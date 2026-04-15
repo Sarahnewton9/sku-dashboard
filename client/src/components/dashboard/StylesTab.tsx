@@ -4,7 +4,8 @@
 
 import { useState, useMemo } from "react";
 import { skuData } from "@/lib/skuData";
-import { Search, ChevronUp, ChevronDown } from "lucide-react";
+import { Search, ChevronUp, ChevronDown, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
 type SortKey = "style" | "category" | "last" | "totalSKUs" | "newSKUs" | "existingSKUs";
 type SortDir = "asc" | "desc";
@@ -18,6 +19,37 @@ export default function StylesTab() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [sortKey, setSortKey] = useState<SortKey>("style");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+
+  function exportToExcel() {
+    // Build rows: one per SKU, filtered to match the current category filter
+    const rows = skuData.rawSkus
+      .filter((sku) => categoryFilter === "All" || sku.category === categoryFilter)
+      .map((sku) => ({
+        Category: sku.category,
+        Style: sku.style,
+        Last: sku.last,
+        Colour: sku.colour,
+        Leather: sku.leather,
+        Status: sku.is_new ? "New" : "Existing",
+      }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    // Set column widths
+    ws["!cols"] = [
+      { wch: 14 }, // Category
+      { wch: 14 }, // Style
+      { wch: 14 }, // Last
+      { wch: 16 }, // Colour
+      { wch: 22 }, // Leather
+      { wch: 10 }, // Status
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "SKU Data");
+    const filename = categoryFilter === "All"
+      ? "SS26_SKU_Export.xlsx"
+      : `SS26_SKU_Export_${categoryFilter.replace(/ /g, "_")}.xlsx`;
+    XLSX.writeFile(wb, filename);
+  }
 
   const filtered = useMemo(() => {
     let data = [...skuData.styles];
@@ -118,9 +150,19 @@ export default function StylesTab() {
           ))}
         </select>
 
-        <span className="text-sm text-muted-foreground ml-auto">
+        <span className="text-sm text-muted-foreground">
           {filtered.length} of {skuData.styles.length} styles
         </span>
+
+        <button
+          onClick={exportToExcel}
+          className="ml-auto flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700"
+          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+          title="Export to Excel"
+        >
+          <Download className="w-4 h-4" />
+          Export Excel
+        </button>
       </div>
 
       {/* Table */}

@@ -5951,7 +5951,7777 @@ export const skuData = {
         "action": "SUEDE \u2013 MATCHING SOCK AND SOLE appears in very few new SKUs \u2014 prioritise adding to more styles"
       }
     ]
-  }
+  },
+  "rawSkus": [
+    {
+      "category": "Dress Shoe",
+      "style": "ALYX",
+      "last": "ANJA",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ALYX",
+      "last": "ANJA",
+      "colour": "SKIN",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ALYX",
+      "last": "ANJA",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ALYX",
+      "last": "ANJA",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ALYX",
+      "last": "ANJA",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ALYX",
+      "last": "ANJA",
+      "colour": "COCO",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ALYX",
+      "last": "ANJA",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ALYX",
+      "last": "ANJA",
+      "colour": "CEMENTO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ALYX",
+      "last": "ANJA",
+      "colour": "ASHEN",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "NUDE",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "GOLD",
+      "leather": "SHINE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "SILVER",
+      "leather": "SHINE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "SKIN",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "BORDEAUX",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "ESPRESSO",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "VINO",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "VINO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ARLA",
+      "last": "ANJA",
+      "colour": "GOLD",
+      "leather": "WOVEN - BISCUIT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ARLA",
+      "last": "ANJA",
+      "colour": "SILVER",
+      "leather": "WOVEN - SILVER",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ASTI",
+      "last": "ANJA",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ASTI",
+      "last": "ANJA",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ASTI",
+      "last": "ANJA",
+      "colour": "BORDEAUX",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ASTI",
+      "last": "ANJA",
+      "colour": "COCO",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ASTI",
+      "last": "ANJA",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ASTI",
+      "last": "ANJA",
+      "colour": "SKIN",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ASTI",
+      "last": "ANJA",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ASTI",
+      "last": "ANJA",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ASTI",
+      "last": "ANJA",
+      "colour": "ESPRESSO",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ASTI",
+      "last": "ANJA",
+      "colour": "VINO",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "AVANTI",
+      "last": "FULL SIZE ONLY 5-10",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "AVANTI",
+      "last": "FULL SIZE ONLY 5-10",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "AVANTI",
+      "last": "FULL SIZE ONLY 5-10",
+      "colour": "BUTTERSCOTCH",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "AVANTI",
+      "last": "FULL SIZE ONLY 5-10",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "AVI",
+      "last": "ANNABELLE",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "AVI",
+      "last": "ANNABELLE",
+      "colour": "SKIN",
+      "leather": "NAAPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "AVI",
+      "last": "ANNABELLE",
+      "colour": "GOLD",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BABE",
+      "last": "BILLIE",
+      "colour": "BLACK",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BABE",
+      "last": "BILLIE",
+      "colour": "OFF-WHITE",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BAKER",
+      "last": "BERTIE",
+      "colour": "BLACK",
+      "leather": "NAPPA PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BAKER",
+      "last": "BERTIE",
+      "colour": "STONE",
+      "leather": "NAPPA PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BAKER",
+      "last": "BERTIE",
+      "colour": "VINO",
+      "leather": "NAPPA PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BAMBI",
+      "last": "BAMBI",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BAMBI",
+      "last": "BAMBI",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BAMBI",
+      "last": "BAMBI",
+      "colour": "VANILLA",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BAMBI",
+      "last": "BAMBI",
+      "colour": "BORDEAUX",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BAZ",
+      "last": "BERTIE",
+      "colour": "BLACK",
+      "leather": "HI-SHINE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BAZ",
+      "last": "BERTIE",
+      "colour": "WHITE",
+      "leather": "HI-SHINE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BAZ",
+      "last": "BERTIE",
+      "colour": "SILVER",
+      "leather": "SHINE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BAZ",
+      "last": "BERTIE",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BAZ",
+      "last": "BERTIE",
+      "colour": "VINO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BETTINA",
+      "last": "BAMBI",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BETTINA",
+      "last": "BAMBI",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BETTINA",
+      "last": "BAMBI",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BETTINA",
+      "last": "BAMBI",
+      "colour": "CEMENTO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BIANCA",
+      "last": "BAMBI",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BIANCA",
+      "last": "BAMBI",
+      "colour": "VANILLA",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BIANCA",
+      "last": "BAMBI",
+      "colour": "BLACK",
+      "leather": "CRINKLE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BIANCA",
+      "last": "BAMBI",
+      "colour": "LIQUEUR",
+      "leather": "CRINKLE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BIANCA",
+      "last": "BAMBI",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BIANCA",
+      "last": "BAMBI",
+      "colour": "DOVE",
+      "leather": "CRINKLE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BIANCA",
+      "last": "BAMBI",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BIANCA",
+      "last": "BAMBI",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BIANCA",
+      "last": "BAMBI",
+      "colour": "CEMENTO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BIANCA",
+      "last": "BAMBI",
+      "colour": "STEEL",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BILLIE",
+      "last": "BILLIE",
+      "colour": "CHOC",
+      "leather": "CROCO/ CHOC NAPPA -COV",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "BLAIRE",
+      "last": "BLAIRE",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "BLAIRE",
+      "last": "BLAIRE",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "BLAIRE",
+      "last": "BLAIRE",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "BLESS",
+      "last": "BETTI",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "BLESS",
+      "last": "BETTI",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BOBBI",
+      "last": "BAMBI",
+      "colour": "BLACK",
+      "leather": "CRINKLE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BOBBI",
+      "last": "BAMBI",
+      "colour": "CHOC",
+      "leather": "CRINKLE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BOBBI",
+      "last": "BAMBI",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BOBBI",
+      "last": "BAMBI",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BOBBI",
+      "last": "BAMBI",
+      "colour": "VINO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BOBBI",
+      "last": "BAMBI",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BOHO",
+      "last": "BILLIE",
+      "colour": "CREAM",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BOSCO",
+      "last": "BAMBI",
+      "colour": "BLACK",
+      "leather": "MESH",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BOSCO",
+      "last": "BAMBI",
+      "colour": "CHOC",
+      "leather": "MESH",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BRASH",
+      "last": "BAMBI",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BRASH",
+      "last": "BAMBI",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BRASH",
+      "last": "BAMBI",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BRASH",
+      "last": "BAMBI",
+      "colour": "SCARLET",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BRASH",
+      "last": "BAMBI",
+      "colour": "ECRU",
+      "leather": "SNAKE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BRASH",
+      "last": "BAMBI",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BRASH",
+      "last": "BAMBI",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "BRASH",
+      "last": "BAMBI",
+      "colour": "SILVER",
+      "leather": "VINTAGE METAL",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BREEZE",
+      "last": "BERTIE",
+      "colour": "BLACK",
+      "leather": "NYLON",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BREEZE",
+      "last": "BERTIE",
+      "colour": "SKIN",
+      "leather": "NYLON",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BREEZE",
+      "last": "BERTIE",
+      "colour": "WHITE",
+      "leather": "NYLON",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BREEZE",
+      "last": "BERTIE",
+      "colour": "IVORY",
+      "leather": "BROCADE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BREEZE",
+      "last": "BERTIE",
+      "colour": "BLACK",
+      "leather": "BROCADE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CAMEO",
+      "last": "CHARLIE",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CAMEO",
+      "last": "CHARLIE",
+      "colour": "VANILLA",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CAMEO",
+      "last": "CHARLIE",
+      "colour": "ECRU",
+      "leather": "SNAKE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CAMEO",
+      "last": "CHARLIE",
+      "colour": "SILVER",
+      "leather": "VINTAGE METAL",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CAMEO",
+      "last": "CHARLIE",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CAMEO",
+      "last": "CHARLIE",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CAMEO",
+      "last": "CHARLIE",
+      "colour": "STEEL",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAMILLE",
+      "last": "CELESTE",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAMILLE",
+      "last": "CELESTE",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAMILLE",
+      "last": "CELESTE",
+      "colour": "VANILLA",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAPPA",
+      "last": "WILLOW NAPPA",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAPPA",
+      "last": "WILLOW NAPPA",
+      "colour": "PERU",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAPPA",
+      "last": "WILLOW NAPPA",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAPPA",
+      "last": "WILLOW NAPPA",
+      "colour": "PETAL",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAPPI",
+      "last": "CELESTE",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAPPI",
+      "last": "CELESTE",
+      "colour": "VINO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAPPI",
+      "last": "CELESTE",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAPPI",
+      "last": "CELESTE",
+      "colour": "STEEL",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAPPI",
+      "last": "CELESTE",
+      "colour": "ASHEN",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAPPI",
+      "last": "CELESTE",
+      "colour": "SKY",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAPPI",
+      "last": "CELESTE",
+      "colour": "PETAL",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CAPPI",
+      "last": "CELESTE",
+      "colour": "TURQUOISE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "CAPRICE",
+      "last": "CAPRICE",
+      "colour": "BLACK",
+      "leather": "KID",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "CAPRICE",
+      "last": "CAPRICE",
+      "colour": "SKIN",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "CAPRICE",
+      "last": "CAPRICE",
+      "colour": "WHITE",
+      "leather": "KID",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "CAPRICE",
+      "last": "CAPRICE",
+      "colour": "SILVER",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CARLA",
+      "last": "CHEEKY",
+      "colour": "BLACK",
+      "leather": "BRAID",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CARLA",
+      "last": "CHEEKY",
+      "colour": "WHITE",
+      "leather": "BRAID",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CARLA",
+      "last": "CHEEKY",
+      "colour": "BLACK",
+      "leather": "MESH",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CARLA",
+      "last": "CHEEKY",
+      "colour": "CHOC",
+      "leather": "MESH",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CASPIAN",
+      "last": "WILLOW NAPPA",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CASPIAN",
+      "last": "WILLOW NAPPA",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CASPIAN",
+      "last": "WILLOW NAPPA",
+      "colour": "VINO",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CASPIAN",
+      "last": "WILLOW NAPPA",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CASPIAN",
+      "last": "WILLOW NAPPA",
+      "colour": "BLUSH",
+      "leather": "NB",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CASPIAN",
+      "last": "WILLOW NAPPA",
+      "colour": "RED",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CASPIAN",
+      "last": "WILLOW NAPPA",
+      "colour": "WILLOW",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CELESTE",
+      "last": "CELESTE",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CELESTE",
+      "last": "CELESTE",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CELESTE",
+      "last": "CELESTE",
+      "colour": "CHOC",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CELESTE",
+      "last": "CELESTE",
+      "colour": "VINO",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CELESTE",
+      "last": "CELESTE",
+      "colour": "GOLD",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CELESTE",
+      "last": "CELESTE",
+      "colour": "METALLIC",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CELESTE",
+      "last": "CELESTE",
+      "colour": "SILVER",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHARLI",
+      "last": "WILLOW NAPPA",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHARLI",
+      "last": "WILLOW NAPPA",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHARLI",
+      "last": "WILLOW NAPPA",
+      "colour": "CHOC",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHEEKY",
+      "last": "CHEEKY",
+      "colour": "BLACK",
+      "leather": "WEAVE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHEEKY",
+      "last": "CHEEKY",
+      "colour": "WHITE",
+      "leather": "WEAVE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHELSEA",
+      "last": "WILLOW NAPPA",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHELSEA",
+      "last": "WILLOW NAPPA",
+      "colour": "CHOC",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHELSEA",
+      "last": "WILLOW NAPPA",
+      "colour": "RED",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHELSEA",
+      "last": "WILLOW NAPPA",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHELSEA",
+      "last": "WILLOW NAPPA",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHELSEA",
+      "last": "WILLOW NAPPA",
+      "colour": "BLACK",
+      "leather": "NAPPA PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHELSEA",
+      "last": "WILLOW NAPPA",
+      "colour": "STONE",
+      "leather": "NAPPA PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHELSEA",
+      "last": "WILLOW NAPPA",
+      "colour": "VINO",
+      "leather": "NAPPA PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHELSEA",
+      "last": "WILLOW NAPPA",
+      "colour": "BLACK",
+      "leather": "LUMIA VELVET",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHELSEA",
+      "last": "WILLOW NAPPA",
+      "colour": "STONE",
+      "leather": "LUMIA VELVET",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHELSEA",
+      "last": "WILLOW NAPPA",
+      "colour": "BLUSH",
+      "leather": "LUMIA VELVET",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHELSEA",
+      "last": "WILLOW NAPPA",
+      "colour": "PETAL",
+      "leather": "NAPPA PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CHERRY",
+      "last": "CHARLIE",
+      "colour": "BLACK",
+      "leather": "CRINKLE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CHERRY",
+      "last": "CHARLIE",
+      "colour": "CHOC",
+      "leather": "CRINKLE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CHERRY",
+      "last": "CHARLIE",
+      "colour": "LIQUEUR",
+      "leather": "CRINKLE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CHERRY",
+      "last": "CHARLIE",
+      "colour": "DOVE",
+      "leather": "CRINKLE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CHERRY",
+      "last": "CHARLIE",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CHERRY",
+      "last": "CHARLIE",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CHERRY",
+      "last": "CHARLIE",
+      "colour": "BLACK",
+      "leather": "CROCO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CHERRY",
+      "last": "CHARLIE",
+      "colour": "VINO",
+      "leather": "CROCO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "CHICAGO",
+      "last": "CLEO",
+      "colour": "CLEAR",
+      "leather": "VINYLITE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHILLI",
+      "last": "WILLOW NAPPA",
+      "colour": "BLACK",
+      "leather": "NAPPA PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHILLI",
+      "last": "WILLOW NAPPA",
+      "colour": "STONE",
+      "leather": "NAPPA PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CHILLI",
+      "last": "WILLOW NAPPA",
+      "colour": "PETAL",
+      "leather": "NAPPA PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CIRCA",
+      "last": "WILLOW NAPPA",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CIRCA",
+      "last": "WILLOW NAPPA",
+      "colour": "PETAL",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CITY",
+      "last": "CELESTE",
+      "colour": "BLACK",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CITY",
+      "last": "CELESTE",
+      "colour": "NAPPA",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CITY",
+      "last": "CELESTE",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CITY",
+      "last": "CELESTE",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CLOVER",
+      "last": "CELESTE",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CLOVER",
+      "last": "CELESTE",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "COLLETTE",
+      "last": "CHARLIE",
+      "colour": "BLACK",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "COLLETTE",
+      "last": "CHARLIE",
+      "colour": "VESTRA",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "COLLETTE",
+      "last": "CHARLIE",
+      "colour": "CHOC",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "COMMA",
+      "last": "WILLOW NAPPA",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "COMMA",
+      "last": "WILLOW NAPPA",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "COMMA",
+      "last": "WILLOW NAPPA",
+      "colour": "RED",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "COMMA",
+      "last": "WILLOW NAPPA",
+      "colour": "VINO",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "COMMA",
+      "last": "WILLOW NAPPA",
+      "colour": "BLOSSOM",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "COMMA",
+      "last": "WILLOW NAPPA",
+      "colour": "PETAL",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "COMMA",
+      "last": "WILLOW NAPPA",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "COMMA",
+      "last": "WILLOW NAPPA",
+      "colour": "ECRU",
+      "leather": "SNAKE",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "COMMA",
+      "last": "WILLOW NAPPA",
+      "colour": "BLACK",
+      "leather": "SPECKLE",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "COMMA",
+      "last": "WILLOW NAPPA",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "COMMA",
+      "last": "WILLOW NAPPA",
+      "colour": "ESPRESSO",
+      "leather": "PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "COMMA",
+      "last": "WILLOW NAPPA",
+      "colour": "NUDE",
+      "leather": "PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CONNIE",
+      "last": "CHARLIE",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CONNIE",
+      "last": "CHARLIE",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CONNIE",
+      "last": "CHARLIE",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CONNIE",
+      "last": "CHARLIE",
+      "colour": "ASHEN",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CONNIE",
+      "last": "CHARLIE",
+      "colour": "ECRU",
+      "leather": "SNAKE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CONNIE",
+      "last": "CHARLIE",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CONNIE",
+      "last": "CHARLIE",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CONNIE",
+      "last": "CHARLIE",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "CORSO",
+      "last": "CLEO",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "CORSO",
+      "last": "CLEO",
+      "colour": "SKIN",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "CORSO",
+      "last": "CLEO",
+      "colour": "GOLD",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "CORSO",
+      "last": "CLEO",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "COSTA",
+      "last": "CHARLIE",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "COSTA",
+      "last": "CHARLIE",
+      "colour": "CEMENTO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "COSTA",
+      "last": "CHARLIE",
+      "colour": "VINO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "COSTA",
+      "last": "CHARLIE",
+      "colour": "NAVY",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "COSTA",
+      "last": "CHARLIE",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "COSTA",
+      "last": "CHARLIE",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "COSTA",
+      "last": "CHARLIE",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "CREW",
+      "last": "WILLOW NAPPA",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "CREW",
+      "last": "WILLOW NAPPA",
+      "colour": "WHITE",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CRUSH",
+      "last": "CHARLIE",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CRUSH",
+      "last": "CHARLIE",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CRUSH",
+      "last": "CHARLIE",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CRUSH",
+      "last": "CHARLIE",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CRUSH",
+      "last": "CHARLIE",
+      "colour": "SCARLET",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CRUSH",
+      "last": "CHARLIE",
+      "colour": "DENIM",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CRUSH",
+      "last": "CHARLIE",
+      "colour": "BLOSSOM",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CRUSH",
+      "last": "CHARLIE",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CRUSH",
+      "last": "CHARLIE",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CRUSH",
+      "last": "CHARLIE",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CRUSH",
+      "last": "CHARLIE",
+      "colour": "BLACK",
+      "leather": "BROCADE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CRUSH",
+      "last": "CHARLIE",
+      "colour": "IVORY",
+      "leather": "BROCADE",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CUBA",
+      "last": "WILLOW NAPPA",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CUBA",
+      "last": "WILLOW NAPPA",
+      "colour": "LATTE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CUBA",
+      "last": "WILLOW NAPPA",
+      "colour": "VINO",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CUBA",
+      "last": "WILLOW NAPPA",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CUBA",
+      "last": "WILLOW NAPPA",
+      "colour": "CHOC",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CUBA",
+      "last": "WILLOW NAPPA",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CUBA",
+      "last": "WILLOW NAPPA",
+      "colour": "PETAL",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CUBA",
+      "last": "WILLOW NAPPA",
+      "colour": "ECRU",
+      "leather": "SNAKE",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CUBA",
+      "last": "WILLOW NAPPA",
+      "colour": "WILLOW",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CURIOUS",
+      "last": "CELESTE",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CURIOUS",
+      "last": "CELESTE",
+      "colour": "WILLOW",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CURIOUS",
+      "last": "CELESTE",
+      "colour": "VANILLA",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CURIOUS",
+      "last": "CELESTE",
+      "colour": "PERU",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DAISY",
+      "last": "DELTA",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DAISY",
+      "last": "DELTA",
+      "colour": "TAN",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DANA",
+      "last": "DELTA",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DANA",
+      "last": "DELTA",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DANA",
+      "last": "DELTA",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DANA",
+      "last": "DELTA",
+      "colour": "WHITE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DANA",
+      "last": "DELTA",
+      "colour": "SILVER",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DARCY",
+      "last": "DRAMA",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DARCY",
+      "last": "DRAMA",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DAZIE",
+      "last": "DAZIE",
+      "colour": "BLACK",
+      "leather": "VINTAGE PETAL SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DAZIE",
+      "last": "DAZIE",
+      "colour": "SKY",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DAZIE",
+      "last": "DAZIE",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DAZIE",
+      "last": "DAZIE",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DAZIE",
+      "last": "DAZIE",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DAZIE",
+      "last": "DAZIE",
+      "colour": "MINT",
+      "leather": "CROCO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DAZIE",
+      "last": "DAZIE",
+      "colour": "RED",
+      "leather": "CROCO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DEMURE",
+      "last": "DIAMOND",
+      "colour": "SILVER",
+      "leather": "GLOMESH",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DEMURE",
+      "last": "DIAMOND",
+      "colour": "GOLD",
+      "leather": "GLOMESH",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DIMA",
+      "last": "DIAMOND",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DIMA",
+      "last": "DIAMOND",
+      "colour": "BLACK",
+      "leather": "NAPPA PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DIMA",
+      "last": "DIAMOND",
+      "colour": "STONE",
+      "leather": "NAPPA PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DIMA",
+      "last": "DIAMOND",
+      "colour": "PETAL",
+      "leather": "NAPPA PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DIMA",
+      "last": "DIAMOND",
+      "colour": "VINO",
+      "leather": "NAPPA PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DIXIE",
+      "last": "DAZIE",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DIXIE",
+      "last": "DAZIE",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DIXIE",
+      "last": "DAZIE",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DIXIE",
+      "last": "DAZIE",
+      "colour": "VINO",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DIXON",
+      "last": "DIAMOND",
+      "colour": "BLACK",
+      "leather": "CROCO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DIXON",
+      "last": "DIAMOND",
+      "colour": "CHOC",
+      "leather": "CROCO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DIXON",
+      "last": "DIAMOND",
+      "colour": "PETAL",
+      "leather": "CROCO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DIXON",
+      "last": "DIAMOND",
+      "colour": "MINT",
+      "leather": "CROCO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DOLLI",
+      "last": "DIAMOND",
+      "colour": "CLEAR",
+      "leather": "VINYLITE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DONTE",
+      "last": "DAZIE",
+      "colour": "VANILLA",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DONTE",
+      "last": "DAZIE",
+      "colour": "PERU",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DONTE",
+      "last": "DAZIE",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DONTE",
+      "last": "DAZIE",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DONTE",
+      "last": "DAZIE",
+      "colour": "VINO",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DRAY",
+      "last": "DAZIE",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "DRAY",
+      "last": "DAZIE",
+      "colour": "WHITE",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "EDGY",
+      "last": "EDGY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "EDGY",
+      "last": "EDGY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "EDGY",
+      "last": "EDGY",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "EDGY",
+      "last": "EDGY",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "EDGY",
+      "last": "EDGY",
+      "colour": "CHOC",
+      "leather": "CROCO",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "EDGY",
+      "last": "EDGY",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "EDGY",
+      "last": "EDGY",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "EDGY",
+      "last": "EDGY",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "ELIZA",
+      "last": "EDGY",
+      "colour": "BLACK",
+      "leather": "NAPPA PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "ELIZA",
+      "last": "EDGY",
+      "colour": "STONE",
+      "leather": "NAPPA PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "ELIZA",
+      "last": "EDGY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "ELIZA",
+      "last": "EDGY",
+      "colour": "ECRU",
+      "leather": "SNAKE (BLK V)",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "ELIZA",
+      "last": "EDGY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "EMBER",
+      "last": "EMBER",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "EMBER",
+      "last": "EMBER",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "EMBER",
+      "last": "EMBER",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "EMBLA",
+      "last": "ENVY",
+      "colour": "BLACK",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "EMBLA",
+      "last": "ENVY",
+      "colour": "CHOC",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "EMILY",
+      "last": "ENVY",
+      "colour": "MINT",
+      "leather": "CROCO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "EMILY",
+      "last": "ENVY",
+      "colour": "PETAL",
+      "leather": "CROCO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "EMILY",
+      "last": "ENVY",
+      "colour": "BLACK",
+      "leather": "CROCO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "EMILY",
+      "last": "ENVY",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "EMILY",
+      "last": "ENVY",
+      "colour": "SKY",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ENVY",
+      "last": "ENVY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ENVY",
+      "last": "ENVY",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ENVY",
+      "last": "ENVY",
+      "colour": "ESPRESSO",
+      "leather": "PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ENVY",
+      "last": "ENVY",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ENVY",
+      "last": "ENVY",
+      "colour": "PETAL",
+      "leather": "CROCO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ENVY",
+      "last": "ENVY",
+      "colour": "RED",
+      "leather": "CROCO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ENVY",
+      "last": "ENVY",
+      "colour": "SKIN",
+      "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "ERES",
+      "last": "EVIE",
+      "colour": "BLACK",
+      "leather": "HI-SHINE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ESQUIRE",
+      "last": "ENVY",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ESQUIRE",
+      "last": "ENVY",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ESQUIRE",
+      "last": "ENVY",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ESQUIRE",
+      "last": "ENVY",
+      "colour": "ECRU",
+      "leather": "SNAKE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ETRO",
+      "last": "ENVY",
+      "colour": "BLACK",
+      "leather": "BROCADE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ETRO",
+      "last": "ENVY",
+      "colour": "CHOC",
+      "leather": "BROCADE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ETRO",
+      "last": "ENVY",
+      "colour": "SKY",
+      "leather": "BROCADE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ETRO",
+      "last": "ENVY",
+      "colour": "IVORY",
+      "leather": "BROCADE",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "EVIE",
+      "last": "EVIE",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "EVIE",
+      "last": "EVIE",
+      "colour": "CHOC",
+      "leather": "BURNISH",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "EVIE",
+      "last": "EVIE",
+      "colour": "TAN",
+      "leather": "BURNISH",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FARRAH",
+      "last": "FARRAH",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FARRAH",
+      "last": "FARRAH",
+      "colour": "DENIM",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FARRAH",
+      "last": "FARRAH",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FARRAH",
+      "last": "FARRAH",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FARRAH",
+      "last": "FARRAH",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FARRAH",
+      "last": "FARRAH",
+      "colour": "VINO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ankle Boot",
+      "style": "FAVE",
+      "last": "FINCH",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Ankle Boot",
+      "style": "FAVE",
+      "last": "FINCH",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Ankle Boot",
+      "style": "FAVE",
+      "last": "FINCH",
+      "colour": "BLACK",
+      "leather": "CRINKLE",
+      "is_new": true
+    },
+    {
+      "category": "Ankle Boot",
+      "style": "FAYE",
+      "last": "FIFI 5-9",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "FENIX",
+      "last": "FINCH",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "FENIX",
+      "last": "FINCH",
+      "colour": "CHOC",
+      "leather": "VENICE",
+      "is_new": true
+    },
+    {
+      "category": "Ankle Boot",
+      "style": "FIDDY",
+      "last": "FIFI 5-9",
+      "colour": "BLACK",
+      "leather": "MICRO",
+      "is_new": false
+    },
+    {
+      "category": "Ankle Boot",
+      "style": "FIDDY",
+      "last": "FIFI 5-9",
+      "colour": "CHOC",
+      "leather": "MICRO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "FIFI",
+      "last": "FIFI 5-9",
+      "colour": "BLACK",
+      "leather": "CROCO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "FIFI",
+      "last": "FIFI 5-9",
+      "colour": "CHOC",
+      "leather": "CROCO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "FIFI",
+      "last": "FIFI 5-9",
+      "colour": "VINO",
+      "leather": "CROCO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "FIFI",
+      "last": "FIFI 5-9",
+      "colour": "SKIN",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "FIFI",
+      "last": "FIFI 5-9",
+      "colour": "BLACK",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "FIFI",
+      "last": "FIFI 5-9",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "FIFI",
+      "last": "FIFI 5-9",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "FIFI",
+      "last": "FIFI 5-9",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "FINCH",
+      "last": "FINCH",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "FINCH",
+      "last": "FINCH",
+      "colour": "CHOC",
+      "leather": "VENICE",
+      "is_new": true
+    },
+    {
+      "category": "Calf Boot",
+      "style": "FINESSE",
+      "last": "FIFI 5-9",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FLASH",
+      "last": "FARRAH",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FLASH",
+      "last": "FARRAH",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FLASH",
+      "last": "FARRAH",
+      "colour": "ASHEN",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FLASH",
+      "last": "FARRAH",
+      "colour": "STONE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FLUKE",
+      "last": "FLORIDA",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FLUKE",
+      "last": "FLORIDA",
+      "colour": "WHITE",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FREYA",
+      "last": "FARRAH",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FREYA",
+      "last": "FARRAH",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FREYA",
+      "last": "FARRAH",
+      "colour": "SKIN",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FREYA",
+      "last": "FARRAH",
+      "colour": "ASHEN",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "FREYA",
+      "last": "FARRAH",
+      "colour": "STEEL",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GATSBY",
+      "last": "GATSBY",
+      "colour": "BLACK",
+      "leather": "ANGUILLE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GATSBY",
+      "last": "GATSBY",
+      "colour": "CHOCOLATE",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GATSBY",
+      "last": "GATSBY",
+      "colour": "VANILLA",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GATSBY",
+      "last": "GATSBY",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GATSBY",
+      "last": "GATSBY",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GATSBY",
+      "last": "GATSBY",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GATSBY",
+      "last": "GATSBY",
+      "colour": "BROWN",
+      "leather": "ANGUILLE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GATSBY",
+      "last": "GATSBY",
+      "colour": "ESPRESSO",
+      "leather": "ANGUILLE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GATSBY",
+      "last": "GATSBY",
+      "colour": "VINO",
+      "leather": "ANGUILLE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GEZZA",
+      "last": "GATSBY",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GEZZA",
+      "last": "GATSBY",
+      "colour": "BLACK",
+      "leather": "HI-SHINE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GEZZA",
+      "last": "GATSBY",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "BLACK",
+      "leather": "VALENCIA \u2013 BLK",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "VESTRA",
+      "leather": "VALENCIA \u2013 BLK",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "CHOC",
+      "leather": "VALENCIAN\u2013 BLK",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "TAN",
+      "leather": "VINTAGE \u2013 MATCHING",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "BLACK",
+      "leather": "SUEDE- MATCH",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE \u2013 BLACK",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "VINO",
+      "leather": "SUEDE \u2013 BLACK",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "ASHEN",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "STONE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GLACIER",
+      "last": "GATSBY",
+      "colour": "VANILLA",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GLACIER",
+      "last": "GATSBY",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GLACIER",
+      "last": "GATSBY",
+      "colour": "CHOCOLATE",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GLACIER",
+      "last": "GATSBY",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GLACIER",
+      "last": "GATSBY",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GLACIER",
+      "last": "GATSBY",
+      "colour": "CHOC",
+      "leather": "VINTAGE W",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GLACIER",
+      "last": "GATSBY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "GLIDE",
+      "last": "GOLDIE",
+      "colour": "BLACK",
+      "leather": "NYLON",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "GLIDE",
+      "last": "GOLDIE",
+      "colour": "CHOC",
+      "leather": "NYLON",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "GLIDE",
+      "last": "GOLDIE",
+      "colour": "WHITE",
+      "leather": "NYLON",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "GLIDE",
+      "last": "GOLDIE",
+      "colour": "SKIN",
+      "leather": "NYLON",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GLORIA",
+      "last": "GIGI",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GLORIA",
+      "last": "GIGI",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GLORIA",
+      "last": "GIGI",
+      "colour": "VANILLA",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GLORIA",
+      "last": "GIGI",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GLORIA",
+      "last": "GIGI",
+      "colour": "STONE",
+      "leather": "SUEDE W",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GLORIA",
+      "last": "GIGI",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GOMEZ",
+      "last": "GIGI",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GOMEZ",
+      "last": "GIGI",
+      "colour": "CHOC",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GOMEZ",
+      "last": "GIGI",
+      "colour": "BLACK",
+      "leather": "ANGUILLE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GOMEZ",
+      "last": "GIGI",
+      "colour": "ESPRESSO",
+      "leather": "ANGUILLE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GOMEZ",
+      "last": "GIGI",
+      "colour": "VANILLA",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GOMEZ",
+      "last": "GIGI",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GOMEZ",
+      "last": "GIGI",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GRAND",
+      "last": "GIGI",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GRAND",
+      "last": "GIGI",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GRAND",
+      "last": "GIGI",
+      "colour": "VINO",
+      "leather": "NAPPA PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GRAND",
+      "last": "GIGI",
+      "colour": "BLACK",
+      "leather": "NAPPA PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HAILEY",
+      "last": "HALLIE",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HAILEY",
+      "last": "HALLIE",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HAILEY",
+      "last": "HALLIE",
+      "colour": "GOLD",
+      "leather": "NAPPA METALLIC",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HALLIE",
+      "last": "HALLIE",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HALLIE",
+      "last": "HALLIE",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HALLIE",
+      "last": "HALLIE",
+      "colour": "CLEAR",
+      "leather": "VINYLITE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HALLIE",
+      "last": "HALLIE",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HALLIE",
+      "last": "HALLIE",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HALLIE",
+      "last": "HALLIE",
+      "colour": "VANILLA",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HALLIE",
+      "last": "HALLIE",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HALLIE",
+      "last": "HALLIE",
+      "colour": "ESPRESSO",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HALLIE",
+      "last": "HALLIE",
+      "colour": "VINO",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HALLIE",
+      "last": "HALLIE",
+      "colour": "VINO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HALLIE",
+      "last": "HALLIE",
+      "colour": "AMBER",
+      "leather": "NAPPA METALLIC",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HALLIE",
+      "last": "HALLIE",
+      "colour": "SILVER",
+      "leather": "NAPPA METALLIC",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HALLIE",
+      "last": "HALLIE",
+      "colour": "GOLD",
+      "leather": "NAPPA METALLIC",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "HARLEY",
+      "last": "HARLEY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "HARLEY",
+      "last": "HARLEY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "HILTON",
+      "last": "HARLEY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "HILTON",
+      "last": "HARLEY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HYPE",
+      "last": "HALLIE",
+      "colour": "BLACK",
+      "leather": "VINTAGE - BLK SOCK",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HYPE",
+      "last": "HALLIE",
+      "colour": "TAN",
+      "leather": "VINTAGE - BLACK SOCK",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HYPE",
+      "last": "HALLIE",
+      "colour": "CHOC",
+      "leather": "VINTAGE - BLACK SOCK",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HYPE",
+      "last": "HALLIE",
+      "colour": "VANILLA",
+      "leather": "VINTAGE \u2013 BLACK SOCK",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "ISABEL",
+      "last": "IVES",
+      "colour": "BLACK",
+      "leather": "MAGIC",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "IVES",
+      "last": "IVES",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "IVES",
+      "last": "IVES",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "IVES",
+      "last": "IVES",
+      "colour": "TAN",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "IVES",
+      "last": "IVES",
+      "colour": "CHOC",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "JAGGER",
+      "last": "JASPER",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "JAGGER",
+      "last": "JASPER",
+      "colour": "BISQUE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JANE",
+      "last": "JAYDE",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JANE",
+      "last": "JAYDE",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JANE",
+      "last": "JAYDE",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JANE",
+      "last": "JAYDE",
+      "colour": "PETAL",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JANE",
+      "last": "JAYDE",
+      "colour": "PERU",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "JANET",
+      "last": "JASPER",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "JANET",
+      "last": "JASPER",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "JANET",
+      "last": "JASPER",
+      "colour": "BLACK",
+      "leather": "SPECKLE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "JAQ",
+      "last": "JUNIPER",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "JAQ",
+      "last": "JUNIPER",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "JAQ",
+      "last": "JUNIPER",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "JAVIER",
+      "last": "JAZZ",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "JAVIER",
+      "last": "JAZZ",
+      "colour": "VANILLA",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "JAVIER",
+      "last": "JAZZ",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "JAVIER",
+      "last": "JAZZ",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JAYDE",
+      "last": "JAYDE",
+      "colour": "BLACK",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JAYDE",
+      "last": "JAYDE",
+      "colour": "CHOC",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JAYDE",
+      "last": "JAYDE",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JAYDE",
+      "last": "JAYDE",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JAYDE",
+      "last": "JAYDE",
+      "colour": "SKY",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JAYDE",
+      "last": "JAYDE",
+      "colour": "PETAL",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JAYDE",
+      "last": "JAYDE",
+      "colour": "TURQUOISE",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "JAZZY",
+      "last": "JASPER",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "JAZZY",
+      "last": "JASPER",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "JAZZY",
+      "last": "JASPER",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "JAZZY",
+      "last": "JASPER",
+      "colour": "BLACK",
+      "leather": "CROCO",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "JAZZY",
+      "last": "JASPER",
+      "colour": "CHOC",
+      "leather": "CROCO",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "JAZZY",
+      "last": "JASPER",
+      "colour": "RED",
+      "leather": "CROCO",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "JESSE",
+      "last": "JAZZ",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "JESSE",
+      "last": "JAZZ",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "JESSE",
+      "last": "JAZZ",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "JESSE",
+      "last": "JAZZ",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "JESSE",
+      "last": "JAZZ",
+      "colour": "ASHEN",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "JESSE",
+      "last": "JAZZ",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "JESSE",
+      "last": "JAZZ",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "JETT",
+      "last": "JASPER",
+      "colour": "BLACK",
+      "leather": "SCUBA",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "JETTA",
+      "last": "SIZES 36-41",
+      "colour": "BLACK",
+      "leather": "TUSCON",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "JETTA",
+      "last": "SIZES 36-41",
+      "colour": "TAN",
+      "leather": "TUSCON",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "JETTA",
+      "last": "SIZES 36-41",
+      "colour": "CHOC",
+      "leather": "TUSCON",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JOELLE",
+      "last": "JAYDE",
+      "colour": "INDIGO",
+      "leather": "NB",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JOELLE",
+      "last": "JAYDE",
+      "colour": "WILLOW",
+      "leather": "NB",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JOELLE",
+      "last": "JAYDE",
+      "colour": "BLUSH",
+      "leather": "NB",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JOELLE",
+      "last": "JAYDE",
+      "colour": "BLACK",
+      "leather": "NB",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "JOKER",
+      "last": "JASPER",
+      "colour": "BLACK",
+      "leather": "MAGIC",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "JOOP",
+      "last": "JAZZ",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "JOOP",
+      "last": "JAZZ",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "JOOP",
+      "last": "JAZZ",
+      "colour": "ECRU",
+      "leather": "SNAKE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JOSS",
+      "last": "JAYDE",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JOSS",
+      "last": "JAYDE",
+      "colour": "VANILLA",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JOSS",
+      "last": "JAYDE",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JOSS",
+      "last": "JAYDE",
+      "colour": "SKY",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JOSS",
+      "last": "JAYDE",
+      "colour": "PETAL",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JOSS",
+      "last": "JAYDE",
+      "colour": "CLEAR",
+      "leather": "VINYLITE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "JUNIPER",
+      "last": "JUNIPER",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "JUNIPER",
+      "last": "JUNIPER",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "JUNIPER",
+      "last": "JUNIPER",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "JUNIPER",
+      "last": "JUNIPER",
+      "colour": "ASHEN",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "JUNIPER",
+      "last": "JUNIPER",
+      "colour": "STEEL",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "JUNIPER",
+      "last": "JUNIPER",
+      "colour": "RED",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "JUNIPER",
+      "last": "JUNIPER",
+      "colour": "BLACK",
+      "leather": "ANGUILLE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "JUNIPER",
+      "last": "JUNIPER",
+      "colour": "VINO",
+      "leather": "ANGUILLE",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "KAILA",
+      "last": "KYRA",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "KAILA",
+      "last": "KYRA",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KALI",
+      "last": "KALI",
+      "colour": "BLACK",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KALI",
+      "last": "KALI",
+      "colour": "CHOC",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KALI",
+      "last": "KALI",
+      "colour": "OAT",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KASSY",
+      "last": "KRUZ",
+      "colour": "FUCHSIA",
+      "leather": "NB",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KASSY",
+      "last": "KRUZ",
+      "colour": "BLUSH",
+      "leather": "NB",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KASSY",
+      "last": "KRUZ",
+      "colour": "WILLOW",
+      "leather": "NB",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KASSY",
+      "last": "KRUZ",
+      "colour": "INDIGO",
+      "leather": "NB",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KASSY",
+      "last": "KRUZ",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KASSY",
+      "last": "KRUZ",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KASSY",
+      "last": "KRUZ",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KASSY",
+      "last": "KRUZ",
+      "colour": "SKY",
+      "leather": "NB",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KASSY",
+      "last": "KRUZ",
+      "colour": "BLACK",
+      "leather": "NB",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KERI",
+      "last": "KRUZ",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KIMA",
+      "last": "KRUZ",
+      "colour": "BLACK",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KIMA",
+      "last": "KRUZ",
+      "colour": "CHOC",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KIMBA",
+      "last": "KIMBA",
+      "colour": "BLACK",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KIMBA",
+      "last": "KIMBA",
+      "colour": "CHOC",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KIMBA",
+      "last": "KIMBA",
+      "colour": "WHITE",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KIMBA",
+      "last": "KIMBA",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "KIMCHI",
+      "last": "KIRA",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "KIMCHI",
+      "last": "KIRA",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KRISTA",
+      "last": "KRUZ",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KRISTA",
+      "last": "KRUZ",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KRISTA",
+      "last": "KRUZ",
+      "colour": "SILVER",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KRISTA",
+      "last": "KRUZ",
+      "colour": "TAN",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KRISTA",
+      "last": "KRUZ",
+      "colour": "SCARLET",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KYLA",
+      "last": "KOMMA",
+      "colour": "GUNMETAL",
+      "leather": "SHINE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KYLA",
+      "last": "KOMMA",
+      "colour": "SILVER",
+      "leather": "FOIL",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KYLA",
+      "last": "KOMMA",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "KYRA",
+      "last": "KYRA",
+      "colour": "BLACK",
+      "leather": "COMO UPPER",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "KYRA",
+      "last": "KYRA",
+      "colour": "CHOC",
+      "leather": "VINTAGE UPPER",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "KYRA",
+      "last": "KYRA",
+      "colour": "WHITE",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "KYRA",
+      "last": "KYRA",
+      "colour": "BLACK",
+      "leather": "PONY",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "LAMORE",
+      "last": "LUXURY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "LAMORE",
+      "last": "LUXURY",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "LAMORE",
+      "last": "LUXURY",
+      "colour": "CHOC",
+      "leather": "BURNISH",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "LAMORE",
+      "last": "LUXURY",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "LAVA",
+      "last": "LEXIA & LEXIA RUBBER",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "LAVA",
+      "last": "LEXIA & LEXIA RUBBER",
+      "colour": "CHOC",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LEGACY",
+      "last": "LILA",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LEGACY",
+      "last": "LILA",
+      "colour": "PERU",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LEGACY",
+      "last": "LILA",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LEROUX",
+      "last": "LILA",
+      "colour": "BLACK",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LEROUX",
+      "last": "LILA",
+      "colour": "CHOC",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "LIA",
+      "last": "LUCY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "LIA",
+      "last": "LUCY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "LIA",
+      "last": "LUCY",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "LIA",
+      "last": "LUCY",
+      "colour": "PETAL",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "LIBBY",
+      "last": "LUXURY",
+      "colour": "CHOC",
+      "leather": "CRINKLE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "LIBBY",
+      "last": "LUXURY",
+      "colour": "BLACK",
+      "leather": "CRINKLE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "LIBBY",
+      "last": "LUXURY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "LIBBY",
+      "last": "LUXURY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "LIBBY",
+      "last": "LUXURY",
+      "colour": "ESPRESSO",
+      "leather": "ANGUILLE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "LIBBY",
+      "last": "LUXURY",
+      "colour": "VINO",
+      "leather": "ANGUILLE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "LIBBY",
+      "last": "LUXURY",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "LIBBY",
+      "last": "LUXURY",
+      "colour": "STONE",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LILA",
+      "last": "LILA",
+      "colour": "BLACK",
+      "leather": "TURIN",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LILA",
+      "last": "LILA",
+      "colour": "SKY",
+      "leather": "NUBUCK",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LILA",
+      "last": "LILA",
+      "colour": "BLUSH",
+      "leather": "NUBUCK",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LILA",
+      "last": "LILA",
+      "colour": "TOMATO",
+      "leather": "NUBUCK",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LILA",
+      "last": "LILA",
+      "colour": "BLACK",
+      "leather": "NUBUCK",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LILA",
+      "last": "LILA",
+      "colour": "STEEL",
+      "leather": "NUBUCK",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LILA",
+      "last": "LILA",
+      "colour": "ESPRESSO",
+      "leather": "NUBUCK",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LILI",
+      "last": "LILA",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LILI",
+      "last": "LILA",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LILI",
+      "last": "LILA",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LILI",
+      "last": "LILA",
+      "colour": "PETAL",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "LONDON",
+      "last": "LUXURY",
+      "colour": "BLACK",
+      "leather": "HI-SHINE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "LONDON",
+      "last": "LUXURY",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "LOOP",
+      "last": "LEXIA & LEXIA RUBBER",
+      "colour": "BLACK",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "LOOP",
+      "last": "LEXIA & LEXIA RUBBER",
+      "colour": "TAN",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "LOOP",
+      "last": "LEXIA & LEXIA RUBBER",
+      "colour": "CHOC",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "LUANA",
+      "last": "LUCY",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "LUANA",
+      "last": "LUCY",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "LUANA",
+      "last": "LUCY",
+      "colour": "SILVER",
+      "leather": "NAPPA METALLIC",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LUCA",
+      "last": "LOTUS",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "LUCIE",
+      "last": "LEXIA & LEXIA RUBBER",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "LUCIE",
+      "last": "LEXIA & LEXIA RUBBER",
+      "colour": "TAN",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Sandal",
+      "style": "LUCIE",
+      "last": "LEXIA & LEXIA RUBBER",
+      "colour": "CHOC",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "LUCY",
+      "last": "LUCY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "LUCY",
+      "last": "LUCY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "LUCY",
+      "last": "LUCY",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "LUCY",
+      "last": "LUCY",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "LUNA",
+      "last": "LEXIA & LEXIA RUBBER",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "LUNA",
+      "last": "LEXIA & LEXIA RUBBER",
+      "colour": "CHOC",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "LUXURY",
+      "last": "LUXURY",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "LUXURY",
+      "last": "LUXURY",
+      "colour": "BLACK",
+      "leather": "CROCO",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "LUXURY",
+      "last": "LUXURY",
+      "colour": "CHOC",
+      "leather": "CROCO",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "LUXURY",
+      "last": "LUXURY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "MADDI",
+      "last": "MADDI",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "MADDI",
+      "last": "MADDI",
+      "colour": "CHOC",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "MADDI",
+      "last": "MADDI",
+      "colour": "VINO",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "MADDI",
+      "last": "MADDI",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "MADDI",
+      "last": "MADDI",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "MADDI",
+      "last": "MADDI",
+      "colour": "WILLOW",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "MADDI",
+      "last": "MADDI",
+      "colour": "RED",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "MADDI",
+      "last": "MADDI",
+      "colour": "PETAL",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MALIBU",
+      "last": "MARLEY",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MALIBU",
+      "last": "MARLEY",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MALIBU",
+      "last": "MARLEY",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MALIBU",
+      "last": "MARLEY",
+      "colour": "SILVER",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MALIBU",
+      "last": "MARLEY",
+      "colour": "BORDEAUX",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MALIBU",
+      "last": "MARLEY",
+      "colour": "COCO",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MALIBU",
+      "last": "MARLEY",
+      "colour": "AMBER",
+      "leather": "METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MAMZELLE",
+      "last": "MADDI",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MAMZELLE",
+      "last": "MADDI",
+      "colour": "PERU",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MAMZELLE",
+      "last": "MADDI",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARAMEO",
+      "last": "MARLEY",
+      "colour": "BLUSH",
+      "leather": "SNAKE NO.4",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARAMEO",
+      "last": "MARLEY",
+      "colour": "CHOC",
+      "leather": "SNAKE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARAMEO",
+      "last": "MARLEY",
+      "colour": "PORCELAIN",
+      "leather": "SNAKE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARAMEO",
+      "last": "MARLEY",
+      "colour": "BLACK",
+      "leather": "SNAKE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARAMEO",
+      "last": "MARLEY",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARAMEO",
+      "last": "MARLEY",
+      "colour": "PETAL",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARAMEO",
+      "last": "MARLEY",
+      "colour": "TURQUOISE",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARCEL",
+      "last": "MARLEY",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARCEL",
+      "last": "MARLEY",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARCEL",
+      "last": "MARLEY",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARCEL",
+      "last": "MARLEY",
+      "colour": "GOLD",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARCEL",
+      "last": "MARLEY",
+      "colour": "SILVER",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARCEL",
+      "last": "MARLEY",
+      "colour": "CLEAR",
+      "leather": "VINYLITE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARCY",
+      "last": "MARLEY",
+      "colour": "GOLD",
+      "leather": "FOIL",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARCY",
+      "last": "MARLEY",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARIAH",
+      "last": "MINOGUE",
+      "colour": "BLACK",
+      "leather": "HI-SHINE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARIAH",
+      "last": "MINOGUE",
+      "colour": "GOLD",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARIAH",
+      "last": "MINOGUE",
+      "colour": "SILVER",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARIAH",
+      "last": "MINOGUE",
+      "colour": "AMBER",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARLEY",
+      "last": "MARLEY",
+      "colour": "CLEAR",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MARTINEZ",
+      "last": "MARTINEZ",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MARTINEZ",
+      "last": "MARTINEZ",
+      "colour": "WHITE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MARTINEZ",
+      "last": "MARTINEZ",
+      "colour": "VINO",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MARTINEZ",
+      "last": "MARTINEZ",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MARTINEZ",
+      "last": "MARTINEZ",
+      "colour": "CHOC",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MATISSE",
+      "last": "MATISSE",
+      "colour": "BLACK",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MATISSE",
+      "last": "MATISSE",
+      "colour": "CHOC",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MATISSE",
+      "last": "MATISSE",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MATISSE",
+      "last": "MATISSE",
+      "colour": "VANILLA",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MATISSE",
+      "last": "MATISSE",
+      "colour": "CHOC",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "MATISSE",
+      "last": "MATISSE",
+      "colour": "VINO",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "MATISSE",
+      "last": "MATISSE",
+      "colour": "BLACK",
+      "leather": "SPECKLE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MATISSE",
+      "last": "MATISSE",
+      "colour": "FUSCHIA",
+      "leather": "NUBUCK",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MATRIX",
+      "last": "MARLEY",
+      "colour": "JADE",
+      "leather": "NB",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MATRIX",
+      "last": "MARLEY",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MATRIX",
+      "last": "MARLEY",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MATRIX",
+      "last": "MARLEY",
+      "colour": "CEMENTO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MATRIX",
+      "last": "MARLEY",
+      "colour": "ECRU",
+      "leather": "SNAKE VINYLITE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MATRIX",
+      "last": "MARLEY",
+      "colour": "TURQUOISE",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MATRIX",
+      "last": "MARLEY",
+      "colour": "PETAL",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MATRIX",
+      "last": "MARLEY",
+      "colour": "SKY",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MAXOS",
+      "last": "MARLEY",
+      "colour": "BONE",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MAXOS",
+      "last": "MARLEY",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MAXOS",
+      "last": "MARLEY",
+      "colour": "SKIN",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MAXOS",
+      "last": "MARLEY",
+      "colour": "AMBER",
+      "leather": "METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MAXOS",
+      "last": "MARLEY",
+      "colour": "SILVER",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MAXOS",
+      "last": "MARLEY",
+      "colour": "BRONZE",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "MAXY",
+      "last": "MADDI",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "MAXY",
+      "last": "MADDI",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "MAXY",
+      "last": "MADDI",
+      "colour": "STEEL",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "MAXY",
+      "last": "MADDI",
+      "colour": "RED",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MAZEY",
+      "last": "MARTINEZ",
+      "colour": "BLACK",
+      "leather": "MESH",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MAZEY",
+      "last": "MARTINEZ",
+      "colour": "WHITE",
+      "leather": "MESH",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MAZEY",
+      "last": "MARTINEZ",
+      "colour": "CHOC",
+      "leather": "MESH",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "METRO",
+      "last": "MUSTANG",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "METRO",
+      "last": "MUSTANG",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "MILAN",
+      "last": "MATISSE",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MILAN",
+      "last": "MATISSE",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MILAN",
+      "last": "MATISSE",
+      "colour": "VANILLA",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MILEY",
+      "last": "MARLEY",
+      "colour": "BLACK",
+      "leather": "NYLON",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MILEY",
+      "last": "MARLEY",
+      "colour": "SKIN",
+      "leather": "NYLON",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MILEY",
+      "last": "MARLEY",
+      "colour": "CHOC",
+      "leather": "NYLON",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "MINTY",
+      "last": "MATISSE",
+      "colour": "BLACK",
+      "leather": "CRINKLE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MINTY",
+      "last": "MATISSE",
+      "colour": "DOVE",
+      "leather": "CRINKLE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MINTY",
+      "last": "MATISSE",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MINTY",
+      "last": "MATISSE",
+      "colour": "PETAL",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MISTY",
+      "last": "MATISSE",
+      "colour": "FUSCHIA",
+      "leather": "NB",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MIXA",
+      "last": "MARLEY",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MIXA",
+      "last": "MARLEY",
+      "colour": "SKY",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MIXA",
+      "last": "MARLEY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MIXA",
+      "last": "MARLEY",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MIXA",
+      "last": "MARLEY",
+      "colour": "PETAL",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MIXA",
+      "last": "MARLEY",
+      "colour": "MIST",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MOLLY",
+      "last": "MARLEY",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MOLLY",
+      "last": "MARLEY",
+      "colour": "COCO",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MOLLY",
+      "last": "MARLEY",
+      "colour": "GOLD",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MOLLY",
+      "last": "MARLEY",
+      "colour": "SILVER",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MOLLY",
+      "last": "MARLEY",
+      "colour": "WHITE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MOLLY",
+      "last": "MARLEY",
+      "colour": "ESPRESSO",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MOLLY",
+      "last": "MARLEY",
+      "colour": "VINO",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MOLLY",
+      "last": "MARLEY",
+      "colour": "AMBER",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MOLLY",
+      "last": "MARLEY",
+      "colour": "PETAL",
+      "leather": "NAPPA PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MOLLY",
+      "last": "MARLEY",
+      "colour": "SKY",
+      "leather": "NAPPA PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MOLLY",
+      "last": "MARLEY",
+      "colour": "TURQUOISE",
+      "leather": "NAPPA PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MOMA",
+      "last": "MADDI",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MOMA",
+      "last": "MADDI",
+      "colour": "PETAL",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MOMA",
+      "last": "MADDI",
+      "colour": "VANILLA",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MOMA",
+      "last": "MADDI",
+      "colour": "SKY",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MOMA",
+      "last": "MADDI",
+      "colour": "STONE",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Calf Boot",
+      "style": "NAXOS",
+      "last": "NIKI",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Calf Boot",
+      "style": "NAXOS",
+      "last": "NIKI",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Calf Boot",
+      "style": "NAXOS",
+      "last": "NIKI",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Calf Boot",
+      "style": "NAXOS",
+      "last": "NIKI",
+      "colour": "VANILLA",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NELLIE",
+      "last": "NIKI",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NELLIE",
+      "last": "NIKI",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NELLIE",
+      "last": "NIKI",
+      "colour": "SKIN",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NELLIE",
+      "last": "NIKI",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESSA",
+      "last": "NIKI",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESSA",
+      "last": "NIKI",
+      "colour": "CHOC",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESSA",
+      "last": "NIKI",
+      "colour": "ASHEN",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESSA",
+      "last": "NIKI",
+      "colour": "ASHEN",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESSA",
+      "last": "NIKI",
+      "colour": "VINO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESSA",
+      "last": "NIKI",
+      "colour": "VINO",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESSA",
+      "last": "NIKI",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESSA",
+      "last": "NIKI",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESTA",
+      "last": "NIKI",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESTA",
+      "last": "NIKI",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESTA",
+      "last": "NIKI",
+      "colour": "VANILLA",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESTA",
+      "last": "NIKI",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESTA",
+      "last": "NIKI",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NEXA",
+      "last": "NIKI",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NEXA",
+      "last": "NIKI",
+      "colour": "VANILLA",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NEXA",
+      "last": "NIKI",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NIFTY",
+      "last": "NIKI",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NIFTY",
+      "last": "NIKI",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NINA",
+      "last": "NIKI",
+      "colour": "BLACK",
+      "leather": "BROCADE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NINA",
+      "last": "NIKI",
+      "colour": "IVORY",
+      "leather": "BROCADE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NONI",
+      "last": "NIKI",
+      "colour": "RED",
+      "leather": "BROCADE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NONI",
+      "last": "NIKI",
+      "colour": "BLACK",
+      "leather": "BROCADE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NONI",
+      "last": "NIKI",
+      "colour": "IVORY",
+      "leather": "BROCADE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PALAIS",
+      "last": "PARIS",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PALAIS",
+      "last": "PARIS",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PALAIS",
+      "last": "PARIS",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PARIS",
+      "last": "PARIS",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PARIS",
+      "last": "PARIS",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PARIS",
+      "last": "PARIS",
+      "colour": "RED",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PARIS",
+      "last": "PARIS",
+      "colour": "STEEL",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PARIS",
+      "last": "PARIS",
+      "colour": "ECRU",
+      "leather": "SNAKE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PENELOPE",
+      "last": "PORSHA",
+      "colour": "BLACK",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PENELOPE",
+      "last": "PORSHA",
+      "colour": "CHOC",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PENELOPE",
+      "last": "PORSHA",
+      "colour": "VESTRA",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PENELOPE",
+      "last": "PORSHA",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PETA",
+      "last": "PARIS",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PETA",
+      "last": "PARIS",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PETA",
+      "last": "PARIS",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PETA",
+      "last": "PARIS",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PETA",
+      "last": "PARIS",
+      "colour": "VINO",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PETA",
+      "last": "PARIS",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PETA",
+      "last": "PARIS",
+      "colour": "STONE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PHOEBE",
+      "last": "PARIS",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PHOEBE",
+      "last": "PARIS",
+      "colour": "CHOC",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PIPER",
+      "last": "PARIS",
+      "colour": "BLACK",
+      "leather": "TULLE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PIPER",
+      "last": "PARIS",
+      "colour": "IVORY",
+      "leather": "TULLE",
+      "is_new": false
+    },
+    {
+      "category": "Calf Boot",
+      "style": "PORSHA",
+      "last": "PORSHA",
+      "colour": "BLACK",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Calf Boot",
+      "style": "PORSHA",
+      "last": "PORSHA",
+      "colour": "CHOC",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Calf Boot",
+      "style": "PORSHA",
+      "last": "PORSHA",
+      "colour": "TAN",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Calf Boot",
+      "style": "PORSHA",
+      "last": "PORSHA",
+      "colour": "VESTRA",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PRANCE",
+      "last": "PORSHA",
+      "colour": "BLACK",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PRANCE",
+      "last": "PORSHA",
+      "colour": "CHOC",
+      "leather": "VALENCIA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PRESH",
+      "last": "PARIS",
+      "colour": "BLACK",
+      "leather": "NAPPA PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PRESH",
+      "last": "PARIS",
+      "colour": "STONE",
+      "leather": "NAPPA PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PRESH",
+      "last": "PARIS",
+      "colour": "VINO",
+      "leather": "NAPPA PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PRESH",
+      "last": "PARIS",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "PRESH",
+      "last": "PARIS",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "ROBBIE",
+      "last": "RUMA",
+      "colour": "DOVE",
+      "leather": "NAPPA A",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "ROBBIE",
+      "last": "RUMA",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "ROBBIE",
+      "last": "RUMA",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "ROBBIE",
+      "last": "RUMA",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROBYN",
+      "last": "ROXIE",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROBYN",
+      "last": "ROXIE",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROBYN",
+      "last": "ROXIE",
+      "colour": "SILVER",
+      "leather": "NAPPA MET",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROBYN",
+      "last": "ROXIE",
+      "colour": "GOLD",
+      "leather": "NAPPA MET",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROBYN",
+      "last": "ROXIE",
+      "colour": "BLACK",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROBYN",
+      "last": "ROXIE",
+      "colour": "VINO",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "RORY",
+      "last": "ROXIE",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "RORY",
+      "last": "ROXIE",
+      "colour": "PETAL",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "ROSA",
+      "last": "RANCHER ??",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "ROSA",
+      "last": "RANCHER ??",
+      "colour": "SKIN",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "ROSA",
+      "last": "RANCHER ??",
+      "colour": "SCARLET",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROXIE",
+      "last": "ROXIE",
+      "colour": "PETAL",
+      "leather": "SDE A",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROXIE",
+      "last": "ROXIE",
+      "colour": "TURQUOISE",
+      "leather": "SDE A",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROXIE",
+      "last": "ROXIE",
+      "colour": "SKY",
+      "leather": "SDE A",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROXIE",
+      "last": "ROXIE",
+      "colour": "MIST",
+      "leather": "SUEDE A",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROXIE",
+      "last": "ROXIE",
+      "colour": "BLACK",
+      "leather": "NAPPA A",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROXIE",
+      "last": "ROXIE",
+      "colour": "TURQUOISE",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROXIE",
+      "last": "ROXIE",
+      "colour": "BISCUIT",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "ROXTA",
+      "last": "RUMA",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "ROXTA",
+      "last": "RUMA",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "ROXTA",
+      "last": "RUMA",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SAGE",
+      "last": "SKYE",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SAGE",
+      "last": "SKYE",
+      "colour": "SKIN",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SAGE",
+      "last": "SKYE",
+      "colour": "GOLD",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SAINT",
+      "last": "SANDRA",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SAINT",
+      "last": "SANDRA",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SAINT",
+      "last": "SANDRA",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAKAI",
+      "last": "SHIRLEY",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAKAI",
+      "last": "SHIRLEY",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAKAI",
+      "last": "SHIRLEY",
+      "colour": "TAN",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "SALLY",
+      "last": "SALLY",
+      "colour": "RED",
+      "leather": "SUEDE \u2013 BLACK SOCK AND LINING",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "SALLY",
+      "last": "SALLY",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "SALLY",
+      "last": "SALLY",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "SALLY",
+      "last": "SALLY",
+      "colour": "STONE",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "SALLY",
+      "last": "SALLY",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAMAR",
+      "last": "SHIRLEY",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAMAR",
+      "last": "SHIRLEY",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAMAR",
+      "last": "SHIRLEY",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAMAR",
+      "last": "SHIRLEY",
+      "colour": "ASHEN",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAMAR",
+      "last": "SHIRLEY",
+      "colour": "CEMENTO",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAMAR",
+      "last": "SHIRLEY",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAMAR",
+      "last": "SHIRLEY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAMAR",
+      "last": "SHIRLEY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAMAR",
+      "last": "SHIRLEY",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAMAR",
+      "last": "SHIRLEY",
+      "colour": "BLOSSOM",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "SAMMY",
+      "last": "SIA",
+      "colour": "BLACK",
+      "leather": "KID",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "SAMMY",
+      "last": "SIA",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "SAMMY",
+      "last": "SIA",
+      "colour": "CHOC",
+      "leather": "VENICE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SANDRA",
+      "last": "SANDRA",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SANDRA",
+      "last": "SANDRA",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SANDRA",
+      "last": "SANDRA",
+      "colour": "WHITE",
+      "leather": "HI-SHINE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SANDRA",
+      "last": "SANDRA",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SANDRA",
+      "last": "SANDRA",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SANDRA",
+      "last": "SANDRA",
+      "colour": "COCO",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SARAH",
+      "last": "SIA",
+      "colour": "MILK",
+      "leather": "CAPRETTO \u2013 BLK VENICE TC",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SARAH",
+      "last": "SIA",
+      "colour": "PETAL",
+      "leather": "SUEDE \u2013 PETAL NAPPA TC",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SARAH",
+      "last": "SIA",
+      "colour": "SKY",
+      "leather": "SUEDE \u2013 SKY VINTAGE TC",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SARAH",
+      "last": "SIA",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE \u2013 CHOC VINTAGE TC",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SASSY",
+      "last": "SWISH",
+      "colour": "BLACK",
+      "leather": "CRINKLE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SASSY",
+      "last": "SWISH",
+      "colour": "DOVE",
+      "leather": "CRINKLE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SASSY",
+      "last": "SWISH",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAVANT",
+      "last": "SHIRLEY",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAVANT",
+      "last": "SHIRLEY",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAVANT",
+      "last": "SHIRLEY",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SAVANT",
+      "last": "SHIRLEY",
+      "colour": "DENIM",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SEZ",
+      "last": "SANDRA",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SEZ",
+      "last": "SANDRA",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SEZ",
+      "last": "SANDRA",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SEZ",
+      "last": "SANDRA",
+      "colour": "SKIN",
+      "leather": "CAP",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SEZ",
+      "last": "SANDRA",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SEZ",
+      "last": "SANDRA",
+      "colour": "PETAL",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SEZ",
+      "last": "SANDRA",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SHAE",
+      "last": "SHIRLEY",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SHAE",
+      "last": "SHIRLEY",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SHAE",
+      "last": "SHIRLEY",
+      "colour": "BUTTERSCOTCH",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SHAE",
+      "last": "SHIRLEY",
+      "colour": "BLOSSOM",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Calf Boot",
+      "style": "SHAQ",
+      "last": "SHIRLEY",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Calf Boot",
+      "style": "SHAQ",
+      "last": "SHIRLEY",
+      "colour": "CHOCOLATE",
+      "leather": "VENICE",
+      "is_new": false
+    },
+    {
+      "category": "Calf Boot",
+      "style": "SHAQ",
+      "last": "SHIRLEY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Calf Boot",
+      "style": "SHEBA",
+      "last": "SHIRLEY",
+      "colour": "COGNAC",
+      "leather": "",
+      "is_new": false
+    },
+    {
+      "category": "Calf Boot",
+      "style": "SHEBA",
+      "last": "SHIRLEY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SIA",
+      "last": "SIA",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SIA",
+      "last": "SIA",
+      "colour": "BLACK",
+      "leather": "KID",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SIA",
+      "last": "SIA",
+      "colour": "BLACK",
+      "leather": "SPECKLE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SIA",
+      "last": "SIA",
+      "colour": "PETAL",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SIA",
+      "last": "SIA",
+      "colour": "SKY",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SIA",
+      "last": "SIA",
+      "colour": "PETAL",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SIA",
+      "last": "SIA",
+      "colour": "SKY",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SIA",
+      "last": "SIA",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SIA",
+      "last": "SIA",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SICILY",
+      "last": "SHIRLEY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SICILY",
+      "last": "SHIRLEY",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SICILY",
+      "last": "SHIRLEY",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SICILY",
+      "last": "SHIRLEY",
+      "colour": "ASHEN",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SICILY",
+      "last": "SHIRLEY",
+      "colour": "STEEL",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SICILY",
+      "last": "SHIRLEY",
+      "colour": "ESPRESSO",
+      "leather": "ANGUILLE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SICILY",
+      "last": "SHIRLEY",
+      "colour": "VINO",
+      "leather": "ANGUILLE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SICILY",
+      "last": "SHIRLEY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SICILY",
+      "last": "SHIRLEY",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SILVIA",
+      "last": "SANDRA",
+      "colour": "BLACK",
+      "leather": "TULE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SILVIA",
+      "last": "SANDRA",
+      "colour": "IVORY",
+      "leather": "TULE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SKYE",
+      "last": "SKYE",
+      "colour": "BLACK",
+      "leather": "PATENT",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SKYE",
+      "last": "SKYE",
+      "colour": "WHITE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SKYE",
+      "last": "SKYE",
+      "colour": "SILVER",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SKYE",
+      "last": "SKYE",
+      "colour": "GOLD",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SOFIA",
+      "last": "SANDRA",
+      "colour": "IVORY",
+      "leather": "BROCADE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SOFIA",
+      "last": "SANDRA",
+      "colour": "BLACK",
+      "leather": "BROCADE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SOPHIE",
+      "last": "SHIRLEY",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SOPHIE",
+      "last": "SHIRLEY",
+      "colour": "STEEL",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SPOILT",
+      "last": "SIA",
+      "colour": "BLACK",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SPOILT",
+      "last": "SIA",
+      "colour": "CHOC",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SPOILT",
+      "last": "SIA",
+      "colour": "IVORY",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "STARR",
+      "last": "SANDRA",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "STARR",
+      "last": "SANDRA",
+      "colour": "WHITE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "STARR",
+      "last": "SANDRA",
+      "colour": "TAN",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "STASSIE",
+      "last": "SANDRA",
+      "colour": "BLACK",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "STASSIE",
+      "last": "SANDRA",
+      "colour": "CHOC",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "STASSIE",
+      "last": "SANDRA",
+      "colour": "IVORY",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "STEVIE",
+      "last": "SHIRLEY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "STEVIE",
+      "last": "SHIRLEY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "STEVIE",
+      "last": "SHIRLEY",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "STEVIE",
+      "last": "SHIRLEY",
+      "colour": "SKIN",
+      "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SUNNY",
+      "last": "SANDRA",
+      "colour": "SILVER",
+      "leather": "SHINE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SUNNY",
+      "last": "SANDRA",
+      "colour": "GOLD",
+      "leather": "SHINE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SUNNY",
+      "last": "SANDRA",
+      "colour": "BLACK",
+      "leather": "CRINKLE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SUNNY",
+      "last": "SANDRA",
+      "colour": "DOVE",
+      "leather": "CRINKLE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SWAY",
+      "last": "SKYE",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SWAY",
+      "last": "SKYE",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SWAY",
+      "last": "SKYE",
+      "colour": "SILVER",
+      "leather": "NAPPA METALLIC",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SWEETIE",
+      "last": "SHIRLEY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SWEETIE",
+      "last": "SHIRLEY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SWEETIE",
+      "last": "SHIRLEY",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SWEETIE",
+      "last": "SHIRLEY",
+      "colour": "VANILLA",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "SWIFT",
+      "last": "SWIFT",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "SWIFT",
+      "last": "SWIFT",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "SWIFT",
+      "last": "SWIFT",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "SWIFT",
+      "last": "SWIFT",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "SWIFT",
+      "last": "SWIFT",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "SWIFT",
+      "last": "SWIFT",
+      "colour": "WHITE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TIANA",
+      "last": "TIANA",
+      "colour": "MIST",
+      "leather": "SUEDE \u2013 MATCHING SOCK AND SOLE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TIANA",
+      "last": "TIANA",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TIANA",
+      "last": "TIANA",
+      "colour": "SKY",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TIANA",
+      "last": "TIANA",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TIANA",
+      "last": "TIANA",
+      "colour": "MILK",
+      "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TILDA",
+      "last": "TILDA",
+      "colour": "BLACK",
+      "leather": "CRINKLE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TILDA",
+      "last": "TILDA",
+      "colour": "DOVE",
+      "leather": "CRINKLE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TILDA",
+      "last": "TILDA",
+      "colour": "PETAL",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TILDA",
+      "last": "TILDA",
+      "colour": "SKY",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TILDA",
+      "last": "TILDA",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TILDA",
+      "last": "TILDA",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TILDA",
+      "last": "TILDA",
+      "colour": "BLACK",
+      "leather": "SPECKLE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TILDA",
+      "last": "TILDA",
+      "colour": "ECRU",
+      "leather": "SNAKE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TOPAZ",
+      "last": "TAYLOR",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TOPAZ",
+      "last": "TAYLOR",
+      "colour": "TAN",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TOPAZ",
+      "last": "TAYLOR",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TOPAZ",
+      "last": "TAYLOR",
+      "colour": "WHITE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TREVI",
+      "last": "TIANA",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TREVI",
+      "last": "TIANA",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TREVI",
+      "last": "TIANA",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TREVI",
+      "last": "TIANA",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TREVI",
+      "last": "TIANA",
+      "colour": "PETAL",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TREVI",
+      "last": "TIANA",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TROPIC",
+      "last": "TROPIC",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TROPIC",
+      "last": "TROPIC",
+      "colour": "VANILLA",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TROPIC",
+      "last": "TROPIC",
+      "colour": "TAN",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TROPIC",
+      "last": "TROPIC",
+      "colour": "WHITE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TUSCANY",
+      "last": "TROPIC",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TUSCANY",
+      "last": "TROPIC",
+      "colour": "STONE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "VALERIE",
+      "last": "VANITY",
+      "colour": "CLEAR",
+      "leather": "VINYLITE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "VALERIE",
+      "last": "VANITY",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "VALERIE",
+      "last": "VANITY",
+      "colour": "CHOC",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "VALERIE",
+      "last": "VANITY",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "VAMORE",
+      "last": "VANITY",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "VAMORE",
+      "last": "VANITY",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "VAMORE",
+      "last": "VANITY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VICTORIA",
+      "last": "VICTORIA",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VICTORIA",
+      "last": "VICTORIA",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VICTORIA",
+      "last": "VICTORIA",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VICTORIA",
+      "last": "VICTORIA",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VICTORIA",
+      "last": "VICTORIA",
+      "colour": "BLOSSOM",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VICTORIA",
+      "last": "VICTORIA",
+      "colour": "WHITE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "VILLA",
+      "last": "VANITY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "VILLA",
+      "last": "VANITY",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "VILLA",
+      "last": "VANITY",
+      "colour": "SKY",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "VIN",
+      "last": "VIXEN",
+      "colour": "BLACK",
+      "leather": "NUBUCK",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "VIN",
+      "last": "VIXEN",
+      "colour": "ESPRESSO",
+      "leather": "NUBUCK",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "VIN",
+      "last": "VIXEN",
+      "colour": "WHEAT",
+      "leather": "NUBUCK",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "VIN",
+      "last": "VIXEN",
+      "colour": "STEEL",
+      "leather": "NUBUCK",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIOLET",
+      "last": "VICTORIA",
+      "colour": "SILVER",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIOLET",
+      "last": "VICTORIA",
+      "colour": "BRONZE",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIOLET",
+      "last": "VICTORIA",
+      "colour": "AMBER",
+      "leather": "NAPPA METALLIC",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIOLET",
+      "last": "VICTORIA",
+      "colour": "DOVE",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIOLET",
+      "last": "VICTORIA",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "VIXEN",
+      "last": "VIXEN",
+      "colour": "BLACK",
+      "leather": "NUBUCK",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "VIXEN",
+      "last": "VIXEN",
+      "colour": "OLIVE",
+      "leather": "NUBUCK",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "VIXEN",
+      "last": "VIXEN",
+      "colour": "ESPRESSO",
+      "leather": "NUBUCK",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "VOGUE",
+      "last": "VANITY",
+      "colour": "BLACK",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "VOGUE",
+      "last": "VANITY",
+      "colour": "TAN",
+      "leather": "COMO",
+      "is_new": false
+    },
+    {
+      "category": "Wedge",
+      "style": "VOLLI",
+      "last": "VANITY",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "VOLLI",
+      "last": "VANITY",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "ZAC",
+      "last": "ZOE",
+      "colour": "BLACK",
+      "leather": "HI-SHINE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "ZAC",
+      "last": "ZOE",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "ZAC",
+      "last": "ZOE",
+      "colour": "TAUPE",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "ZEPHYR",
+      "last": "ZOE",
+      "colour": "BLACK",
+      "leather": "HI-SHINE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "ZOE",
+      "last": "ZOE",
+      "colour": "BLACK",
+      "leather": "HI-SHINE",
+      "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "ZOE",
+      "last": "ZOE",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": false
+    }
+  ]
 } as const;
 
 export type SKUData = typeof skuData;
