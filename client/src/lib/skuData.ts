@@ -102,7 +102,8 @@ export const skuData = {
         "SKIN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ALYX_61cc3ec1.png"
     },
     {
       "style": "ANJA",
@@ -131,7 +132,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ANJA_93d0de32.png"
     },
     {
       "style": "ARLA",
@@ -149,7 +151,8 @@ export const skuData = {
         "SILVER"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ARLA_6b12797d.png"
     },
     {
       "style": "ASTI",
@@ -175,7 +178,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ASTI_a6e94991.png"
     },
     {
       "style": "AVANTI",
@@ -194,7 +198,8 @@ export const skuData = {
         "WHEAT"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/AVANTI_12aa3a7e.png"
     },
     {
       "style": "AVI",
@@ -214,7 +219,8 @@ export const skuData = {
         "SKIN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/AVI_63aff5ea.png"
     },
     {
       "style": "BABE",
@@ -229,7 +235,8 @@ export const skuData = {
         "OFF-WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BABE_afac005f.png"
     },
     {
       "style": "BAKER",
@@ -247,7 +254,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BAKER_f88b45e8.png"
     },
     {
       "style": "BAMBI",
@@ -266,7 +274,8 @@ export const skuData = {
         "VANILLA"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BAMBI_53ff1241.png"
     },
     {
       "style": "BAZ",
@@ -287,7 +296,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BAZ_bbb52f38.png"
     },
     {
       "style": "BETTINA",
@@ -307,7 +317,8 @@ export const skuData = {
         "ESPRESSO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BETTINA_6a79ce3b.png"
     },
     {
       "style": "BIANCA",
@@ -333,7 +344,8 @@ export const skuData = {
         "WHEAT"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BIANCA_7818a6b4.png"
     },
     {
       "style": "BILLIE",
@@ -349,7 +361,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BILLIE_a726d9ed.png"
     },
     {
       "style": "BLAIRE",
@@ -367,7 +380,8 @@ export const skuData = {
         "WHEAT"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BLAIRE_4be13843.png"
     },
     {
       "style": "BLESS",
@@ -384,7 +398,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BLESS_e0d6c354.png"
     },
     {
       "style": "BOBBI",
@@ -405,7 +420,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BOBBI_1d2fc928.png"
     },
     {
       "style": "BOHO",
@@ -419,7 +435,8 @@ export const skuData = {
         "CREAM"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BOHO_718e719f.png"
     },
     {
       "style": "BOSCO",
@@ -436,7 +453,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BOSCO_c4b25125.png"
     },
     {
       "style": "BRASH",
@@ -463,7 +481,8 @@ export const skuData = {
         "WHEAT"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BRASH_0623fdbf.png"
     },
     {
       "style": "BREEZE",
@@ -483,7 +502,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BREEZE_55464681.png"
     },
     {
       "style": "CAMEO",
@@ -508,7 +528,8 @@ export const skuData = {
         "VANILLA"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CAMEO_8c66ebcf.png"
     },
     {
       "style": "CAMILLE",
@@ -526,7 +547,8 @@ export const skuData = {
         "VANILLA"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CAMILLE_1bf67dce.png"
     },
     {
       "style": "CAPPA",
@@ -545,7 +567,8 @@ export const skuData = {
         "SKY"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CAPPA_cb3ea7e1.png"
     },
     {
       "style": "CAPPI",
@@ -568,7 +591,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CAPPI_83cf3c2a.png"
     },
     {
       "style": "CAPRICE",
@@ -589,7 +613,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CAPRICE_6deb88c1.png"
     },
     {
       "style": "CARLA",
@@ -608,7 +633,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CARLA_94d4b2aa.png"
     },
     {
       "style": "CASPIAN",
@@ -631,7 +657,8 @@ export const skuData = {
         "WILLOW"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CASPIAN_840033d2.png"
     },
     {
       "style": "CELESTE",
@@ -653,7 +680,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CELESTE_6fd47b89.png"
     },
     {
       "style": "CHARLI",
@@ -671,7 +699,8 @@ export const skuData = {
         "DOVE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CHARLI_d567f1eb.png"
     },
     {
       "style": "CHEEKY",
@@ -688,7 +717,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CHEEKY_d6b4c1f9.png"
     },
     {
       "style": "CHELSEA",
@@ -714,7 +744,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CHELSEA_716f7495.png"
     },
     {
       "style": "CHERRY",
@@ -737,7 +768,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CHERRY_4ee37b5a.png"
     },
     {
       "style": "CHICAGO",
@@ -753,7 +785,8 @@ export const skuData = {
         "CLEAR"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CHICAGO_c3b967b0.png"
     },
     {
       "style": "CHILLI",
@@ -771,7 +804,8 @@ export const skuData = {
         "STONE"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CHILLI_6643df2d.png"
     },
     {
       "style": "CIRCA",
@@ -788,7 +822,8 @@ export const skuData = {
         "PETAL"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CIRCA_5bf17fba.png"
     },
     {
       "style": "CITY",
@@ -807,7 +842,8 @@ export const skuData = {
         "SKY"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CITY_5dac847d.png"
     },
     {
       "style": "CLOVER",
@@ -824,7 +860,8 @@ export const skuData = {
         "DOVE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CLOVER_ab6a46c7.png"
     },
     {
       "style": "COLLETTE",
@@ -842,7 +879,8 @@ export const skuData = {
         "VESTRA"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/COLLETTE_6724400b.png"
     },
     {
       "style": "COMMA",
@@ -871,7 +909,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/COMMA_40acdeef.png"
     },
     {
       "style": "CONNIE",
@@ -895,7 +934,8 @@ export const skuData = {
         "TAUPE"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CONNIE_78f37280.png"
     },
     {
       "style": "CORSO",
@@ -915,7 +955,8 @@ export const skuData = {
         "SKIN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CORSO_7bab85d6.png"
     },
     {
       "style": "COSTA",
@@ -937,7 +978,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/COSTA_383866e1.png"
     },
     {
       "style": "CREW",
@@ -954,7 +996,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CREW_98cf4a48.png"
     },
     {
       "style": "CRUSH",
@@ -983,7 +1026,8 @@ export const skuData = {
         "WHEAT"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CRUSH_5b695a66.png"
     },
     {
       "style": "CUBA",
@@ -1008,7 +1052,8 @@ export const skuData = {
         "WILLOW"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CUBA_79900f8d.png"
     },
     {
       "style": "CURIOUS",
@@ -1027,7 +1072,8 @@ export const skuData = {
         "WILLOW"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/CURIOUS_59e68b98.png"
     },
     {
       "style": "DAISY",
@@ -1044,7 +1090,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/DAISY_5bc008e9.png"
     },
     {
       "style": "DANA",
@@ -1066,7 +1113,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/DANA_5a3908b9.png"
     },
     {
       "style": "DARCY",
@@ -1084,7 +1132,8 @@ export const skuData = {
         "ESPRESSO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/DARCY_4b92411a.png"
     },
     {
       "style": "DAZIE",
@@ -1109,7 +1158,8 @@ export const skuData = {
         "TAUPE"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/DAZIE_c217347e.png"
     },
     {
       "style": "DEMURE",
@@ -1126,7 +1176,8 @@ export const skuData = {
         "SILVER"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/DEMURE_798767cf.png"
     },
     {
       "style": "DIMA",
@@ -1146,7 +1197,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/DIMA_e34f67ff.png"
     },
     {
       "style": "DIXIE",
@@ -1167,7 +1219,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/DIXIE_b1e439cd.png"
     },
     {
       "style": "DIXON",
@@ -1186,7 +1239,8 @@ export const skuData = {
         "PETAL"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/DIXON_a729b6f3.png"
     },
     {
       "style": "DOLLI",
@@ -1202,7 +1256,8 @@ export const skuData = {
         "CLEAR"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/DOLLI_13856617.png"
     },
     {
       "style": "DONTE",
@@ -1223,7 +1278,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/DONTE_82fb5fd9.png"
     },
     {
       "style": "DRAY",
@@ -1241,7 +1297,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/DRAY_e327a65a.png"
     },
     {
       "style": "EDGY",
@@ -1265,7 +1322,8 @@ export const skuData = {
         "TAUPE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/EDGY_9e1568bf.png"
     },
     {
       "style": "ELIZA",
@@ -1286,7 +1344,8 @@ export const skuData = {
         "STONE"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ELIZA_43f02d13.png"
     },
     {
       "style": "EMBER",
@@ -1304,7 +1363,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/EMBER_681b7578.png"
     },
     {
       "style": "EMBLA",
@@ -1321,7 +1381,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/EMBLA_c4ba8422.png"
     },
     {
       "style": "EMILY",
@@ -1342,7 +1403,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/EMILY_a7062ede.png"
     },
     {
       "style": "ENVY",
@@ -1366,7 +1428,8 @@ export const skuData = {
         "SKIN"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ENVY_dea1a097.png"
     },
     {
       "style": "ERES",
@@ -1382,7 +1445,8 @@ export const skuData = {
         "BLACK"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ERES_e02f5f33.png"
     },
     {
       "style": "ESQUIRE",
@@ -1403,7 +1467,8 @@ export const skuData = {
         "MILK"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ESQUIRE_34be9dc6.png"
     },
     {
       "style": "ETRO",
@@ -1422,7 +1487,8 @@ export const skuData = {
         "SKY"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ETRO_16de4b07.png"
     },
     {
       "style": "EVIE",
@@ -1441,7 +1507,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/EVIE_caeef07e.png"
     },
     {
       "style": "FARRAH",
@@ -1463,7 +1530,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/FARRAH_595ea018.png"
     },
     {
       "style": "FAVE",
@@ -1481,7 +1549,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/FAVE_9b6d5a4c.png"
     },
     {
       "style": "FAYE",
@@ -1497,7 +1566,8 @@ export const skuData = {
         "BLACK"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/FAYE_bd93ac28.png"
     },
     {
       "style": "FENIX",
@@ -1515,7 +1585,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/FENIX_5a25fb07.png"
     },
     {
       "style": "FIDDY",
@@ -1532,7 +1603,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/FIDDY_5f9d8f03.png"
     },
     {
       "style": "FIFI",
@@ -1556,7 +1628,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/FIFI_0b883604.png"
     },
     {
       "style": "FINCH",
@@ -1574,7 +1647,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/FINCH_55cabd3c.png"
     },
     {
       "style": "FINESSE",
@@ -1590,7 +1664,8 @@ export const skuData = {
         "BLACK"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/FINESSE_7aad1929.png"
     },
     {
       "style": "FLASH",
@@ -1609,7 +1684,8 @@ export const skuData = {
         "STONE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/FLASH_7f2f5e93.png"
     },
     {
       "style": "FLUKE",
@@ -1626,7 +1702,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/FLUKE_3ea93b58.png"
     },
     {
       "style": "FREYA",
@@ -1649,7 +1726,8 @@ export const skuData = {
         "STEEL"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/FREYA_20043258.png"
     },
     {
       "style": "GATSBY",
@@ -1673,7 +1751,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/GATSBY_87e29cc6.png"
     },
     {
       "style": "GEZZA",
@@ -1691,7 +1770,8 @@ export const skuData = {
         "ESPRESSO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/GEZZA_67c2acc0.png"
     },
     {
       "style": "GIGI",
@@ -1719,7 +1799,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/GIGI_10de89a5.png"
     },
     {
       "style": "GLACIER",
@@ -1743,7 +1824,8 @@ export const skuData = {
         "WHEAT"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/GLACIER_d56e8369.png"
     },
     {
       "style": "GLIDE",
@@ -1762,7 +1844,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/GLIDE_2dc9bd38.png"
     },
     {
       "style": "GLORIA",
@@ -1785,7 +1868,8 @@ export const skuData = {
         "VANILLA"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/GLORIA_fa40aadd.png"
     },
     {
       "style": "GOMEZ",
@@ -1808,7 +1892,8 @@ export const skuData = {
         "VANILLA"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/GOMEZ_5af18188.png"
     },
     {
       "style": "GRAND",
@@ -1827,7 +1912,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/GRAND_2f61faec.png"
     },
     {
       "style": "HAILEY",
@@ -1846,7 +1932,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/HAILEY_2f65a265.png"
     },
     {
       "style": "HALLIE",
@@ -1877,7 +1964,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/HALLIE_8e87603a.png"
     },
     {
       "style": "HARLEY",
@@ -1894,7 +1982,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/HARLEY_58f4a1bc.png"
     },
     {
       "style": "HILTON",
@@ -1911,7 +2000,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/HILTON_3c65064d.png"
     },
     {
       "style": "HYPE",
@@ -1932,7 +2022,8 @@ export const skuData = {
         "VANILLA"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/HYPE_4fe72b19.png"
     },
     {
       "style": "ISABEL",
@@ -1948,7 +2039,8 @@ export const skuData = {
         "BLACK"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ISABEL_ffaaf2bd.png"
     },
     {
       "style": "IVES",
@@ -1969,7 +2061,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/IVES_68cdde56.png"
     },
     {
       "style": "JAGGER",
@@ -1986,7 +2079,8 @@ export const skuData = {
         "BLACK"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JAGGER_2a133ecb.png"
     },
     {
       "style": "JANE",
@@ -2006,7 +2100,8 @@ export const skuData = {
         "SKY"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JANE_4285f5df.png"
     },
     {
       "style": "JANET",
@@ -2024,7 +2119,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JANET_6307b7b6.png"
     },
     {
       "style": "JAQ",
@@ -2043,7 +2139,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JAQ_6ce21e85.png"
     },
     {
       "style": "JAVIER",
@@ -2064,7 +2161,8 @@ export const skuData = {
         "VANILLA"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JAVIER_3181120e.png"
     },
     {
       "style": "JAYDE",
@@ -2086,7 +2184,8 @@ export const skuData = {
         "WHEAT"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JAYDE_b4c266a4.png"
     },
     {
       "style": "JAZZY",
@@ -2106,7 +2205,8 @@ export const skuData = {
         "RED"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JAZZY_40efdb63.png"
     },
     {
       "style": "JESSE",
@@ -2131,7 +2231,8 @@ export const skuData = {
         "TAUPE"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JESSE_66a00312.png"
     },
     {
       "style": "JETT",
@@ -2147,7 +2248,8 @@ export const skuData = {
         "BLACK"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JETT_ed58c8c1.png"
     },
     {
       "style": "JETTA",
@@ -2165,7 +2267,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JETTA_494f0002.png"
     },
     {
       "style": "JOELLE",
@@ -2184,7 +2287,8 @@ export const skuData = {
         "WILLOW"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JOELLE_11122aa6.png"
     },
     {
       "style": "JOKER",
@@ -2200,7 +2304,8 @@ export const skuData = {
         "BLACK"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JOKER_66d782f0.png"
     },
     {
       "style": "JOOP",
@@ -2219,7 +2324,8 @@ export const skuData = {
         "ECRU"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JOOP_4ef8cdca.png"
     },
     {
       "style": "JOSS",
@@ -2241,7 +2347,8 @@ export const skuData = {
         "VANILLA"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JOSS_d07fa4a5.png"
     },
     {
       "style": "JUNIPER",
@@ -2266,7 +2373,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/JUNIPER_0142ae72.png"
     },
     {
       "style": "KAILA",
@@ -2283,7 +2391,8 @@ export const skuData = {
         "ESPRESSO"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/KAILA_721b581b.png"
     },
     {
       "style": "KALI",
@@ -2299,7 +2408,8 @@ export const skuData = {
         "OAT"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/KALI_3038fa42.png"
     },
     {
       "style": "KASSY",
@@ -2323,7 +2433,8 @@ export const skuData = {
         "WILLOW"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/KASSY_2f4523d6.png"
     },
     {
       "style": "KERI",
@@ -2339,7 +2450,8 @@ export const skuData = {
         "BLACK"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/KERI_1eddb0a6.png"
     },
     {
       "style": "KIMA",
@@ -2356,7 +2468,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/KIMA_eeef4c17.png"
     },
     {
       "style": "KIMBA",
@@ -2374,7 +2487,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/KIMBA_b31efb6e.png"
     },
     {
       "style": "KIMCHI",
@@ -2391,7 +2505,8 @@ export const skuData = {
         "DOVE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/KIMCHI_718e5c42.png"
     },
     {
       "style": "KRISTA",
@@ -2414,7 +2529,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/KRISTA_757568f5.png"
     },
     {
       "style": "KYLA",
@@ -2434,7 +2550,8 @@ export const skuData = {
         "SILVER"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/KYLA_177fb189.png"
     },
     {
       "style": "KYRA",
@@ -2455,7 +2572,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/KYRA_cbae183b.png"
     },
     {
       "style": "LAMORE",
@@ -2476,7 +2594,8 @@ export const skuData = {
         "WHEAT"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LAMORE_971c05b2.png"
     },
     {
       "style": "LAVA",
@@ -2493,7 +2612,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LAVA_7d38b74b.png"
     },
     {
       "style": "LEGACY",
@@ -2512,7 +2632,8 @@ export const skuData = {
         "PERU"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LEGACY_ba7f1427.png"
     },
     {
       "style": "LEROUX",
@@ -2529,7 +2650,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LEROUX_5b501b1d.png"
     },
     {
       "style": "LIA",
@@ -2548,7 +2670,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LIA_bbd1413c.png"
     },
     {
       "style": "LIBBY",
@@ -2571,7 +2694,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LIBBY_ece25608.png"
     },
     {
       "style": "LILA",
@@ -2593,7 +2717,8 @@ export const skuData = {
         "TOMATO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LILA_0b47a959.png"
     },
     {
       "style": "LILI",
@@ -2612,7 +2737,8 @@ export const skuData = {
         "WHEAT"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LILI_f356d041.png"
     },
     {
       "style": "LONDON",
@@ -2629,7 +2755,8 @@ export const skuData = {
         "BLACK"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LONDON_7c93485e.png"
     },
     {
       "style": "LOOP",
@@ -2645,7 +2772,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LOOP_8b91e35d.png"
     },
     {
       "style": "LUANA",
@@ -2665,7 +2793,8 @@ export const skuData = {
         "SILVER"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LUANA_89bc1bb6.png"
     },
     {
       "style": "LUCA",
@@ -2681,7 +2810,8 @@ export const skuData = {
         "MILK"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LUCA_98506d95.png"
     },
     {
       "style": "LUCIE",
@@ -2699,7 +2829,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LUCIE_02c4aac3.png"
     },
     {
       "style": "LUCY",
@@ -2719,7 +2850,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LUCY_e514ce98.png"
     },
     {
       "style": "LUNA",
@@ -2736,7 +2868,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LUNA_b8964d85.png"
     },
     {
       "style": "LUXURY",
@@ -2755,7 +2888,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/LUXURY_49b4df0c.png"
     },
     {
       "style": "MADDI",
@@ -2778,7 +2912,8 @@ export const skuData = {
         "WILLOW"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MADDI_88a5d4ea.png"
     },
     {
       "style": "MALIBU",
@@ -2803,7 +2938,8 @@ export const skuData = {
         "SILVER"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MALIBU_525a3bfb.png"
     },
     {
       "style": "MAMZELLE",
@@ -2821,7 +2957,8 @@ export const skuData = {
         "PERU"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MAMZELLE_1b7ede83.png"
     },
     {
       "style": "MARAMEO",
@@ -2845,7 +2982,8 @@ export const skuData = {
         "TURQUOISE"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MARAMEO_3dca7bfb.png"
     },
     {
       "style": "MARCEL",
@@ -2868,7 +3006,8 @@ export const skuData = {
         "SILVER"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MARCEL_7cc84bf7.png"
     },
     {
       "style": "MARCY",
@@ -2886,7 +3025,8 @@ export const skuData = {
         "GOLD"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MARCY_5076b94a.png"
     },
     {
       "style": "MARIAH",
@@ -2906,7 +3046,8 @@ export const skuData = {
         "SILVER"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MARIAH_dbf7c5a1.png"
     },
     {
       "style": "MARLEY",
@@ -2920,7 +3061,8 @@ export const skuData = {
         "CLEAR"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MARLEY_bdd03cd6.png"
     },
     {
       "style": "MARTINEZ",
@@ -2940,7 +3082,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MARTINEZ_eb3c527f.png"
     },
     {
       "style": "MATISSE",
@@ -2965,7 +3108,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MATISSE_aa7a098c.png"
     },
     {
       "style": "MATRIX",
@@ -2990,7 +3134,8 @@ export const skuData = {
         "TURQUOISE"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MATRIX_3b430586.png"
     },
     {
       "style": "MAXOS",
@@ -3015,7 +3160,8 @@ export const skuData = {
         "SKIN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MAXOS_92557e8c.png"
     },
     {
       "style": "MAXY",
@@ -3034,7 +3180,8 @@ export const skuData = {
         "STEEL"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MAXY_a94ed0ec.png"
     },
     {
       "style": "MAZEY",
@@ -3052,7 +3199,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MAZEY_508fee03.png"
     },
     {
       "style": "METRO",
@@ -3069,7 +3217,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/METRO_bea56f76.png"
     },
     {
       "style": "MILAN",
@@ -3087,7 +3236,8 @@ export const skuData = {
         "VANILLA"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MILAN_4a685091.png"
     },
     {
       "style": "MILEY",
@@ -3105,7 +3255,8 @@ export const skuData = {
         "SKIN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MILEY_931d8bac.png"
     },
     {
       "style": "MINTY",
@@ -3125,7 +3276,8 @@ export const skuData = {
         "SKY"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MINTY_3ac4acfa.png"
     },
     {
       "style": "MISTY",
@@ -3141,7 +3293,8 @@ export const skuData = {
         "FUSCHIA"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MISTY_2d9f44e9.png"
     },
     {
       "style": "MIXA",
@@ -3162,7 +3315,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MIXA_eef9e450.png"
     },
     {
       "style": "MOLLY",
@@ -3191,7 +3345,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MOLLY_38b5ca9c.png"
     },
     {
       "style": "MOMA",
@@ -3212,7 +3367,8 @@ export const skuData = {
         "VANILLA"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/MOMA_7c8082ac.png"
     },
     {
       "style": "NAXOS",
@@ -3231,7 +3387,8 @@ export const skuData = {
         "VANILLA"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/NAXOS_e2c1655a.png"
     },
     {
       "style": "NELLIE",
@@ -3251,7 +3408,8 @@ export const skuData = {
         "SKIN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/NELLIE_cca85a80.png"
     },
     {
       "style": "NESSA",
@@ -3272,7 +3430,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/NESSA_0ca5d0f2.png"
     },
     {
       "style": "NESTA",
@@ -3293,7 +3452,8 @@ export const skuData = {
         "VANILLA"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/NESTA_d10eb51c.png"
     },
     {
       "style": "NEXA",
@@ -3311,7 +3471,8 @@ export const skuData = {
         "VANILLA"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/NEXA_29d93a0f.png"
     },
     {
       "style": "NIFTY",
@@ -3328,7 +3489,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/NIFTY_27b7b2f2.png"
     },
     {
       "style": "NINA",
@@ -3345,7 +3507,8 @@ export const skuData = {
         "IVORY"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/NINA_71e648d6.png"
     },
     {
       "style": "NONI",
@@ -3363,7 +3526,8 @@ export const skuData = {
         "RED"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/NONI_39bd6b01.png"
     },
     {
       "style": "PALAIS",
@@ -3382,7 +3546,8 @@ export const skuData = {
         "MILK"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/PALAIS_8f791e78.png"
     },
     {
       "style": "PARIS",
@@ -3403,7 +3568,8 @@ export const skuData = {
         "STEEL"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/PARIS_a37a8e37.png"
     },
     {
       "style": "PENELOPE",
@@ -3423,7 +3589,8 @@ export const skuData = {
         "VESTRA"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/PENELOPE_d630a316.png"
     },
     {
       "style": "PETA",
@@ -3446,7 +3613,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/PETA_775a801e.png"
     },
     {
       "style": "PHOEBE",
@@ -3463,7 +3631,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/PHOEBE_dd14516f.png"
     },
     {
       "style": "PIPER",
@@ -3480,7 +3649,8 @@ export const skuData = {
         "IVORY"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/PIPER_7574e336.png"
     },
     {
       "style": "PORSHA",
@@ -3499,7 +3669,8 @@ export const skuData = {
         "VESTRA"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/PORSHA_63dca28c.png"
     },
     {
       "style": "PRANCE",
@@ -3516,7 +3687,8 @@ export const skuData = {
         "CHOC"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/PRANCE_5ba0f895.png"
     },
     {
       "style": "PRESH",
@@ -3536,7 +3708,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/PRESH_d352a8b1.png"
     },
     {
       "style": "ROBBIE",
@@ -3556,7 +3729,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ROBBIE_77b1677f.png"
     },
     {
       "style": "ROBYN",
@@ -3578,7 +3752,8 @@ export const skuData = {
         "VINO"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ROBYN_6724bc4f.png"
     },
     {
       "style": "RORY",
@@ -3595,7 +3770,8 @@ export const skuData = {
         "PETAL"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/RORY_33ddd2bd.png"
     },
     {
       "style": "ROSA",
@@ -3614,7 +3790,8 @@ export const skuData = {
         "SKIN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ROSA_8212cb8a.png"
     },
     {
       "style": "ROXIE",
@@ -3638,7 +3815,8 @@ export const skuData = {
         "TURQUOISE"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ROXIE_6cdaf781.png"
     },
     {
       "style": "ROXTA",
@@ -3657,7 +3835,8 @@ export const skuData = {
         "DOVE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ROXTA_c9e8aac3.png"
     },
     {
       "style": "SAGE",
@@ -3676,7 +3855,8 @@ export const skuData = {
         "SKIN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SAGE_de3e845e.png"
     },
     {
       "style": "SAINT",
@@ -3694,7 +3874,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SAINT_b3a73dc0.png"
     },
     {
       "style": "SAKAI",
@@ -3712,7 +3893,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SAKAI_0d4f7c78.png"
     },
     {
       "style": "SALLY",
@@ -3733,7 +3915,8 @@ export const skuData = {
         "TAUPE"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SALLY_cf0807f9.png"
     },
     {
       "style": "SAMAR",
@@ -3759,7 +3942,8 @@ export const skuData = {
         "WHEAT"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SAMAR_6d6fa000.png"
     },
     {
       "style": "SAMMY",
@@ -3779,7 +3963,8 @@ export const skuData = {
         "DOVE"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SAMMY_2cd6e514.png"
     },
     {
       "style": "SANDRA",
@@ -3802,7 +3987,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SANDRA_01a3f174.png"
     },
     {
       "style": "SARAH",
@@ -3824,7 +4010,8 @@ export const skuData = {
         "SKY"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SARAH_3ac28780.png"
     },
     {
       "style": "SASSY",
@@ -3842,7 +4029,8 @@ export const skuData = {
         "DOVE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SASSY_783d4769.png"
     },
     {
       "style": "SAVANT",
@@ -3861,7 +4049,8 @@ export const skuData = {
         "WHEAT"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SAVANT_15e1b793.png"
     },
     {
       "style": "SEZ",
@@ -3886,7 +4075,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SEZ_794dd99c.png"
     },
     {
       "style": "SHAE",
@@ -3905,7 +4095,8 @@ export const skuData = {
         "ESPRESSO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SHAE_369a22cd.png"
     },
     {
       "style": "SHAQ",
@@ -3925,7 +4116,8 @@ export const skuData = {
         "CHOCOLATE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SHAQ_30998709.png"
     },
     {
       "style": "SHEBA",
@@ -3942,7 +4134,8 @@ export const skuData = {
         "COGNAC"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SHEBA_3f63e38e.png"
     },
     {
       "style": "SIA",
@@ -3966,7 +4159,8 @@ export const skuData = {
         "WHEAT"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SIA_ac653f7f.png"
     },
     {
       "style": "SICILY",
@@ -3991,7 +4185,8 @@ export const skuData = {
         "WHEAT"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SICILY_875ed861.png"
     },
     {
       "style": "SILVIA",
@@ -4008,7 +4203,8 @@ export const skuData = {
         "IVORY"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SILVIA_6ab1a315.png"
     },
     {
       "style": "SKYE",
@@ -4029,7 +4225,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SKYE_aa9df1a3.png"
     },
     {
       "style": "SOFIA",
@@ -4046,7 +4243,8 @@ export const skuData = {
         "IVORY"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SOFIA_6df572ef.png"
     },
     {
       "style": "SOPHIE",
@@ -4063,7 +4261,8 @@ export const skuData = {
         "STEEL"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SOPHIE_15ffb539.png"
     },
     {
       "style": "SPOILT",
@@ -4081,7 +4280,8 @@ export const skuData = {
         "IVORY"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SPOILT_2862042e.png"
     },
     {
       "style": "STARR",
@@ -4099,7 +4299,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/STARR_fa2bbd9c.png"
     },
     {
       "style": "STASSIE",
@@ -4117,7 +4318,8 @@ export const skuData = {
         "IVORY"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/STASSIE_9d904279.png"
     },
     {
       "style": "STEVIE",
@@ -4137,7 +4339,8 @@ export const skuData = {
         "SKIN"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/STEVIE_56d267ba.png"
     },
     {
       "style": "SUNNY",
@@ -4157,7 +4360,8 @@ export const skuData = {
         "SILVER"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SUNNY_cecabdaf.png"
     },
     {
       "style": "SWAY",
@@ -4176,7 +4380,8 @@ export const skuData = {
         "SILVER"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SWAY_28fc5cf3.png"
     },
     {
       "style": "SWEETIE",
@@ -4195,7 +4400,8 @@ export const skuData = {
         "VANILLA"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SWEETIE_0cddcfb9.png"
     },
     {
       "style": "SWIFT",
@@ -4218,7 +4424,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SWIFT_062b43fd.png"
     },
     {
       "style": "TIANA",
@@ -4241,7 +4448,8 @@ export const skuData = {
         "SKY"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/TIANA_18e7a6ed.png"
     },
     {
       "style": "TILDA",
@@ -4266,7 +4474,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/TILDA_d55776f2.png"
     },
     {
       "style": "TOPAZ",
@@ -4287,7 +4496,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/TOPAZ_c4456acb.png"
     },
     {
       "style": "TREVI",
@@ -4308,7 +4518,8 @@ export const skuData = {
         "TAUPE"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/TREVI_780108d8.png"
     },
     {
       "style": "TROPIC",
@@ -4327,7 +4538,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/TROPIC_764dccd0.png"
     },
     {
       "style": "TUSCANY",
@@ -4344,7 +4556,8 @@ export const skuData = {
         "STONE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/TUSCANY_4a50c230.png"
     },
     {
       "style": "VALERIE",
@@ -4365,7 +4578,8 @@ export const skuData = {
         "ESPRESSO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/VALERIE_8bf16b19.png"
     },
     {
       "style": "VAMORE",
@@ -4383,7 +4597,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/VAMORE_52e1a1de.png"
     },
     {
       "style": "VICTORIA",
@@ -4406,7 +4621,8 @@ export const skuData = {
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/VICTORIA_86a1469a.png"
     },
     {
       "style": "VILLA",
@@ -4425,7 +4641,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/VILLA_ef3689b0.png"
     },
     {
       "style": "VIN",
@@ -4444,7 +4661,8 @@ export const skuData = {
         "WHEAT"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/VIN_21f4c187.png"
     },
     {
       "style": "VIOLET",
@@ -4465,7 +4683,8 @@ export const skuData = {
         "SILVER"
       ],
       "isAllNew": false,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/VIOLET_06f7442c.png"
     },
     {
       "style": "VIXEN",
@@ -4483,7 +4702,8 @@ export const skuData = {
         "OLIVE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/VIXEN_c86e21bf.png"
     },
     {
       "style": "VOGUE",
@@ -4500,7 +4720,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/VOGUE_65ebcde7.png"
     },
     {
       "style": "VOLLI",
@@ -4517,7 +4738,8 @@ export const skuData = {
         "TAN"
       ],
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/VOLLI_9a4158de.png"
     },
     {
       "style": "ZAC",
@@ -4536,7 +4758,8 @@ export const skuData = {
         "TAUPE"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ZAC_9ecc74be.png"
     },
     {
       "style": "ZEPHYR",
@@ -4552,7 +4775,8 @@ export const skuData = {
         "BLACK"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ZEPHYR_49a0fe44.png"
     },
     {
       "style": "ZOE",
@@ -4570,7 +4794,8 @@ export const skuData = {
         "ESPRESSO"
       ],
       "isAllNew": false,
-      "hasNew": false
+      "hasNew": false,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ZOE_526c5f93.png"
     }
   ],
   "leathers": [

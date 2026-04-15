@@ -2,6 +2,7 @@
  * CategoryTab — shows each category as a card with SKU breakdown
  */
 
+import { useMemo } from "react";
 import { skuData } from "@/lib/skuData";
 
 const CATEGORY_COLOURS: Record<string, string> = {
@@ -27,6 +28,19 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 export default function CategoryTab() {
+  // Build a map of category → style images (up to 6 per category)
+  const categoryImages = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const style of skuData.styles) {
+      const cat = style.category;
+      if (!map[cat]) map[cat] = [];
+      if (style.imageUrl && map[cat].length < 6) {
+        map[cat].push(style.imageUrl);
+      }
+    }
+    return map;
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
@@ -34,6 +48,7 @@ export default function CategoryTab() {
           const colour = CATEGORY_COLOURS[cat.category] ?? "#6b7280";
           const icon = CATEGORY_ICONS[cat.category] ?? "👟";
           const pctNew = cat.pctNew;
+          const images = categoryImages[cat.category] ?? [];
 
           return (
             <div
@@ -85,6 +100,26 @@ export default function CategoryTab() {
                     </span>
                   </div>
                 </div>
+
+                {/* Style image strip */}
+                {images.length > 0 && (
+                  <div className="flex gap-1.5 mb-4 flex-wrap">
+                    {images.slice(0, 6).map((url, i) => (
+                      <div
+                        key={i}
+                        className="w-12 h-9 rounded overflow-hidden flex items-center justify-center flex-shrink-0"
+                        style={{ background: "var(--muted)" }}
+                      >
+                        <img
+                          src={url}
+                          alt=""
+                          className="w-full h-full object-contain"
+                          loading="lazy"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Progress bar */}
                 <div>

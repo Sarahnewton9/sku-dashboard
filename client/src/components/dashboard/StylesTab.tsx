@@ -170,22 +170,40 @@ export default function StylesTab() {
                     }}
                   >
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {style.hasNew && (
-                          <span
-                            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                            style={{ background: "#f59e0b" }}
-                          />
-                        )}
-                        <span className="font-semibold text-foreground">{style.style}</span>
-                        {style.isAllNew && (
-                          <span
-                            className="text-xs px-1.5 py-0.5 rounded font-medium"
-                            style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}
-                          >
-                            NEW
-                          </span>
-                        )}
+                      <div className="flex items-center gap-3">
+                        {/* Shoe thumbnail */}
+                        <div
+                          className="w-16 h-10 rounded flex-shrink-0 overflow-hidden flex items-center justify-center"
+                          style={{ background: "var(--muted)" }}
+                        >
+                          {style.imageUrl ? (
+                            <img
+                              src={style.imageUrl}
+                              alt={style.style}
+                              className="w-full h-full object-contain"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {style.hasNew && (
+                            <span
+                              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                              style={{ background: "#f59e0b" }}
+                            />
+                          )}
+                          <span className="font-semibold text-foreground">{style.style}</span>
+                          {style.isAllNew && (
+                            <span
+                              className="text-xs px-1.5 py-0.5 rounded font-medium"
+                              style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}
+                            >
+                              NEW
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
