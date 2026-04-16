@@ -9,7 +9,7 @@ export const skuData = {
     "totalStyles": 225,
     "brandNewStyles": 61,
     "stylesWithNew": 96,
-    "uniqueLeathers": 72,
+    "uniqueLeathers": 70,
     "uniqueColours": 62
   },
   "categories": [
@@ -143,8 +143,7 @@ export const skuData = {
       "newSKUs": 2,
       "existingSKUs": 0,
       "leathers": [
-        "WOVEN - BISCUIT",
-        "WOVEN - SILVER"
+        "WOVEN"
       ],
       "colours": [
         "GOLD",
@@ -184,7 +183,7 @@ export const skuData = {
     {
       "style": "AVANTI",
       "category": "Wedge",
-      "last": "FULL SIZE ONLY 5-10",
+      "last": "AVANTI",
       "totalSKUs": 4,
       "newSKUs": 0,
       "existingSKUs": 4,
@@ -508,7 +507,7 @@ export const skuData = {
     {
       "style": "CAMEO",
       "category": "Dress Shoe",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "totalSKUs": 7,
       "newSKUs": 0,
       "existingSKUs": 7,
@@ -553,7 +552,7 @@ export const skuData = {
     {
       "style": "CAPPA",
       "category": "Ballet Flat",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "totalSKUs": 4,
       "newSKUs": 3,
       "existingSKUs": 1,
@@ -639,7 +638,7 @@ export const skuData = {
     {
       "style": "CASPIAN",
       "category": "Ballet Flat",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "totalSKUs": 7,
       "newSKUs": 1,
       "existingSKUs": 6,
@@ -686,7 +685,7 @@ export const skuData = {
     {
       "style": "CHARLI",
       "category": "Ballet Flat",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "totalSKUs": 3,
       "newSKUs": 0,
       "existingSKUs": 3,
@@ -723,7 +722,7 @@ export const skuData = {
     {
       "style": "CHELSEA",
       "category": "Ballet Flat",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "totalSKUs": 12,
       "newSKUs": 4,
       "existingSKUs": 8,
@@ -750,7 +749,7 @@ export const skuData = {
     {
       "style": "CHERRY",
       "category": "Dress Shoe",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "totalSKUs": 8,
       "newSKUs": 0,
       "existingSKUs": 8,
@@ -791,7 +790,7 @@ export const skuData = {
     {
       "style": "CHILLI",
       "category": "Ballet Flat",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "totalSKUs": 3,
       "newSKUs": 3,
       "existingSKUs": 0,
@@ -810,7 +809,7 @@ export const skuData = {
     {
       "style": "CIRCA",
       "category": "Ballet Flat",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "totalSKUs": 2,
       "newSKUs": 2,
       "existingSKUs": 0,
@@ -866,7 +865,7 @@ export const skuData = {
     {
       "style": "COLLETTE",
       "category": "Dress Shoe",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "totalSKUs": 3,
       "newSKUs": 0,
       "existingSKUs": 3,
@@ -885,7 +884,7 @@ export const skuData = {
     {
       "style": "COMMA",
       "category": "Ballet Flat",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "totalSKUs": 12,
       "newSKUs": 7,
       "existingSKUs": 5,
@@ -915,7 +914,7 @@ export const skuData = {
     {
       "style": "CONNIE",
       "category": "Dress Shoe",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "totalSKUs": 8,
       "newSKUs": 3,
       "existingSKUs": 5,
@@ -940,7 +939,7 @@ export const skuData = {
     {
       "style": "CORSO",
       "category": "Dress Sandal",
-      "last": "CLEO",
+      "last": "CLEO/CORSO",
       "totalSKUs": 4,
       "newSKUs": 0,
       "existingSKUs": 4,
@@ -961,7 +960,7 @@ export const skuData = {
     {
       "style": "COSTA",
       "category": "Dress Shoe",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "totalSKUs": 7,
       "newSKUs": 3,
       "existingSKUs": 4,
@@ -984,7 +983,7 @@ export const skuData = {
     {
       "style": "CREW",
       "category": "Loafer",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "totalSKUs": 2,
       "newSKUs": 2,
       "existingSKUs": 0,
@@ -1002,7 +1001,7 @@ export const skuData = {
     {
       "style": "CRUSH",
       "category": "Dress Shoe",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "totalSKUs": 12,
       "newSKUs": 2,
       "existingSKUs": 10,
@@ -1032,7 +1031,7 @@ export const skuData = {
     {
       "style": "CUBA",
       "category": "Ballet Flat",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "totalSKUs": 9,
       "newSKUs": 2,
       "existingSKUs": 7,
@@ -1078,7 +1077,7 @@ export const skuData = {
     {
       "style": "DAISY",
       "category": "Dress Sandal",
-      "last": "DELTA",
+      "last": "DELTA/ALLURE",
       "totalSKUs": 2,
       "newSKUs": 0,
       "existingSKUs": 2,
@@ -1096,7 +1095,7 @@ export const skuData = {
     {
       "style": "DANA",
       "category": "Dress Sandal",
-      "last": "DELTA",
+      "last": "DELTA/ALLURE",
       "totalSKUs": 5,
       "newSKUs": 0,
       "existingSKUs": 5,
@@ -1350,7 +1349,7 @@ export const skuData = {
     {
       "style": "EMBER",
       "category": "Wedge",
-      "last": "EMBER",
+      "last": "EDGY/EMBER",
       "totalSKUs": 3,
       "newSKUs": 3,
       "existingSKUs": 0,
@@ -1555,7 +1554,7 @@ export const skuData = {
     {
       "style": "FAYE",
       "category": "Ankle Boot",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "totalSKUs": 1,
       "newSKUs": 0,
       "existingSKUs": 1,
@@ -1591,7 +1590,7 @@ export const skuData = {
     {
       "style": "FIDDY",
       "category": "Ankle Boot",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "totalSKUs": 2,
       "newSKUs": 0,
       "existingSKUs": 2,
@@ -1609,7 +1608,7 @@ export const skuData = {
     {
       "style": "FIFI",
       "category": "Dress Shoe",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "totalSKUs": 8,
       "newSKUs": 3,
       "existingSKUs": 5,
@@ -1653,7 +1652,7 @@ export const skuData = {
     {
       "style": "FINESSE",
       "category": "Calf Boot",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "totalSKUs": 1,
       "newSKUs": 0,
       "existingSKUs": 1,
@@ -1898,7 +1897,7 @@ export const skuData = {
     {
       "style": "GRAND",
       "category": "Loafer",
-      "last": "GIGI",
+      "last": "GIGI/GRAND",
       "totalSKUs": 4,
       "newSKUs": 0,
       "existingSKUs": 4,
@@ -2254,7 +2253,7 @@ export const skuData = {
     {
       "style": "JETTA",
       "category": "Sandal",
-      "last": "SIZES 36-41",
+      "last": "JASPER/JETTA",
       "totalSKUs": 3,
       "newSKUs": 0,
       "existingSKUs": 3,
@@ -2535,7 +2534,7 @@ export const skuData = {
     {
       "style": "KYLA",
       "category": "Dress Sandal",
-      "last": "KOMMA",
+      "last": "KOMMA/KEIKI",
       "totalSKUs": 3,
       "newSKUs": 0,
       "existingSKUs": 3,
@@ -3031,7 +3030,7 @@ export const skuData = {
     {
       "style": "MARIAH",
       "category": "Dress Sandal",
-      "last": "MINOGUE",
+      "last": "MINOGUE/MILLER",
       "totalSKUs": 4,
       "newSKUs": 0,
       "existingSKUs": 4,
@@ -3776,7 +3775,7 @@ export const skuData = {
     {
       "style": "ROSA",
       "category": "Dress Sandal",
-      "last": "RANCHER ??",
+      "last": "RANCHER",
       "totalSKUs": 3,
       "newSKUs": 0,
       "existingSKUs": 3,
@@ -3904,8 +3903,7 @@ export const skuData = {
       "newSKUs": 5,
       "existingSKUs": 0,
       "leathers": [
-        "SUEDE",
-        "SUEDE \u2013 BLACK SOCK AND LINING"
+        "SUEDE"
       ],
       "colours": [
         "BLACK",
@@ -4801,8 +4799,8 @@ export const skuData = {
   "leathers": [
     {
       "name": "SUEDE",
-      "allCount": 188,
-      "newCount": 52
+      "allCount": 189,
+      "newCount": 53
     },
     {
       "name": "NAPPA",
@@ -4945,6 +4943,11 @@ export const skuData = {
       "newCount": 3
     },
     {
+      "name": "WOVEN",
+      "allCount": 2,
+      "newCount": 2
+    },
+    {
       "name": "VINTAGE METAL",
       "allCount": 2,
       "newCount": 0
@@ -5018,16 +5021,6 @@ export const skuData = {
       "name": "TULE",
       "allCount": 2,
       "newCount": 0
-    },
-    {
-      "name": "WOVEN - BISCUIT",
-      "allCount": 1,
-      "newCount": 1
-    },
-    {
-      "name": "WOVEN - SILVER",
-      "allCount": 1,
-      "newCount": 1
     },
     {
       "name": "NAAPA",
@@ -5121,11 +5114,6 @@ export const skuData = {
     },
     {
       "name": "SUEDE A",
-      "allCount": 1,
-      "newCount": 1
-    },
-    {
-      "name": "SUEDE \u2013 BLACK SOCK AND LINING",
       "allCount": 1,
       "newCount": 1
     },
@@ -5807,16 +5795,10 @@ export const skuData = {
         "action": "BROCADE appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
-        "name": "WOVEN - BISCUIT",
+        "name": "WOVEN",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "WOVEN - BISCUIT appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "WOVEN - SILVER",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "WOVEN - SILVER appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "WOVEN appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
         "name": "CROCO/ CHOC NAPPA -COV",
@@ -5889,12 +5871,6 @@ export const skuData = {
         "styleCount": 1,
         "bucket": "Priority expand",
         "action": "NAPPA A appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "SUEDE \u2013 BLACK SOCK AND LINING",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "SUEDE \u2013 BLACK SOCK AND LINING appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
         "name": "KID",
@@ -6142,7 +6118,7 @@ export const skuData = {
       "style": "ARLA",
       "last": "ANJA",
       "colour": "GOLD",
-      "leather": "WOVEN - BISCUIT",
+      "leather": "WOVEN",
       "is_new": true
     },
     {
@@ -6150,7 +6126,7 @@ export const skuData = {
       "style": "ARLA",
       "last": "ANJA",
       "colour": "SILVER",
-      "leather": "WOVEN - SILVER",
+      "leather": "WOVEN",
       "is_new": true
     },
     {
@@ -6236,7 +6212,7 @@ export const skuData = {
     {
       "category": "Wedge",
       "style": "AVANTI",
-      "last": "FULL SIZE ONLY 5-10",
+      "last": "AVANTI",
       "colour": "BLACK",
       "leather": "SUEDE",
       "is_new": false
@@ -6244,7 +6220,7 @@ export const skuData = {
     {
       "category": "Wedge",
       "style": "AVANTI",
-      "last": "FULL SIZE ONLY 5-10",
+      "last": "AVANTI",
       "colour": "ESPRESSO",
       "leather": "SUEDE",
       "is_new": false
@@ -6252,7 +6228,7 @@ export const skuData = {
     {
       "category": "Wedge",
       "style": "AVANTI",
-      "last": "FULL SIZE ONLY 5-10",
+      "last": "AVANTI",
       "colour": "BUTTERSCOTCH",
       "leather": "SUEDE",
       "is_new": false
@@ -6260,7 +6236,7 @@ export const skuData = {
     {
       "category": "Wedge",
       "style": "AVANTI",
-      "last": "FULL SIZE ONLY 5-10",
+      "last": "AVANTI",
       "colour": "WHEAT",
       "leather": "SUEDE",
       "is_new": false
@@ -6740,7 +6716,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CAMEO",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "BLACK",
       "leather": "VINTAGE",
       "is_new": false
@@ -6748,7 +6724,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CAMEO",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "VANILLA",
       "leather": "NAPPA",
       "is_new": false
@@ -6756,7 +6732,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CAMEO",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "ECRU",
       "leather": "SNAKE",
       "is_new": false
@@ -6764,7 +6740,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CAMEO",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "SILVER",
       "leather": "VINTAGE METAL",
       "is_new": false
@@ -6772,7 +6748,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CAMEO",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "BLACK",
       "leather": "SUEDE",
       "is_new": false
@@ -6780,7 +6756,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CAMEO",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "ESPRESSO",
       "leather": "SUEDE",
       "is_new": false
@@ -6788,7 +6764,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CAMEO",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "STEEL",
       "leather": "SUEDE",
       "is_new": false
@@ -6820,7 +6796,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CAPPA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "DOVE",
       "leather": "NAPPA",
       "is_new": true
@@ -6828,7 +6804,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CAPPA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "PERU",
       "leather": "NAPPA",
       "is_new": true
@@ -6836,7 +6812,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CAPPA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "SKY",
       "leather": "NAPPA",
       "is_new": true
@@ -6844,7 +6820,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CAPPA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "PETAL",
       "leather": "NAPPA",
       "is_new": false
@@ -6980,7 +6956,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CASPIAN",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLACK",
       "leather": "NAPPA",
       "is_new": false
@@ -6988,7 +6964,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CASPIAN",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "DOVE",
       "leather": "NAPPA",
       "is_new": false
@@ -6996,7 +6972,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CASPIAN",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "VINO",
       "leather": "NAPPA",
       "is_new": false
@@ -7004,7 +6980,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CASPIAN",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "SKY",
       "leather": "NAPPA",
       "is_new": false
@@ -7012,7 +6988,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CASPIAN",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLUSH",
       "leather": "NB",
       "is_new": false
@@ -7020,7 +6996,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CASPIAN",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "RED",
       "leather": "NAPPA",
       "is_new": true
@@ -7028,7 +7004,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CASPIAN",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "WILLOW",
       "leather": "NAPPA",
       "is_new": false
@@ -7092,7 +7068,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHARLI",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLACK",
       "leather": "NAPPA",
       "is_new": false
@@ -7100,7 +7076,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHARLI",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "DOVE",
       "leather": "NAPPA",
       "is_new": false
@@ -7108,7 +7084,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHARLI",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "CHOC",
       "leather": "NAPPA",
       "is_new": false
@@ -7132,7 +7108,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHELSEA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLACK",
       "leather": "NAPPA",
       "is_new": false
@@ -7140,7 +7116,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHELSEA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "CHOC",
       "leather": "NAPPA",
       "is_new": false
@@ -7148,7 +7124,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHELSEA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "RED",
       "leather": "NAPPA",
       "is_new": false
@@ -7156,7 +7132,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHELSEA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "SKY",
       "leather": "NAPPA",
       "is_new": false
@@ -7164,7 +7140,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHELSEA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "DOVE",
       "leather": "NAPPA",
       "is_new": false
@@ -7172,7 +7148,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHELSEA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLACK",
       "leather": "NAPPA PATENT",
       "is_new": false
@@ -7180,7 +7156,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHELSEA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "STONE",
       "leather": "NAPPA PATENT",
       "is_new": false
@@ -7188,7 +7164,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHELSEA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "VINO",
       "leather": "NAPPA PATENT",
       "is_new": false
@@ -7196,7 +7172,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHELSEA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLACK",
       "leather": "LUMIA VELVET",
       "is_new": true
@@ -7204,7 +7180,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHELSEA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "STONE",
       "leather": "LUMIA VELVET",
       "is_new": true
@@ -7212,7 +7188,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHELSEA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLUSH",
       "leather": "LUMIA VELVET",
       "is_new": true
@@ -7220,7 +7196,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHELSEA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "PETAL",
       "leather": "NAPPA PATENT",
       "is_new": true
@@ -7228,7 +7204,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CHERRY",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "BLACK",
       "leather": "CRINKLE",
       "is_new": false
@@ -7236,7 +7212,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CHERRY",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "CHOC",
       "leather": "CRINKLE",
       "is_new": false
@@ -7244,7 +7220,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CHERRY",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "LIQUEUR",
       "leather": "CRINKLE",
       "is_new": false
@@ -7252,7 +7228,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CHERRY",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "DOVE",
       "leather": "CRINKLE",
       "is_new": false
@@ -7260,7 +7236,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CHERRY",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "ESPRESSO",
       "leather": "SUEDE",
       "is_new": false
@@ -7268,7 +7244,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CHERRY",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "BLACK",
       "leather": "SUEDE",
       "is_new": false
@@ -7276,7 +7252,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CHERRY",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "BLACK",
       "leather": "CROCO",
       "is_new": false
@@ -7284,7 +7260,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CHERRY",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "VINO",
       "leather": "CROCO",
       "is_new": false
@@ -7300,7 +7276,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHILLI",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLACK",
       "leather": "NAPPA PATENT",
       "is_new": true
@@ -7308,7 +7284,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHILLI",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "STONE",
       "leather": "NAPPA PATENT",
       "is_new": true
@@ -7316,7 +7292,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CHILLI",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "PETAL",
       "leather": "NAPPA PATENT",
       "is_new": true
@@ -7324,7 +7300,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CIRCA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLACK",
       "leather": "NAPPA",
       "is_new": true
@@ -7332,7 +7308,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CIRCA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "PETAL",
       "leather": "NAPPA",
       "is_new": true
@@ -7388,7 +7364,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "COLLETTE",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "BLACK",
       "leather": "VALENCIA",
       "is_new": false
@@ -7396,7 +7372,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "COLLETTE",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "VESTRA",
       "leather": "VALENCIA",
       "is_new": false
@@ -7404,7 +7380,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "COLLETTE",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "CHOC",
       "leather": "VALENCIA",
       "is_new": false
@@ -7412,7 +7388,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "COMMA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLACK",
       "leather": "NAPPA",
       "is_new": false
@@ -7420,7 +7396,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "COMMA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "DOVE",
       "leather": "NAPPA",
       "is_new": false
@@ -7428,7 +7404,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "COMMA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "RED",
       "leather": "NAPPA",
       "is_new": false
@@ -7436,7 +7412,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "COMMA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "VINO",
       "leather": "NAPPA",
       "is_new": false
@@ -7444,7 +7420,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "COMMA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLOSSOM",
       "leather": "SUEDE",
       "is_new": false
@@ -7452,7 +7428,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "COMMA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "PETAL",
       "leather": "NAPPA",
       "is_new": true
@@ -7460,7 +7436,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "COMMA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "SKY",
       "leather": "NAPPA",
       "is_new": true
@@ -7468,7 +7444,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "COMMA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "ECRU",
       "leather": "SNAKE",
       "is_new": true
@@ -7476,7 +7452,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "COMMA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLACK",
       "leather": "SPECKLE",
       "is_new": true
@@ -7484,7 +7460,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "COMMA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLACK",
       "leather": "PATENT",
       "is_new": true
@@ -7492,7 +7468,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "COMMA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "ESPRESSO",
       "leather": "PATENT",
       "is_new": true
@@ -7500,7 +7476,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "COMMA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "NUDE",
       "leather": "PATENT",
       "is_new": true
@@ -7508,7 +7484,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CONNIE",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "ESPRESSO",
       "leather": "SUEDE",
       "is_new": false
@@ -7516,7 +7492,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CONNIE",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "TAUPE",
       "leather": "SUEDE",
       "is_new": false
@@ -7524,7 +7500,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CONNIE",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "BLACK",
       "leather": "SUEDE",
       "is_new": false
@@ -7532,7 +7508,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CONNIE",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "ASHEN",
       "leather": "SUEDE",
       "is_new": false
@@ -7540,7 +7516,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CONNIE",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "ECRU",
       "leather": "SNAKE",
       "is_new": false
@@ -7548,7 +7524,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CONNIE",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "TAN",
       "leather": "VINTAGE",
       "is_new": true
@@ -7556,7 +7532,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CONNIE",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "BLACK",
       "leather": "VINTAGE",
       "is_new": true
@@ -7564,7 +7540,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CONNIE",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "CHOC",
       "leather": "VINTAGE",
       "is_new": true
@@ -7572,7 +7548,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "CORSO",
-      "last": "CLEO",
+      "last": "CLEO/CORSO",
       "colour": "BLACK",
       "leather": "NAPPA",
       "is_new": false
@@ -7580,7 +7556,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "CORSO",
-      "last": "CLEO",
+      "last": "CLEO/CORSO",
       "colour": "SKIN",
       "leather": "NAPPA",
       "is_new": false
@@ -7588,7 +7564,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "CORSO",
-      "last": "CLEO",
+      "last": "CLEO/CORSO",
       "colour": "GOLD",
       "leather": "NAPPA",
       "is_new": false
@@ -7596,7 +7572,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "CORSO",
-      "last": "CLEO",
+      "last": "CLEO/CORSO",
       "colour": "MILK",
       "leather": "CAPRETTO",
       "is_new": false
@@ -7604,7 +7580,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "COSTA",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "BLACK",
       "leather": "SUEDE",
       "is_new": false
@@ -7612,7 +7588,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "COSTA",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "CEMENTO",
       "leather": "SUEDE",
       "is_new": false
@@ -7620,7 +7596,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "COSTA",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "VINO",
       "leather": "SUEDE",
       "is_new": false
@@ -7628,7 +7604,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "COSTA",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "NAVY",
       "leather": "SUEDE",
       "is_new": false
@@ -7636,7 +7612,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "COSTA",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "BLACK",
       "leather": "NAPPA",
       "is_new": true
@@ -7644,7 +7620,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "COSTA",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "DOVE",
       "leather": "NAPPA",
       "is_new": true
@@ -7652,7 +7628,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "COSTA",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "SKY",
       "leather": "NAPPA",
       "is_new": true
@@ -7660,7 +7636,7 @@ export const skuData = {
     {
       "category": "Loafer",
       "style": "CREW",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLACK",
       "leather": "NAPPA",
       "is_new": true
@@ -7668,7 +7644,7 @@ export const skuData = {
     {
       "category": "Loafer",
       "style": "CREW",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "WHITE",
       "leather": "NAPPA",
       "is_new": true
@@ -7676,7 +7652,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CRUSH",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "BLACK",
       "leather": "VINTAGE",
       "is_new": false
@@ -7684,7 +7660,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CRUSH",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "TAUPE",
       "leather": "SUEDE",
       "is_new": false
@@ -7692,7 +7668,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CRUSH",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "ESPRESSO",
       "leather": "SUEDE",
       "is_new": false
@@ -7700,7 +7676,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CRUSH",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "WHEAT",
       "leather": "SUEDE",
       "is_new": false
@@ -7708,7 +7684,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CRUSH",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "SCARLET",
       "leather": "SUEDE",
       "is_new": false
@@ -7716,7 +7692,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CRUSH",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "DENIM",
       "leather": "SUEDE",
       "is_new": false
@@ -7724,7 +7700,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CRUSH",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "BLOSSOM",
       "leather": "SUEDE",
       "is_new": false
@@ -7732,7 +7708,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CRUSH",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "TAN",
       "leather": "VINTAGE",
       "is_new": false
@@ -7740,7 +7716,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CRUSH",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "CHOC",
       "leather": "VINTAGE",
       "is_new": false
@@ -7748,7 +7724,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CRUSH",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "MILK",
       "leather": "CAPRETTO",
       "is_new": false
@@ -7756,7 +7732,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CRUSH",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "BLACK",
       "leather": "BROCADE",
       "is_new": true
@@ -7764,7 +7740,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "CRUSH",
-      "last": "CHARLIE",
+      "last": "CHARLIE/PENNY",
       "colour": "IVORY",
       "leather": "BROCADE",
       "is_new": true
@@ -7772,7 +7748,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CUBA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "BLACK",
       "leather": "NAPPA",
       "is_new": false
@@ -7780,7 +7756,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CUBA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "LATTE",
       "leather": "NAPPA",
       "is_new": false
@@ -7788,7 +7764,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CUBA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "VINO",
       "leather": "NAPPA",
       "is_new": false
@@ -7796,7 +7772,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CUBA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "DOVE",
       "leather": "NAPPA",
       "is_new": false
@@ -7804,7 +7780,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CUBA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "CHOC",
       "leather": "NAPPA",
       "is_new": false
@@ -7812,7 +7788,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CUBA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "SKY",
       "leather": "NAPPA",
       "is_new": false
@@ -7820,7 +7796,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CUBA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "PETAL",
       "leather": "NAPPA",
       "is_new": true
@@ -7828,7 +7804,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CUBA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "ECRU",
       "leather": "SNAKE",
       "is_new": true
@@ -7836,7 +7812,7 @@ export const skuData = {
     {
       "category": "Ballet Flat",
       "style": "CUBA",
-      "last": "WILLOW NAPPA",
+      "last": "CHEEKY/CUBA",
       "colour": "WILLOW",
       "leather": "NAPPA",
       "is_new": false
@@ -7876,7 +7852,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "DAISY",
-      "last": "DELTA",
+      "last": "DELTA/ALLURE",
       "colour": "BLACK",
       "leather": "COMO",
       "is_new": false
@@ -7884,7 +7860,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "DAISY",
-      "last": "DELTA",
+      "last": "DELTA/ALLURE",
       "colour": "TAN",
       "leather": "COMO",
       "is_new": false
@@ -7892,7 +7868,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "DANA",
-      "last": "DELTA",
+      "last": "DELTA/ALLURE",
       "colour": "TAN",
       "leather": "VINTAGE",
       "is_new": false
@@ -7900,7 +7876,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "DANA",
-      "last": "DELTA",
+      "last": "DELTA/ALLURE",
       "colour": "CHOC",
       "leather": "VINTAGE",
       "is_new": false
@@ -7908,7 +7884,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "DANA",
-      "last": "DELTA",
+      "last": "DELTA/ALLURE",
       "colour": "BLACK",
       "leather": "VINTAGE",
       "is_new": false
@@ -7916,7 +7892,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "DANA",
-      "last": "DELTA",
+      "last": "DELTA/ALLURE",
       "colour": "WHITE",
       "leather": "NAPPA",
       "is_new": false
@@ -7924,7 +7900,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "DANA",
-      "last": "DELTA",
+      "last": "DELTA/ALLURE",
       "colour": "SILVER",
       "leather": "NAPPA METALLIC",
       "is_new": false
@@ -8292,7 +8268,7 @@ export const skuData = {
     {
       "category": "Wedge",
       "style": "EMBER",
-      "last": "EMBER",
+      "last": "EDGY/EMBER",
       "colour": "TAN",
       "leather": "VINTAGE",
       "is_new": true
@@ -8300,7 +8276,7 @@ export const skuData = {
     {
       "category": "Wedge",
       "style": "EMBER",
-      "last": "EMBER",
+      "last": "EDGY/EMBER",
       "colour": "BLACK",
       "leather": "VINTAGE",
       "is_new": true
@@ -8308,7 +8284,7 @@ export const skuData = {
     {
       "category": "Wedge",
       "style": "EMBER",
-      "last": "EMBER",
+      "last": "EDGY/EMBER",
       "colour": "CHOC",
       "leather": "VINTAGE",
       "is_new": true
@@ -8596,7 +8572,7 @@ export const skuData = {
     {
       "category": "Ankle Boot",
       "style": "FAYE",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "colour": "BLACK",
       "leather": "VINTAGE",
       "is_new": false
@@ -8620,7 +8596,7 @@ export const skuData = {
     {
       "category": "Ankle Boot",
       "style": "FIDDY",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "colour": "BLACK",
       "leather": "MICRO",
       "is_new": false
@@ -8628,7 +8604,7 @@ export const skuData = {
     {
       "category": "Ankle Boot",
       "style": "FIDDY",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "colour": "CHOC",
       "leather": "MICRO",
       "is_new": false
@@ -8636,7 +8612,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "FIFI",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "colour": "BLACK",
       "leather": "CROCO",
       "is_new": false
@@ -8644,7 +8620,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "FIFI",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "colour": "CHOC",
       "leather": "CROCO",
       "is_new": false
@@ -8652,7 +8628,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "FIFI",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "colour": "VINO",
       "leather": "CROCO",
       "is_new": false
@@ -8660,7 +8636,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "FIFI",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "colour": "SKIN",
       "leather": "CAPRETTO",
       "is_new": false
@@ -8668,7 +8644,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "FIFI",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "colour": "BLACK",
       "leather": "VALENCIA",
       "is_new": false
@@ -8676,7 +8652,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "FIFI",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "colour": "BLACK",
       "leather": "SUEDE",
       "is_new": true
@@ -8684,7 +8660,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "FIFI",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "colour": "ESPRESSO",
       "leather": "SUEDE",
       "is_new": true
@@ -8692,7 +8668,7 @@ export const skuData = {
     {
       "category": "Dress Shoe",
       "style": "FIFI",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "colour": "TAUPE",
       "leather": "SUEDE",
       "is_new": true
@@ -8716,7 +8692,7 @@ export const skuData = {
     {
       "category": "Calf Boot",
       "style": "FINESSE",
-      "last": "FIFI 5-9",
+      "last": "FIFI",
       "colour": "BLACK",
       "leather": "VINTAGE",
       "is_new": false
@@ -9172,7 +9148,7 @@ export const skuData = {
     {
       "category": "Loafer",
       "style": "GRAND",
-      "last": "GIGI",
+      "last": "GIGI/GRAND",
       "colour": "CHOC",
       "leather": "VINTAGE",
       "is_new": false
@@ -9180,7 +9156,7 @@ export const skuData = {
     {
       "category": "Loafer",
       "style": "GRAND",
-      "last": "GIGI",
+      "last": "GIGI/GRAND",
       "colour": "BLACK",
       "leather": "VINTAGE",
       "is_new": false
@@ -9188,7 +9164,7 @@ export const skuData = {
     {
       "category": "Loafer",
       "style": "GRAND",
-      "last": "GIGI",
+      "last": "GIGI/GRAND",
       "colour": "VINO",
       "leather": "NAPPA PATENT",
       "is_new": false
@@ -9196,7 +9172,7 @@ export const skuData = {
     {
       "category": "Loafer",
       "style": "GRAND",
-      "last": "GIGI",
+      "last": "GIGI/GRAND",
       "colour": "BLACK",
       "leather": "NAPPA PATENT",
       "is_new": false
@@ -9740,7 +9716,7 @@ export const skuData = {
     {
       "category": "Sandal",
       "style": "JETTA",
-      "last": "SIZES 36-41",
+      "last": "JASPER/JETTA",
       "colour": "BLACK",
       "leather": "TUSCON",
       "is_new": false
@@ -9748,7 +9724,7 @@ export const skuData = {
     {
       "category": "Sandal",
       "style": "JETTA",
-      "last": "SIZES 36-41",
+      "last": "JASPER/JETTA",
       "colour": "TAN",
       "leather": "TUSCON",
       "is_new": false
@@ -9756,7 +9732,7 @@ export const skuData = {
     {
       "category": "Sandal",
       "style": "JETTA",
-      "last": "SIZES 36-41",
+      "last": "JASPER/JETTA",
       "colour": "CHOC",
       "leather": "TUSCON",
       "is_new": false
@@ -10164,7 +10140,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "KYLA",
-      "last": "KOMMA",
+      "last": "KOMMA/KEIKI",
       "colour": "GUNMETAL",
       "leather": "SHINE",
       "is_new": false
@@ -10172,7 +10148,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "KYLA",
-      "last": "KOMMA",
+      "last": "KOMMA/KEIKI",
       "colour": "SILVER",
       "leather": "FOIL",
       "is_new": false
@@ -10180,7 +10156,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "KYLA",
-      "last": "KOMMA",
+      "last": "KOMMA/KEIKI",
       "colour": "BLACK",
       "leather": "SUEDE",
       "is_new": false
@@ -10932,7 +10908,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "MARIAH",
-      "last": "MINOGUE",
+      "last": "MINOGUE/MILLER",
       "colour": "BLACK",
       "leather": "HI-SHINE",
       "is_new": false
@@ -10940,7 +10916,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "MARIAH",
-      "last": "MINOGUE",
+      "last": "MINOGUE/MILLER",
       "colour": "GOLD",
       "leather": "NAPPA METALLIC",
       "is_new": false
@@ -10948,7 +10924,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "MARIAH",
-      "last": "MINOGUE",
+      "last": "MINOGUE/MILLER",
       "colour": "SILVER",
       "leather": "NAPPA METALLIC",
       "is_new": false
@@ -10956,7 +10932,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "MARIAH",
-      "last": "MINOGUE",
+      "last": "MINOGUE/MILLER",
       "colour": "AMBER",
       "leather": "NAPPA METALLIC",
       "is_new": false
@@ -12140,7 +12116,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "ROSA",
-      "last": "RANCHER ??",
+      "last": "RANCHER",
       "colour": "BLACK",
       "leather": "VINTAGE",
       "is_new": false
@@ -12148,7 +12124,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "ROSA",
-      "last": "RANCHER ??",
+      "last": "RANCHER",
       "colour": "SKIN",
       "leather": "NAPPA",
       "is_new": false
@@ -12156,7 +12132,7 @@ export const skuData = {
     {
       "category": "Dress Sandal",
       "style": "ROSA",
-      "last": "RANCHER ??",
+      "last": "RANCHER",
       "colour": "SCARLET",
       "leather": "VINTAGE",
       "is_new": false
@@ -12318,7 +12294,7 @@ export const skuData = {
       "style": "SALLY",
       "last": "SALLY",
       "colour": "RED",
-      "leather": "SUEDE \u2013 BLACK SOCK AND LINING",
+      "leather": "SUEDE",
       "is_new": true
     },
     {
