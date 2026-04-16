@@ -9,7 +9,7 @@ export const skuData = {
     "totalStyles": 225,
     "brandNewStyles": 61,
     "stylesWithNew": 96,
-    "uniqueLeathers": 70,
+    "uniqueLeathers": 69,
     "uniqueColours": 62
   },
   "categories": [
@@ -3802,7 +3802,7 @@ export const skuData = {
       "leathers": [
         "NAPPA",
         "NAPPA A",
-        "SDE A",
+        "SUEDE",
         "SUEDE A"
       ],
       "colours": [
@@ -4799,8 +4799,8 @@ export const skuData = {
   "leathers": [
     {
       "name": "SUEDE",
-      "allCount": 189,
-      "newCount": 53
+      "allCount": 192,
+      "newCount": 56
     },
     {
       "name": "NAPPA",
@@ -4936,11 +4936,6 @@ export const skuData = {
       "name": "TUSCON",
       "allCount": 3,
       "newCount": 0
-    },
-    {
-      "name": "SDE A",
-      "allCount": 3,
-      "newCount": 3
     },
     {
       "name": "WOVEN",
@@ -5712,7 +5707,7 @@ export const skuData = {
       },
       {
         "name": "SUEDE",
-        "styleCount": 17,
+        "styleCount": 18,
         "bucket": "Well covered",
         "action": "SUEDE is well represented across new SKUs \u2014 maintain current range"
       },
@@ -5853,12 +5848,6 @@ export const skuData = {
         "styleCount": 1,
         "bucket": "Priority expand",
         "action": "NAPPA MET appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "SDE A",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "SDE A appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
         "name": "SUEDE A",
@@ -12142,7 +12131,7 @@ export const skuData = {
       "style": "ROXIE",
       "last": "ROXIE",
       "colour": "PETAL",
-      "leather": "SDE A",
+      "leather": "SUEDE",
       "is_new": true
     },
     {
@@ -12150,7 +12139,7 @@ export const skuData = {
       "style": "ROXIE",
       "last": "ROXIE",
       "colour": "TURQUOISE",
-      "leather": "SDE A",
+      "leather": "SUEDE",
       "is_new": true
     },
     {
@@ -12158,7 +12147,7 @@ export const skuData = {
       "style": "ROXIE",
       "last": "ROXIE",
       "colour": "SKY",
-      "leather": "SDE A",
+      "leather": "SUEDE",
       "is_new": true
     },
     {

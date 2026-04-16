@@ -8378,19 +8378,19 @@
       {
         "colour_leather": "PETAL SDE A",
         "colour": "PETAL",
-        "leather": "SDE A",
+        "leather": "SUEDE",
         "is_new": true
       },
       {
         "colour_leather": "TURQUOISE SDE A",
         "colour": "TURQUOISE",
-        "leather": "SDE A",
+        "leather": "SUEDE",
         "is_new": true
       },
       {
         "colour_leather": "SKY SDE A",
         "colour": "SKY",
-        "leather": "SDE A",
+        "leather": "SUEDE",
         "is_new": true
       },
       {
@@ -8424,7 +8424,7 @@
     "leathers": [
       "NAPPA",
       "NAPPA A",
-      "SDE A",
+      "SUEDE",
       "SUEDE A"
     ],
     "colours": [
