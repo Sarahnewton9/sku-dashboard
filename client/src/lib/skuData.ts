@@ -3,23 +3,23 @@
 
 export const skuData = {
   "summary": {
-    "totalSKUs": 971,
+    "totalSKUs": 969,
     "newSKUs": 326,
-    "existingSKUs": 645,
+    "existingSKUs": 643,
     "totalStyles": 225,
     "brandNewStyles": 61,
     "stylesWithNew": 96,
     "uniqueLeathers": 40,
-    "uniqueColours": 62
+    "uniqueColours": 57
   },
   "categories": [
     {
       "category": "Dress Shoe",
       "totalStyles": 68,
-      "totalSKUs": 316,
+      "totalSKUs": 314,
       "newSKUs": 105,
-      "existingSKUs": 211,
-      "pctNew": 33.2
+      "existingSKUs": 209,
+      "pctNew": 33.4
     },
     {
       "category": "Dress Sandal",
@@ -224,13 +224,12 @@ export const skuData = {
       "style": "BABE",
       "category": "Dress Shoe",
       "last": "BILLIE",
-      "totalSKUs": 2,
+      "totalSKUs": 1,
       "newSKUs": 0,
-      "existingSKUs": 2,
+      "existingSKUs": 1,
       "leathers": [],
       "colours": [
-        "BLACK",
-        "OFF-WHITE"
+        "BLACK"
       ],
       "isAllNew": false,
       "hasNew": false,
@@ -425,13 +424,11 @@ export const skuData = {
       "style": "BOHO",
       "category": "Dress Shoe",
       "last": "BILLIE",
-      "totalSKUs": 1,
+      "totalSKUs": 0,
       "newSKUs": 0,
-      "existingSKUs": 1,
+      "existingSKUs": 0,
       "leathers": [],
-      "colours": [
-        "CREAM"
-      ],
+      "colours": [],
       "isAllNew": false,
       "hasNew": false,
       "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BOHO_718e719f.png"
@@ -666,14 +663,14 @@ export const skuData = {
       "newSKUs": 3,
       "existingSKUs": 4,
       "leathers": [
-        "NAPPA"
+        "NAPPA",
+        "NAPPA METALLIC"
       ],
       "colours": [
         "BLACK",
-        "CHOC",
+        "CHOCOLATE",
         "DOVE",
         "GOLD",
-        "METALLIC",
         "SILVER",
         "VINO"
       ],
@@ -693,7 +690,7 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "CHOC",
+        "CHOCOLATE",
         "DOVE"
       ],
       "isAllNew": false,
@@ -733,7 +730,7 @@ export const skuData = {
       "colours": [
         "BLACK",
         "BLUSH",
-        "CHOC",
+        "CHOCOLATE",
         "DOVE",
         "PETAL",
         "RED",
@@ -836,7 +833,6 @@ export const skuData = {
       "colours": [
         "BLACK",
         "DOVE",
-        "NAPPA",
         "SKY"
       ],
       "isAllNew": false,
@@ -1040,7 +1036,7 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "CHOC",
+        "CHOCOLATE",
         "DOVE",
         "ECRU",
         "LATTE",
@@ -1878,7 +1874,7 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "CHOC",
+        "CHOCOLATE",
         "ESPRESSO",
         "SKY",
         "VANILLA"
@@ -2599,7 +2595,7 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "CHOC"
+        "CHOCOLATE"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -2815,7 +2811,7 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "CHOC",
+        "CHOCOLATE",
         "TAN"
       ],
       "isAllNew": false,
@@ -2855,7 +2851,7 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "CHOC"
+        "CHOCOLATE"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -2893,7 +2889,7 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "CHOC",
+        "CHOCOLATE",
         "DOVE",
         "PETAL",
         "RED",
@@ -3065,7 +3061,7 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "CHOC",
+        "CHOCOLATE",
         "SKY",
         "VINO",
         "WHITE"
@@ -3092,7 +3088,7 @@ export const skuData = {
       "colours": [
         "BLACK",
         "CHOC",
-        "FUSCHIA",
+        "FUCHSIA",
         "VANILLA",
         "VINO"
       ],
@@ -3279,7 +3275,7 @@ export const skuData = {
         "NUBUCK"
       ],
       "colours": [
-        "FUSCHIA"
+        "FUCHSIA"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -3414,7 +3410,7 @@ export const skuData = {
       "colours": [
         "ASHEN",
         "BLACK",
-        "CHOC",
+        "CHOCOLATE",
         "ESPRESSO",
         "VINO"
       ],
@@ -3617,7 +3613,7 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "CHOC"
+        "CHOCOLATE"
       ],
       "isAllNew": false,
       "hasNew": false,
@@ -4555,7 +4551,7 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "CHOC",
+        "CHOCOLATE",
         "CLEAR",
         "ESPRESSO"
       ],
@@ -4788,8 +4784,8 @@ export const skuData = {
     },
     {
       "name": "NAPPA",
-      "allCount": 188,
-      "newCount": 71
+      "allCount": 189,
+      "newCount": 70
     },
     {
       "name": "VINTAGE",
@@ -4808,8 +4804,8 @@ export const skuData = {
     },
     {
       "name": "NAPPA METALLIC",
-      "allCount": 28,
-      "newCount": 7
+      "allCount": 30,
+      "newCount": 9
     },
     {
       "name": "NUBUCK",
@@ -4985,13 +4981,13 @@ export const skuData = {
   "colours": [
     {
       "name": "BLACK",
-      "allCount": 277,
+      "allCount": 278,
       "newCount": 87
     },
     {
       "name": "CHOC",
-      "allCount": 99,
-      "newCount": 35
+      "allCount": 86,
+      "newCount": 32
     },
     {
       "name": "ESPRESSO",
@@ -5030,8 +5026,8 @@ export const skuData = {
     },
     {
       "name": "SILVER",
-      "allCount": 23,
-      "newCount": 7
+      "allCount": 24,
+      "newCount": 8
     },
     {
       "name": "VANILLA",
@@ -5062,6 +5058,11 @@ export const skuData = {
       "name": "WHEAT",
       "allCount": 16,
       "newCount": 6
+    },
+    {
+      "name": "CHOCOLATE",
+      "allCount": 16,
+      "newCount": 3
     },
     {
       "name": "STONE",
@@ -5164,9 +5165,9 @@ export const skuData = {
       "newCount": 2
     },
     {
-      "name": "CHOCOLATE",
+      "name": "FUCHSIA",
       "allCount": 3,
-      "newCount": 0
+      "newCount": 2
     },
     {
       "name": "MIST",
@@ -5194,33 +5195,8 @@ export const skuData = {
       "newCount": 2
     },
     {
-      "name": "FUSCHIA",
-      "allCount": 2,
-      "newCount": 1
-    },
-    {
       "name": "BRONZE",
       "allCount": 2,
-      "newCount": 0
-    },
-    {
-      "name": "OFF-WHITE",
-      "allCount": 1,
-      "newCount": 0
-    },
-    {
-      "name": "CREAM",
-      "allCount": 1,
-      "newCount": 0
-    },
-    {
-      "name": "METALLIC",
-      "allCount": 1,
-      "newCount": 1
-    },
-    {
-      "name": "NAPPA",
-      "allCount": 1,
       "newCount": 0
     },
     {
@@ -5247,11 +5223,6 @@ export const skuData = {
       "name": "OAT",
       "allCount": 1,
       "newCount": 0
-    },
-    {
-      "name": "FUCHSIA",
-      "allCount": 1,
-      "newCount": 1
     },
     {
       "name": "GUNMETAL",
@@ -5304,7 +5275,7 @@ export const skuData = {
       },
       {
         "name": "CHOC",
-        "styleCount": 35,
+        "styleCount": 32,
         "bucket": "Well covered",
         "action": "CHOC is well represented across new SKUs \u2014 maintain current range"
       },
@@ -5429,6 +5400,12 @@ export const skuData = {
         "action": "WILLOW has moderate coverage \u2014 expand to more styles"
       },
       {
+        "name": "CHOCOLATE",
+        "styleCount": 3,
+        "bucket": "Expand",
+        "action": "CHOCOLATE has moderate coverage \u2014 expand to more styles"
+      },
+      {
         "name": "MIST",
         "styleCount": 3,
         "bucket": "Expand",
@@ -5459,16 +5436,16 @@ export const skuData = {
         "action": "INDIGO appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
+        "name": "FUCHSIA",
+        "styleCount": 2,
+        "bucket": "Priority expand",
+        "action": "FUCHSIA appears in very few new SKUs \u2014 prioritise adding to more styles"
+      },
+      {
         "name": "ASHEN",
         "styleCount": 2,
         "bucket": "Priority expand",
         "action": "ASHEN appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "METALLIC",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "METALLIC appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
         "name": "NUDE",
@@ -5487,18 +5464,6 @@ export const skuData = {
         "styleCount": 1,
         "bucket": "Priority expand",
         "action": "CLEAR appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "FUCHSIA",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "FUCHSIA appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "FUSCHIA",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "FUSCHIA appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
         "name": "BISCUIT",
@@ -5557,6 +5522,12 @@ export const skuData = {
         "action": "CAPRETTO is well represented across new SKUs \u2014 maintain current range"
       },
       {
+        "name": "NAPPA METALLIC",
+        "styleCount": 6,
+        "bucket": "Good coverage",
+        "action": "NAPPA METALLIC has good coverage \u2014 consider selective additions"
+      },
+      {
         "name": "SNAKE",
         "styleCount": 6,
         "bucket": "Good coverage",
@@ -5591,12 +5562,6 @@ export const skuData = {
         "styleCount": 5,
         "bucket": "Good coverage",
         "action": "COMO has good coverage \u2014 consider selective additions"
-      },
-      {
-        "name": "NAPPA METALLIC",
-        "styleCount": 5,
-        "bucket": "Good coverage",
-        "action": "NAPPA METALLIC has good coverage \u2014 consider selective additions"
       },
       {
         "name": "PATENT",
@@ -6037,14 +6002,6 @@ export const skuData = {
     },
     {
       "category": "Dress Shoe",
-      "style": "BABE",
-      "last": "BILLIE",
-      "colour": "OFF-WHITE",
-      "leather": "",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
       "style": "BAKER",
       "last": "BERTIE",
       "colour": "BLACK",
@@ -6345,14 +6302,6 @@ export const skuData = {
       "last": "BAMBI",
       "colour": "BLACK",
       "leather": "SUEDE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "BOHO",
-      "last": "BILLIE",
-      "colour": "CREAM",
-      "leather": "",
       "is_new": false
     },
     {
@@ -6791,7 +6740,7 @@ export const skuData = {
       "category": "Ballet Flat",
       "style": "CELESTE",
       "last": "CELESTE",
-      "colour": "CHOC",
+      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": false
     },
@@ -6808,15 +6757,15 @@ export const skuData = {
       "style": "CELESTE",
       "last": "CELESTE",
       "colour": "GOLD",
-      "leather": "NAPPA",
+      "leather": "NAPPA METALLIC",
       "is_new": true
     },
     {
       "category": "Ballet Flat",
       "style": "CELESTE",
       "last": "CELESTE",
-      "colour": "METALLIC",
-      "leather": "",
+      "colour": "SILVER",
+      "leather": "NAPPA METALLIC",
       "is_new": true
     },
     {
@@ -6847,7 +6796,7 @@ export const skuData = {
       "category": "Ballet Flat",
       "style": "CHARLI",
       "last": "CHEEKY/CUBA",
-      "colour": "CHOC",
+      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": false
     },
@@ -6879,7 +6828,7 @@ export const skuData = {
       "category": "Ballet Flat",
       "style": "CHELSEA",
       "last": "CHEEKY/CUBA",
-      "colour": "CHOC",
+      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": false
     },
@@ -7080,15 +7029,15 @@ export const skuData = {
       "style": "CITY",
       "last": "CELESTE",
       "colour": "BLACK",
-      "leather": "",
+      "leather": "NAPPA",
       "is_new": false
     },
     {
       "category": "Ballet Flat",
       "style": "CITY",
       "last": "CELESTE",
-      "colour": "NAPPA",
-      "leather": "",
+      "colour": "BLACK",
+      "leather": "NAPPA",
       "is_new": false
     },
     {
@@ -7543,7 +7492,7 @@ export const skuData = {
       "category": "Ballet Flat",
       "style": "CUBA",
       "last": "CHEEKY/CUBA",
-      "colour": "CHOC",
+      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": false
     },
@@ -8863,7 +8812,7 @@ export const skuData = {
       "category": "Loafer",
       "style": "GOMEZ",
       "last": "GIGI",
-      "colour": "CHOC",
+      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": false
     },
@@ -9999,7 +9948,7 @@ export const skuData = {
       "category": "Sandal",
       "style": "LAVA",
       "last": "LEXIA & LEXIA RUBBER",
-      "colour": "CHOC",
+      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": true
     },
@@ -10319,7 +10268,7 @@ export const skuData = {
       "category": "Sandal",
       "style": "LUCIE",
       "last": "LEXIA & LEXIA RUBBER",
-      "colour": "CHOC",
+      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": false
     },
@@ -10367,7 +10316,7 @@ export const skuData = {
       "category": "Sandal",
       "style": "LUNA",
       "last": "LEXIA & LEXIA RUBBER",
-      "colour": "CHOC",
+      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": true
     },
@@ -10415,7 +10364,7 @@ export const skuData = {
       "category": "Dress Shoe",
       "style": "MADDI",
       "last": "MADDI",
-      "colour": "CHOC",
+      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": false
     },
@@ -10743,7 +10692,7 @@ export const skuData = {
       "category": "Ballet Flat",
       "style": "MARTINEZ",
       "last": "MARTINEZ",
-      "colour": "CHOC",
+      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": true
     },
@@ -10807,7 +10756,7 @@ export const skuData = {
       "category": "Wedge",
       "style": "MATISSE",
       "last": "MATISSE",
-      "colour": "FUSCHIA",
+      "colour": "FUCHSIA",
       "leather": "NUBUCK",
       "is_new": false
     },
@@ -11079,7 +11028,7 @@ export const skuData = {
       "category": "Wedge",
       "style": "MISTY",
       "last": "MATISSE",
-      "colour": "FUSCHIA",
+      "colour": "FUCHSIA",
       "leather": "NUBUCK",
       "is_new": true
     },
@@ -11335,7 +11284,7 @@ export const skuData = {
       "category": "Dress Shoe",
       "style": "NESSA",
       "last": "NIKI",
-      "colour": "CHOC",
+      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": false
     },
@@ -11671,7 +11620,7 @@ export const skuData = {
       "category": "Dress Shoe",
       "style": "PHOEBE",
       "last": "PARIS",
-      "colour": "CHOC",
+      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": false
     },
@@ -13175,7 +13124,7 @@ export const skuData = {
       "category": "Wedge",
       "style": "VALERIE",
       "last": "VANITY",
-      "colour": "CHOC",
+      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": false
     },
