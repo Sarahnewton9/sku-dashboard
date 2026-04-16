@@ -9,17 +9,18 @@ export const skuData = {
     "totalStyles": 225,
     "brandNewStyles": 62,
     "stylesWithNew": 97,
+    "existingStyles": 128,
     "uniqueLeathers": 40,
     "uniqueColours": 57
   },
   "categories": [
     {
       "category": "Dress Shoe",
-      "totalStyles": 68,
-      "totalSKUs": 314,
+      "totalStyles": 67,
+      "totalSKUs": 305,
       "newSKUs": 105,
-      "existingSKUs": 209,
-      "pctNew": 33.4
+      "existingSKUs": 200,
+      "pctNew": 34.4
     },
     {
       "category": "Dress Sandal",
@@ -31,11 +32,11 @@ export const skuData = {
     },
     {
       "category": "Ballet Flat",
-      "totalStyles": 33,
-      "totalSKUs": 168,
+      "totalStyles": 34,
+      "totalSKUs": 177,
       "newSKUs": 60,
-      "existingSKUs": 108,
-      "pctNew": 35.7
+      "existingSKUs": 117,
+      "pctNew": 33.9
     },
     {
       "category": "Loafer",
@@ -2879,7 +2880,7 @@ export const skuData = {
     },
     {
       "style": "MADDI",
-      "category": "Dress Shoe",
+      "category": "Ballet Flat",
       "last": "MADDI",
       "totalSKUs": 8,
       "newSKUs": 3,
@@ -3150,7 +3151,7 @@ export const skuData = {
     },
     {
       "style": "MAXY",
-      "category": "Dress Shoe",
+      "category": "Ballet Flat",
       "last": "MADDI",
       "totalSKUs": 4,
       "newSKUs": 0,
@@ -3929,7 +3930,7 @@ export const skuData = {
     },
     {
       "style": "SAMMY",
-      "category": "Ballet Flat",
+      "category": "Dress Shoe",
       "last": "SIA",
       "totalSKUs": 3,
       "newSKUs": 3,
@@ -10359,7 +10360,7 @@ export const skuData = {
       "is_new": false
     },
     {
-      "category": "Dress Shoe",
+      "category": "Ballet Flat",
       "style": "MADDI",
       "last": "MADDI",
       "colour": "BLACK",
@@ -10367,7 +10368,7 @@ export const skuData = {
       "is_new": false
     },
     {
-      "category": "Dress Shoe",
+      "category": "Ballet Flat",
       "style": "MADDI",
       "last": "MADDI",
       "colour": "CHOCOLATE",
@@ -10375,7 +10376,7 @@ export const skuData = {
       "is_new": false
     },
     {
-      "category": "Dress Shoe",
+      "category": "Ballet Flat",
       "style": "MADDI",
       "last": "MADDI",
       "colour": "VINO",
@@ -10383,7 +10384,7 @@ export const skuData = {
       "is_new": false
     },
     {
-      "category": "Dress Shoe",
+      "category": "Ballet Flat",
       "style": "MADDI",
       "last": "MADDI",
       "colour": "DOVE",
@@ -10391,7 +10392,7 @@ export const skuData = {
       "is_new": false
     },
     {
-      "category": "Dress Shoe",
+      "category": "Ballet Flat",
       "style": "MADDI",
       "last": "MADDI",
       "colour": "SKY",
@@ -10399,7 +10400,7 @@ export const skuData = {
       "is_new": false
     },
     {
-      "category": "Dress Shoe",
+      "category": "Ballet Flat",
       "style": "MADDI",
       "last": "MADDI",
       "colour": "WILLOW",
@@ -10407,7 +10408,7 @@ export const skuData = {
       "is_new": true
     },
     {
-      "category": "Dress Shoe",
+      "category": "Ballet Flat",
       "style": "MADDI",
       "last": "MADDI",
       "colour": "RED",
@@ -10415,7 +10416,7 @@ export const skuData = {
       "is_new": true
     },
     {
-      "category": "Dress Shoe",
+      "category": "Ballet Flat",
       "style": "MADDI",
       "last": "MADDI",
       "colour": "PETAL",
@@ -10879,7 +10880,7 @@ export const skuData = {
       "is_new": false
     },
     {
-      "category": "Dress Shoe",
+      "category": "Ballet Flat",
       "style": "MAXY",
       "last": "MADDI",
       "colour": "BLACK",
@@ -10887,7 +10888,7 @@ export const skuData = {
       "is_new": false
     },
     {
-      "category": "Dress Shoe",
+      "category": "Ballet Flat",
       "style": "MAXY",
       "last": "MADDI",
       "colour": "ESPRESSO",
@@ -10895,7 +10896,7 @@ export const skuData = {
       "is_new": false
     },
     {
-      "category": "Dress Shoe",
+      "category": "Ballet Flat",
       "style": "MAXY",
       "last": "MADDI",
       "colour": "STEEL",
@@ -10903,7 +10904,7 @@ export const skuData = {
       "is_new": false
     },
     {
-      "category": "Dress Shoe",
+      "category": "Ballet Flat",
       "style": "MAXY",
       "last": "MADDI",
       "colour": "RED",
@@ -12127,7 +12128,7 @@ export const skuData = {
       "is_new": true
     },
     {
-      "category": "Ballet Flat",
+      "category": "Dress Shoe",
       "style": "SAMMY",
       "last": "SIA",
       "colour": "BLACK",
@@ -12135,7 +12136,7 @@ export const skuData = {
       "is_new": true
     },
     {
-      "category": "Ballet Flat",
+      "category": "Dress Shoe",
       "style": "SAMMY",
       "last": "SIA",
       "colour": "DOVE",
@@ -12143,7 +12144,7 @@ export const skuData = {
       "is_new": true
     },
     {
-      "category": "Ballet Flat",
+      "category": "Dress Shoe",
       "style": "SAMMY",
       "last": "SIA",
       "colour": "CHOC",

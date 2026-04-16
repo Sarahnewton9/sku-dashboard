@@ -109,7 +109,7 @@ function buildCombosFromRaw(): Combo[] {
     });
   }
 
-  return Array.from(map.values()).sort((a, b) => a.key.localeCompare(b.key));
+  return Array.from(map.values()).sort((a, b) => b.totalCount - a.totalCount || a.key.localeCompare(b.key));
 }
 
 const ALL_COMBOS = buildCombosFromRaw();
@@ -274,6 +274,10 @@ export default function ColourLeatherTab() {
 
                 {/* Badges */}
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* Total usage count */}
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-foreground/10 text-foreground border border-border">
+                    {displayCount} SKU{displayCount !== 1 ? "s" : ""}
+                  </span>
                   {combo.newCount > 0 ? (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
                       <Star className="w-2.5 h-2.5" />
