@@ -2371,7 +2371,9 @@ export const skuData = {
       "totalSKUs": 3,
       "newSKUs": 3,
       "existingSKUs": 0,
-      "leathers": [],
+      "leathers": [
+        "NAPPA"
+      ],
       "colours": [
         "BLACK",
         "CHOC",
@@ -4768,8 +4770,8 @@ export const skuData = {
     },
     {
       "name": "NAPPA",
-      "allCount": 189,
-      "newCount": 70
+      "allCount": 192,
+      "newCount": 73
     },
     {
       "name": "VINTAGE",
@@ -5460,7 +5462,7 @@ export const skuData = {
     "leathers": [
       {
         "name": "NAPPA",
-        "styleCount": 34,
+        "styleCount": 35,
         "bucket": "Well covered",
         "action": "NAPPA is well represented across new SKUs \u2014 maintain current range"
       },
@@ -9586,7 +9588,7 @@ export const skuData = {
       "style": "KALI",
       "last": "KALI",
       "colour": "BLACK",
-      "leather": "",
+      "leather": "NAPPA",
       "is_new": true
     },
     {
@@ -9594,7 +9596,7 @@ export const skuData = {
       "style": "KALI",
       "last": "KALI",
       "colour": "CHOC",
-      "leather": "",
+      "leather": "NAPPA",
       "is_new": true
     },
     {
@@ -9602,7 +9604,7 @@ export const skuData = {
       "style": "KALI",
       "last": "KALI",
       "colour": "OAT",
-      "leather": "",
+      "leather": "NAPPA",
       "is_new": true
     },
     {

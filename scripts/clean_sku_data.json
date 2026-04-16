@@ -5273,26 +5273,28 @@
       {
         "colour_leather": "BLACK",
         "colour": "BLACK",
-        "leather": "",
+        "leather": "NAPPA",
         "is_new": true
       },
       {
         "colour_leather": "CHOC",
         "colour": "CHOC",
-        "leather": "",
+        "leather": "NAPPA",
         "is_new": true
       },
       {
         "colour_leather": "OAT",
         "colour": "OAT",
-        "leather": "",
+        "leather": "NAPPA",
         "is_new": true
       }
     ],
     "total_skus": 3,
     "new_skus": 3,
     "existing_skus": 0,
-    "leathers": [],
+    "leathers": [
+      "NAPPA"
+    ],
     "colours": [
       "BLACK",
       "CHOC",
