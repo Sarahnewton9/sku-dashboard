@@ -9,7 +9,7 @@ export const skuData = {
     "totalStyles": 225,
     "brandNewStyles": 61,
     "stylesWithNew": 96,
-    "uniqueLeathers": 41,
+    "uniqueLeathers": 40,
     "uniqueColours": 62
   },
   "categories": [
@@ -1330,8 +1330,8 @@ export const skuData = {
       "newSKUs": 5,
       "existingSKUs": 0,
       "leathers": [
-        "ECRU SNAKE",
         "NAPPA PATENT",
+        "SNAKE",
         "VINTAGE"
       ],
       "colours": [
@@ -3108,8 +3108,8 @@ export const skuData = {
       "newSKUs": 3,
       "existingSKUs": 5,
       "leathers": [
-        "ECRU SNAKE",
         "NUBUCK",
+        "SNAKE",
         "SUEDE"
       ],
       "colours": [
@@ -4847,6 +4847,11 @@ export const skuData = {
       "newCount": 0
     },
     {
+      "name": "SNAKE",
+      "allCount": 15,
+      "newCount": 6
+    },
+    {
       "name": "BROCADE",
       "allCount": 15,
       "newCount": 6
@@ -4855,11 +4860,6 @@ export const skuData = {
       "name": "SATIN",
       "allCount": 14,
       "newCount": 14
-    },
-    {
-      "name": "SNAKE",
-      "allCount": 13,
-      "newCount": 5
     },
     {
       "name": "ANGUILLE",
@@ -4940,11 +4940,6 @@ export const skuData = {
       "name": "GLOMESH",
       "allCount": 2,
       "newCount": 0
-    },
-    {
-      "name": "ECRU SNAKE",
-      "allCount": 2,
-      "newCount": 1
     },
     {
       "name": "MICRO",
@@ -5562,6 +5557,12 @@ export const skuData = {
         "action": "CAPRETTO is well represented across new SKUs \u2014 maintain current range"
       },
       {
+        "name": "SNAKE",
+        "styleCount": 6,
+        "bucket": "Good coverage",
+        "action": "SNAKE has good coverage \u2014 consider selective additions"
+      },
+      {
         "name": "VENICE",
         "styleCount": 6,
         "bucket": "Good coverage",
@@ -5578,12 +5579,6 @@ export const skuData = {
         "styleCount": 5,
         "bucket": "Good coverage",
         "action": "NAPPA PATENT has good coverage \u2014 consider selective additions"
-      },
-      {
-        "name": "SNAKE",
-        "styleCount": 5,
-        "bucket": "Good coverage",
-        "action": "SNAKE has good coverage \u2014 consider selective additions"
       },
       {
         "name": "SPECKLE",
@@ -5656,12 +5651,6 @@ export const skuData = {
         "styleCount": 1,
         "bucket": "Priority expand",
         "action": "LUMIA VELVET appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "ECRU SNAKE",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "ECRU SNAKE appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
         "name": "VINYLITE",
@@ -8027,7 +8016,7 @@ export const skuData = {
       "style": "ELIZA",
       "last": "EDGY",
       "colour": "ECRU",
-      "leather": "ECRU SNAKE",
+      "leather": "SNAKE",
       "is_new": true
     },
     {
@@ -10859,7 +10848,7 @@ export const skuData = {
       "style": "MATRIX",
       "last": "MARLEY",
       "colour": "ECRU",
-      "leather": "ECRU SNAKE",
+      "leather": "SNAKE",
       "is_new": false
     },
     {

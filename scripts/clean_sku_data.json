@@ -2992,7 +2992,7 @@
       {
         "colour_leather": "ECRU SNAKE (BLK V)",
         "colour": "ECRU",
-        "leather": "ECRU SNAKE",
+        "leather": "SNAKE",
         "is_new": true
       },
       {
@@ -3006,8 +3006,8 @@
     "new_skus": 5,
     "existing_skus": 0,
     "leathers": [
-      "ECRU SNAKE",
       "NAPPA PATENT",
+      "SNAKE",
       "VINTAGE"
     ],
     "colours": [
@@ -6894,7 +6894,7 @@
       {
         "colour_leather": "ECRU SNAKE VINYLITE",
         "colour": "ECRU",
-        "leather": "ECRU SNAKE",
+        "leather": "SNAKE",
         "is_new": false
       },
       {
@@ -6920,8 +6920,8 @@
     "new_skus": 3,
     "existing_skus": 5,
     "leathers": [
-      "ECRU SNAKE",
       "NUBUCK",
+      "SNAKE",
       "SUEDE"
     ],
     "colours": [
