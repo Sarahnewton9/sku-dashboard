@@ -369,7 +369,7 @@
       {
         "colour_leather": "SKIN NAAPA",
         "colour": "SKIN",
-        "leather": "NAAPA",
+        "leather": "NAPPA",
         "is_new": false
       },
       {
@@ -383,7 +383,6 @@
     "new_skus": 0,
     "existing_skus": 3,
     "leathers": [
-      "NAAPA",
       "NAPPA",
       "NAPPA METALLIC"
     ],
@@ -1356,7 +1355,7 @@
       {
         "colour_leather": "BLUSH NB",
         "colour": "BLUSH",
-        "leather": "NB",
+        "leather": "NUBUCK",
         "is_new": false
       },
       {
@@ -1377,7 +1376,7 @@
     "existing_skus": 6,
     "leathers": [
       "NAPPA",
-      "NB"
+      "NUBUCK"
     ],
     "colours": [
       "BLACK",
@@ -1500,13 +1499,13 @@
       {
         "colour_leather": "BLACK WEAVE",
         "colour": "BLACK",
-        "leather": "WEAVE",
+        "leather": "VINTAGE",
         "is_new": false
       },
       {
         "colour_leather": "WHITE WEAVE",
         "colour": "WHITE",
-        "leather": "WEAVE",
+        "leather": "VINTAGE",
         "is_new": false
       }
     ],
@@ -1514,7 +1513,7 @@
     "new_skus": 0,
     "existing_skus": 2,
     "leathers": [
-      "WEAVE"
+      "VINTAGE"
     ],
     "colours": [
       "BLACK",
@@ -2558,7 +2557,7 @@
       {
         "colour_leather": "BLACK VINTAGE PETAL SUEDE",
         "colour": "BLACK",
-        "leather": "VINTAGE PETAL SUEDE",
+        "leather": "VINTAGE",
         "is_new": true
       },
       {
@@ -2604,8 +2603,7 @@
     "leathers": [
       "CROCO",
       "SUEDE",
-      "VINTAGE",
-      "VINTAGE PETAL SUEDE"
+      "VINTAGE"
     ],
     "colours": [
       "BLACK",
@@ -2994,7 +2992,7 @@
       {
         "colour_leather": "ECRU SNAKE (BLK V)",
         "colour": "ECRU",
-        "leather": "SNAKE (BLK V)",
+        "leather": "ECRU SNAKE",
         "is_new": true
       },
       {
@@ -3008,8 +3006,8 @@
     "new_skus": 5,
     "existing_skus": 0,
     "leathers": [
+      "ECRU SNAKE",
       "NAPPA PATENT",
-      "SNAKE (BLK V)",
       "VINTAGE"
     ],
     "colours": [
@@ -3214,7 +3212,7 @@
       {
         "colour_leather": "BLACK H SHINE",
         "colour": "BLACK",
-        "leather": "H SHINE",
+        "leather": "HI SHINE",
         "is_new": false
       }
     ],
@@ -3222,7 +3220,7 @@
     "new_skus": 0,
     "existing_skus": 1,
     "leathers": [
-      "H SHINE"
+      "HI SHINE"
     ],
     "colours": [
       "BLACK"
@@ -3916,43 +3914,43 @@
       {
         "colour_leather": "BLACK VALENCIA \u2013 BLK",
         "colour": "BLACK",
-        "leather": "VALENCIA \u2013 BLK",
+        "leather": "VALENCIA",
         "is_new": false
       },
       {
         "colour_leather": "VESTRA VALENCIA \u2013 BLK",
         "colour": "VESTRA",
-        "leather": "VALENCIA \u2013 BLK",
+        "leather": "VALENCIA",
         "is_new": false
       },
       {
         "colour_leather": "CHOC VALENCIAN\u2013 BLK",
         "colour": "CHOC",
-        "leather": "VALENCIAN\u2013 BLK",
+        "leather": "VALENCIA",
         "is_new": false
       },
       {
         "colour_leather": "TAN VINTAGE \u2013 MATCHING",
         "colour": "TAN",
-        "leather": "VINTAGE \u2013 MATCHING",
+        "leather": "VINTAGE",
         "is_new": false
       },
       {
         "colour_leather": "BLACK SUEDE- MATCH",
         "colour": "BLACK",
-        "leather": "SUEDE- MATCH",
+        "leather": "SUEDE",
         "is_new": false
       },
       {
         "colour_leather": "ESPRESSO SUEDE \u2013 BLACK",
         "colour": "ESPRESSO",
-        "leather": "SUEDE \u2013 BLACK",
+        "leather": "SUEDE",
         "is_new": false
       },
       {
         "colour_leather": "VINO SUEDE \u2013 BLACK",
         "colour": "VINO",
-        "leather": "SUEDE \u2013 BLACK",
+        "leather": "SUEDE",
         "is_new": false
       },
       {
@@ -3973,11 +3971,8 @@
     "existing_skus": 9,
     "leathers": [
       "SUEDE",
-      "SUEDE \u2013 BLACK",
-      "SUEDE- MATCH",
-      "VALENCIA \u2013 BLK",
-      "VALENCIAN\u2013 BLK",
-      "VINTAGE \u2013 MATCHING"
+      "VALENCIA",
+      "VINTAGE"
     ],
     "colours": [
       "ASHEN",
@@ -4029,7 +4024,7 @@
       {
         "colour_leather": "CHOC VINTAGE W",
         "colour": "CHOC",
-        "leather": "VINTAGE W",
+        "leather": "VINTAGE",
         "is_new": false
       },
       {
@@ -4045,8 +4040,7 @@
     "leathers": [
       "SUEDE",
       "VENICE",
-      "VINTAGE",
-      "VINTAGE W"
+      "VINTAGE"
     ],
     "colours": [
       "BLACK",
@@ -4134,7 +4128,7 @@
       {
         "colour_leather": "STONE SUEDE W",
         "colour": "STONE",
-        "leather": "SUEDE W",
+        "leather": "SUEDE",
         "is_new": false
       },
       {
@@ -4149,7 +4143,6 @@
     "existing_skus": 6,
     "leathers": [
       "SUEDE",
-      "SUEDE W",
       "VINTAGE"
     ],
     "colours": [
@@ -4488,25 +4481,25 @@
       {
         "colour_leather": "BLACK VINTAGE - BLK SOCK",
         "colour": "BLACK",
-        "leather": "VINTAGE - BLK SOCK",
+        "leather": "VINTAGE",
         "is_new": false
       },
       {
         "colour_leather": "TAN VINTAGE - BLACK SOCK",
         "colour": "TAN",
-        "leather": "VINTAGE - BLACK SOCK",
+        "leather": "VINTAGE",
         "is_new": false
       },
       {
         "colour_leather": "CHOC VINTAGE - BLACK SOCK",
         "colour": "CHOC",
-        "leather": "VINTAGE - BLACK SOCK",
+        "leather": "VINTAGE",
         "is_new": false
       },
       {
         "colour_leather": "VANILLA VINTAGE \u2013 BLACK SOCK",
         "colour": "VANILLA",
-        "leather": "VINTAGE \u2013 BLACK SOCK",
+        "leather": "VINTAGE",
         "is_new": false
       }
     ],
@@ -4514,9 +4507,7 @@
     "new_skus": 0,
     "existing_skus": 4,
     "leathers": [
-      "VINTAGE - BLACK SOCK",
-      "VINTAGE - BLK SOCK",
-      "VINTAGE \u2013 BLACK SOCK"
+      "VINTAGE"
     ],
     "colours": [
       "BLACK",
@@ -5055,25 +5046,25 @@
       {
         "colour_leather": "INDIGO NB",
         "colour": "INDIGO",
-        "leather": "NB",
+        "leather": "NUBUCK",
         "is_new": true
       },
       {
         "colour_leather": "WILLOW NB",
         "colour": "WILLOW",
-        "leather": "NB",
+        "leather": "NUBUCK",
         "is_new": true
       },
       {
         "colour_leather": "BLUSH NB",
         "colour": "BLUSH",
-        "leather": "NB",
+        "leather": "NUBUCK",
         "is_new": true
       },
       {
         "colour_leather": "BLACK NB",
         "colour": "BLACK",
-        "leather": "NB",
+        "leather": "NUBUCK",
         "is_new": true
       }
     ],
@@ -5081,7 +5072,7 @@
     "new_skus": 4,
     "existing_skus": 0,
     "leathers": [
-      "NB"
+      "NUBUCK"
     ],
     "colours": [
       "BLACK",
@@ -5358,25 +5349,25 @@
       {
         "colour_leather": "FUCHSIA NB",
         "colour": "FUCHSIA",
-        "leather": "NB",
+        "leather": "NUBUCK",
         "is_new": true
       },
       {
         "colour_leather": "BLUSH NB",
         "colour": "BLUSH",
-        "leather": "NB",
+        "leather": "NUBUCK",
         "is_new": false
       },
       {
         "colour_leather": "WILLOW NB",
         "colour": "WILLOW",
-        "leather": "NB",
+        "leather": "NUBUCK",
         "is_new": true
       },
       {
         "colour_leather": "INDIGO NB",
         "colour": "INDIGO",
-        "leather": "NB",
+        "leather": "NUBUCK",
         "is_new": true
       },
       {
@@ -5400,13 +5391,13 @@
       {
         "colour_leather": "SKY NB",
         "colour": "SKY",
-        "leather": "NB",
+        "leather": "NUBUCK",
         "is_new": false
       },
       {
         "colour_leather": "BLACK NB",
         "colour": "BLACK",
-        "leather": "NB",
+        "leather": "NUBUCK",
         "is_new": false
       }
     ],
@@ -5415,7 +5406,7 @@
     "existing_skus": 3,
     "leathers": [
       "NAPPA",
-      "NB",
+      "NUBUCK",
       "VINTAGE"
     ],
     "colours": [
@@ -5656,13 +5647,13 @@
       {
         "colour_leather": "BLACK COMO UPPER",
         "colour": "BLACK",
-        "leather": "COMO UPPER",
+        "leather": "COMO",
         "is_new": false
       },
       {
         "colour_leather": "CHOC VINTAGE UPPER",
         "colour": "CHOC",
-        "leather": "VINTAGE UPPER",
+        "leather": "VINTAGE",
         "is_new": false
       },
       {
@@ -5683,9 +5674,9 @@
     "existing_skus": 3,
     "leathers": [
       "CAPRETTO",
-      "COMO UPPER",
+      "COMO",
       "PONY",
-      "VINTAGE UPPER"
+      "VINTAGE"
     ],
     "colours": [
       "BLACK",
@@ -6531,7 +6522,7 @@
       {
         "colour_leather": "BLUSH SNAKE NO.4",
         "colour": "BLUSH",
-        "leather": "SNAKE NO.4",
+        "leather": "SNAKE",
         "is_new": false
       },
       {
@@ -6576,8 +6567,7 @@
     "existing_skus": 5,
     "leathers": [
       "NAPPA",
-      "SNAKE",
-      "SNAKE NO.4"
+      "SNAKE"
     ],
     "colours": [
       "BLACK",
@@ -6880,7 +6870,7 @@
       {
         "colour_leather": "JADE NB",
         "colour": "JADE",
-        "leather": "NB",
+        "leather": "NUBUCK",
         "is_new": false
       },
       {
@@ -6904,7 +6894,7 @@
       {
         "colour_leather": "ECRU SNAKE VINYLITE",
         "colour": "ECRU",
-        "leather": "SNAKE VINYLITE",
+        "leather": "ECRU SNAKE",
         "is_new": false
       },
       {
@@ -6930,8 +6920,8 @@
     "new_skus": 3,
     "existing_skus": 5,
     "leathers": [
-      "NB",
-      "SNAKE VINYLITE",
+      "ECRU SNAKE",
+      "NUBUCK",
       "SUEDE"
     ],
     "colours": [
@@ -7246,7 +7236,7 @@
       {
         "colour_leather": "FUSCHIA NB",
         "colour": "FUSCHIA",
-        "leather": "NB",
+        "leather": "NUBUCK",
         "is_new": true
       }
     ],
@@ -7254,7 +7244,7 @@
     "new_skus": 1,
     "existing_skus": 0,
     "leathers": [
-      "NB"
+      "NUBUCK"
     ],
     "colours": [
       "FUSCHIA"
@@ -8206,7 +8196,7 @@
       {
         "colour_leather": "DOVE NAPPA A",
         "colour": "DOVE",
-        "leather": "NAPPA A",
+        "leather": "NAPPA",
         "is_new": false
       },
       {
@@ -8232,7 +8222,7 @@
     "new_skus": 0,
     "existing_skus": 4,
     "leathers": [
-      "NAPPA A",
+      "NAPPA",
       "VINTAGE"
     ],
     "colours": [
@@ -8263,13 +8253,13 @@
       {
         "colour_leather": "SILVER NAPPA MET",
         "colour": "SILVER",
-        "leather": "NAPPA MET",
+        "leather": "NAPPA METALLIC",
         "is_new": true
       },
       {
         "colour_leather": "GOLD NAPPA MET",
         "colour": "GOLD",
-        "leather": "NAPPA MET",
+        "leather": "NAPPA METALLIC",
         "is_new": false
       },
       {
@@ -8291,7 +8281,7 @@
     "leathers": [
       "CAPRETTO",
       "NAPPA",
-      "NAPPA MET"
+      "NAPPA METALLIC"
     ],
     "colours": [
       "BLACK",
@@ -8396,13 +8386,13 @@
       {
         "colour_leather": "MIST SUEDE A",
         "colour": "MIST",
-        "leather": "SUEDE A",
+        "leather": "SUEDE",
         "is_new": true
       },
       {
         "colour_leather": "BLACK NAPPA A",
         "colour": "BLACK",
-        "leather": "NAPPA A",
+        "leather": "NAPPA",
         "is_new": true
       },
       {
@@ -8423,9 +8413,7 @@
     "existing_skus": 0,
     "leathers": [
       "NAPPA",
-      "NAPPA A",
-      "SUEDE",
-      "SUEDE A"
+      "SUEDE"
     ],
     "colours": [
       "BISCUIT",
@@ -8832,25 +8820,25 @@
       {
         "colour_leather": "MILK CAPRETTO \u2013 BLK VENICE TC",
         "colour": "MILK",
-        "leather": "CAPRETTO \u2013 BLK VENICE TC",
+        "leather": "CAPRETTO",
         "is_new": true
       },
       {
         "colour_leather": "PETAL SUEDE \u2013 PETAL NAPPA TC",
         "colour": "PETAL",
-        "leather": "SUEDE \u2013 PETAL NAPPA TC",
+        "leather": "SUEDE",
         "is_new": true
       },
       {
         "colour_leather": "SKY SUEDE \u2013 SKY VINTAGE TC",
         "colour": "SKY",
-        "leather": "SUEDE \u2013 SKY VINTAGE TC",
+        "leather": "SUEDE",
         "is_new": true
       },
       {
         "colour_leather": "ESPRESSO SUEDE \u2013 CHOC VINTAGE TC",
         "colour": "ESPRESSO",
-        "leather": "SUEDE \u2013 CHOC VINTAGE TC",
+        "leather": "SUEDE",
         "is_new": true
       }
     ],
@@ -8858,10 +8846,8 @@
     "new_skus": 4,
     "existing_skus": 0,
     "leathers": [
-      "CAPRETTO \u2013 BLK VENICE TC",
-      "SUEDE \u2013 CHOC VINTAGE TC",
-      "SUEDE \u2013 PETAL NAPPA TC",
-      "SUEDE \u2013 SKY VINTAGE TC"
+      "CAPRETTO",
+      "SUEDE"
     ],
     "colours": [
       "ESPRESSO",
@@ -8978,7 +8964,7 @@
       {
         "colour_leather": "SKIN CAP",
         "colour": "SKIN",
-        "leather": "CAP",
+        "leather": "CAPRETTO",
         "is_new": true
       },
       {
@@ -9004,7 +8990,6 @@
     "new_skus": 4,
     "existing_skus": 3,
     "leathers": [
-      "CAP",
       "CAPRETTO",
       "NAPPA",
       "VINTAGE"
@@ -9300,13 +9285,13 @@
       {
         "colour_leather": "BLACK TULE",
         "colour": "BLACK",
-        "leather": "TULE",
+        "leather": "TULLE",
         "is_new": false
       },
       {
         "colour_leather": "IVORY TULE",
         "colour": "IVORY",
-        "leather": "TULE",
+        "leather": "TULLE",
         "is_new": false
       }
     ],
@@ -9314,7 +9299,7 @@
     "new_skus": 0,
     "existing_skus": 2,
     "leathers": [
-      "TULE"
+      "TULLE"
     ],
     "colours": [
       "BLACK",
@@ -9779,7 +9764,7 @@
       {
         "colour_leather": "MIST SUEDE \u2013 MATCHING SOCK AND SOLE",
         "colour": "MIST",
-        "leather": "SUEDE \u2013 MATCHING SOCK AND SOLE",
+        "leather": "SUEDE",
         "is_new": true
       },
       {
@@ -9813,8 +9798,7 @@
     "leathers": [
       "CAPRETTO",
       "NAPPA",
-      "SUEDE",
-      "SUEDE \u2013 MATCHING SOCK AND SOLE"
+      "SUEDE"
     ],
     "colours": [
       "BLACK",

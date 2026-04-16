@@ -9,7 +9,7 @@ export const skuData = {
     "totalStyles": 225,
     "brandNewStyles": 61,
     "stylesWithNew": 96,
-    "uniqueLeathers": 69,
+    "uniqueLeathers": 41,
     "uniqueColours": 62
   },
   "categories": [
@@ -208,7 +208,6 @@ export const skuData = {
       "newSKUs": 0,
       "existingSKUs": 3,
       "leathers": [
-        "NAAPA",
         "NAPPA",
         "NAPPA METALLIC"
       ],
@@ -644,7 +643,7 @@ export const skuData = {
       "existingSKUs": 6,
       "leathers": [
         "NAPPA",
-        "NB"
+        "NUBUCK"
       ],
       "colours": [
         "BLACK",
@@ -709,7 +708,7 @@ export const skuData = {
       "newSKUs": 0,
       "existingSKUs": 2,
       "leathers": [
-        "WEAVE"
+        "VINTAGE"
       ],
       "colours": [
         "BLACK",
@@ -1144,8 +1143,7 @@ export const skuData = {
       "leathers": [
         "CROCO",
         "SUEDE",
-        "VINTAGE",
-        "VINTAGE PETAL SUEDE"
+        "VINTAGE"
       ],
       "colours": [
         "BLACK",
@@ -1332,8 +1330,8 @@ export const skuData = {
       "newSKUs": 5,
       "existingSKUs": 0,
       "leathers": [
+        "ECRU SNAKE",
         "NAPPA PATENT",
-        "SNAKE (BLK V)",
         "VINTAGE"
       ],
       "colours": [
@@ -1781,11 +1779,8 @@ export const skuData = {
       "existingSKUs": 9,
       "leathers": [
         "SUEDE",
-        "SUEDE \u2013 BLACK",
-        "SUEDE- MATCH",
-        "VALENCIA \u2013 BLK",
-        "VALENCIAN\u2013 BLK",
-        "VINTAGE \u2013 MATCHING"
+        "VALENCIA",
+        "VINTAGE"
       ],
       "colours": [
         "ASHEN",
@@ -1811,8 +1806,7 @@ export const skuData = {
       "leathers": [
         "SUEDE",
         "VENICE",
-        "VINTAGE",
-        "VINTAGE W"
+        "VINTAGE"
       ],
       "colours": [
         "BLACK",
@@ -1855,7 +1849,6 @@ export const skuData = {
       "existingSKUs": 6,
       "leathers": [
         "SUEDE",
-        "SUEDE W",
         "VINTAGE"
       ],
       "colours": [
@@ -2010,9 +2003,7 @@ export const skuData = {
       "newSKUs": 0,
       "existingSKUs": 4,
       "leathers": [
-        "VINTAGE - BLACK SOCK",
-        "VINTAGE - BLK SOCK",
-        "VINTAGE \u2013 BLACK SOCK"
+        "VINTAGE"
       ],
       "colours": [
         "BLACK",
@@ -2277,7 +2268,7 @@ export const skuData = {
       "newSKUs": 4,
       "existingSKUs": 0,
       "leathers": [
-        "NB"
+        "NUBUCK"
       ],
       "colours": [
         "BLACK",
@@ -2419,7 +2410,7 @@ export const skuData = {
       "existingSKUs": 3,
       "leathers": [
         "NAPPA",
-        "NB",
+        "NUBUCK",
         "VINTAGE"
       ],
       "colours": [
@@ -2561,9 +2552,9 @@ export const skuData = {
       "existingSKUs": 3,
       "leathers": [
         "CAPRETTO",
-        "COMO UPPER",
+        "COMO",
         "PONY",
-        "VINTAGE UPPER"
+        "VINTAGE"
       ],
       "colours": [
         "BLACK",
@@ -2968,8 +2959,7 @@ export const skuData = {
       "existingSKUs": 5,
       "leathers": [
         "NAPPA",
-        "SNAKE",
-        "SNAKE NO.4"
+        "SNAKE"
       ],
       "colours": [
         "BLACK",
@@ -3118,8 +3108,8 @@ export const skuData = {
       "newSKUs": 3,
       "existingSKUs": 5,
       "leathers": [
-        "NB",
-        "SNAKE VINYLITE",
+        "ECRU SNAKE",
+        "NUBUCK",
         "SUEDE"
       ],
       "colours": [
@@ -3286,7 +3276,7 @@ export const skuData = {
       "newSKUs": 1,
       "existingSKUs": 0,
       "leathers": [
-        "NB"
+        "NUBUCK"
       ],
       "colours": [
         "FUSCHIA"
@@ -3718,7 +3708,7 @@ export const skuData = {
       "newSKUs": 0,
       "existingSKUs": 4,
       "leathers": [
-        "NAPPA A",
+        "NAPPA",
         "VINTAGE"
       ],
       "colours": [
@@ -3741,7 +3731,7 @@ export const skuData = {
       "leathers": [
         "CAPRETTO",
         "NAPPA",
-        "NAPPA MET"
+        "NAPPA METALLIC"
       ],
       "colours": [
         "BLACK",
@@ -3801,9 +3791,7 @@ export const skuData = {
       "existingSKUs": 0,
       "leathers": [
         "NAPPA",
-        "NAPPA A",
-        "SUEDE",
-        "SUEDE A"
+        "SUEDE"
       ],
       "colours": [
         "BISCUIT",
@@ -3996,10 +3984,8 @@ export const skuData = {
       "newSKUs": 4,
       "existingSKUs": 0,
       "leathers": [
-        "CAPRETTO \u2013 BLK VENICE TC",
-        "SUEDE \u2013 CHOC VINTAGE TC",
-        "SUEDE \u2013 PETAL NAPPA TC",
-        "SUEDE \u2013 SKY VINTAGE TC"
+        "CAPRETTO",
+        "SUEDE"
       ],
       "colours": [
         "ESPRESSO",
@@ -4058,7 +4044,6 @@ export const skuData = {
       "newSKUs": 4,
       "existingSKUs": 3,
       "leathers": [
-        "CAP",
         "CAPRETTO",
         "NAPPA",
         "VINTAGE"
@@ -4194,7 +4179,7 @@ export const skuData = {
       "newSKUs": 0,
       "existingSKUs": 2,
       "leathers": [
-        "TULE"
+        "TULLE"
       ],
       "colours": [
         "BLACK",
@@ -4435,8 +4420,7 @@ export const skuData = {
       "leathers": [
         "CAPRETTO",
         "NAPPA",
-        "SUEDE",
-        "SUEDE \u2013 MATCHING SOCK AND SOLE"
+        "SUEDE"
       ],
       "colours": [
         "BLACK",
@@ -4799,18 +4783,18 @@ export const skuData = {
   "leathers": [
     {
       "name": "SUEDE",
-      "allCount": 192,
-      "newCount": 56
+      "allCount": 201,
+      "newCount": 61
     },
     {
       "name": "NAPPA",
-      "allCount": 185,
-      "newCount": 70
+      "allCount": 188,
+      "newCount": 71
     },
     {
       "name": "VINTAGE",
-      "allCount": 154,
-      "newCount": 65
+      "allCount": 164,
+      "newCount": 66
     },
     {
       "name": "PATENT",
@@ -4819,13 +4803,23 @@ export const skuData = {
     },
     {
       "name": "CAPRETTO",
-      "allCount": 32,
-      "newCount": 13
+      "allCount": 34,
+      "newCount": 15
     },
     {
       "name": "NAPPA METALLIC",
-      "allCount": 26,
-      "newCount": 6
+      "allCount": 28,
+      "newCount": 7
+    },
+    {
+      "name": "NUBUCK",
+      "allCount": 27,
+      "newCount": 8
+    },
+    {
+      "name": "COMO",
+      "allCount": 24,
+      "newCount": 5
     },
     {
       "name": "NAPPA PATENT",
@@ -4838,11 +4832,6 @@ export const skuData = {
       "newCount": 6
     },
     {
-      "name": "COMO",
-      "allCount": 23,
-      "newCount": 5
-    },
-    {
       "name": "CROCO",
       "allCount": 22,
       "newCount": 12
@@ -4853,14 +4842,14 @@ export const skuData = {
       "newCount": 7
     },
     {
+      "name": "VALENCIA",
+      "allCount": 18,
+      "newCount": 0
+    },
+    {
       "name": "BROCADE",
       "allCount": 15,
       "newCount": 6
-    },
-    {
-      "name": "VALENCIA",
-      "allCount": 15,
-      "newCount": 0
     },
     {
       "name": "SATIN",
@@ -4868,18 +4857,8 @@ export const skuData = {
       "newCount": 14
     },
     {
-      "name": "NUBUCK",
-      "allCount": 14,
-      "newCount": 0
-    },
-    {
-      "name": "NB",
-      "allCount": 13,
-      "newCount": 8
-    },
-    {
       "name": "SNAKE",
-      "allCount": 12,
+      "allCount": 13,
       "newCount": 5
     },
     {
@@ -4923,6 +4902,11 @@ export const skuData = {
       "newCount": 1
     },
     {
+      "name": "TULLE",
+      "allCount": 4,
+      "newCount": 0
+    },
+    {
       "name": "LUMIA VELVET",
       "allCount": 3,
       "newCount": 3
@@ -4953,32 +4937,17 @@ export const skuData = {
       "newCount": 0
     },
     {
-      "name": "WEAVE",
-      "allCount": 2,
-      "newCount": 0
-    },
-    {
       "name": "GLOMESH",
       "allCount": 2,
       "newCount": 0
     },
     {
+      "name": "ECRU SNAKE",
+      "allCount": 2,
+      "newCount": 1
+    },
+    {
       "name": "MICRO",
-      "allCount": 2,
-      "newCount": 0
-    },
-    {
-      "name": "VALENCIA \u2013 BLK",
-      "allCount": 2,
-      "newCount": 0
-    },
-    {
-      "name": "SUEDE \u2013 BLACK",
-      "allCount": 2,
-      "newCount": 0
-    },
-    {
-      "name": "VINTAGE - BLACK SOCK",
       "allCount": 2,
       "newCount": 0
     },
@@ -4998,92 +4967,12 @@ export const skuData = {
       "newCount": 0
     },
     {
-      "name": "TULLE",
-      "allCount": 2,
-      "newCount": 0
-    },
-    {
-      "name": "NAPPA A",
-      "allCount": 2,
-      "newCount": 1
-    },
-    {
-      "name": "NAPPA MET",
-      "allCount": 2,
-      "newCount": 1
-    },
-    {
-      "name": "TULE",
-      "allCount": 2,
-      "newCount": 0
-    },
-    {
-      "name": "NAAPA",
-      "allCount": 1,
-      "newCount": 0
-    },
-    {
       "name": "CROCO/ CHOC NAPPA -COV",
       "allCount": 1,
       "newCount": 1
     },
     {
-      "name": "VINTAGE PETAL SUEDE",
-      "allCount": 1,
-      "newCount": 1
-    },
-    {
-      "name": "SNAKE (BLK V)",
-      "allCount": 1,
-      "newCount": 1
-    },
-    {
-      "name": "VALENCIAN\u2013 BLK",
-      "allCount": 1,
-      "newCount": 0
-    },
-    {
-      "name": "VINTAGE \u2013 MATCHING",
-      "allCount": 1,
-      "newCount": 0
-    },
-    {
-      "name": "SUEDE- MATCH",
-      "allCount": 1,
-      "newCount": 0
-    },
-    {
-      "name": "VINTAGE W",
-      "allCount": 1,
-      "newCount": 0
-    },
-    {
-      "name": "SUEDE W",
-      "allCount": 1,
-      "newCount": 0
-    },
-    {
-      "name": "VINTAGE - BLK SOCK",
-      "allCount": 1,
-      "newCount": 0
-    },
-    {
-      "name": "VINTAGE \u2013 BLACK SOCK",
-      "allCount": 1,
-      "newCount": 0
-    },
-    {
       "name": "SCUBA",
-      "allCount": 1,
-      "newCount": 0
-    },
-    {
-      "name": "COMO UPPER",
-      "allCount": 1,
-      "newCount": 0
-    },
-    {
-      "name": "VINTAGE UPPER",
       "allCount": 1,
       "newCount": 0
     },
@@ -5096,51 +4985,6 @@ export const skuData = {
       "name": "TURIN",
       "allCount": 1,
       "newCount": 0
-    },
-    {
-      "name": "SNAKE NO.4",
-      "allCount": 1,
-      "newCount": 0
-    },
-    {
-      "name": "SNAKE VINYLITE",
-      "allCount": 1,
-      "newCount": 0
-    },
-    {
-      "name": "SUEDE A",
-      "allCount": 1,
-      "newCount": 1
-    },
-    {
-      "name": "CAPRETTO \u2013 BLK VENICE TC",
-      "allCount": 1,
-      "newCount": 1
-    },
-    {
-      "name": "SUEDE \u2013 PETAL NAPPA TC",
-      "allCount": 1,
-      "newCount": 1
-    },
-    {
-      "name": "SUEDE \u2013 SKY VINTAGE TC",
-      "allCount": 1,
-      "newCount": 1
-    },
-    {
-      "name": "SUEDE \u2013 CHOC VINTAGE TC",
-      "allCount": 1,
-      "newCount": 1
-    },
-    {
-      "name": "CAP",
-      "allCount": 1,
-      "newCount": 1
-    },
-    {
-      "name": "SUEDE \u2013 MATCHING SOCK AND SOLE",
-      "allCount": 1,
-      "newCount": 1
     }
   ],
   "colours": [
@@ -5707,13 +5551,13 @@ export const skuData = {
       },
       {
         "name": "SUEDE",
-        "styleCount": 18,
+        "styleCount": 19,
         "bucket": "Well covered",
         "action": "SUEDE is well represented across new SKUs \u2014 maintain current range"
       },
       {
         "name": "CAPRETTO",
-        "styleCount": 11,
+        "styleCount": 12,
         "bucket": "Well covered",
         "action": "CAPRETTO is well represented across new SKUs \u2014 maintain current range"
       },
@@ -5754,6 +5598,12 @@ export const skuData = {
         "action": "COMO has good coverage \u2014 consider selective additions"
       },
       {
+        "name": "NAPPA METALLIC",
+        "styleCount": 5,
+        "bucket": "Good coverage",
+        "action": "NAPPA METALLIC has good coverage \u2014 consider selective additions"
+      },
+      {
         "name": "PATENT",
         "styleCount": 4,
         "bucket": "Expand",
@@ -5772,16 +5622,10 @@ export const skuData = {
         "action": "CRINKLE has moderate coverage \u2014 expand to more styles"
       },
       {
-        "name": "NAPPA METALLIC",
-        "styleCount": 4,
-        "bucket": "Expand",
-        "action": "NAPPA METALLIC has moderate coverage \u2014 expand to more styles"
-      },
-      {
-        "name": "NB",
+        "name": "NUBUCK",
         "styleCount": 3,
         "bucket": "Expand",
-        "action": "NB has moderate coverage \u2014 expand to more styles"
+        "action": "NUBUCK has moderate coverage \u2014 expand to more styles"
       },
       {
         "name": "BROCADE",
@@ -5814,16 +5658,10 @@ export const skuData = {
         "action": "LUMIA VELVET appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
-        "name": "VINTAGE PETAL SUEDE",
+        "name": "ECRU SNAKE",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "VINTAGE PETAL SUEDE appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "SNAKE (BLK V)",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "SNAKE (BLK V) appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "ECRU SNAKE appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
         "name": "VINYLITE",
@@ -5844,58 +5682,10 @@ export const skuData = {
         "action": "BURNISH appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
-        "name": "NAPPA MET",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "NAPPA MET appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "SUEDE A",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "SUEDE A appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "NAPPA A",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "NAPPA A appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
         "name": "KID",
         "styleCount": 1,
         "bucket": "Priority expand",
         "action": "KID appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "CAPRETTO \u2013 BLK VENICE TC",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "CAPRETTO \u2013 BLK VENICE TC appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "SUEDE \u2013 PETAL NAPPA TC",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "SUEDE \u2013 PETAL NAPPA TC appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "SUEDE \u2013 SKY VINTAGE TC",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "SUEDE \u2013 SKY VINTAGE TC appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "SUEDE \u2013 CHOC VINTAGE TC",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "SUEDE \u2013 CHOC VINTAGE TC appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "CAP",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "CAP appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
         "name": "ANGUILLE",
@@ -5908,12 +5698,6 @@ export const skuData = {
         "styleCount": 1,
         "bucket": "Priority expand",
         "action": "SHINE appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "SUEDE \u2013 MATCHING SOCK AND SOLE",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "SUEDE \u2013 MATCHING SOCK AND SOLE appears in very few new SKUs \u2014 prioritise adding to more styles"
       }
     ]
   },
@@ -6243,7 +6027,7 @@ export const skuData = {
       "style": "AVI",
       "last": "ANNABELLE",
       "colour": "SKIN",
-      "leather": "NAAPA",
+      "leather": "NAPPA",
       "is_new": false
     },
     {
@@ -6979,7 +6763,7 @@ export const skuData = {
       "style": "CASPIAN",
       "last": "CHEEKY/CUBA",
       "colour": "BLUSH",
-      "leather": "NB",
+      "leather": "NUBUCK",
       "is_new": false
     },
     {
@@ -7083,7 +6867,7 @@ export const skuData = {
       "style": "CHEEKY",
       "last": "CHEEKY",
       "colour": "BLACK",
-      "leather": "WEAVE",
+      "leather": "VINTAGE",
       "is_new": false
     },
     {
@@ -7091,7 +6875,7 @@ export const skuData = {
       "style": "CHEEKY",
       "last": "CHEEKY",
       "colour": "WHITE",
-      "leather": "WEAVE",
+      "leather": "VINTAGE",
       "is_new": false
     },
     {
@@ -7915,7 +7699,7 @@ export const skuData = {
       "style": "DAZIE",
       "last": "DAZIE",
       "colour": "BLACK",
-      "leather": "VINTAGE PETAL SUEDE",
+      "leather": "VINTAGE",
       "is_new": true
     },
     {
@@ -8243,7 +8027,7 @@ export const skuData = {
       "style": "ELIZA",
       "last": "EDGY",
       "colour": "ECRU",
-      "leather": "SNAKE (BLK V)",
+      "leather": "ECRU SNAKE",
       "is_new": true
     },
     {
@@ -8875,7 +8659,7 @@ export const skuData = {
       "style": "GIGI",
       "last": "GIGI",
       "colour": "BLACK",
-      "leather": "VALENCIA \u2013 BLK",
+      "leather": "VALENCIA",
       "is_new": false
     },
     {
@@ -8883,7 +8667,7 @@ export const skuData = {
       "style": "GIGI",
       "last": "GIGI",
       "colour": "VESTRA",
-      "leather": "VALENCIA \u2013 BLK",
+      "leather": "VALENCIA",
       "is_new": false
     },
     {
@@ -8891,7 +8675,7 @@ export const skuData = {
       "style": "GIGI",
       "last": "GIGI",
       "colour": "CHOC",
-      "leather": "VALENCIAN\u2013 BLK",
+      "leather": "VALENCIA",
       "is_new": false
     },
     {
@@ -8899,7 +8683,7 @@ export const skuData = {
       "style": "GIGI",
       "last": "GIGI",
       "colour": "TAN",
-      "leather": "VINTAGE \u2013 MATCHING",
+      "leather": "VINTAGE",
       "is_new": false
     },
     {
@@ -8907,7 +8691,7 @@ export const skuData = {
       "style": "GIGI",
       "last": "GIGI",
       "colour": "BLACK",
-      "leather": "SUEDE- MATCH",
+      "leather": "SUEDE",
       "is_new": false
     },
     {
@@ -8915,7 +8699,7 @@ export const skuData = {
       "style": "GIGI",
       "last": "GIGI",
       "colour": "ESPRESSO",
-      "leather": "SUEDE \u2013 BLACK",
+      "leather": "SUEDE",
       "is_new": false
     },
     {
@@ -8923,7 +8707,7 @@ export const skuData = {
       "style": "GIGI",
       "last": "GIGI",
       "colour": "VINO",
-      "leather": "SUEDE \u2013 BLACK",
+      "leather": "SUEDE",
       "is_new": false
     },
     {
@@ -8987,7 +8771,7 @@ export const skuData = {
       "style": "GLACIER",
       "last": "GATSBY",
       "colour": "CHOC",
-      "leather": "VINTAGE W",
+      "leather": "VINTAGE",
       "is_new": false
     },
     {
@@ -9067,7 +8851,7 @@ export const skuData = {
       "style": "GLORIA",
       "last": "GIGI",
       "colour": "STONE",
-      "leather": "SUEDE W",
+      "leather": "SUEDE",
       "is_new": false
     },
     {
@@ -9331,7 +9115,7 @@ export const skuData = {
       "style": "HYPE",
       "last": "HALLIE",
       "colour": "BLACK",
-      "leather": "VINTAGE - BLK SOCK",
+      "leather": "VINTAGE",
       "is_new": false
     },
     {
@@ -9339,7 +9123,7 @@ export const skuData = {
       "style": "HYPE",
       "last": "HALLIE",
       "colour": "TAN",
-      "leather": "VINTAGE - BLACK SOCK",
+      "leather": "VINTAGE",
       "is_new": false
     },
     {
@@ -9347,7 +9131,7 @@ export const skuData = {
       "style": "HYPE",
       "last": "HALLIE",
       "colour": "CHOC",
-      "leather": "VINTAGE - BLACK SOCK",
+      "leather": "VINTAGE",
       "is_new": false
     },
     {
@@ -9355,7 +9139,7 @@ export const skuData = {
       "style": "HYPE",
       "last": "HALLIE",
       "colour": "VANILLA",
-      "leather": "VINTAGE \u2013 BLACK SOCK",
+      "leather": "VINTAGE",
       "is_new": false
     },
     {
@@ -9731,7 +9515,7 @@ export const skuData = {
       "style": "JOELLE",
       "last": "JAYDE",
       "colour": "INDIGO",
-      "leather": "NB",
+      "leather": "NUBUCK",
       "is_new": true
     },
     {
@@ -9739,7 +9523,7 @@ export const skuData = {
       "style": "JOELLE",
       "last": "JAYDE",
       "colour": "WILLOW",
-      "leather": "NB",
+      "leather": "NUBUCK",
       "is_new": true
     },
     {
@@ -9747,7 +9531,7 @@ export const skuData = {
       "style": "JOELLE",
       "last": "JAYDE",
       "colour": "BLUSH",
-      "leather": "NB",
+      "leather": "NUBUCK",
       "is_new": true
     },
     {
@@ -9755,7 +9539,7 @@ export const skuData = {
       "style": "JOELLE",
       "last": "JAYDE",
       "colour": "BLACK",
-      "leather": "NB",
+      "leather": "NUBUCK",
       "is_new": true
     },
     {
@@ -9947,7 +9731,7 @@ export const skuData = {
       "style": "KASSY",
       "last": "KRUZ",
       "colour": "FUCHSIA",
-      "leather": "NB",
+      "leather": "NUBUCK",
       "is_new": true
     },
     {
@@ -9955,7 +9739,7 @@ export const skuData = {
       "style": "KASSY",
       "last": "KRUZ",
       "colour": "BLUSH",
-      "leather": "NB",
+      "leather": "NUBUCK",
       "is_new": false
     },
     {
@@ -9963,7 +9747,7 @@ export const skuData = {
       "style": "KASSY",
       "last": "KRUZ",
       "colour": "WILLOW",
-      "leather": "NB",
+      "leather": "NUBUCK",
       "is_new": true
     },
     {
@@ -9971,7 +9755,7 @@ export const skuData = {
       "style": "KASSY",
       "last": "KRUZ",
       "colour": "INDIGO",
-      "leather": "NB",
+      "leather": "NUBUCK",
       "is_new": true
     },
     {
@@ -10003,7 +9787,7 @@ export const skuData = {
       "style": "KASSY",
       "last": "KRUZ",
       "colour": "SKY",
-      "leather": "NB",
+      "leather": "NUBUCK",
       "is_new": false
     },
     {
@@ -10011,7 +9795,7 @@ export const skuData = {
       "style": "KASSY",
       "last": "KRUZ",
       "colour": "BLACK",
-      "leather": "NB",
+      "leather": "NUBUCK",
       "is_new": false
     },
     {
@@ -10155,7 +9939,7 @@ export const skuData = {
       "style": "KYRA",
       "last": "KYRA",
       "colour": "BLACK",
-      "leather": "COMO UPPER",
+      "leather": "COMO",
       "is_new": false
     },
     {
@@ -10163,7 +9947,7 @@ export const skuData = {
       "style": "KYRA",
       "last": "KYRA",
       "colour": "CHOC",
-      "leather": "VINTAGE UPPER",
+      "leather": "VINTAGE",
       "is_new": false
     },
     {
@@ -10779,7 +10563,7 @@ export const skuData = {
       "style": "MARAMEO",
       "last": "MARLEY",
       "colour": "BLUSH",
-      "leather": "SNAKE NO.4",
+      "leather": "SNAKE",
       "is_new": false
     },
     {
@@ -11043,7 +10827,7 @@ export const skuData = {
       "style": "MATRIX",
       "last": "MARLEY",
       "colour": "JADE",
-      "leather": "NB",
+      "leather": "NUBUCK",
       "is_new": false
     },
     {
@@ -11075,7 +10859,7 @@ export const skuData = {
       "style": "MATRIX",
       "last": "MARLEY",
       "colour": "ECRU",
-      "leather": "SNAKE VINYLITE",
+      "leather": "ECRU SNAKE",
       "is_new": false
     },
     {
@@ -11307,7 +11091,7 @@ export const skuData = {
       "style": "MISTY",
       "last": "MATISSE",
       "colour": "FUSCHIA",
-      "leather": "NB",
+      "leather": "NUBUCK",
       "is_new": true
     },
     {
@@ -12011,7 +11795,7 @@ export const skuData = {
       "style": "ROBBIE",
       "last": "RUMA",
       "colour": "DOVE",
-      "leather": "NAPPA A",
+      "leather": "NAPPA",
       "is_new": false
     },
     {
@@ -12059,7 +11843,7 @@ export const skuData = {
       "style": "ROBYN",
       "last": "ROXIE",
       "colour": "SILVER",
-      "leather": "NAPPA MET",
+      "leather": "NAPPA METALLIC",
       "is_new": true
     },
     {
@@ -12067,7 +11851,7 @@ export const skuData = {
       "style": "ROBYN",
       "last": "ROXIE",
       "colour": "GOLD",
-      "leather": "NAPPA MET",
+      "leather": "NAPPA METALLIC",
       "is_new": false
     },
     {
@@ -12155,7 +11939,7 @@ export const skuData = {
       "style": "ROXIE",
       "last": "ROXIE",
       "colour": "MIST",
-      "leather": "SUEDE A",
+      "leather": "SUEDE",
       "is_new": true
     },
     {
@@ -12163,7 +11947,7 @@ export const skuData = {
       "style": "ROXIE",
       "last": "ROXIE",
       "colour": "BLACK",
-      "leather": "NAPPA A",
+      "leather": "NAPPA",
       "is_new": true
     },
     {
@@ -12475,7 +12259,7 @@ export const skuData = {
       "style": "SARAH",
       "last": "SIA",
       "colour": "MILK",
-      "leather": "CAPRETTO \u2013 BLK VENICE TC",
+      "leather": "CAPRETTO",
       "is_new": true
     },
     {
@@ -12483,7 +12267,7 @@ export const skuData = {
       "style": "SARAH",
       "last": "SIA",
       "colour": "PETAL",
-      "leather": "SUEDE \u2013 PETAL NAPPA TC",
+      "leather": "SUEDE",
       "is_new": true
     },
     {
@@ -12491,7 +12275,7 @@ export const skuData = {
       "style": "SARAH",
       "last": "SIA",
       "colour": "SKY",
-      "leather": "SUEDE \u2013 SKY VINTAGE TC",
+      "leather": "SUEDE",
       "is_new": true
     },
     {
@@ -12499,7 +12283,7 @@ export const skuData = {
       "style": "SARAH",
       "last": "SIA",
       "colour": "ESPRESSO",
-      "leather": "SUEDE \u2013 CHOC VINTAGE TC",
+      "leather": "SUEDE",
       "is_new": true
     },
     {
@@ -12587,7 +12371,7 @@ export const skuData = {
       "style": "SEZ",
       "last": "SANDRA",
       "colour": "SKIN",
-      "leather": "CAP",
+      "leather": "CAPRETTO",
       "is_new": true
     },
     {
@@ -12835,7 +12619,7 @@ export const skuData = {
       "style": "SILVIA",
       "last": "SANDRA",
       "colour": "BLACK",
-      "leather": "TULE",
+      "leather": "TULLE",
       "is_new": false
     },
     {
@@ -12843,7 +12627,7 @@ export const skuData = {
       "style": "SILVIA",
       "last": "SANDRA",
       "colour": "IVORY",
-      "leather": "TULE",
+      "leather": "TULLE",
       "is_new": false
     },
     {
@@ -13155,7 +12939,7 @@ export const skuData = {
       "style": "TIANA",
       "last": "TIANA",
       "colour": "MIST",
-      "leather": "SUEDE \u2013 MATCHING SOCK AND SOLE",
+      "leather": "SUEDE",
       "is_new": true
     },
     {
