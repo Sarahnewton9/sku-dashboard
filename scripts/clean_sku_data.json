@@ -1466,7 +1466,7 @@
       {
         "colour_leather": "WHITE WEAVE",
         "colour": "WHITE",
-        "leather": "VINTAGE",
+        "leather": "WEAVE",
         "is_new": false
       }
     ],
@@ -1474,7 +1474,8 @@
     "new_skus": 0,
     "existing_skus": 2,
     "leathers": [
-      "VINTAGE"
+      "VINTAGE",
+      "WEAVE"
     ],
     "colours": [
       "BLACK",
@@ -6685,14 +6686,16 @@
       {
         "colour_leather": "CLEAR",
         "colour": "CLEAR",
-        "leather": "",
+        "leather": "VINYLITE",
         "is_new": false
       }
     ],
     "total_skus": 1,
     "new_skus": 0,
     "existing_skus": 1,
-    "leathers": [],
+    "leathers": [
+      "VINYLITE"
+    ],
     "colours": [
       "CLEAR"
     ]
@@ -7533,7 +7536,7 @@
       {
         "colour_leather": "ASHEN NAPPA",
         "colour": "ASHEN",
-        "leather": "NAPPA",
+        "leather": "SUEDE",
         "is_new": false
       },
       {
@@ -7565,8 +7568,8 @@
     "new_skus": 0,
     "existing_skus": 8,
     "leathers": [
-      "NAPPA",
-      "SUEDE"
+      "SUEDE",
+      "NAPPA"
     ],
     "colours": [
       "ASHEN",

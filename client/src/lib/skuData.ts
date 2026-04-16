@@ -10,7 +10,7 @@ export const skuData = {
     "brandNewStyles": 58,
     "stylesWithNew": 93,
     "existingStyles": 131,
-    "uniqueLeathers": 39,
+    "uniqueLeathers": 40,
     "uniqueColours": 57
   },
   "categories": [
@@ -689,7 +689,8 @@ export const skuData = {
       "newSKUs": 0,
       "existingSKUs": 2,
       "leathers": [
-        "VINTAGE"
+        "VINTAGE",
+        "WEAVE"
       ],
       "colours": [
         "BLACK",
@@ -3027,7 +3028,9 @@ export const skuData = {
       "totalSKUs": 1,
       "newSKUs": 0,
       "existingSKUs": 1,
-      "leathers": [],
+      "leathers": [
+        "VINYLITE"
+      ],
       "colours": [
         "CLEAR"
       ],
@@ -4765,17 +4768,17 @@ export const skuData = {
   "leathers": [
     {
       "name": "SUEDE",
-      "allCount": 201,
+      "allCount": 202,
       "newCount": 50
     },
     {
       "name": "NAPPA",
-      "allCount": 192,
+      "allCount": 191,
       "newCount": 73
     },
     {
       "name": "VINTAGE",
-      "allCount": 164,
+      "allCount": 163,
       "newCount": 59
     },
     {
@@ -4864,14 +4867,14 @@ export const skuData = {
       "newCount": 2
     },
     {
+      "name": "VINYLITE",
+      "allCount": 7,
+      "newCount": 1
+    },
+    {
       "name": "SHINE",
       "allCount": 6,
       "newCount": 2
-    },
-    {
-      "name": "VINYLITE",
-      "allCount": 6,
-      "newCount": 1
     },
     {
       "name": "SPECKLE",
@@ -4941,6 +4944,11 @@ export const skuData = {
     {
       "name": "METALLIC",
       "allCount": 2,
+      "newCount": 0
+    },
+    {
+      "name": "WEAVE",
+      "allCount": 1,
       "newCount": 0
     },
     {
@@ -6756,7 +6764,7 @@ export const skuData = {
       "style": "CHEEKY",
       "last": "CHEEKY",
       "colour": "WHITE",
-      "leather": "VINTAGE",
+      "leather": "WEAVE",
       "is_new": false
     },
     {
@@ -10596,7 +10604,7 @@ export const skuData = {
       "style": "MARLEY",
       "last": "MARLEY",
       "colour": "CLEAR",
-      "leather": "",
+      "leather": "VINYLITE",
       "is_new": false
     },
     {
@@ -11244,7 +11252,7 @@ export const skuData = {
       "style": "NESSA",
       "last": "NIKI",
       "colour": "ASHEN",
-      "leather": "NAPPA",
+      "leather": "SUEDE",
       "is_new": false
     },
     {
