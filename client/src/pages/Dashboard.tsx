@@ -14,6 +14,7 @@ import StylesTab from "@/components/dashboard/StylesTab";
 import LeathersTab from "@/components/dashboard/LeathersTab";
 import ColoursTab from "@/components/dashboard/ColoursTab";
 import ExpansionTab from "@/components/dashboard/ExpansionTab";
+import ColourLeatherTab from "@/components/dashboard/ColourLeatherTab";
 import {
   LayoutDashboard,
   Tag,
@@ -22,9 +23,10 @@ import {
   Palette,
   TrendingUp,
   ChevronRight,
+  Combine,
 } from "lucide-react";
 
-type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "expansion";
+type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any> }[] = [
@@ -33,6 +35,7 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any> }[] = 
   { id: "styles", label: "By Style", icon: Table2 },
   { id: "leathers", label: "Leathers", icon: Layers },
   { id: "colours", label: "Colours", icon: Palette },
+  { id: "colourleather", label: "Colour/Leather", icon: Combine },
   { id: "expansion", label: "Expansion Analysis", icon: TrendingUp },
 ];
 
@@ -127,6 +130,7 @@ export default function Dashboard() {
               {activeTab === "styles" && `${skuData.styles.length} styles`}
               {activeTab === "leathers" && `${skuData.leathers.length} unique leather types`}
               {activeTab === "colours" && `${skuData.colours.length} unique colours`}
+              {activeTab === "colourleather" && "171 colour/leather combinations"}
               {activeTab === "expansion" && "New SKU coverage analysis"}
             </p>
           </div>
@@ -151,6 +155,7 @@ export default function Dashboard() {
             {activeTab === "styles" && <StylesTab />}
             {activeTab === "leathers" && <LeathersTab />}
             {activeTab === "colours" && <ColoursTab />}
+            {activeTab === "colourleather" && <ColourLeatherTab />}
             {activeTab === "expansion" && <ExpansionTab />}
           </div>
         </div>
