@@ -4,11 +4,11 @@
 export const skuData = {
   "summary": {
     "totalSKUs": 969,
-    "newSKUs": 326,
-    "existingSKUs": 643,
+    "newSKUs": 329,
+    "existingSKUs": 640,
     "totalStyles": 225,
-    "brandNewStyles": 61,
-    "stylesWithNew": 96,
+    "brandNewStyles": 62,
+    "stylesWithNew": 97,
     "uniqueLeathers": 40,
     "uniqueColours": 57
   },
@@ -25,9 +25,9 @@ export const skuData = {
       "category": "Dress Sandal",
       "totalStyles": 65,
       "totalSKUs": 280,
-      "newSKUs": 101,
-      "existingSKUs": 179,
-      "pctNew": 36.1
+      "newSKUs": 104,
+      "existingSKUs": 176,
+      "pctNew": 37.1
     },
     {
       "category": "Ballet Flat",
@@ -2385,16 +2385,16 @@ export const skuData = {
       "category": "Dress Sandal",
       "last": "KALI",
       "totalSKUs": 3,
-      "newSKUs": 0,
-      "existingSKUs": 3,
+      "newSKUs": 3,
+      "existingSKUs": 0,
       "leathers": [],
       "colours": [
         "BLACK",
         "CHOC",
         "OAT"
       ],
-      "isAllNew": false,
-      "hasNew": false,
+      "isAllNew": true,
+      "hasNew": true,
       "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/KALI_3038fa42.png"
     },
     {
@@ -4982,12 +4982,12 @@ export const skuData = {
     {
       "name": "BLACK",
       "allCount": 278,
-      "newCount": 87
+      "newCount": 88
     },
     {
       "name": "CHOC",
       "allCount": 86,
-      "newCount": 32
+      "newCount": 33
     },
     {
       "name": "ESPRESSO",
@@ -5222,7 +5222,7 @@ export const skuData = {
     {
       "name": "OAT",
       "allCount": 1,
-      "newCount": 0
+      "newCount": 1
     },
     {
       "name": "GUNMETAL",
@@ -5269,13 +5269,13 @@ export const skuData = {
     "colours": [
       {
         "name": "BLACK",
-        "styleCount": 72,
+        "styleCount": 73,
         "bucket": "Well covered",
         "action": "BLACK is well represented across new SKUs \u2014 maintain current range"
       },
       {
         "name": "CHOC",
-        "styleCount": 32,
+        "styleCount": 33,
         "bucket": "Well covered",
         "action": "CHOC is well represented across new SKUs \u2014 maintain current range"
       },
@@ -5464,6 +5464,12 @@ export const skuData = {
         "styleCount": 1,
         "bucket": "Priority expand",
         "action": "CLEAR appears in very few new SKUs \u2014 prioritise adding to more styles"
+      },
+      {
+        "name": "OAT",
+        "styleCount": 1,
+        "bucket": "Priority expand",
+        "action": "OAT appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
         "name": "BISCUIT",
@@ -9646,7 +9652,7 @@ export const skuData = {
       "last": "KALI",
       "colour": "BLACK",
       "leather": "",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Dress Sandal",
@@ -9654,7 +9660,7 @@ export const skuData = {
       "last": "KALI",
       "colour": "CHOC",
       "leather": "",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Dress Sandal",
@@ -9662,7 +9668,7 @@ export const skuData = {
       "last": "KALI",
       "colour": "OAT",
       "leather": "",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Dress Sandal",

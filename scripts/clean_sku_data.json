@@ -5297,24 +5297,24 @@
         "colour_leather": "BLACK",
         "colour": "BLACK",
         "leather": "",
-        "is_new": false
+        "is_new": true
       },
       {
         "colour_leather": "CHOC",
         "colour": "CHOC",
         "leather": "",
-        "is_new": false
+        "is_new": true
       },
       {
         "colour_leather": "OAT",
         "colour": "OAT",
         "leather": "",
-        "is_new": false
+        "is_new": true
       }
     ],
     "total_skus": 3,
-    "new_skus": 0,
-    "existing_skus": 3,
+    "new_skus": 3,
+    "existing_skus": 0,
     "leathers": [],
     "colours": [
       "BLACK",
