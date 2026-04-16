@@ -70,7 +70,7 @@ function buildCombosFromRaw(): Combo[] {
   const map = new Map<string, Combo>();
   const rawSkus: Array<{
     style: string; category: string; last: string;
-    colour: string; leather: string; isNew: boolean;
+    colour: string; leather: string; is_new: boolean;
   }> = (skuData as any).rawSkus ?? [];
 
   // Build a quick imageUrl lookup
@@ -98,13 +98,13 @@ function buildCombosFromRaw(): Combo[] {
     }
     const combo = map.get(key)!;
     combo.totalCount++;
-    if (sku.isNew) combo.newCount++;
-    else combo.existingCount++;
-    combo.skus.push({
-      style: sku.style,
-      category: sku.category,
-      last: sku.last,
-      isNew: sku.isNew,
+      if (sku.is_new) combo.newCount++;
+      else combo.existingCount++;
+      combo.skus.push({
+        style: sku.style,
+        category: sku.category,
+        last: sku.last,
+        isNew: sku.is_new,
       imageUrl: imageMap.get(sku.style) ?? "",
     });
   }
@@ -274,15 +274,21 @@ export default function ColourLeatherTab() {
 
                 {/* Badges */}
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  {combo.newCount > 0 && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                  {combo.newCount > 0 ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
                       <Star className="w-2.5 h-2.5" />
                       {combo.newCount} new
                     </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
+                      0 new
+                    </span>
                   )}
-                  <span className="text-xs text-muted-foreground">
-                    {displayCount} SKU{displayCount !== 1 ? "s" : ""}
-                  </span>
+                  {combo.existingCount > 0 && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                      {combo.existingCount} existing
+                    </span>
+                  )}
                   {/* Mini image strip (up to 4 thumbnails) */}
                   <div className="hidden sm:flex -space-x-2">
                     {Array.from(
