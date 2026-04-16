@@ -679,29 +679,6 @@
     ]
   },
   {
-    "style": "BILLIE",
-    "last": "BILLIE",
-    "page": 7,
-    "category": "Dress Shoe",
-    "skus": [
-      {
-        "colour_leather": "CHOC CROCO/ CHOC NAPPA -COV",
-        "colour": "CHOC",
-        "leather": "CROCO/ CHOC NAPPA -COV",
-        "is_new": true
-      }
-    ],
-    "total_skus": 1,
-    "new_skus": 1,
-    "existing_skus": 0,
-    "leathers": [
-      "CROCO/ CHOC NAPPA -COV"
-    ],
-    "colours": [
-      "CHOC"
-    ]
-  },
-  {
     "style": "BLAIRE",
     "last": "BLAIRE",
     "page": 8,
@@ -8617,66 +8594,66 @@
         "colour_leather": "ESPRESSO SUEDE",
         "colour": "ESPRESSO",
         "leather": "SUEDE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "TAUPE SUEDE",
         "colour": "TAUPE",
         "leather": "SUEDE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "WHEAT SUEDE",
         "colour": "WHEAT",
         "leather": "SUEDE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "ASHEN SUEDE",
         "colour": "ASHEN",
         "leather": "SUEDE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "CEMENTO SUEDE",
         "colour": "CEMENTO",
         "leather": "SUEDE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "BLACK SUEDE",
         "colour": "BLACK",
         "leather": "SUEDE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "BLACK VINTAGE",
         "colour": "BLACK",
         "leather": "VINTAGE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "CHOC VINTAGE",
         "colour": "CHOC",
         "leather": "VINTAGE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "MILK CAPRETTO",
         "colour": "MILK",
         "leather": "CAPRETTO",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "BLOSSOM SUEDE",
         "colour": "BLOSSOM",
         "leather": "SUEDE",
-        "is_new": true
+        "is_new": false
       }
     ],
     "total_skus": 10,
-    "new_skus": 10,
-    "existing_skus": 0,
+    "new_skus": 0,
+    "existing_skus": 10,
     "leathers": [
       "CAPRETTO",
       "SUEDE",
@@ -9188,60 +9165,60 @@
         "colour_leather": "BLACK VINTAGE",
         "colour": "BLACK",
         "leather": "VINTAGE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "ESPRESSO SUEDE",
         "colour": "ESPRESSO",
         "leather": "SUEDE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "WHEAT SUEDE",
         "colour": "WHEAT",
         "leather": "SUEDE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "ASHEN SUEDE",
         "colour": "ASHEN",
         "leather": "SUEDE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "STEEL SUEDE",
         "colour": "STEEL",
         "leather": "SUEDE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "ESPRESSO ANGUILLE",
         "colour": "ESPRESSO",
         "leather": "ANGUILLE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "VINO ANGUILLE",
         "colour": "VINO",
         "leather": "ANGUILLE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "CHOC VINTAGE",
         "colour": "CHOC",
         "leather": "VINTAGE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "TAN VINTAGE",
         "colour": "TAN",
         "leather": "VINTAGE",
-        "is_new": true
+        "is_new": false
       }
     ],
     "total_skus": 9,
-    "new_skus": 9,
-    "existing_skus": 0,
+    "new_skus": 0,
+    "existing_skus": 9,
     "leathers": [
       "ANGUILLE",
       "SUEDE",
@@ -9515,30 +9492,30 @@
         "colour_leather": "BLACK VINTAGE",
         "colour": "BLACK",
         "leather": "VINTAGE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "CHOC VINTAGE",
         "colour": "CHOC",
         "leather": "VINTAGE",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "MILK CAPRETTO",
         "colour": "MILK",
         "leather": "CAPRETTO",
-        "is_new": true
+        "is_new": false
       },
       {
         "colour_leather": "SKIN CAPRETTO",
         "colour": "SKIN",
         "leather": "CAPRETTO",
-        "is_new": true
+        "is_new": false
       }
     ],
     "total_skus": 4,
-    "new_skus": 4,
-    "existing_skus": 0,
+    "new_skus": 0,
+    "existing_skus": 4,
     "leathers": [
       "CAPRETTO",
       "VINTAGE"

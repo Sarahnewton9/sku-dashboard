@@ -3,24 +3,24 @@
 
 export const skuData = {
   "summary": {
-    "totalSKUs": 969,
-    "newSKUs": 329,
-    "existingSKUs": 640,
-    "totalStyles": 225,
-    "brandNewStyles": 62,
-    "stylesWithNew": 97,
-    "existingStyles": 128,
-    "uniqueLeathers": 40,
+    "totalSKUs": 968,
+    "newSKUs": 305,
+    "existingSKUs": 663,
+    "totalStyles": 224,
+    "brandNewStyles": 58,
+    "stylesWithNew": 93,
+    "existingStyles": 131,
+    "uniqueLeathers": 39,
     "uniqueColours": 57
   },
   "categories": [
     {
       "category": "Dress Shoe",
-      "totalStyles": 67,
-      "totalSKUs": 305,
-      "newSKUs": 105,
-      "existingSKUs": 200,
-      "pctNew": 34.4
+      "totalStyles": 66,
+      "totalSKUs": 304,
+      "newSKUs": 81,
+      "existingSKUs": 223,
+      "pctNew": 26.6
     },
     {
       "category": "Dress Sandal",
@@ -344,23 +344,6 @@ export const skuData = {
       "isAllNew": false,
       "hasNew": false,
       "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BIANCA_7818a6b4.png"
-    },
-    {
-      "style": "BILLIE",
-      "category": "Dress Shoe",
-      "last": "BILLIE",
-      "totalSKUs": 1,
-      "newSKUs": 1,
-      "existingSKUs": 0,
-      "leathers": [
-        "CROCO/ CHOC NAPPA -COV"
-      ],
-      "colours": [
-        "CHOC"
-      ],
-      "isAllNew": true,
-      "hasNew": true,
-      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BILLIE_a726d9ed.png"
     },
     {
       "style": "BLAIRE",
@@ -3906,8 +3889,8 @@ export const skuData = {
       "category": "Dress Shoe",
       "last": "SHIRLEY",
       "totalSKUs": 10,
-      "newSKUs": 10,
-      "existingSKUs": 0,
+      "newSKUs": 0,
+      "existingSKUs": 10,
       "leathers": [
         "CAPRETTO",
         "SUEDE",
@@ -3924,8 +3907,8 @@ export const skuData = {
         "TAUPE",
         "WHEAT"
       ],
-      "isAllNew": true,
-      "hasNew": true,
+      "isAllNew": false,
+      "hasNew": false,
       "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SAMAR_6d6fa000.png"
     },
     {
@@ -4147,8 +4130,8 @@ export const skuData = {
       "category": "Dress Shoe",
       "last": "SHIRLEY",
       "totalSKUs": 9,
-      "newSKUs": 9,
-      "existingSKUs": 0,
+      "newSKUs": 0,
+      "existingSKUs": 9,
       "leathers": [
         "ANGUILLE",
         "SUEDE",
@@ -4164,8 +4147,8 @@ export const skuData = {
         "VINO",
         "WHEAT"
       ],
-      "isAllNew": true,
-      "hasNew": true,
+      "isAllNew": false,
+      "hasNew": false,
       "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SICILY_875ed861.png"
     },
     {
@@ -4306,8 +4289,8 @@ export const skuData = {
       "category": "Dress Shoe",
       "last": "SHIRLEY",
       "totalSKUs": 4,
-      "newSKUs": 4,
-      "existingSKUs": 0,
+      "newSKUs": 0,
+      "existingSKUs": 4,
       "leathers": [
         "CAPRETTO",
         "VINTAGE"
@@ -4318,8 +4301,8 @@ export const skuData = {
         "MILK",
         "SKIN"
       ],
-      "isAllNew": true,
-      "hasNew": true,
+      "isAllNew": false,
+      "hasNew": false,
       "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/STEVIE_56d267ba.png"
     },
     {
@@ -4781,7 +4764,7 @@ export const skuData = {
     {
       "name": "SUEDE",
       "allCount": 201,
-      "newCount": 61
+      "newCount": 50
     },
     {
       "name": "NAPPA",
@@ -4791,7 +4774,7 @@ export const skuData = {
     {
       "name": "VINTAGE",
       "allCount": 164,
-      "newCount": 66
+      "newCount": 59
     },
     {
       "name": "PATENT",
@@ -4801,7 +4784,7 @@ export const skuData = {
     {
       "name": "CAPRETTO",
       "allCount": 34,
-      "newCount": 15
+      "newCount": 12
     },
     {
       "name": "NAPPA METALLIC",
@@ -4861,7 +4844,7 @@ export const skuData = {
     {
       "name": "ANGUILLE",
       "allCount": 12,
-      "newCount": 2
+      "newCount": 0
     },
     {
       "name": "HI-SHINE",
@@ -4959,11 +4942,6 @@ export const skuData = {
       "newCount": 0
     },
     {
-      "name": "CROCO/ CHOC NAPPA -COV",
-      "allCount": 1,
-      "newCount": 1
-    },
-    {
       "name": "SCUBA",
       "allCount": 1,
       "newCount": 0
@@ -4983,22 +4961,22 @@ export const skuData = {
     {
       "name": "BLACK",
       "allCount": 278,
-      "newCount": 88
+      "newCount": 84
     },
     {
       "name": "CHOC",
-      "allCount": 86,
-      "newCount": 33
+      "allCount": 85,
+      "newCount": 29
     },
     {
       "name": "ESPRESSO",
       "allCount": 65,
-      "newCount": 14
+      "newCount": 11
     },
     {
       "name": "TAN",
       "allCount": 49,
-      "newCount": 15
+      "newCount": 14
     },
     {
       "name": "DOVE",
@@ -5013,7 +4991,7 @@ export const skuData = {
     {
       "name": "VINO",
       "allCount": 36,
-      "newCount": 6
+      "newCount": 5
     },
     {
       "name": "PETAL",
@@ -5023,7 +5001,7 @@ export const skuData = {
     {
       "name": "MILK",
       "allCount": 24,
-      "newCount": 12
+      "newCount": 10
     },
     {
       "name": "SILVER",
@@ -5043,12 +5021,12 @@ export const skuData = {
     {
       "name": "SKIN",
       "allCount": 18,
-      "newCount": 3
+      "newCount": 2
     },
     {
       "name": "TAUPE",
       "allCount": 17,
-      "newCount": 4
+      "newCount": 3
     },
     {
       "name": "GOLD",
@@ -5058,7 +5036,7 @@ export const skuData = {
     {
       "name": "WHEAT",
       "allCount": 16,
-      "newCount": 6
+      "newCount": 4
     },
     {
       "name": "CHOCOLATE",
@@ -5073,7 +5051,7 @@ export const skuData = {
     {
       "name": "ASHEN",
       "allCount": 12,
-      "newCount": 2
+      "newCount": 0
     },
     {
       "name": "RED",
@@ -5083,7 +5061,7 @@ export const skuData = {
     {
       "name": "STEEL",
       "allCount": 11,
-      "newCount": 1
+      "newCount": 0
     },
     {
       "name": "ECRU",
@@ -5108,7 +5086,7 @@ export const skuData = {
     {
       "name": "CEMENTO",
       "allCount": 6,
-      "newCount": 1
+      "newCount": 0
     },
     {
       "name": "PERU",
@@ -5138,7 +5116,7 @@ export const skuData = {
     {
       "name": "BLOSSOM",
       "allCount": 5,
-      "newCount": 1
+      "newCount": 0
     },
     {
       "name": "BORDEAUX",
@@ -5270,13 +5248,13 @@ export const skuData = {
     "colours": [
       {
         "name": "BLACK",
-        "styleCount": 73,
+        "styleCount": 70,
         "bucket": "Well covered",
         "action": "BLACK is well represented across new SKUs \u2014 maintain current range"
       },
       {
         "name": "CHOC",
-        "styleCount": 33,
+        "styleCount": 29,
         "bucket": "Well covered",
         "action": "CHOC is well represented across new SKUs \u2014 maintain current range"
       },
@@ -5294,27 +5272,27 @@ export const skuData = {
       },
       {
         "name": "TAN",
-        "styleCount": 15,
+        "styleCount": 14,
         "bucket": "Well covered",
         "action": "TAN is well represented across new SKUs \u2014 maintain current range"
-      },
-      {
-        "name": "ESPRESSO",
-        "styleCount": 13,
-        "bucket": "Well covered",
-        "action": "ESPRESSO is well represented across new SKUs \u2014 maintain current range"
-      },
-      {
-        "name": "MILK",
-        "styleCount": 12,
-        "bucket": "Well covered",
-        "action": "MILK is well represented across new SKUs \u2014 maintain current range"
       },
       {
         "name": "DOVE",
         "styleCount": 11,
         "bucket": "Well covered",
         "action": "DOVE is well represented across new SKUs \u2014 maintain current range"
+      },
+      {
+        "name": "ESPRESSO",
+        "styleCount": 11,
+        "bucket": "Well covered",
+        "action": "ESPRESSO is well represented across new SKUs \u2014 maintain current range"
+      },
+      {
+        "name": "MILK",
+        "styleCount": 10,
+        "bucket": "Well covered",
+        "action": "MILK is well represented across new SKUs \u2014 maintain current range"
       },
       {
         "name": "SILVER",
@@ -5341,22 +5319,10 @@ export const skuData = {
         "action": "ECRU has good coverage \u2014 consider selective additions"
       },
       {
-        "name": "VINO",
-        "styleCount": 6,
-        "bucket": "Good coverage",
-        "action": "VINO has good coverage \u2014 consider selective additions"
-      },
-      {
         "name": "VANILLA",
         "styleCount": 6,
         "bucket": "Good coverage",
         "action": "VANILLA has good coverage \u2014 consider selective additions"
-      },
-      {
-        "name": "WHEAT",
-        "styleCount": 6,
-        "bucket": "Good coverage",
-        "action": "WHEAT has good coverage \u2014 consider selective additions"
       },
       {
         "name": "GOLD",
@@ -5371,6 +5337,12 @@ export const skuData = {
         "action": "RED has good coverage \u2014 consider selective additions"
       },
       {
+        "name": "VINO",
+        "styleCount": 5,
+        "bucket": "Good coverage",
+        "action": "VINO has good coverage \u2014 consider selective additions"
+      },
+      {
         "name": "TURQUOISE",
         "styleCount": 5,
         "bucket": "Good coverage",
@@ -5383,16 +5355,16 @@ export const skuData = {
         "action": "IVORY has moderate coverage \u2014 expand to more styles"
       },
       {
-        "name": "TAUPE",
+        "name": "WHEAT",
         "styleCount": 4,
         "bucket": "Expand",
-        "action": "TAUPE has moderate coverage \u2014 expand to more styles"
+        "action": "WHEAT has moderate coverage \u2014 expand to more styles"
       },
       {
-        "name": "SKIN",
+        "name": "TAUPE",
         "styleCount": 3,
         "bucket": "Expand",
-        "action": "SKIN has moderate coverage \u2014 expand to more styles"
+        "action": "TAUPE has moderate coverage \u2014 expand to more styles"
       },
       {
         "name": "WILLOW",
@@ -5431,6 +5403,12 @@ export const skuData = {
         "action": "MINT appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
+        "name": "SKIN",
+        "styleCount": 2,
+        "bucket": "Priority expand",
+        "action": "SKIN appears in very few new SKUs \u2014 prioritise adding to more styles"
+      },
+      {
         "name": "INDIGO",
         "styleCount": 2,
         "bucket": "Priority expand",
@@ -5441,12 +5419,6 @@ export const skuData = {
         "styleCount": 2,
         "bucket": "Priority expand",
         "action": "FUCHSIA appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "ASHEN",
-        "styleCount": 2,
-        "bucket": "Priority expand",
-        "action": "ASHEN appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
         "name": "NUDE",
@@ -5479,28 +5451,10 @@ export const skuData = {
         "action": "BISCUIT appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
-        "name": "CEMENTO",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "CEMENTO appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "BLOSSOM",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "BLOSSOM appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
         "name": "DENIM",
         "styleCount": 1,
         "bucket": "Priority expand",
         "action": "DENIM appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "STEEL",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "STEEL appears in very few new SKUs \u2014 prioritise adding to more styles"
       }
     ],
     "leathers": [
@@ -5512,19 +5466,19 @@ export const skuData = {
       },
       {
         "name": "VINTAGE",
-        "styleCount": 30,
+        "styleCount": 27,
         "bucket": "Well covered",
         "action": "VINTAGE is well represented across new SKUs \u2014 maintain current range"
       },
       {
         "name": "SUEDE",
-        "styleCount": 19,
+        "styleCount": 17,
         "bucket": "Well covered",
         "action": "SUEDE is well represented across new SKUs \u2014 maintain current range"
       },
       {
         "name": "CAPRETTO",
-        "styleCount": 12,
+        "styleCount": 10,
         "bucket": "Well covered",
         "action": "CAPRETTO is well represented across new SKUs \u2014 maintain current range"
       },
@@ -5607,12 +5561,6 @@ export const skuData = {
         "action": "WOVEN appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
-        "name": "CROCO/ CHOC NAPPA -COV",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "CROCO/ CHOC NAPPA -COV appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
         "name": "MESH",
         "styleCount": 1,
         "bucket": "Priority expand",
@@ -5647,12 +5595,6 @@ export const skuData = {
         "styleCount": 1,
         "bucket": "Priority expand",
         "action": "KID appears in very few new SKUs \u2014 prioritise adding to more styles"
-      },
-      {
-        "name": "ANGUILLE",
-        "styleCount": 1,
-        "bucket": "Priority expand",
-        "action": "ANGUILLE appears in very few new SKUs \u2014 prioritise adding to more styles"
       },
       {
         "name": "SHINE",
@@ -6214,14 +6156,6 @@ export const skuData = {
       "colour": "STEEL",
       "leather": "SUEDE",
       "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "BILLIE",
-      "last": "BILLIE",
-      "colour": "CHOC",
-      "leather": "CROCO/ CHOC NAPPA -COV",
-      "is_new": true
     },
     {
       "category": "Sandal",
@@ -12053,7 +11987,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "ESPRESSO",
       "leather": "SUEDE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12061,7 +11995,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "TAUPE",
       "leather": "SUEDE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12069,7 +12003,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "WHEAT",
       "leather": "SUEDE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12077,7 +12011,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "ASHEN",
       "leather": "SUEDE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12085,7 +12019,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "CEMENTO",
       "leather": "SUEDE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12093,7 +12027,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "BLACK",
       "leather": "SUEDE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12101,7 +12035,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "BLACK",
       "leather": "VINTAGE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12109,7 +12043,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "CHOC",
       "leather": "VINTAGE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12117,7 +12051,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "MILK",
       "leather": "CAPRETTO",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12125,7 +12059,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "BLOSSOM",
       "leather": "SUEDE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12493,7 +12427,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "BLACK",
       "leather": "VINTAGE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12501,7 +12435,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "ESPRESSO",
       "leather": "SUEDE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12509,7 +12443,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "WHEAT",
       "leather": "SUEDE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12517,7 +12451,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "ASHEN",
       "leather": "SUEDE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12525,7 +12459,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "STEEL",
       "leather": "SUEDE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12533,7 +12467,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "ESPRESSO",
       "leather": "ANGUILLE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12541,7 +12475,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "VINO",
       "leather": "ANGUILLE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12549,7 +12483,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "CHOC",
       "leather": "VINTAGE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12557,7 +12491,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "TAN",
       "leather": "VINTAGE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Sandal",
@@ -12717,7 +12651,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "BLACK",
       "leather": "VINTAGE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12725,7 +12659,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "CHOC",
       "leather": "VINTAGE",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12733,7 +12667,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "MILK",
       "leather": "CAPRETTO",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12741,7 +12675,7 @@ export const skuData = {
       "last": "SHIRLEY",
       "colour": "SKIN",
       "leather": "CAPRETTO",
-      "is_new": true
+      "is_new": false
     },
     {
       "category": "Dress Sandal",
