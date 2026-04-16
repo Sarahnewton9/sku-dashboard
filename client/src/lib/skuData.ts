@@ -23,11 +23,11 @@ export const skuData = {
     },
     {
       "category": "Dress Sandal",
-      "totalStyles": 65,
-      "totalSKUs": 280,
-      "newSKUs": 104,
+      "totalStyles": 64,
+      "totalSKUs": 277,
+      "newSKUs": 101,
       "existingSKUs": 176,
-      "pctNew": 37.1
+      "pctNew": 36.5
     },
     {
       "category": "Ballet Flat",
@@ -55,11 +55,11 @@ export const skuData = {
     },
     {
       "category": "Sandal",
-      "totalStyles": 15,
-      "totalSKUs": 40,
-      "newSKUs": 14,
+      "totalStyles": 16,
+      "totalSKUs": 43,
+      "newSKUs": 17,
       "existingSKUs": 26,
-      "pctNew": 35.0
+      "pctNew": 39.5
     },
     {
       "category": "Ankle Boot",
@@ -2382,7 +2382,7 @@ export const skuData = {
     },
     {
       "style": "KALI",
-      "category": "Dress Sandal",
+      "category": "Sandal",
       "last": "KALI",
       "totalSKUs": 3,
       "newSKUs": 3,
@@ -9647,7 +9647,7 @@ export const skuData = {
       "is_new": true
     },
     {
-      "category": "Dress Sandal",
+      "category": "Sandal",
       "style": "KALI",
       "last": "KALI",
       "colour": "BLACK",
@@ -9655,7 +9655,7 @@ export const skuData = {
       "is_new": true
     },
     {
-      "category": "Dress Sandal",
+      "category": "Sandal",
       "style": "KALI",
       "last": "KALI",
       "colour": "CHOC",
@@ -9663,7 +9663,7 @@ export const skuData = {
       "is_new": true
     },
     {
-      "category": "Dress Sandal",
+      "category": "Sandal",
       "style": "KALI",
       "last": "KALI",
       "colour": "OAT",
