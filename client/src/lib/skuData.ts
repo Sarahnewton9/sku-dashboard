@@ -4784,7 +4784,6 @@ export const skuData = {
       "style": "VIVA",
       "last": "VIVA",
       "category": "Dress Sandal",
-      "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/viva_db6c169f.png",
       "colours": [
         "BLACK",
         "CHOC",
@@ -4803,13 +4802,13 @@ export const skuData = {
       "newSKUs": 7,
       "existingSKUs": 0,
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/viva_db6c169f.png"
     },
     {
       "style": "VIKA",
       "last": "VIVA",
       "category": "Dress Sandal",
-      "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/vika_88e28b4d.png",
       "colours": [
         "BLACK",
         "CHOC",
@@ -4823,13 +4822,13 @@ export const skuData = {
       "newSKUs": 3,
       "existingSKUs": 0,
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/vika_88e28b4d.png"
     },
     {
       "style": "VINE",
       "last": "VIVA",
       "category": "Dress Sandal",
-      "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/vine_23cfe561.png",
       "colours": [
         "BLACK",
         "BLUSH",
@@ -4842,13 +4841,13 @@ export const skuData = {
       "newSKUs": 3,
       "existingSKUs": 0,
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/vine_23cfe561.png"
     },
     {
       "style": "PIXIE",
       "last": "PIXIE",
       "category": "Casual Flat",
-      "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/pixie_c90860a6.png",
       "colours": [
         "BLACK",
         "BLUSH",
@@ -4869,13 +4868,13 @@ export const skuData = {
       "newSKUs": 8,
       "existingSKUs": 0,
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/pixie_c90860a6.png"
     },
     {
       "style": "TINA",
       "last": "TILDA",
       "category": "Dress Sandal",
-      "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/tina_9cfdb72a.png",
       "colours": [
         "BLACK",
         "CHOC",
@@ -4891,13 +4890,13 @@ export const skuData = {
       "newSKUs": 4,
       "existingSKUs": 0,
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/tina_9cfdb72a.png"
     },
     {
       "style": "TASHA",
       "last": "TILDA",
       "category": "Dress Sandal",
-      "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/tasha_02d3dab5.png",
       "colours": [
         "BLACK",
         "CHOC",
@@ -4910,13 +4909,13 @@ export const skuData = {
       "newSKUs": 3,
       "existingSKUs": 0,
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/tasha_02d3dab5.png"
     },
     {
       "style": "TRACK",
       "last": "TILDA",
       "category": "Dress Sandal",
-      "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/track_ff5a0015.png",
       "colours": [
         "BLACK",
         "CHOC",
@@ -4930,7 +4929,8 @@ export const skuData = {
       "newSKUs": 4,
       "existingSKUs": 0,
       "isAllNew": true,
-      "hasNew": true
+      "hasNew": true,
+      "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/track_ff5a0015.png"
     }
   ],
   "leathers": [
