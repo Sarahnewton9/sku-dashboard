@@ -3,12 +3,12 @@
 
 export const skuData = {
   "summary": {
-    "totalSKUs": 1083,
-    "newSKUs": 419,
-    "existingSKUs": 660,
+    "totalSKUs": 968,
+    "newSKUs": 305,
+    "existingSKUs": 663,
     "totalStyles": 224,
     "brandNewStyles": 58,
-    "stylesWithNew": 35,
+    "stylesWithNew": 93,
     "existingStyles": 131,
     "uniqueLeathers": 40,
     "uniqueColours": 57
@@ -2530,8 +2530,8 @@ export const skuData = {
       "style": "KYRA",
       "category": "Sandal",
       "last": "KYRA",
-      "totalSKUs": 5,
-      "newSKUs": 2,
+      "totalSKUs": 4,
+      "newSKUs": 1,
       "existingSKUs": 3,
       "leathers": [
         "CAPRETTO",
@@ -2541,7 +2541,6 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "BLACK PONY / BLACK SUEDE / BLACK NAPPA WEDGE",
         "CHOC",
         "WHITE"
       ],
@@ -2575,15 +2574,14 @@ export const skuData = {
       "style": "LAVA",
       "category": "Sandal",
       "last": "LEXIA & LEXIA RUBBER",
-      "totalSKUs": 3,
-      "newSKUs": 3,
+      "totalSKUs": 2,
+      "newSKUs": 2,
       "existingSKUs": 0,
       "leathers": [
         "NAPPA"
       ],
       "colours": [
         "BLACK",
-        "CHOC",
         "CHOCOLATE"
       ],
       "isAllNew": true,
@@ -2594,8 +2592,8 @@ export const skuData = {
       "style": "LEGACY",
       "category": "Dress Shoe",
       "last": "LILA",
-      "totalSKUs": 8,
-      "newSKUs": 8,
+      "totalSKUs": 3,
+      "newSKUs": 3,
       "existingSKUs": 0,
       "leathers": [
         "COMO",
@@ -2603,13 +2601,8 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "BLACK COMO / BLK PATENT",
-        "BLACK COMO / PETAL NAPPA PATENT",
-        "BLACK COMO / TURQUOISE NAPPA PATENT",
         "DOVE",
-        "DOVE NAPPA / BLACK PATENT",
-        "PERU",
-        "PERU NAPPA / BLK PATENT"
+        "PERU"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -2637,22 +2630,17 @@ export const skuData = {
       "style": "LIA",
       "category": "Dress Sandal",
       "last": "LUCY",
-      "totalSKUs": 9,
-      "newSKUs": 9,
+      "totalSKUs": 4,
+      "newSKUs": 4,
       "existingSKUs": 0,
       "leathers": [
         "VINTAGE"
       ],
       "colours": [
         "BLACK",
-        "BLACK VINTAGE",
         "CHOC",
-        "CHOC VINTAGE",
         "PETAL",
-        "PETAL VINTAGE",
-        "SKY VINTAGE",
-        "TAN",
-        "TAN VINTAGE"
+        "TAN"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -2709,8 +2697,8 @@ export const skuData = {
       "style": "LILI",
       "category": "Dress Shoe",
       "last": "LILA",
-      "totalSKUs": 6,
-      "newSKUs": 6,
+      "totalSKUs": 4,
+      "newSKUs": 4,
       "existingSKUs": 0,
       "leathers": [
         "SUEDE"
@@ -2718,9 +2706,7 @@ export const skuData = {
       "colours": [
         "BLACK",
         "ESPRESSO",
-        "MIST",
         "PETAL",
-        "TURQUOISE",
         "WHEAT"
       ],
       "isAllNew": true,
@@ -2766,8 +2752,8 @@ export const skuData = {
       "style": "LUANA",
       "category": "Dress Sandal",
       "last": "LUCY",
-      "totalSKUs": 6,
-      "newSKUs": 6,
+      "totalSKUs": 3,
+      "newSKUs": 3,
       "existingSKUs": 0,
       "leathers": [
         "CAPRETTO",
@@ -2776,11 +2762,8 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "BLACK NAPPA",
         "MILK",
-        "MILK CAPRETTO",
-        "SILVER",
-        "SILVER NAPPA METALLIC"
+        "SILVER"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -2826,8 +2809,8 @@ export const skuData = {
       "style": "LUCY",
       "category": "Dress Sandal",
       "last": "LUCY",
-      "totalSKUs": 8,
-      "newSKUs": 8,
+      "totalSKUs": 4,
+      "newSKUs": 4,
       "existingSKUs": 0,
       "leathers": [
         "CAPRETTO",
@@ -2835,13 +2818,9 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "BLACK VINTAGE",
         "CHOC",
-        "CHOC VINTAGE",
         "MILK",
-        "MILK CAPRETTO",
-        "TAN",
-        "TAN VINTAGE"
+        "TAN"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -2851,15 +2830,14 @@ export const skuData = {
       "style": "LUNA",
       "category": "Sandal",
       "last": "LEXIA & LEXIA RUBBER",
-      "totalSKUs": 3,
-      "newSKUs": 3,
+      "totalSKUs": 2,
+      "newSKUs": 2,
       "existingSKUs": 0,
       "leathers": [
         "NAPPA"
       ],
       "colours": [
         "BLACK",
-        "CHOC",
         "CHOCOLATE"
       ],
       "isAllNew": true,
@@ -2890,8 +2868,8 @@ export const skuData = {
       "style": "MADDI",
       "category": "Ballet Flat",
       "last": "MADDI",
-      "totalSKUs": 6,
-      "newSKUs": 1,
+      "totalSKUs": 8,
+      "newSKUs": 3,
       "existingSKUs": 5,
       "leathers": [
         "NAPPA"
@@ -2902,7 +2880,9 @@ export const skuData = {
         "DOVE",
         "PETAL",
         "RED",
-        "VINO"
+        "SKY",
+        "VINO",
+        "WILLOW"
       ],
       "isAllNew": false,
       "hasNew": true,
@@ -2938,19 +2918,16 @@ export const skuData = {
       "style": "MAMZELLE",
       "category": "Ballet Flat",
       "last": "MADDI",
-      "totalSKUs": 6,
-      "newSKUs": 6,
+      "totalSKUs": 3,
+      "newSKUs": 3,
       "existingSKUs": 0,
       "leathers": [
         "NAPPA"
       ],
       "colours": [
         "BLACK",
-        "BLACK NAPPA / BLACK PATENT T/C",
         "DOVE",
-        "DOVE NAPPA / BLACK NAPPA",
-        "PERU",
-        "PERU NAPPA / BLACK NAPPA"
+        "PERU"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -2960,9 +2937,9 @@ export const skuData = {
       "style": "MARAMEO",
       "category": "Dress Sandal",
       "last": "MARLEY",
-      "totalSKUs": 6,
+      "totalSKUs": 7,
       "newSKUs": 2,
-      "existingSKUs": 4,
+      "existingSKUs": 5,
       "leathers": [
         "NAPPA",
         "SNAKE"
@@ -2971,6 +2948,7 @@ export const skuData = {
         "BLACK",
         "BLUSH",
         "CHOC",
+        "PETAL",
         "PORCELAIN",
         "SKY",
         "TURQUOISE"
@@ -3064,15 +3042,14 @@ export const skuData = {
       "style": "MARTINEZ",
       "category": "Ballet Flat",
       "last": "MARTINEZ",
-      "totalSKUs": 6,
-      "newSKUs": 4,
+      "totalSKUs": 5,
+      "newSKUs": 3,
       "existingSKUs": 2,
       "leathers": [
         "NAPPA"
       ],
       "colours": [
         "BLACK",
-        "CHOC",
         "CHOCOLATE",
         "SKY",
         "VINO",
@@ -3086,8 +3063,8 @@ export const skuData = {
       "style": "MATISSE",
       "category": "Wedge",
       "last": "MATISSE",
-      "totalSKUs": 15,
-      "newSKUs": 12,
+      "totalSKUs": 8,
+      "newSKUs": 5,
       "existingSKUs": 3,
       "leathers": [
         "NAPPA",
@@ -3099,17 +3076,10 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "BLACK SATIN",
-        "BLACK SPECKLE / BLK VINTAGE",
-        "BLACK VINTAGE",
         "CHOC",
-        "CHOC SATIN",
-        "CHOC VENICE",
         "FUCHSIA",
         "VANILLA",
-        "VANILLA VINTAGE",
-        "VINO",
-        "VINO NAPPA"
+        "VINO"
       ],
       "isAllNew": false,
       "hasNew": true,
@@ -3119,8 +3089,8 @@ export const skuData = {
       "style": "MATRIX",
       "category": "Dress Sandal",
       "last": "MARLEY",
-      "totalSKUs": 12,
-      "newSKUs": 7,
+      "totalSKUs": 8,
+      "newSKUs": 3,
       "existingSKUs": 5,
       "leathers": [
         "NUBUCK",
@@ -3131,15 +3101,11 @@ export const skuData = {
         "BLACK",
         "CEMENTO",
         "ECRU",
-        "ECRU SNAKE VINYLITE",
         "ESPRESSO",
         "JADE",
         "PETAL",
-        "PETAL SUEDE",
         "SKY",
-        "SKY SUEDE",
-        "TURQUOISE",
-        "TURQUOISE SUEDE"
+        "TURQUOISE"
       ],
       "isAllNew": false,
       "hasNew": true,
@@ -3232,19 +3198,16 @@ export const skuData = {
       "style": "MILAN",
       "category": "Wedge",
       "last": "MATISSE",
-      "totalSKUs": 6,
-      "newSKUs": 6,
+      "totalSKUs": 3,
+      "newSKUs": 3,
       "existingSKUs": 0,
       "leathers": [
         "VINTAGE"
       ],
       "colours": [
         "BLACK",
-        "BLACK VINTAGE",
         "TAN",
-        "TAN VINTAGE",
-        "VANILLA",
-        "VANILLA VINTAGE"
+        "VANILLA"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -3273,8 +3236,8 @@ export const skuData = {
       "style": "MINTY",
       "category": "Wedge",
       "last": "MATISSE",
-      "totalSKUs": 8,
-      "newSKUs": 8,
+      "totalSKUs": 4,
+      "newSKUs": 4,
       "existingSKUs": 0,
       "leathers": [
         "CRINKLE",
@@ -3282,13 +3245,9 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "BLACK CRINKLE",
         "DOVE",
-        "DOVE CRINKLE",
         "PETAL",
-        "PETAL NAPPA",
-        "SKY",
-        "SKY NAPPA"
+        "SKY"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -3315,8 +3274,8 @@ export const skuData = {
       "style": "MIXA",
       "category": "Dress Sandal",
       "last": "MARLEY",
-      "totalSKUs": 12,
-      "newSKUs": 12,
+      "totalSKUs": 6,
+      "newSKUs": 6,
       "existingSKUs": 0,
       "leathers": [
         "SUEDE",
@@ -3324,16 +3283,10 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "BLACK SUEDE",
-        "BLACK VINTAGE",
         "MIST",
-        "MIST SUEDE",
         "PETAL",
-        "PETAL SUEDE",
         "SKY",
-        "SKY SUEDE",
-        "TAN",
-        "TAN VINTAGE"
+        "TAN"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -3343,8 +3296,8 @@ export const skuData = {
       "style": "MOLLY",
       "category": "Dress Sandal",
       "last": "MARLEY",
-      "totalSKUs": 15,
-      "newSKUs": 7,
+      "totalSKUs": 11,
+      "newSKUs": 3,
       "existingSKUs": 8,
       "leathers": [
         "NAPPA",
@@ -3354,18 +3307,14 @@ export const skuData = {
       ],
       "colours": [
         "AMBER",
-        "AMBER NAPPA METALLIC",
         "BLACK",
         "COCO",
         "ESPRESSO",
         "GOLD",
         "PETAL",
-        "PETAL NAPPA PATENT",
         "SILVER",
         "SKY",
-        "SKY NAPPA PATENT",
         "TURQUOISE",
-        "TURQUOISE NAPPA PATENT",
         "VINO",
         "WHITE"
       ],
@@ -3462,8 +3411,8 @@ export const skuData = {
       "style": "NESTA",
       "category": "Dress Shoe",
       "last": "NIKI",
-      "totalSKUs": 8,
-      "newSKUs": 5,
+      "totalSKUs": 5,
+      "newSKUs": 2,
       "existingSKUs": 3,
       "leathers": [
         "CAPRETTO",
@@ -3473,11 +3422,8 @@ export const skuData = {
         "BLACK",
         "CHOC",
         "MILK",
-        "MILK CAPRETTO",
         "TAN",
-        "TAN VINTAGE",
-        "VANILLA",
-        "VANILLA VINTAGE"
+        "VANILLA"
       ],
       "isAllNew": false,
       "hasNew": true,
@@ -3764,8 +3710,8 @@ export const skuData = {
       "style": "ROBYN",
       "category": "Ballet Flat",
       "last": "ROXIE",
-      "totalSKUs": 12,
-      "newSKUs": 10,
+      "totalSKUs": 6,
+      "newSKUs": 4,
       "existingSKUs": 2,
       "leathers": [
         "CAPRETTO",
@@ -3774,16 +3720,10 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "BLACK / WHT SPECKLE A/O",
-        "BLACK NAPPA / BLK PAT T/C",
         "GOLD",
-        "GOLD NAPPA MET / BLK GROS T/C",
         "MILK",
-        "MILK CAPRETTO / BLK PAT T/C",
         "SILVER",
-        "SILVER NAPPA MET / BLACK GROS T/C",
-        "VINO",
-        "VINO NAPPA / PETAL NAPPA T/C"
+        "VINO"
       ],
       "isAllNew": false,
       "hasNew": true,
@@ -3793,17 +3733,15 @@ export const skuData = {
       "style": "RORY",
       "category": "Ballet Flat",
       "last": "ROXIE",
-      "totalSKUs": 4,
-      "newSKUs": 4,
+      "totalSKUs": 2,
+      "newSKUs": 2,
       "existingSKUs": 0,
       "leathers": [
         "NAPPA"
       ],
       "colours": [
         "BLACK",
-        "BLACK NAPPA / GROS BINDING",
-        "PETAL",
-        "PETAL NAPPA / GROS BINDING"
+        "PETAL"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -3833,8 +3771,8 @@ export const skuData = {
       "style": "ROXIE",
       "category": "Ballet Flat",
       "last": "ROXIE",
-      "totalSKUs": 13,
-      "newSKUs": 13,
+      "totalSKUs": 7,
+      "newSKUs": 7,
       "existingSKUs": 0,
       "leathers": [
         "NAPPA",
@@ -3842,18 +3780,11 @@ export const skuData = {
       ],
       "colours": [
         "BISCUIT",
-        "BISCUIT NAPPA / BLACK NAPPA T/C",
         "BLACK",
-        "BLACK NAPPA A/O",
         "MIST",
-        "MIST SUEDE A/O",
         "PETAL",
-        "PETAL SDE A/O",
         "SKY",
-        "SKY SDE A/O",
-        "TURQUOISE",
-        "TURQUOISE NAPPA / BLK NAPPA T/C",
-        "TURQUOISE SDE A/O"
+        "TURQUOISE"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -3941,24 +3872,18 @@ export const skuData = {
       "style": "SALLY",
       "category": "Wedge",
       "last": "SALLY",
-      "totalSKUs": 11,
-      "newSKUs": 11,
+      "totalSKUs": 5,
+      "newSKUs": 5,
       "existingSKUs": 0,
       "leathers": [
         "SUEDE"
       ],
       "colours": [
         "BLACK",
-        "BLACK SUEDE",
-        "BLACK SUEDE / BLACK SPECKLE UPPER",
         "ESPRESSO",
-        "ESPRESSO SUEDE",
         "RED",
-        "RED SUEDE \u2013 BLACK SOCK AND LINING",
         "STONE",
-        "STONE SUEDE",
-        "TAUPE",
-        "TAUPE SUEDE"
+        "TAUPE"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -3995,8 +3920,8 @@ export const skuData = {
       "style": "SAMMY",
       "category": "Dress Shoe",
       "last": "SIA",
-      "totalSKUs": 6,
-      "newSKUs": 6,
+      "totalSKUs": 3,
+      "newSKUs": 3,
       "existingSKUs": 0,
       "leathers": [
         "KID",
@@ -4005,11 +3930,8 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "BLACK VENICE",
         "CHOC",
-        "CHOC VENICE",
-        "DOVE",
-        "DOVE NAPPA"
+        "DOVE"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -4043,8 +3965,8 @@ export const skuData = {
       "style": "SARAH",
       "category": "Dress Shoe",
       "last": "SIA",
-      "totalSKUs": 8,
-      "newSKUs": 8,
+      "totalSKUs": 4,
+      "newSKUs": 4,
       "existingSKUs": 0,
       "leathers": [
         "CAPRETTO",
@@ -4052,13 +3974,9 @@ export const skuData = {
       ],
       "colours": [
         "ESPRESSO",
-        "ESPRESSO SUEDE \u2013 CHOC VINTAGE T/C",
         "MILK",
-        "MILK CAPRETTO \u2013 BLK VENICE T/C",
         "PETAL",
-        "PETAL SUEDE \u2013 PETAL NAPPA T/C",
-        "SKY",
-        "SKY SUEDE \u2013 SKY VINTAGE T/C"
+        "SKY"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -4087,21 +4005,17 @@ export const skuData = {
       "style": "SAVANT",
       "category": "Dress Shoe",
       "last": "SHIRLEY",
-      "totalSKUs": 8,
-      "newSKUs": 8,
+      "totalSKUs": 4,
+      "newSKUs": 4,
       "existingSKUs": 0,
       "leathers": [
         "SUEDE"
       ],
       "colours": [
         "DENIM",
-        "DENIM SUEDE / SKY VINTAGE T/C",
         "ESPRESSO",
-        "ESPRESSO SUEDE / CHOC VINTAGE",
         "TAUPE",
-        "TAUPE SUEDE / TAN VINTAGE T/C",
-        "WHEAT",
-        "WHEAT SUEDE / VANILLA VINTAGE"
+        "WHEAT"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -4111,7 +4025,7 @@ export const skuData = {
       "style": "SEZ",
       "category": "Dress Sandal",
       "last": "SANDRA",
-      "totalSKUs": 11,
+      "totalSKUs": 7,
       "newSKUs": 4,
       "existingSKUs": 3,
       "leathers": [
@@ -4123,14 +4037,10 @@ export const skuData = {
         "BLACK",
         "CHOC",
         "MILK",
-        "MILK CAPRETTO",
         "PETAL",
-        "PETAL NAPPA",
         "SKIN",
         "SKY",
-        "SKY NAPPA",
-        "TAN",
-        "TAN VINTAGE"
+        "TAN"
       ],
       "isAllNew": false,
       "hasNew": true,
@@ -4199,9 +4109,9 @@ export const skuData = {
       "style": "SIA",
       "category": "Dress Shoe",
       "last": "SIA",
-      "totalSKUs": 6,
-      "newSKUs": 2,
-      "existingSKUs": 4,
+      "totalSKUs": 9,
+      "newSKUs": 4,
+      "existingSKUs": 5,
       "leathers": [
         "KID",
         "NAPPA",
@@ -4210,8 +4120,7 @@ export const skuData = {
         "VENICE"
       ],
       "colours": [
-        "BLACK SPECKLE",
-        "BLACK VENICE",
+        "BLACK",
         "ESPRESSO",
         "PETAL",
         "SKY",
@@ -4327,19 +4236,16 @@ export const skuData = {
       "style": "SPOILT",
       "category": "Dress Shoe",
       "last": "SIA",
-      "totalSKUs": 6,
-      "newSKUs": 6,
+      "totalSKUs": 3,
+      "newSKUs": 3,
       "existingSKUs": 0,
       "leathers": [
         "SATIN"
       ],
       "colours": [
         "BLACK",
-        "BLACK SATIN",
         "CHOC",
-        "CHOC SATIN",
-        "IVORY",
-        "IVORY SATIN"
+        "IVORY"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -4368,19 +4274,16 @@ export const skuData = {
       "style": "STASSIE",
       "category": "Dress Sandal",
       "last": "SANDRA",
-      "totalSKUs": 6,
-      "newSKUs": 6,
+      "totalSKUs": 3,
+      "newSKUs": 3,
       "existingSKUs": 0,
       "leathers": [
         "SATIN"
       ],
       "colours": [
         "BLACK",
-        "BLACK SATIN",
         "CHOC",
-        "CHOC SATIN",
-        "IVORY",
-        "IVORY SATIN"
+        "IVORY"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -4411,8 +4314,8 @@ export const skuData = {
       "style": "SUNNY",
       "category": "Dress Sandal",
       "last": "SANDRA",
-      "totalSKUs": 8,
-      "newSKUs": 8,
+      "totalSKUs": 4,
+      "newSKUs": 4,
       "existingSKUs": 0,
       "leathers": [
         "CRINKLE",
@@ -4420,13 +4323,9 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "BLACK CRINKLE",
         "DOVE",
-        "DOVE CRINKLE",
         "GOLD",
-        "GOLD SHINE",
-        "SILVER",
-        "SILVER SHINE"
+        "SILVER"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -4436,8 +4335,8 @@ export const skuData = {
       "style": "SWAY",
       "category": "Dress Sandal",
       "last": "SKYE",
-      "totalSKUs": 6,
-      "newSKUs": 6,
+      "totalSKUs": 3,
+      "newSKUs": 3,
       "existingSKUs": 0,
       "leathers": [
         "NAPPA",
@@ -4445,11 +4344,8 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "BLACK NAPPA",
         "DOVE",
-        "DOVE NAPPA",
-        "SILVER",
-        "SILVER NAPPA METALLIC"
+        "SILVER"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -4503,8 +4399,8 @@ export const skuData = {
       "style": "TIANA",
       "category": "Dress Sandal",
       "last": "TIANA",
-      "totalSKUs": 10,
-      "newSKUs": 10,
+      "totalSKUs": 5,
+      "newSKUs": 5,
       "existingSKUs": 0,
       "leathers": [
         "CAPRETTO",
@@ -4513,15 +4409,10 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "BLACK NAPPA",
         "ESPRESSO",
-        "ESPRESSO SUEDE",
         "MILK",
-        "MILK CAPRETTO",
         "MIST",
-        "MIST SUEDE \u2013 MATCHING SOCK AND SOLE",
-        "SKY",
-        "SKY SUEDE"
+        "SKY"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -4531,8 +4422,8 @@ export const skuData = {
       "style": "TILDA",
       "category": "Dress Sandal",
       "last": "TILDA",
-      "totalSKUs": 15,
-      "newSKUs": 15,
+      "totalSKUs": 8,
+      "newSKUs": 8,
       "existingSKUs": 0,
       "leathers": [
         "CRINKLE",
@@ -4542,20 +4433,12 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
-        "BLACK CRINKLE",
-        "BLACK SPECKLE / BLACK VINTAGE T/P AND BINDING AND HEEL COVER",
         "CHOC",
-        "CHOC VINTAGE",
         "DOVE",
-        "DOVE CRINKLE",
         "ECRU",
-        "ECRU SNAKE",
         "PETAL",
-        "PETAL VINTAGE",
         "SKY",
-        "SKY VINTAGE",
-        "TAN",
-        "TAN VINTAGE"
+        "TAN"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -4587,19 +4470,19 @@ export const skuData = {
       "style": "TREVI",
       "category": "Dress Sandal",
       "last": "TIANA",
-      "totalSKUs": 5,
+      "totalSKUs": 6,
       "newSKUs": 3,
-      "existingSKUs": 2,
+      "existingSKUs": 3,
       "leathers": [
         "SUEDE",
         "VINTAGE"
       ],
       "colours": [
-        "BLACK VINTAGE",
+        "BLACK",
         "CHOC",
-        "CHOC VINTAGE",
+        "PETAL",
         "TAN",
-        "TAN VINTAGE"
+        "TAUPE"
       ],
       "isAllNew": false,
       "hasNew": true,
@@ -4712,8 +4595,8 @@ export const skuData = {
       "style": "VILLA",
       "category": "Wedge",
       "last": "VANITY",
-      "totalSKUs": 6,
-      "newSKUs": 6,
+      "totalSKUs": 3,
+      "newSKUs": 3,
       "existingSKUs": 0,
       "leathers": [
         "SUEDE",
@@ -4721,11 +4604,8 @@ export const skuData = {
       ],
       "colours": [
         "CHOC",
-        "CHOC VINTAGE / CHOC UNIT",
         "SKY",
-        "SKY SUEDE / CHOC UNIT",
-        "TAN",
-        "TAN VINTAGE / CHOC UNIT"
+        "TAN"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -4814,17 +4694,15 @@ export const skuData = {
       "style": "VOLLI",
       "category": "Wedge",
       "last": "VANITY",
-      "totalSKUs": 4,
-      "newSKUs": 4,
+      "totalSKUs": 2,
+      "newSKUs": 2,
       "existingSKUs": 0,
       "leathers": [
         "VINTAGE"
       ],
       "colours": [
         "CHOC",
-        "CHOC VINTAGE / CHOC UNIT",
-        "TAN",
-        "TAN VINTAGE / CHOC UNIT"
+        "TAN"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -13482,4 +13360,11 @@ export const skuData = {
       "is_new": false
     }
   ]
-};
+} as const;
+
+export type SKUData = typeof skuData;
+export type CategoryData = typeof skuData.categories[number];
+export type StyleData = typeof skuData.styles[number];
+export type LeatherData = typeof skuData.leathers[number];
+export type ColourData = typeof skuData.colours[number];
+export type ExpansionItem = typeof skuData.expansion.colours[number];
