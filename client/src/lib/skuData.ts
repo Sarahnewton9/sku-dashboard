@@ -5891,22 +5891,6 @@ export const skuData = {
       "category": "Dress Shoe",
       "style": "ANJA",
       "last": "ANJA",
-      "colour": "GOLD",
-      "leather": "SHINE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "ANJA",
-      "last": "ANJA",
-      "colour": "SILVER",
-      "leather": "SHINE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "ANJA",
-      "last": "ANJA",
       "colour": "SKIN",
       "leather": "CAPRETTO",
       "is_new": false
@@ -5966,6 +5950,22 @@ export const skuData = {
       "colour": "VINO",
       "leather": "SUEDE",
       "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "GOLD",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ANJA",
+      "last": "ANJA",
+      "colour": "SILVER",
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Dress Shoe",
@@ -6107,25 +6107,17 @@ export const skuData = {
       "category": "Dress Shoe",
       "style": "AVI",
       "last": "ANNABELLE",
-      "colour": "SKIN",
-      "leather": "NAPPA",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "AVI",
-      "last": "ANNABELLE",
       "colour": "GOLD",
       "leather": "NAPPA METALLIC",
       "is_new": false
     },
     {
       "category": "Dress Shoe",
-      "style": "BABE",
-      "last": "BILLIE",
-      "colour": "BLACK",
+      "style": "AVI",
+      "last": "ANNABELLE",
+      "colour": "SKIN",
       "leather": "",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Dress Shoe",
@@ -6188,7 +6180,7 @@ export const skuData = {
       "style": "BAZ",
       "last": "BERTIE",
       "colour": "BLACK",
-      "leather": "HI-SHINE",
+      "leather": "HI SHINE",
       "is_new": false
     },
     {
@@ -6196,15 +6188,7 @@ export const skuData = {
       "style": "BAZ",
       "last": "BERTIE",
       "colour": "WHITE",
-      "leather": "HI-SHINE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "BAZ",
-      "last": "BERTIE",
-      "colour": "SILVER",
-      "leather": "SHINE",
+      "leather": "HI SHINE",
       "is_new": false
     },
     {
@@ -6222,6 +6206,14 @@ export const skuData = {
       "colour": "VINO",
       "leather": "SUEDE",
       "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BAZ",
+      "last": "BERTIE",
+      "colour": "SILVER",
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Ballet Flat",
@@ -6500,8 +6492,8 @@ export const skuData = {
       "style": "BRASH",
       "last": "BAMBI",
       "colour": "SILVER",
-      "leather": "VINTAGE METAL",
-      "is_new": false
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Dress Shoe",
@@ -6545,6 +6537,22 @@ export const skuData = {
     },
     {
       "category": "Dress Shoe",
+      "style": "BREEZE",
+      "last": "BERTIE",
+      "colour": "CHOC",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "BREEZE",
+      "last": "BERTIE",
+      "colour": "SKY",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
       "style": "CAMEO",
       "last": "CHARLIE/PENNY",
       "colour": "BLACK",
@@ -6571,14 +6579,6 @@ export const skuData = {
       "category": "Dress Shoe",
       "style": "CAMEO",
       "last": "CHARLIE/PENNY",
-      "colour": "SILVER",
-      "leather": "VINTAGE METAL",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "CAMEO",
-      "last": "CHARLIE/PENNY",
       "colour": "BLACK",
       "leather": "SUEDE",
       "is_new": false
@@ -6598,6 +6598,14 @@ export const skuData = {
       "colour": "STEEL",
       "leather": "SUEDE",
       "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "CAMEO",
+      "last": "CHARLIE/PENNY",
+      "colour": "SILVER",
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Ballet Flat",
@@ -6712,14 +6720,6 @@ export const skuData = {
       "is_new": true
     },
     {
-      "category": "Ballet Flat",
-      "style": "CAPPI",
-      "last": "CELESTE",
-      "colour": "TURQUOISE",
-      "leather": "SUEDE",
-      "is_new": false
-    },
-    {
       "category": "Dress Sandal",
       "style": "CAPRICE",
       "last": "CAPRICE",
@@ -6756,22 +6756,6 @@ export const skuData = {
       "style": "CARLA",
       "last": "CHEEKY",
       "colour": "BLACK",
-      "leather": "BRAID",
-      "is_new": false
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "CARLA",
-      "last": "CHEEKY",
-      "colour": "WHITE",
-      "leather": "BRAID",
-      "is_new": false
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "CARLA",
-      "last": "CHEEKY",
-      "colour": "BLACK",
       "leather": "MESH",
       "is_new": true
     },
@@ -6781,6 +6765,14 @@ export const skuData = {
       "last": "CHEEKY",
       "colour": "CHOC",
       "leather": "MESH",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CARLA",
+      "last": "CHEEKY",
+      "colour": "WHITE",
+      "leather": "",
       "is_new": true
     },
     {
@@ -6813,14 +6805,6 @@ export const skuData = {
       "last": "CHEEKY/CUBA",
       "colour": "SKY",
       "leather": "NAPPA",
-      "is_new": false
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "CASPIAN",
-      "last": "CHEEKY/CUBA",
-      "colour": "BLUSH",
-      "leather": "NUBUCK",
       "is_new": false
     },
     {
@@ -6841,6 +6825,14 @@ export const skuData = {
     },
     {
       "category": "Ballet Flat",
+      "style": "CASPIAN",
+      "last": "CHEEKY/CUBA",
+      "colour": "BLUSH",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
       "style": "CELESTE",
       "last": "CELESTE",
       "colour": "BLACK",
@@ -6852,14 +6844,6 @@ export const skuData = {
       "style": "CELESTE",
       "last": "CELESTE",
       "colour": "DOVE",
-      "leather": "NAPPA",
-      "is_new": false
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "CELESTE",
-      "last": "CELESTE",
-      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": false
     },
@@ -6876,15 +6860,7 @@ export const skuData = {
       "style": "CELESTE",
       "last": "CELESTE",
       "colour": "GOLD",
-      "leather": "NAPPA METALLIC",
-      "is_new": true
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "CELESTE",
-      "last": "CELESTE",
-      "colour": "SILVER",
-      "leather": "NAPPA METALLIC",
+      "leather": "NAPPA",
       "is_new": true
     },
     {
@@ -6893,6 +6869,14 @@ export const skuData = {
       "last": "CELESTE",
       "colour": "SILVER",
       "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CELESTE",
+      "last": "CELESTE",
+      "colour": "CHOCOLATE",
+      "leather": "NAPPA METALLIC",
       "is_new": true
     },
     {
@@ -6917,37 +6901,29 @@ export const skuData = {
       "last": "CHEEKY/CUBA",
       "colour": "CHOCOLATE",
       "leather": "NAPPA",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Ballet Flat",
       "style": "CHEEKY",
       "last": "CHEEKY",
       "colour": "BLACK",
-      "leather": "VINTAGE",
-      "is_new": false
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Ballet Flat",
       "style": "CHEEKY",
       "last": "CHEEKY",
       "colour": "WHITE",
-      "leather": "WEAVE",
-      "is_new": false
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Ballet Flat",
       "style": "CHELSEA",
       "last": "CHEEKY/CUBA",
       "colour": "BLACK",
-      "leather": "NAPPA",
-      "is_new": false
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "CHELSEA",
-      "last": "CHEEKY/CUBA",
-      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": false
     },
@@ -7003,16 +6979,8 @@ export const skuData = {
       "category": "Ballet Flat",
       "style": "CHELSEA",
       "last": "CHEEKY/CUBA",
-      "colour": "BLACK",
-      "leather": "LUMIA VELVET",
-      "is_new": true
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "CHELSEA",
-      "last": "CHEEKY/CUBA",
-      "colour": "STONE",
-      "leather": "LUMIA VELVET",
+      "colour": "PETAL",
+      "leather": "NAPPA PATENT",
       "is_new": true
     },
     {
@@ -7020,15 +6988,15 @@ export const skuData = {
       "style": "CHELSEA",
       "last": "CHEEKY/CUBA",
       "colour": "BLUSH",
-      "leather": "LUMIA VELVET",
+      "leather": "",
       "is_new": true
     },
     {
       "category": "Ballet Flat",
       "style": "CHELSEA",
       "last": "CHEEKY/CUBA",
-      "colour": "PETAL",
-      "leather": "NAPPA PATENT",
+      "colour": "CHOCOLATE",
+      "leather": "",
       "is_new": true
     },
     {
@@ -7142,14 +7110,6 @@ export const skuData = {
       "colour": "PETAL",
       "leather": "NAPPA",
       "is_new": true
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "CITY",
-      "last": "CELESTE",
-      "colour": "BLACK",
-      "leather": "NAPPA",
-      "is_new": false
     },
     {
       "category": "Ballet Flat",
@@ -7611,14 +7571,6 @@ export const skuData = {
       "category": "Ballet Flat",
       "style": "CUBA",
       "last": "CHEEKY/CUBA",
-      "colour": "CHOCOLATE",
-      "leather": "NAPPA",
-      "is_new": false
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "CUBA",
-      "last": "CHEEKY/CUBA",
       "colour": "SKY",
       "leather": "NAPPA",
       "is_new": false
@@ -7646,6 +7598,14 @@ export const skuData = {
       "colour": "WILLOW",
       "leather": "NAPPA",
       "is_new": false
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CUBA",
+      "last": "CHEEKY/CUBA",
+      "colour": "CHOCOLATE",
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Ballet Flat",
@@ -7677,6 +7637,22 @@ export const skuData = {
       "last": "CELESTE",
       "colour": "PERU",
       "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CURIOUS",
+      "last": "CELESTE",
+      "colour": "BLUSH",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "CURIOUS",
+      "last": "CELESTE",
+      "colour": "INDIGO",
+      "leather": "",
       "is_new": true
     },
     {
@@ -7755,14 +7731,6 @@ export const skuData = {
       "category": "Dress Shoe",
       "style": "DAZIE",
       "last": "DAZIE",
-      "colour": "BLACK",
-      "leather": "VINTAGE",
-      "is_new": true
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "DAZIE",
-      "last": "DAZIE",
       "colour": "SKY",
       "leather": "SUEDE",
       "is_new": true
@@ -7808,12 +7776,12 @@ export const skuData = {
       "is_new": false
     },
     {
-      "category": "Dress Sandal",
-      "style": "DEMURE",
-      "last": "DIAMOND",
-      "colour": "SILVER",
-      "leather": "GLOMESH",
-      "is_new": false
+      "category": "Dress Shoe",
+      "style": "DAZIE",
+      "last": "DAZIE",
+      "colour": "BLACK",
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Dress Sandal",
@@ -7821,7 +7789,15 @@ export const skuData = {
       "last": "DIAMOND",
       "colour": "GOLD",
       "leather": "GLOMESH",
-      "is_new": false
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DEMURE",
+      "last": "DIAMOND",
+      "colour": "SILVER",
+      "leather": "GLOMESH",
+      "is_new": true
     },
     {
       "category": "Dress Sandal",
@@ -7860,6 +7836,14 @@ export const skuData = {
       "style": "DIMA",
       "last": "DIAMOND",
       "colour": "VINO",
+      "leather": "NAPPA PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "DIMA",
+      "last": "DIAMOND",
+      "colour": "TURQUOISE",
       "leather": "NAPPA PATENT",
       "is_new": true
     },
@@ -7992,6 +7976,14 @@ export const skuData = {
       "is_new": true
     },
     {
+      "category": "Dress Shoe",
+      "style": "DRAY",
+      "last": "DAZIE",
+      "colour": "TURQUOISE",
+      "leather": "",
+      "is_new": true
+    },
+    {
       "category": "Wedge",
       "style": "EDGY",
       "last": "EDGY",
@@ -8027,14 +8019,6 @@ export const skuData = {
       "category": "Wedge",
       "style": "EDGY",
       "last": "EDGY",
-      "colour": "CHOC",
-      "leather": "CROCO",
-      "is_new": false
-    },
-    {
-      "category": "Wedge",
-      "style": "EDGY",
-      "last": "EDGY",
       "colour": "BLACK",
       "leather": "SUEDE",
       "is_new": false
@@ -8057,34 +8041,26 @@ export const skuData = {
     },
     {
       "category": "Wedge",
-      "style": "ELIZA",
+      "style": "EDGY",
       "last": "EDGY",
-      "colour": "BLACK",
-      "leather": "NAPPA PATENT",
+      "colour": "BLUSH",
+      "leather": "",
       "is_new": true
     },
     {
       "category": "Wedge",
-      "style": "ELIZA",
+      "style": "EDGY",
       "last": "EDGY",
-      "colour": "STONE",
-      "leather": "NAPPA PATENT",
+      "colour": "INDIGO",
+      "leather": "",
       "is_new": true
     },
     {
       "category": "Wedge",
-      "style": "ELIZA",
+      "style": "EDGY",
       "last": "EDGY",
-      "colour": "BLACK",
-      "leather": "VINTAGE",
-      "is_new": true
-    },
-    {
-      "category": "Wedge",
-      "style": "ELIZA",
-      "last": "EDGY",
-      "colour": "ECRU",
-      "leather": "SNAKE",
+      "colour": "WILLOW",
+      "leather": "",
       "is_new": true
     },
     {
@@ -8093,6 +8069,14 @@ export const skuData = {
       "last": "EDGY",
       "colour": "CHOC",
       "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "ELIZA",
+      "last": "EDGY",
+      "colour": "ECRU",
+      "leather": "",
       "is_new": true
     },
     {
@@ -8232,12 +8216,20 @@ export const skuData = {
       "is_new": true
     },
     {
+      "category": "Dress Shoe",
+      "style": "ENVY",
+      "last": "ENVY",
+      "colour": "TURQUOISE",
+      "leather": "",
+      "is_new": true
+    },
+    {
       "category": "Loafer",
       "style": "ERES",
       "last": "EVIE",
       "colour": "BLACK",
       "leather": "HI-SHINE",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Dress Shoe",
@@ -8269,6 +8261,30 @@ export const skuData = {
       "last": "ENVY",
       "colour": "ECRU",
       "leather": "SNAKE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ESQUIRE",
+      "last": "ENVY",
+      "colour": "CHOC",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ESQUIRE",
+      "last": "ENVY",
+      "colour": "RED",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "ESQUIRE",
+      "last": "ENVY",
+      "colour": "SKY",
+      "leather": "",
       "is_new": true
     },
     {
@@ -8316,16 +8332,16 @@ export const skuData = {
       "style": "EVIE",
       "last": "EVIE",
       "colour": "CHOC",
-      "leather": "BURNISH",
-      "is_new": false
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Loafer",
       "style": "EVIE",
       "last": "EVIE",
       "colour": "TAN",
-      "leather": "BURNISH",
-      "is_new": false
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Dress Sandal",
@@ -8429,7 +8445,7 @@ export const skuData = {
       "last": "FIFI",
       "colour": "BLACK",
       "leather": "MICRO",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Ankle Boot",
@@ -8437,7 +8453,7 @@ export const skuData = {
       "last": "FIFI",
       "colour": "CHOC",
       "leather": "MICRO",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Dress Shoe",
@@ -8700,7 +8716,7 @@ export const skuData = {
       "style": "GEZZA",
       "last": "GATSBY",
       "colour": "BLACK",
-      "leather": "HI-SHINE",
+      "leather": "HI SHINE",
       "is_new": false
     },
     {
@@ -8708,62 +8724,6 @@ export const skuData = {
       "style": "GEZZA",
       "last": "GATSBY",
       "colour": "BLACK",
-      "leather": "SUEDE",
-      "is_new": false
-    },
-    {
-      "category": "Loafer",
-      "style": "GIGI",
-      "last": "GIGI",
-      "colour": "BLACK",
-      "leather": "VALENCIA",
-      "is_new": false
-    },
-    {
-      "category": "Loafer",
-      "style": "GIGI",
-      "last": "GIGI",
-      "colour": "VESTRA",
-      "leather": "VALENCIA",
-      "is_new": false
-    },
-    {
-      "category": "Loafer",
-      "style": "GIGI",
-      "last": "GIGI",
-      "colour": "CHOC",
-      "leather": "VALENCIA",
-      "is_new": false
-    },
-    {
-      "category": "Loafer",
-      "style": "GIGI",
-      "last": "GIGI",
-      "colour": "TAN",
-      "leather": "VINTAGE",
-      "is_new": false
-    },
-    {
-      "category": "Loafer",
-      "style": "GIGI",
-      "last": "GIGI",
-      "colour": "BLACK",
-      "leather": "SUEDE",
-      "is_new": false
-    },
-    {
-      "category": "Loafer",
-      "style": "GIGI",
-      "last": "GIGI",
-      "colour": "ESPRESSO",
-      "leather": "SUEDE",
-      "is_new": false
-    },
-    {
-      "category": "Loafer",
-      "style": "GIGI",
-      "last": "GIGI",
-      "colour": "VINO",
       "leather": "SUEDE",
       "is_new": false
     },
@@ -8782,6 +8742,54 @@ export const skuData = {
       "colour": "STONE",
       "leather": "SUEDE",
       "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "BLACK",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "CHOC",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "ESPRESSO",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "TAN",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "VESTRA",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Loafer",
+      "style": "GIGI",
+      "last": "GIGI",
+      "colour": "VINO",
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Loafer",
@@ -8827,7 +8835,7 @@ export const skuData = {
       "category": "Loafer",
       "style": "GLACIER",
       "last": "GATSBY",
-      "colour": "CHOC",
+      "colour": "BLACK",
       "leather": "VINTAGE",
       "is_new": false
     },
@@ -8835,9 +8843,9 @@ export const skuData = {
       "category": "Loafer",
       "style": "GLACIER",
       "last": "GATSBY",
-      "colour": "BLACK",
-      "leather": "VINTAGE",
-      "is_new": false
+      "colour": "CHOC",
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Dress Shoe",
@@ -8907,7 +8915,7 @@ export const skuData = {
       "category": "Loafer",
       "style": "GLORIA",
       "last": "GIGI",
-      "colour": "STONE",
+      "colour": "ESPRESSO",
       "leather": "SUEDE",
       "is_new": false
     },
@@ -8915,23 +8923,15 @@ export const skuData = {
       "category": "Loafer",
       "style": "GLORIA",
       "last": "GIGI",
-      "colour": "ESPRESSO",
-      "leather": "SUEDE",
-      "is_new": false
+      "colour": "STONE",
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Loafer",
       "style": "GOMEZ",
       "last": "GIGI",
       "colour": "BLACK",
-      "leather": "NAPPA",
-      "is_new": false
-    },
-    {
-      "category": "Loafer",
-      "style": "GOMEZ",
-      "last": "GIGI",
-      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": false
     },
@@ -8974,6 +8974,14 @@ export const skuData = {
       "colour": "SKY",
       "leather": "NAPPA",
       "is_new": false
+    },
+    {
+      "category": "Loafer",
+      "style": "GOMEZ",
+      "last": "GIGI",
+      "colour": "CHOCOLATE",
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Loafer",
@@ -9173,15 +9181,7 @@ export const skuData = {
       "last": "HALLIE",
       "colour": "BLACK",
       "leather": "VINTAGE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "HYPE",
-      "last": "HALLIE",
-      "colour": "TAN",
-      "leather": "VINTAGE",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Dress Sandal",
@@ -9189,7 +9189,15 @@ export const skuData = {
       "last": "HALLIE",
       "colour": "CHOC",
       "leather": "VINTAGE",
-      "is_new": false
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "HYPE",
+      "last": "HALLIE",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
     },
     {
       "category": "Dress Sandal",
@@ -9197,7 +9205,7 @@ export const skuData = {
       "last": "HALLIE",
       "colour": "VANILLA",
       "leather": "VINTAGE",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Sandal",
@@ -9205,7 +9213,7 @@ export const skuData = {
       "last": "IVES",
       "colour": "BLACK",
       "leather": "MAGIC",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Sandal",
@@ -9541,7 +9549,7 @@ export const skuData = {
       "last": "JASPER",
       "colour": "BLACK",
       "leather": "SCUBA",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Sandal",
@@ -9549,15 +9557,7 @@ export const skuData = {
       "last": "JASPER/JETTA",
       "colour": "BLACK",
       "leather": "TUSCON",
-      "is_new": false
-    },
-    {
-      "category": "Sandal",
-      "style": "JETTA",
-      "last": "JASPER/JETTA",
-      "colour": "TAN",
-      "leather": "TUSCON",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Sandal",
@@ -9565,7 +9565,31 @@ export const skuData = {
       "last": "JASPER/JETTA",
       "colour": "CHOC",
       "leather": "TUSCON",
-      "is_new": false
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "JETTA",
+      "last": "JASPER/JETTA",
+      "colour": "TAN",
+      "leather": "TUSCON",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JOELLE",
+      "last": "JAYDE",
+      "colour": "BLACK",
+      "leather": "NUBUCK",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "JOELLE",
+      "last": "JAYDE",
+      "colour": "BLUSH",
+      "leather": "NUBUCK",
+      "is_new": true
     },
     {
       "category": "Dress Sandal",
@@ -9584,28 +9608,12 @@ export const skuData = {
       "is_new": true
     },
     {
-      "category": "Dress Sandal",
-      "style": "JOELLE",
-      "last": "JAYDE",
-      "colour": "BLUSH",
-      "leather": "NUBUCK",
-      "is_new": true
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "JOELLE",
-      "last": "JAYDE",
-      "colour": "BLACK",
-      "leather": "NUBUCK",
-      "is_new": true
-    },
-    {
       "category": "Sandal",
       "style": "JOKER",
       "last": "JASPER",
       "colour": "BLACK",
       "leather": "MAGIC",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Ballet Flat",
@@ -9787,46 +9795,6 @@ export const skuData = {
       "category": "Dress Sandal",
       "style": "KASSY",
       "last": "KRUZ",
-      "colour": "FUCHSIA",
-      "leather": "NUBUCK",
-      "is_new": true
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "KASSY",
-      "last": "KRUZ",
-      "colour": "BLUSH",
-      "leather": "NUBUCK",
-      "is_new": false
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "KASSY",
-      "last": "KRUZ",
-      "colour": "WILLOW",
-      "leather": "NUBUCK",
-      "is_new": true
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "KASSY",
-      "last": "KRUZ",
-      "colour": "INDIGO",
-      "leather": "NUBUCK",
-      "is_new": true
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "KASSY",
-      "last": "KRUZ",
-      "colour": "SKY",
-      "leather": "NAPPA",
-      "is_new": true
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "KASSY",
-      "last": "KRUZ",
       "colour": "TAN",
       "leather": "VINTAGE",
       "is_new": true
@@ -9835,25 +9803,33 @@ export const skuData = {
       "category": "Dress Sandal",
       "style": "KASSY",
       "last": "KRUZ",
-      "colour": "BLACK",
-      "leather": "VINTAGE",
+      "colour": "BLUSH",
+      "leather": "",
       "is_new": true
     },
     {
       "category": "Dress Sandal",
       "style": "KASSY",
       "last": "KRUZ",
-      "colour": "SKY",
-      "leather": "NUBUCK",
-      "is_new": false
+      "colour": "FUCHSIA",
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Dress Sandal",
       "style": "KASSY",
       "last": "KRUZ",
-      "colour": "BLACK",
-      "leather": "NUBUCK",
-      "is_new": false
+      "colour": "INDIGO",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KASSY",
+      "last": "KRUZ",
+      "colour": "WILLOW",
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Dress Sandal",
@@ -9909,6 +9885,30 @@ export const skuData = {
       "last": "KIMBA",
       "colour": "BLACK",
       "leather": "PATENT",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KIMBA",
+      "last": "KIMBA",
+      "colour": "ECRU",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KIMBA",
+      "last": "KIMBA",
+      "colour": "ESPRESSO",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KIMBA",
+      "last": "KIMBA",
+      "colour": "VINO",
+      "leather": "",
       "is_new": true
     },
     {
@@ -9971,41 +9971,25 @@ export const skuData = {
       "category": "Dress Sandal",
       "style": "KYLA",
       "last": "KOMMA/KEIKI",
-      "colour": "GUNMETAL",
-      "leather": "SHINE",
+      "colour": "BLACK",
+      "leather": "SUEDE",
       "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "KYLA",
+      "last": "KOMMA/KEIKI",
+      "colour": "GUNMETAL",
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Dress Sandal",
       "style": "KYLA",
       "last": "KOMMA/KEIKI",
       "colour": "SILVER",
-      "leather": "FOIL",
-      "is_new": false
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "KYLA",
-      "last": "KOMMA/KEIKI",
-      "colour": "BLACK",
-      "leather": "SUEDE",
-      "is_new": false
-    },
-    {
-      "category": "Sandal",
-      "style": "KYRA",
-      "last": "KYRA",
-      "colour": "BLACK",
-      "leather": "COMO",
-      "is_new": false
-    },
-    {
-      "category": "Sandal",
-      "style": "KYRA",
-      "last": "KYRA",
-      "colour": "CHOC",
-      "leather": "VINTAGE",
-      "is_new": false
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Sandal",
@@ -10021,6 +10005,14 @@ export const skuData = {
       "last": "KYRA",
       "colour": "BLACK",
       "leather": "PONY",
+      "is_new": true
+    },
+    {
+      "category": "Sandal",
+      "style": "KYRA",
+      "last": "KYRA",
+      "colour": "CHOC",
+      "leather": "",
       "is_new": true
     },
     {
@@ -10043,16 +10035,16 @@ export const skuData = {
       "category": "Loafer",
       "style": "LAMORE",
       "last": "LUXURY",
-      "colour": "CHOC",
-      "leather": "BURNISH",
+      "colour": "WHEAT",
+      "leather": "SUEDE",
       "is_new": true
     },
     {
       "category": "Loafer",
       "style": "LAMORE",
       "last": "LUXURY",
-      "colour": "WHEAT",
-      "leather": "SUEDE",
+      "colour": "CHOC",
+      "leather": "",
       "is_new": true
     },
     {
@@ -10144,6 +10136,14 @@ export const skuData = {
       "is_new": true
     },
     {
+      "category": "Dress Sandal",
+      "style": "LIA",
+      "last": "LUCY",
+      "colour": "SKY",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
       "category": "Loafer",
       "style": "LIBBY",
       "last": "LUXURY",
@@ -10206,14 +10206,6 @@ export const skuData = {
       "colour": "STONE",
       "leather": "SUEDE",
       "is_new": true
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "LILA",
-      "last": "LILA",
-      "colour": "BLACK",
-      "leather": "TURIN",
-      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -10296,11 +10288,27 @@ export const skuData = {
       "is_new": true
     },
     {
+      "category": "Dress Shoe",
+      "style": "LILI",
+      "last": "LILA",
+      "colour": "MIST",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "LILI",
+      "last": "LILA",
+      "colour": "TURQUOISE",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
       "category": "Loafer",
       "style": "LONDON",
       "last": "LUXURY",
       "colour": "BLACK",
-      "leather": "HI-SHINE",
+      "leather": "HI SHINE",
       "is_new": false
     },
     {
@@ -10389,7 +10397,7 @@ export const skuData = {
       "last": "LEXIA & LEXIA RUBBER",
       "colour": "CHOCOLATE",
       "leather": "NAPPA",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Dress Sandal",
@@ -10421,6 +10429,30 @@ export const skuData = {
       "last": "LUCY",
       "colour": "MILK",
       "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "LUCY",
+      "last": "LUCY",
+      "colour": "PERU",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "LUCY",
+      "last": "LUCY",
+      "colour": "PETAL",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "LUCY",
+      "last": "LUCY",
+      "colour": "SKY",
+      "leather": "",
       "is_new": true
     },
     {
@@ -10483,14 +10515,6 @@ export const skuData = {
       "category": "Ballet Flat",
       "style": "MADDI",
       "last": "MADDI",
-      "colour": "CHOCOLATE",
-      "leather": "NAPPA",
-      "is_new": false
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "MADDI",
-      "last": "MADDI",
       "colour": "VINO",
       "leather": "NAPPA",
       "is_new": false
@@ -10515,14 +10539,6 @@ export const skuData = {
       "category": "Ballet Flat",
       "style": "MADDI",
       "last": "MADDI",
-      "colour": "WILLOW",
-      "leather": "NAPPA",
-      "is_new": true
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "MADDI",
-      "last": "MADDI",
       "colour": "RED",
       "leather": "NAPPA",
       "is_new": true
@@ -10532,6 +10548,14 @@ export const skuData = {
       "style": "MADDI",
       "last": "MADDI",
       "colour": "PETAL",
+      "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "MADDI",
+      "last": "MADDI",
+      "colour": "CHOCOLATE",
       "leather": "NAPPA",
       "is_new": true
     },
@@ -10571,14 +10595,6 @@ export const skuData = {
       "category": "Dress Sandal",
       "style": "MALIBU",
       "last": "MARLEY",
-      "colour": "BORDEAUX",
-      "leather": "PATENT",
-      "is_new": false
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "MALIBU",
-      "last": "MARLEY",
       "colour": "COCO",
       "leather": "PATENT",
       "is_new": false
@@ -10590,6 +10606,14 @@ export const skuData = {
       "colour": "AMBER",
       "leather": "METALLIC",
       "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MALIBU",
+      "last": "MARLEY",
+      "colour": "BORDEAUX",
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Ballet Flat",
@@ -10614,14 +10638,6 @@ export const skuData = {
       "colour": "DOVE",
       "leather": "NAPPA",
       "is_new": true
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "MARAMEO",
-      "last": "MARLEY",
-      "colour": "BLUSH",
-      "leather": "SNAKE",
-      "is_new": false
     },
     {
       "category": "Dress Sandal",
@@ -10669,6 +10685,14 @@ export const skuData = {
       "last": "MARLEY",
       "colour": "TURQUOISE",
       "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MARAMEO",
+      "last": "MARLEY",
+      "colour": "BLUSH",
+      "leather": "",
       "is_new": true
     },
     {
@@ -10723,24 +10747,24 @@ export const skuData = {
       "category": "Dress Sandal",
       "style": "MARCY",
       "last": "MARLEY",
-      "colour": "GOLD",
-      "leather": "FOIL",
-      "is_new": false
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "MARCY",
-      "last": "MARLEY",
       "colour": "BLACK",
       "leather": "PATENT",
       "is_new": false
     },
     {
       "category": "Dress Sandal",
+      "style": "MARCY",
+      "last": "MARLEY",
+      "colour": "GOLD",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
       "style": "MARIAH",
       "last": "MINOGUE/MILLER",
       "colour": "BLACK",
-      "leather": "HI-SHINE",
+      "leather": "HI SHINE",
       "is_new": false
     },
     {
@@ -10872,22 +10896,6 @@ export const skuData = {
       "is_new": true
     },
     {
-      "category": "Wedge",
-      "style": "MATISSE",
-      "last": "MATISSE",
-      "colour": "FUCHSIA",
-      "leather": "NUBUCK",
-      "is_new": false
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "MATRIX",
-      "last": "MARLEY",
-      "colour": "JADE",
-      "leather": "NUBUCK",
-      "is_new": false
-    },
-    {
       "category": "Dress Sandal",
       "style": "MATRIX",
       "last": "MARLEY",
@@ -10915,14 +10923,6 @@ export const skuData = {
       "category": "Dress Sandal",
       "style": "MATRIX",
       "last": "MARLEY",
-      "colour": "ECRU",
-      "leather": "SNAKE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "MATRIX",
-      "last": "MARLEY",
       "colour": "TURQUOISE",
       "leather": "SUEDE",
       "is_new": true
@@ -10941,6 +10941,22 @@ export const skuData = {
       "last": "MARLEY",
       "colour": "SKY",
       "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MATRIX",
+      "last": "MARLEY",
+      "colour": "ECRU",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "MATRIX",
+      "last": "MARLEY",
+      "colour": "JADE",
+      "leather": "",
       "is_new": true
     },
     {
@@ -11147,7 +11163,39 @@ export const skuData = {
       "category": "Wedge",
       "style": "MISTY",
       "last": "MATISSE",
+      "colour": "BLACK",
+      "leather": "NUBUCK",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MISTY",
+      "last": "MATISSE",
+      "colour": "BLUSH",
+      "leather": "NUBUCK",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MISTY",
+      "last": "MATISSE",
       "colour": "FUCHSIA",
+      "leather": "NUBUCK",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MISTY",
+      "last": "MATISSE",
+      "colour": "INDIGO",
+      "leather": "NUBUCK",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "MISTY",
+      "last": "MATISSE",
+      "colour": "WILLOW",
       "leather": "NUBUCK",
       "is_new": true
     },
@@ -11403,57 +11451,57 @@ export const skuData = {
       "category": "Dress Shoe",
       "style": "NESSA",
       "last": "NIKI",
+      "colour": "ASHEN",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESSA",
+      "last": "NIKI",
+      "colour": "ASHEN",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESSA",
+      "last": "NIKI",
+      "colour": "VINO",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESSA",
+      "last": "NIKI",
+      "colour": "VINO",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESSA",
+      "last": "NIKI",
+      "colour": "BLACK",
+      "leather": "SUEDE",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESSA",
+      "last": "NIKI",
+      "colour": "BLACK",
+      "leather": "NAPPA",
+      "is_new": false
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "NESSA",
+      "last": "NIKI",
       "colour": "CHOCOLATE",
-      "leather": "NAPPA",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "NESSA",
-      "last": "NIKI",
-      "colour": "ASHEN",
-      "leather": "SUEDE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "NESSA",
-      "last": "NIKI",
-      "colour": "ASHEN",
-      "leather": "SUEDE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "NESSA",
-      "last": "NIKI",
-      "colour": "VINO",
-      "leather": "SUEDE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "NESSA",
-      "last": "NIKI",
-      "colour": "VINO",
-      "leather": "NAPPA",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "NESSA",
-      "last": "NIKI",
-      "colour": "BLACK",
-      "leather": "SUEDE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "NESSA",
-      "last": "NIKI",
-      "colour": "BLACK",
-      "leather": "NAPPA",
-      "is_new": false
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Dress Shoe",
@@ -11741,7 +11789,7 @@ export const skuData = {
       "last": "PARIS",
       "colour": "CHOCOLATE",
       "leather": "NAPPA",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Dress Shoe",
@@ -11851,14 +11899,6 @@ export const skuData = {
       "category": "Dress Sandal",
       "style": "ROBBIE",
       "last": "RUMA",
-      "colour": "DOVE",
-      "leather": "NAPPA",
-      "is_new": false
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "ROBBIE",
-      "last": "RUMA",
       "colour": "BLACK",
       "leather": "VINTAGE",
       "is_new": false
@@ -11880,11 +11920,11 @@ export const skuData = {
       "is_new": false
     },
     {
-      "category": "Ballet Flat",
-      "style": "ROBYN",
-      "last": "ROXIE",
-      "colour": "MILK",
-      "leather": "CAPRETTO",
+      "category": "Dress Sandal",
+      "style": "ROBBIE",
+      "last": "RUMA",
+      "colour": "DOVE",
+      "leather": "",
       "is_new": true
     },
     {
@@ -11894,22 +11934,6 @@ export const skuData = {
       "colour": "BLACK",
       "leather": "NAPPA",
       "is_new": true
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "ROBYN",
-      "last": "ROXIE",
-      "colour": "SILVER",
-      "leather": "NAPPA METALLIC",
-      "is_new": true
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "ROBYN",
-      "last": "ROXIE",
-      "colour": "GOLD",
-      "leather": "NAPPA METALLIC",
-      "is_new": false
     },
     {
       "category": "Ballet Flat",
@@ -11925,6 +11949,22 @@ export const skuData = {
       "last": "ROXIE",
       "colour": "VINO",
       "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROBYN",
+      "last": "ROXIE",
+      "colour": "GOLD",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROBYN",
+      "last": "ROXIE",
+      "colour": "SILVER",
+      "leather": "",
       "is_new": true
     },
     {
@@ -11971,46 +12011,6 @@ export const skuData = {
       "category": "Ballet Flat",
       "style": "ROXIE",
       "last": "ROXIE",
-      "colour": "PETAL",
-      "leather": "SUEDE",
-      "is_new": true
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "ROXIE",
-      "last": "ROXIE",
-      "colour": "TURQUOISE",
-      "leather": "SUEDE",
-      "is_new": true
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "ROXIE",
-      "last": "ROXIE",
-      "colour": "SKY",
-      "leather": "SUEDE",
-      "is_new": true
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "ROXIE",
-      "last": "ROXIE",
-      "colour": "MIST",
-      "leather": "SUEDE",
-      "is_new": true
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "ROXIE",
-      "last": "ROXIE",
-      "colour": "BLACK",
-      "leather": "NAPPA",
-      "is_new": true
-    },
-    {
-      "category": "Ballet Flat",
-      "style": "ROXIE",
-      "last": "ROXIE",
       "colour": "TURQUOISE",
       "leather": "NAPPA",
       "is_new": true
@@ -12021,6 +12021,38 @@ export const skuData = {
       "last": "ROXIE",
       "colour": "BISCUIT",
       "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROXIE",
+      "last": "ROXIE",
+      "colour": "BLACK",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROXIE",
+      "last": "ROXIE",
+      "colour": "MIST",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROXIE",
+      "last": "ROXIE",
+      "colour": "PETAL",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Ballet Flat",
+      "style": "ROXIE",
+      "last": "ROXIE",
+      "colour": "SKY",
+      "leather": "",
       "is_new": true
     },
     {
@@ -12123,14 +12155,6 @@ export const skuData = {
       "category": "Wedge",
       "style": "SALLY",
       "last": "SALLY",
-      "colour": "RED",
-      "leather": "SUEDE",
-      "is_new": true
-    },
-    {
-      "category": "Wedge",
-      "style": "SALLY",
-      "last": "SALLY",
       "colour": "BLACK",
       "leather": "SUEDE",
       "is_new": true
@@ -12156,6 +12180,14 @@ export const skuData = {
       "style": "SALLY",
       "last": "SALLY",
       "colour": "ESPRESSO",
+      "leather": "SUEDE",
+      "is_new": true
+    },
+    {
+      "category": "Wedge",
+      "style": "SALLY",
+      "last": "SALLY",
+      "colour": "RED",
       "leather": "SUEDE",
       "is_new": true
     },
@@ -12284,7 +12316,7 @@ export const skuData = {
       "style": "SANDRA",
       "last": "SANDRA",
       "colour": "WHITE",
-      "leather": "HI-SHINE",
+      "leather": "HI SHINE",
       "is_new": false
     },
     {
@@ -12315,8 +12347,16 @@ export const skuData = {
       "category": "Dress Shoe",
       "style": "SARAH",
       "last": "SIA",
+      "colour": "ESPRESSO",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Shoe",
+      "style": "SARAH",
+      "last": "SIA",
       "colour": "MILK",
-      "leather": "CAPRETTO",
+      "leather": "",
       "is_new": true
     },
     {
@@ -12324,7 +12364,7 @@ export const skuData = {
       "style": "SARAH",
       "last": "SIA",
       "colour": "PETAL",
-      "leather": "SUEDE",
+      "leather": "",
       "is_new": true
     },
     {
@@ -12332,15 +12372,7 @@ export const skuData = {
       "style": "SARAH",
       "last": "SIA",
       "colour": "SKY",
-      "leather": "SUEDE",
-      "is_new": true
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "SARAH",
-      "last": "SIA",
-      "colour": "ESPRESSO",
-      "leather": "SUEDE",
+      "leather": "",
       "is_new": true
     },
     {
@@ -12427,14 +12459,6 @@ export const skuData = {
       "category": "Dress Sandal",
       "style": "SEZ",
       "last": "SANDRA",
-      "colour": "SKIN",
-      "leather": "CAPRETTO",
-      "is_new": true
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "SEZ",
-      "last": "SANDRA",
       "colour": "MILK",
       "leather": "CAPRETTO",
       "is_new": true
@@ -12453,6 +12477,14 @@ export const skuData = {
       "last": "SANDRA",
       "colour": "SKY",
       "leather": "NAPPA",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SEZ",
+      "last": "SANDRA",
+      "colour": "SKIN",
+      "leather": "",
       "is_new": true
     },
     {
@@ -12516,7 +12548,7 @@ export const skuData = {
       "style": "SHEBA",
       "last": "SHIRLEY",
       "colour": "COGNAC",
-      "leather": "",
+      "leather": "VINTAGE",
       "is_new": false
     },
     {
@@ -12550,54 +12582,6 @@ export const skuData = {
       "colour": "BLACK",
       "leather": "SPECKLE",
       "is_new": true
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "SIA",
-      "last": "SIA",
-      "colour": "PETAL",
-      "leather": "NAPPA",
-      "is_new": true
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "SIA",
-      "last": "SIA",
-      "colour": "SKY",
-      "leather": "NAPPA",
-      "is_new": true
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "SIA",
-      "last": "SIA",
-      "colour": "PETAL",
-      "leather": "SUEDE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "SIA",
-      "last": "SIA",
-      "colour": "SKY",
-      "leather": "SUEDE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "SIA",
-      "last": "SIA",
-      "colour": "ESPRESSO",
-      "leather": "SUEDE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Shoe",
-      "style": "SIA",
-      "last": "SIA",
-      "colour": "WHEAT",
-      "leather": "SUEDE",
-      "is_new": false
     },
     {
       "category": "Dress Shoe",
@@ -12677,7 +12661,7 @@ export const skuData = {
       "last": "SANDRA",
       "colour": "BLACK",
       "leather": "TULLE",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Dress Sandal",
@@ -12685,7 +12669,7 @@ export const skuData = {
       "last": "SANDRA",
       "colour": "IVORY",
       "leather": "TULLE",
-      "is_new": false
+      "is_new": true
     },
     {
       "category": "Dress Sandal",
@@ -12859,22 +12843,6 @@ export const skuData = {
       "category": "Dress Sandal",
       "style": "SUNNY",
       "last": "SANDRA",
-      "colour": "SILVER",
-      "leather": "SHINE",
-      "is_new": true
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "SUNNY",
-      "last": "SANDRA",
-      "colour": "GOLD",
-      "leather": "SHINE",
-      "is_new": true
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "SUNNY",
-      "last": "SANDRA",
       "colour": "BLACK",
       "leather": "CRINKLE",
       "is_new": true
@@ -12885,6 +12853,22 @@ export const skuData = {
       "last": "SANDRA",
       "colour": "DOVE",
       "leather": "CRINKLE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SUNNY",
+      "last": "SANDRA",
+      "colour": "GOLD",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "SUNNY",
+      "last": "SANDRA",
+      "colour": "SILVER",
+      "leather": "",
       "is_new": true
     },
     {
@@ -12995,14 +12979,6 @@ export const skuData = {
       "category": "Dress Sandal",
       "style": "TIANA",
       "last": "TIANA",
-      "colour": "MIST",
-      "leather": "SUEDE",
-      "is_new": true
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "TIANA",
-      "last": "TIANA",
       "colour": "ESPRESSO",
       "leather": "SUEDE",
       "is_new": true
@@ -13029,6 +13005,14 @@ export const skuData = {
       "last": "TIANA",
       "colour": "MILK",
       "leather": "CAPRETTO",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TIANA",
+      "last": "TIANA",
+      "colour": "MIST",
+      "leather": "",
       "is_new": true
     },
     {
@@ -13161,22 +13145,6 @@ export const skuData = {
     },
     {
       "category": "Dress Sandal",
-      "style": "TREVI",
-      "last": "TIANA",
-      "colour": "PETAL",
-      "leather": "SUEDE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Sandal",
-      "style": "TREVI",
-      "last": "TIANA",
-      "colour": "TAUPE",
-      "leather": "SUEDE",
-      "is_new": false
-    },
-    {
-      "category": "Dress Sandal",
       "style": "TROPIC",
       "last": "TROPIC",
       "colour": "BLACK",
@@ -13243,17 +13211,17 @@ export const skuData = {
       "category": "Wedge",
       "style": "VALERIE",
       "last": "VANITY",
-      "colour": "CHOCOLATE",
-      "leather": "NAPPA",
+      "colour": "ESPRESSO",
+      "leather": "SUEDE",
       "is_new": false
     },
     {
       "category": "Wedge",
       "style": "VALERIE",
       "last": "VANITY",
-      "colour": "ESPRESSO",
-      "leather": "SUEDE",
-      "is_new": false
+      "colour": "CHOCOLATE",
+      "leather": "",
+      "is_new": true
     },
     {
       "category": "Wedge",
@@ -13484,7 +13452,7 @@ export const skuData = {
       "style": "ZAC",
       "last": "ZOE",
       "colour": "BLACK",
-      "leather": "HI-SHINE",
+      "leather": "HI SHINE",
       "is_new": false
     },
     {
@@ -13508,7 +13476,7 @@ export const skuData = {
       "style": "ZEPHYR",
       "last": "ZOE",
       "colour": "BLACK",
-      "leather": "HI-SHINE",
+      "leather": "HI SHINE",
       "is_new": false
     },
     {
@@ -13516,7 +13484,7 @@ export const skuData = {
       "style": "ZOE",
       "last": "ZOE",
       "colour": "BLACK",
-      "leather": "HI-SHINE",
+      "leather": "HI SHINE",
       "is_new": false
     },
     {
@@ -13526,6 +13494,262 @@ export const skuData = {
       "colour": "ESPRESSO",
       "leather": "SUEDE",
       "is_new": false
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIVA",
+      "last": "VIVA",
+      "colour": "BLACK",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIVA",
+      "last": "VIVA",
+      "colour": "CHOC",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIVA",
+      "last": "VIVA",
+      "colour": "PETAL",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIVA",
+      "last": "VIVA",
+      "colour": "SKY",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIVA",
+      "last": "VIVA",
+      "colour": "TAN",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIVA",
+      "last": "VIVA",
+      "colour": "TURQUOISE",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIVA",
+      "last": "VIVA",
+      "colour": "VANILLA",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIKA",
+      "last": "VIVA",
+      "colour": "BLACK",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIKA",
+      "last": "VIVA",
+      "colour": "CHOC",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VIKA",
+      "last": "VIVA",
+      "colour": "PERU",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VINE",
+      "last": "VIVA",
+      "colour": "BLACK",
+      "leather": "NUBUCK",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VINE",
+      "last": "VIVA",
+      "colour": "BLUSH",
+      "leather": "NUBUCK",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "VINE",
+      "last": "VIVA",
+      "colour": "WILLOW",
+      "leather": "NUBUCK",
+      "is_new": true
+    },
+    {
+      "category": "Casual Flat",
+      "style": "PIXIE",
+      "last": "PIXIE",
+      "colour": "BLACK",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Casual Flat",
+      "style": "PIXIE",
+      "last": "PIXIE",
+      "colour": "BLUSH",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Casual Flat",
+      "style": "PIXIE",
+      "last": "PIXIE",
+      "colour": "CHOC",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Casual Flat",
+      "style": "PIXIE",
+      "last": "PIXIE",
+      "colour": "INDIGO",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Casual Flat",
+      "style": "PIXIE",
+      "last": "PIXIE",
+      "colour": "SKY",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Casual Flat",
+      "style": "PIXIE",
+      "last": "PIXIE",
+      "colour": "STONE",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Casual Flat",
+      "style": "PIXIE",
+      "last": "PIXIE",
+      "colour": "VANILLA",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Casual Flat",
+      "style": "PIXIE",
+      "last": "PIXIE",
+      "colour": "VINO",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TINA",
+      "last": "TILDA",
+      "colour": "BLACK",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TINA",
+      "last": "TILDA",
+      "colour": "CHOC",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TINA",
+      "last": "TILDA",
+      "colour": "MILK",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TINA",
+      "last": "TILDA",
+      "colour": "PETAL",
+      "leather": "",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TASHA",
+      "last": "TILDA",
+      "colour": "BLACK",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TASHA",
+      "last": "TILDA",
+      "colour": "CHOC",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TASHA",
+      "last": "TILDA",
+      "colour": "IVORY",
+      "leather": "SATIN",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TRACK",
+      "last": "TILDA",
+      "colour": "BLACK",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TRACK",
+      "last": "TILDA",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TRACK",
+      "last": "TILDA",
+      "colour": "TAN",
+      "leather": "VINTAGE",
+      "is_new": true
+    },
+    {
+      "category": "Dress Sandal",
+      "style": "TRACK",
+      "last": "TILDA",
+      "colour": "VANILLA",
+      "leather": "VINTAGE",
+      "is_new": true
     }
   ]
 } as const;
