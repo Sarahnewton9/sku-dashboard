@@ -3,13 +3,13 @@
 
 export const skuData = {
   "summary": {
-    "totalSKUs": 968,
-    "newSKUs": 305,
-    "existingSKUs": 663,
-    "totalStyles": 224,
-    "brandNewStyles": 58,
-    "stylesWithNew": 93,
-    "existingStyles": 131,
+    "totalSKUs": 1018,
+    "newSKUs": 366,
+    "existingSKUs": 652,
+    "totalStyles": 231,
+    "brandNewStyles": 67,
+    "stylesWithNew": 35,
+    "existingStyles": 129,
     "uniqueLeathers": 40,
     "uniqueColours": 57
   },
@@ -225,13 +225,11 @@ export const skuData = {
       "style": "BABE",
       "category": "Dress Shoe",
       "last": "BILLIE",
-      "totalSKUs": 1,
+      "totalSKUs": 0,
       "newSKUs": 0,
-      "existingSKUs": 1,
+      "existingSKUs": 0,
       "leathers": [],
-      "colours": [
-        "BLACK"
-      ],
+      "colours": [],
       "isAllNew": false,
       "hasNew": false,
       "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BABE_afac005f.png"
@@ -467,8 +465,8 @@ export const skuData = {
       "style": "BREEZE",
       "category": "Dress Shoe",
       "last": "BERTIE",
-      "totalSKUs": 5,
-      "newSKUs": 0,
+      "totalSKUs": 7,
+      "newSKUs": 2,
       "existingSKUs": 5,
       "leathers": [
         "BROCADE",
@@ -476,12 +474,14 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
+        "CHOC",
         "IVORY",
         "SKIN",
+        "SKY",
         "WHITE"
       ],
       "isAllNew": false,
-      "hasNew": false,
+      "hasNew": true,
       "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/BREEZE_55464681.png"
     },
     {
@@ -553,8 +553,8 @@ export const skuData = {
       "style": "CAPPI",
       "category": "Ballet Flat",
       "last": "CELESTE",
-      "totalSKUs": 8,
-      "newSKUs": 2,
+      "totalSKUs": 7,
+      "newSKUs": 1,
       "existingSKUs": 6,
       "leathers": [
         "SUEDE"
@@ -566,7 +566,6 @@ export const skuData = {
         "PETAL",
         "SKY",
         "STEEL",
-        "TURQUOISE",
         "VINO"
       ],
       "isAllNew": false,
@@ -647,7 +646,6 @@ export const skuData = {
       "newSKUs": 3,
       "existingSKUs": 4,
       "leathers": [
-        "NAPPA",
         "NAPPA METALLIC"
       ],
       "colours": [
@@ -1038,14 +1036,17 @@ export const skuData = {
       "style": "CURIOUS",
       "category": "Ballet Flat",
       "last": "CELESTE",
-      "totalSKUs": 4,
-      "newSKUs": 2,
+      "totalSKUs": 7,
+      "newSKUs": 5,
       "existingSKUs": 2,
       "leathers": [
-        "NAPPA"
+        "NAPPA",
+        "NUBUCK"
       ],
       "colours": [
         "BLACK",
+        "BLUSH",
+        "INDIGO",
         "PERU",
         "VANILLA",
         "WILLOW"
@@ -1124,6 +1125,7 @@ export const skuData = {
       "leathers": [
         "CROCO",
         "SUEDE",
+        "VENICE",
         "VINTAGE"
       ],
       "colours": [
@@ -1161,8 +1163,8 @@ export const skuData = {
       "style": "DIMA",
       "category": "Dress Sandal",
       "last": "DIAMOND",
-      "totalSKUs": 5,
-      "newSKUs": 5,
+      "totalSKUs": 6,
+      "newSKUs": 6,
       "existingSKUs": 0,
       "leathers": [
         "NAPPA PATENT",
@@ -1172,6 +1174,7 @@ export const skuData = {
         "BLACK",
         "PETAL",
         "STONE",
+        "TURQUOISE",
         "VINO"
       ],
       "isAllNew": true,
@@ -1241,8 +1244,8 @@ export const skuData = {
       "style": "DONTE",
       "category": "Dress Shoe",
       "last": "DAZIE",
-      "totalSKUs": 5,
-      "newSKUs": 5,
+      "totalSKUs": 6,
+      "newSKUs": 6,
       "existingSKUs": 0,
       "leathers": [
         "NAPPA",
@@ -1263,8 +1266,8 @@ export const skuData = {
       "style": "DRAY",
       "category": "Dress Shoe",
       "last": "DAZIE",
-      "totalSKUs": 2,
-      "newSKUs": 2,
+      "totalSKUs": 3,
+      "newSKUs": 3,
       "existingSKUs": 0,
       "leathers": [
         "NAPPA",
@@ -1272,6 +1275,7 @@ export const skuData = {
       ],
       "colours": [
         "BLACK",
+        "TURQUOISE",
         "WHITE"
       ],
       "isAllNew": true,
@@ -1282,33 +1286,37 @@ export const skuData = {
       "style": "EDGY",
       "category": "Wedge",
       "last": "EDGY",
-      "totalSKUs": 8,
-      "newSKUs": 0,
+      "totalSKUs": 11,
+      "newSKUs": 3,
       "existingSKUs": 8,
       "leathers": [
         "CROCO",
         "NAPPA",
+        "NUBUCK",
         "SUEDE",
         "VINTAGE"
       ],
       "colours": [
         "BLACK",
+        "BLUSH",
         "CHOC",
         "DOVE",
         "ESPRESSO",
+        "INDIGO",
         "TAN",
-        "TAUPE"
+        "TAUPE",
+        "WILLOW"
       ],
       "isAllNew": false,
-      "hasNew": false,
+      "hasNew": true,
       "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/EDGY_9e1568bf.png"
     },
     {
       "style": "ELIZA",
       "category": "Wedge",
       "last": "EDGY",
-      "totalSKUs": 5,
-      "newSKUs": 5,
+      "totalSKUs": 3,
+      "newSKUs": 3,
       "existingSKUs": 0,
       "leathers": [
         "NAPPA PATENT",
@@ -1316,10 +1324,8 @@ export const skuData = {
         "VINTAGE"
       ],
       "colours": [
-        "BLACK",
         "CHOC",
-        "ECRU",
-        "STONE"
+        "ECRU"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -1388,12 +1394,13 @@ export const skuData = {
       "style": "ENVY",
       "category": "Dress Shoe",
       "last": "ENVY",
-      "totalSKUs": 7,
-      "newSKUs": 7,
+      "totalSKUs": 9,
+      "newSKUs": 9,
       "existingSKUs": 0,
       "leathers": [
         "CAPRETTO",
         "CROCO",
+        "NAPPA",
         "PATENT",
         "VINTAGE"
       ],
@@ -1403,7 +1410,8 @@ export const skuData = {
         "MILK",
         "PETAL",
         "RED",
-        "SKIN"
+        "SKIN",
+        "TURQUOISE"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -1430,19 +1438,24 @@ export const skuData = {
       "style": "ESQUIRE",
       "category": "Dress Shoe",
       "last": "ENVY",
-      "totalSKUs": 4,
-      "newSKUs": 4,
+      "totalSKUs": 7,
+      "newSKUs": 7,
       "existingSKUs": 0,
       "leathers": [
         "CAPRETTO",
         "COMO",
+        "NAPPA",
         "PATENT",
-        "SNAKE"
+        "SNAKE",
+        "VENICE"
       ],
       "colours": [
         "BLACK",
+        "CHOC",
         "ECRU",
-        "MILK"
+        "MILK",
+        "RED",
+        "SKY"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -2388,20 +2401,18 @@ export const skuData = {
       "style": "KASSY",
       "category": "Dress Sandal",
       "last": "KRUZ",
-      "totalSKUs": 9,
-      "newSKUs": 6,
-      "existingSKUs": 3,
+      "totalSKUs": 7,
+      "newSKUs": 5,
+      "existingSKUs": 2,
       "leathers": [
         "NAPPA",
         "NUBUCK",
         "VINTAGE"
       ],
       "colours": [
-        "BLACK",
         "BLUSH",
         "FUCHSIA",
         "INDIGO",
-        "SKY",
         "TAN",
         "WILLOW"
       ],
@@ -2448,15 +2459,20 @@ export const skuData = {
       "style": "KIMBA",
       "category": "Dress Sandal",
       "last": "KIMBA",
-      "totalSKUs": 4,
-      "newSKUs": 1,
+      "totalSKUs": 8,
+      "newSKUs": 5,
       "existingSKUs": 3,
       "leathers": [
-        "PATENT"
+        "PATENT",
+        "PONY",
+        "SNAKE"
       ],
       "colours": [
         "BLACK",
         "CHOC",
+        "ECRU",
+        "ESPRESSO",
+        "VINO",
         "WHITE"
       ],
       "isAllNew": false,
@@ -2592,12 +2608,12 @@ export const skuData = {
       "style": "LEGACY",
       "category": "Dress Shoe",
       "last": "LILA",
-      "totalSKUs": 3,
-      "newSKUs": 3,
+      "totalSKUs": 5,
+      "newSKUs": 5,
       "existingSKUs": 0,
       "leathers": [
-        "COMO",
-        "NAPPA"
+        "NAPPA",
+        "PATENT"
       ],
       "colours": [
         "BLACK",
@@ -2630,8 +2646,8 @@ export const skuData = {
       "style": "LIA",
       "category": "Dress Sandal",
       "last": "LUCY",
-      "totalSKUs": 4,
-      "newSKUs": 4,
+      "totalSKUs": 5,
+      "newSKUs": 5,
       "existingSKUs": 0,
       "leathers": [
         "VINTAGE"
@@ -2640,6 +2656,7 @@ export const skuData = {
         "BLACK",
         "CHOC",
         "PETAL",
+        "SKY",
         "TAN"
       ],
       "isAllNew": true,
@@ -2697,8 +2714,8 @@ export const skuData = {
       "style": "LILI",
       "category": "Dress Shoe",
       "last": "LILA",
-      "totalSKUs": 4,
-      "newSKUs": 4,
+      "totalSKUs": 6,
+      "newSKUs": 6,
       "existingSKUs": 0,
       "leathers": [
         "SUEDE"
@@ -2706,7 +2723,9 @@ export const skuData = {
       "colours": [
         "BLACK",
         "ESPRESSO",
+        "MIST",
         "PETAL",
+        "TURQUOISE",
         "WHEAT"
       ],
       "isAllNew": true,
@@ -2809,17 +2828,21 @@ export const skuData = {
       "style": "LUCY",
       "category": "Dress Sandal",
       "last": "LUCY",
-      "totalSKUs": 4,
-      "newSKUs": 4,
+      "totalSKUs": 8,
+      "newSKUs": 8,
       "existingSKUs": 0,
       "leathers": [
         "CAPRETTO",
+        "NAPPA",
         "VINTAGE"
       ],
       "colours": [
         "BLACK",
         "CHOC",
         "MILK",
+        "PERU",
+        "PETAL",
+        "SKY",
         "TAN"
       ],
       "isAllNew": true,
@@ -2868,8 +2891,8 @@ export const skuData = {
       "style": "MADDI",
       "category": "Ballet Flat",
       "last": "MADDI",
-      "totalSKUs": 8,
-      "newSKUs": 3,
+      "totalSKUs": 7,
+      "newSKUs": 2,
       "existingSKUs": 5,
       "leathers": [
         "NAPPA"
@@ -2881,8 +2904,7 @@ export const skuData = {
         "PETAL",
         "RED",
         "SKY",
-        "VINO",
-        "WILLOW"
+        "VINO"
       ],
       "isAllNew": false,
       "hasNew": true,
@@ -3064,8 +3086,8 @@ export const skuData = {
       "category": "Wedge",
       "last": "MATISSE",
       "totalSKUs": 8,
-      "newSKUs": 5,
-      "existingSKUs": 3,
+      "newSKUs": 6,
+      "existingSKUs": 2,
       "leathers": [
         "NAPPA",
         "NUBUCK",
@@ -3077,7 +3099,6 @@ export const skuData = {
       "colours": [
         "BLACK",
         "CHOC",
-        "FUCHSIA",
         "VANILLA",
         "VINO"
       ],
@@ -3257,14 +3278,18 @@ export const skuData = {
       "style": "MISTY",
       "category": "Wedge",
       "last": "MATISSE",
-      "totalSKUs": 1,
-      "newSKUs": 1,
+      "totalSKUs": 5,
+      "newSKUs": 5,
       "existingSKUs": 0,
       "leathers": [
         "NUBUCK"
       ],
       "colours": [
-        "FUCHSIA"
+        "BLACK",
+        "BLUSH",
+        "FUCHSIA",
+        "INDIGO",
+        "WILLOW"
       ],
       "isAllNew": true,
       "hasNew": true,
@@ -3710,18 +3735,19 @@ export const skuData = {
       "style": "ROBYN",
       "category": "Ballet Flat",
       "last": "ROXIE",
-      "totalSKUs": 6,
-      "newSKUs": 4,
+      "totalSKUs": 7,
+      "newSKUs": 5,
       "existingSKUs": 2,
       "leathers": [
         "CAPRETTO",
         "NAPPA",
-        "NAPPA METALLIC"
+        "NAPPA METALLIC",
+        "SPECKLE",
+        "SUEDE"
       ],
       "colours": [
         "BLACK",
         "GOLD",
-        "MILK",
         "SILVER",
         "VINO"
       ],
@@ -3872,8 +3898,8 @@ export const skuData = {
       "style": "SALLY",
       "category": "Wedge",
       "last": "SALLY",
-      "totalSKUs": 5,
-      "newSKUs": 5,
+      "totalSKUs": 6,
+      "newSKUs": 6,
       "existingSKUs": 0,
       "leathers": [
         "SUEDE"
@@ -4109,24 +4135,17 @@ export const skuData = {
       "style": "SIA",
       "category": "Dress Shoe",
       "last": "SIA",
-      "totalSKUs": 9,
-      "newSKUs": 4,
-      "existingSKUs": 5,
+      "totalSKUs": 2,
+      "newSKUs": 2,
+      "existingSKUs": 0,
       "leathers": [
-        "KID",
-        "NAPPA",
         "SPECKLE",
-        "SUEDE",
         "VENICE"
       ],
       "colours": [
-        "BLACK",
-        "ESPRESSO",
-        "PETAL",
-        "SKY",
-        "WHEAT"
+        "BLACK"
       ],
-      "isAllNew": false,
+      "isAllNew": true,
       "hasNew": true,
       "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/SIA_ac653f7f.png"
     },
@@ -4470,21 +4489,18 @@ export const skuData = {
       "style": "TREVI",
       "category": "Dress Sandal",
       "last": "TIANA",
-      "totalSKUs": 6,
+      "totalSKUs": 3,
       "newSKUs": 3,
-      "existingSKUs": 3,
+      "existingSKUs": 0,
       "leathers": [
-        "SUEDE",
         "VINTAGE"
       ],
       "colours": [
         "BLACK",
         "CHOC",
-        "PETAL",
-        "TAN",
-        "TAUPE"
+        "TAN"
       ],
-      "isAllNew": false,
+      "isAllNew": true,
       "hasNew": true,
       "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/TREVI_780108d8.png"
     },
@@ -4763,6 +4779,158 @@ export const skuData = {
       "isAllNew": false,
       "hasNew": false,
       "imageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/ZOE_526c5f93.png"
+    },
+    {
+      "style": "VIVA",
+      "last": "VIVA",
+      "category": "Dress Sandal",
+      "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/viva_db6c169f.png",
+      "colours": [
+        "BLACK",
+        "CHOC",
+        "PETAL",
+        "SKY",
+        "TAN",
+        "TURQUOISE",
+        "VANILLA"
+      ],
+      "leathers": [
+        "SUEDE",
+        "VENICE",
+        "VINTAGE"
+      ],
+      "totalSKUs": 7,
+      "newSKUs": 7,
+      "existingSKUs": 0,
+      "isAllNew": true,
+      "hasNew": true
+    },
+    {
+      "style": "VIKA",
+      "last": "VIVA",
+      "category": "Dress Sandal",
+      "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/vika_88e28b4d.png",
+      "colours": [
+        "BLACK",
+        "CHOC",
+        "PERU"
+      ],
+      "leathers": [
+        "NAPPA",
+        "VENICE"
+      ],
+      "totalSKUs": 3,
+      "newSKUs": 3,
+      "existingSKUs": 0,
+      "isAllNew": true,
+      "hasNew": true
+    },
+    {
+      "style": "VINE",
+      "last": "VIVA",
+      "category": "Dress Sandal",
+      "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/vine_23cfe561.png",
+      "colours": [
+        "BLACK",
+        "BLUSH",
+        "WILLOW"
+      ],
+      "leathers": [
+        "NUBUCK"
+      ],
+      "totalSKUs": 3,
+      "newSKUs": 3,
+      "existingSKUs": 0,
+      "isAllNew": true,
+      "hasNew": true
+    },
+    {
+      "style": "PIXIE",
+      "last": "PIXIE",
+      "category": "Casual Flat",
+      "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/pixie_c90860a6.png",
+      "colours": [
+        "BLACK",
+        "BLUSH",
+        "CHOC",
+        "INDIGO",
+        "SKY",
+        "STONE",
+        "VANILLA",
+        "VINO"
+      ],
+      "leathers": [
+        "NAPPA",
+        "NUBUCK",
+        "SUEDE",
+        "VENICE"
+      ],
+      "totalSKUs": 8,
+      "newSKUs": 8,
+      "existingSKUs": 0,
+      "isAllNew": true,
+      "hasNew": true
+    },
+    {
+      "style": "TINA",
+      "last": "TILDA",
+      "category": "Dress Sandal",
+      "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/tina_9cfdb72a.png",
+      "colours": [
+        "BLACK",
+        "CHOC",
+        "MILK",
+        "PETAL"
+      ],
+      "leathers": [
+        "CAPRETTO",
+        "NAPPA",
+        "VENICE"
+      ],
+      "totalSKUs": 4,
+      "newSKUs": 4,
+      "existingSKUs": 0,
+      "isAllNew": true,
+      "hasNew": true
+    },
+    {
+      "style": "TASHA",
+      "last": "TILDA",
+      "category": "Dress Sandal",
+      "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/tasha_02d3dab5.png",
+      "colours": [
+        "BLACK",
+        "CHOC",
+        "IVORY"
+      ],
+      "leathers": [
+        "SATIN"
+      ],
+      "totalSKUs": 3,
+      "newSKUs": 3,
+      "existingSKUs": 0,
+      "isAllNew": true,
+      "hasNew": true
+    },
+    {
+      "style": "TRACK",
+      "last": "TILDA",
+      "category": "Dress Sandal",
+      "image": "https://d2xsxph8kpxj0f.cloudfront.net/310519663500263115/RGHTjKGQqzKd5FypxANQbT/track_ff5a0015.png",
+      "colours": [
+        "BLACK",
+        "CHOC",
+        "TAN",
+        "VANILLA"
+      ],
+      "leathers": [
+        "VINTAGE"
+      ],
+      "totalSKUs": 4,
+      "newSKUs": 4,
+      "existingSKUs": 0,
+      "isAllNew": true,
+      "hasNew": true
     }
   ],
   "leathers": [
@@ -5260,211 +5428,211 @@ export const skuData = {
         "name": "BLACK",
         "styleCount": 70,
         "bucket": "Well covered",
-        "action": "BLACK is well represented across new SKUs \u2014 maintain current range"
+        "action": "BLACK is well represented across new SKUs — maintain current range"
       },
       {
         "name": "CHOC",
         "styleCount": 29,
         "bucket": "Well covered",
-        "action": "CHOC is well represented across new SKUs \u2014 maintain current range"
+        "action": "CHOC is well represented across new SKUs — maintain current range"
       },
       {
         "name": "SKY",
         "styleCount": 27,
         "bucket": "Well covered",
-        "action": "SKY is well represented across new SKUs \u2014 maintain current range"
+        "action": "SKY is well represented across new SKUs — maintain current range"
       },
       {
         "name": "PETAL",
         "styleCount": 27,
         "bucket": "Well covered",
-        "action": "PETAL is well represented across new SKUs \u2014 maintain current range"
+        "action": "PETAL is well represented across new SKUs — maintain current range"
       },
       {
         "name": "TAN",
         "styleCount": 14,
         "bucket": "Well covered",
-        "action": "TAN is well represented across new SKUs \u2014 maintain current range"
+        "action": "TAN is well represented across new SKUs — maintain current range"
       },
       {
         "name": "DOVE",
         "styleCount": 11,
         "bucket": "Well covered",
-        "action": "DOVE is well represented across new SKUs \u2014 maintain current range"
+        "action": "DOVE is well represented across new SKUs — maintain current range"
       },
       {
         "name": "ESPRESSO",
         "styleCount": 11,
         "bucket": "Well covered",
-        "action": "ESPRESSO is well represented across new SKUs \u2014 maintain current range"
+        "action": "ESPRESSO is well represented across new SKUs — maintain current range"
       },
       {
         "name": "MILK",
         "styleCount": 10,
         "bucket": "Well covered",
-        "action": "MILK is well represented across new SKUs \u2014 maintain current range"
+        "action": "MILK is well represented across new SKUs — maintain current range"
       },
       {
         "name": "SILVER",
         "styleCount": 7,
         "bucket": "Good coverage",
-        "action": "SILVER has good coverage \u2014 consider selective additions"
+        "action": "SILVER has good coverage — consider selective additions"
       },
       {
         "name": "STONE",
         "styleCount": 7,
         "bucket": "Good coverage",
-        "action": "STONE has good coverage \u2014 consider selective additions"
+        "action": "STONE has good coverage — consider selective additions"
       },
       {
         "name": "PERU",
         "styleCount": 6,
         "bucket": "Good coverage",
-        "action": "PERU has good coverage \u2014 consider selective additions"
+        "action": "PERU has good coverage — consider selective additions"
       },
       {
         "name": "ECRU",
         "styleCount": 6,
         "bucket": "Good coverage",
-        "action": "ECRU has good coverage \u2014 consider selective additions"
+        "action": "ECRU has good coverage — consider selective additions"
       },
       {
         "name": "VANILLA",
         "styleCount": 6,
         "bucket": "Good coverage",
-        "action": "VANILLA has good coverage \u2014 consider selective additions"
+        "action": "VANILLA has good coverage — consider selective additions"
       },
       {
         "name": "GOLD",
         "styleCount": 5,
         "bucket": "Good coverage",
-        "action": "GOLD has good coverage \u2014 consider selective additions"
+        "action": "GOLD has good coverage — consider selective additions"
       },
       {
         "name": "RED",
         "styleCount": 5,
         "bucket": "Good coverage",
-        "action": "RED has good coverage \u2014 consider selective additions"
+        "action": "RED has good coverage — consider selective additions"
       },
       {
         "name": "VINO",
         "styleCount": 5,
         "bucket": "Good coverage",
-        "action": "VINO has good coverage \u2014 consider selective additions"
+        "action": "VINO has good coverage — consider selective additions"
       },
       {
         "name": "TURQUOISE",
         "styleCount": 5,
         "bucket": "Good coverage",
-        "action": "TURQUOISE has good coverage \u2014 consider selective additions"
+        "action": "TURQUOISE has good coverage — consider selective additions"
       },
       {
         "name": "IVORY",
         "styleCount": 4,
         "bucket": "Expand",
-        "action": "IVORY has moderate coverage \u2014 expand to more styles"
+        "action": "IVORY has moderate coverage — expand to more styles"
       },
       {
         "name": "WHEAT",
         "styleCount": 4,
         "bucket": "Expand",
-        "action": "WHEAT has moderate coverage \u2014 expand to more styles"
+        "action": "WHEAT has moderate coverage — expand to more styles"
       },
       {
         "name": "TAUPE",
         "styleCount": 3,
         "bucket": "Expand",
-        "action": "TAUPE has moderate coverage \u2014 expand to more styles"
+        "action": "TAUPE has moderate coverage — expand to more styles"
       },
       {
         "name": "WILLOW",
         "styleCount": 3,
         "bucket": "Expand",
-        "action": "WILLOW has moderate coverage \u2014 expand to more styles"
+        "action": "WILLOW has moderate coverage — expand to more styles"
       },
       {
         "name": "CHOCOLATE",
         "styleCount": 3,
         "bucket": "Expand",
-        "action": "CHOCOLATE has moderate coverage \u2014 expand to more styles"
+        "action": "CHOCOLATE has moderate coverage — expand to more styles"
       },
       {
         "name": "MIST",
         "styleCount": 3,
         "bucket": "Expand",
-        "action": "MIST has moderate coverage \u2014 expand to more styles"
+        "action": "MIST has moderate coverage — expand to more styles"
       },
       {
         "name": "BLUSH",
         "styleCount": 2,
         "bucket": "Priority expand",
-        "action": "BLUSH appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "BLUSH appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "WHITE",
         "styleCount": 2,
         "bucket": "Priority expand",
-        "action": "WHITE appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "WHITE appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "MINT",
         "styleCount": 2,
         "bucket": "Priority expand",
-        "action": "MINT appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "MINT appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "SKIN",
         "styleCount": 2,
         "bucket": "Priority expand",
-        "action": "SKIN appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "SKIN appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "INDIGO",
         "styleCount": 2,
         "bucket": "Priority expand",
-        "action": "INDIGO appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "INDIGO appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "FUCHSIA",
         "styleCount": 2,
         "bucket": "Priority expand",
-        "action": "FUCHSIA appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "FUCHSIA appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "NUDE",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "NUDE appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "NUDE appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "AMBER",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "AMBER appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "AMBER appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "CLEAR",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "CLEAR appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "CLEAR appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "OAT",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "OAT appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "OAT appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "BISCUIT",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "BISCUIT appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "BISCUIT appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "DENIM",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "DENIM appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "DENIM appears in very few new SKUs — prioritise adding to more styles"
       }
     ],
     "leathers": [
@@ -5472,145 +5640,145 @@ export const skuData = {
         "name": "NAPPA",
         "styleCount": 35,
         "bucket": "Well covered",
-        "action": "NAPPA is well represented across new SKUs \u2014 maintain current range"
+        "action": "NAPPA is well represented across new SKUs — maintain current range"
       },
       {
         "name": "VINTAGE",
         "styleCount": 27,
         "bucket": "Well covered",
-        "action": "VINTAGE is well represented across new SKUs \u2014 maintain current range"
+        "action": "VINTAGE is well represented across new SKUs — maintain current range"
       },
       {
         "name": "SUEDE",
         "styleCount": 17,
         "bucket": "Well covered",
-        "action": "SUEDE is well represented across new SKUs \u2014 maintain current range"
+        "action": "SUEDE is well represented across new SKUs — maintain current range"
       },
       {
         "name": "CAPRETTO",
         "styleCount": 10,
         "bucket": "Well covered",
-        "action": "CAPRETTO is well represented across new SKUs \u2014 maintain current range"
+        "action": "CAPRETTO is well represented across new SKUs — maintain current range"
       },
       {
         "name": "NAPPA METALLIC",
         "styleCount": 6,
         "bucket": "Good coverage",
-        "action": "NAPPA METALLIC has good coverage \u2014 consider selective additions"
+        "action": "NAPPA METALLIC has good coverage — consider selective additions"
       },
       {
         "name": "SNAKE",
         "styleCount": 6,
         "bucket": "Good coverage",
-        "action": "SNAKE has good coverage \u2014 consider selective additions"
+        "action": "SNAKE has good coverage — consider selective additions"
       },
       {
         "name": "VENICE",
         "styleCount": 6,
         "bucket": "Good coverage",
-        "action": "VENICE has good coverage \u2014 consider selective additions"
+        "action": "VENICE has good coverage — consider selective additions"
       },
       {
         "name": "SATIN",
         "styleCount": 6,
         "bucket": "Good coverage",
-        "action": "SATIN has good coverage \u2014 consider selective additions"
+        "action": "SATIN has good coverage — consider selective additions"
       },
       {
         "name": "NAPPA PATENT",
         "styleCount": 5,
         "bucket": "Good coverage",
-        "action": "NAPPA PATENT has good coverage \u2014 consider selective additions"
+        "action": "NAPPA PATENT has good coverage — consider selective additions"
       },
       {
         "name": "SPECKLE",
         "styleCount": 5,
         "bucket": "Good coverage",
-        "action": "SPECKLE has good coverage \u2014 consider selective additions"
+        "action": "SPECKLE has good coverage — consider selective additions"
       },
       {
         "name": "COMO",
         "styleCount": 5,
         "bucket": "Good coverage",
-        "action": "COMO has good coverage \u2014 consider selective additions"
+        "action": "COMO has good coverage — consider selective additions"
       },
       {
         "name": "PATENT",
         "styleCount": 4,
         "bucket": "Expand",
-        "action": "PATENT has moderate coverage \u2014 expand to more styles"
+        "action": "PATENT has moderate coverage — expand to more styles"
       },
       {
         "name": "CROCO",
         "styleCount": 4,
         "bucket": "Expand",
-        "action": "CROCO has moderate coverage \u2014 expand to more styles"
+        "action": "CROCO has moderate coverage — expand to more styles"
       },
       {
         "name": "CRINKLE",
         "styleCount": 4,
         "bucket": "Expand",
-        "action": "CRINKLE has moderate coverage \u2014 expand to more styles"
+        "action": "CRINKLE has moderate coverage — expand to more styles"
       },
       {
         "name": "NUBUCK",
         "styleCount": 3,
         "bucket": "Expand",
-        "action": "NUBUCK has moderate coverage \u2014 expand to more styles"
+        "action": "NUBUCK has moderate coverage — expand to more styles"
       },
       {
         "name": "BROCADE",
         "styleCount": 2,
         "bucket": "Priority expand",
-        "action": "BROCADE appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "BROCADE appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "WOVEN",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "WOVEN appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "WOVEN appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "MESH",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "MESH appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "MESH appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "LUMIA VELVET",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "LUMIA VELVET appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "LUMIA VELVET appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "VINYLITE",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "VINYLITE appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "VINYLITE appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "PONY",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "PONY appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "PONY appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "BURNISH",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "BURNISH appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "BURNISH appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "KID",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "KID appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "KID appears in very few new SKUs — prioritise adding to more styles"
       },
       {
         "name": "SHINE",
         "styleCount": 1,
         "bucket": "Priority expand",
-        "action": "SHINE appears in very few new SKUs \u2014 prioritise adding to more styles"
+        "action": "SHINE appears in very few new SKUs — prioritise adding to more styles"
       }
     ]
   },
