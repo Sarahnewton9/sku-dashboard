@@ -120,7 +120,7 @@ export default function ColourLeatherTab() {
   const [openKeys, setOpenKeys] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => {
-    return ALL_COMBOS.filter((combo) => {
+    const results = ALL_COMBOS.filter((combo) => {
       const matchesSearch =
         !search ||
         combo.key.toLowerCase().includes(search.toLowerCase()) ||
@@ -134,6 +134,14 @@ export default function ColourLeatherTab() {
 
       return matchesSearch && matchesFilter;
     });
+    // Re-sort based on active filter
+    if (filter === "new") {
+      results.sort((a, b) => b.newCount - a.newCount || a.key.localeCompare(b.key));
+    } else if (filter === "existing") {
+      results.sort((a, b) => b.existingCount - a.existingCount || a.key.localeCompare(b.key));
+    }
+    // filter === "all" keeps the default totalCount order from ALL_COMBOS
+    return results;
   }, [search, filter]);
 
   const toggleKey = (key: string) => {
