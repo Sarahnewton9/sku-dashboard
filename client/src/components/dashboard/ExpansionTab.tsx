@@ -1,10 +1,13 @@
 /**
- * ExpansionTab — New SKU expansion analysis
- * Buckets colours and leathers by how many styles they appear in (new SKUs only)
+ * ExpansionTab — New SKU expansion analysis by Colour/Leather combination
+ * Design: Refined Analytical Dashboard — warm off-white, Sora + Inter typography, amber accents
+ * Uses rawSkus to compute how many styles each colour/leather combo appears in (new SKUs only).
+ * Treats "BLACK VINTAGE" and "BLACK NAPPA" as distinct entries.
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { skuData } from "@/lib/skuData";
+import { Search } from "lucide-react";
 
 type BucketType = "Well covered" | "Good coverage" | "Expand" | "Priority expand";
 
@@ -39,28 +42,100 @@ const BUCKET_CONFIG: Record<BucketType, { label: string; range: string; colour: 
   },
 };
 
-function BucketSection({
-  bucket,
-  items,
-}: {
+function getBucket(styleCount: number): BucketType {
+  if (styleCount >= 10) return "Well covered";
+  if (styleCount >= 5) return "Good coverage";
+  if (styleCount >= 3) return "Expand";
+  return "Priority expand";
+}
+
+function getAction(bucket: BucketType): string {
+  switch (bucket) {
+    case "Well covered": return "Maintain current range";
+    case "Good coverage": return "Consider selective additions";
+    case "Expand": return "Expand to more styles";
+    case "Priority expand": return "Prioritise adding to more styles";
+  }
+}
+
+type ExpansionItem = {
+  key: string;
+  colour: string;
+  leather: string;
+  newStyleCount: number;
+  totalStyleCount: number;
+  newSkuCount: number;
+  totalSkuCount: number;
   bucket: BucketType;
-  items: ExpansionItem[];
-}) {
+  action: string;
+};
+
+function buildExpansionData(): ExpansionItem[] {
+  const raw = (skuData as any).rawSkus as Array<{
+    style: string; colour: string; leather: string; is_new: boolean;
+  }>;
+  if (!raw) return [];
+
+  // Count per combo: styles that have new SKUs, and total styles
+  const newStylesMap = new Map<string, Set<string>>();
+  const totalStylesMap = new Map<string, Set<string>>();
+  const newSkuCount = new Map<string, number>();
+  const totalSkuCount = new Map<string, number>();
+  const comboMeta = new Map<string, { colour: string; leather: string }>();
+
+  for (const r of raw) {
+    const key = (r.colour + (r.leather ? " " + r.leather : "")).trim();
+    if (!key) continue;
+    if (!comboMeta.has(key)) comboMeta.set(key, { colour: r.colour, leather: r.leather });
+
+    if (!totalStylesMap.has(key)) totalStylesMap.set(key, new Set());
+    totalStylesMap.get(key)!.add(r.style);
+    totalSkuCount.set(key, (totalSkuCount.get(key) ?? 0) + 1);
+
+    if (r.is_new) {
+      if (!newStylesMap.has(key)) newStylesMap.set(key, new Set());
+      newStylesMap.get(key)!.add(r.style);
+      newSkuCount.set(key, (newSkuCount.get(key) ?? 0) + 1);
+    }
+  }
+
+  const items: ExpansionItem[] = [];
+  for (const [key, meta] of Array.from(comboMeta.entries())) {
+    const newStyles = newStylesMap.get(key)?.size ?? 0;
+    if (newStyles === 0) continue; // Only show combos that appear in at least one new SKU
+    const totalStyles = totalStylesMap.get(key)?.size ?? 0;
+    const bucket = getBucket(newStyles);
+    items.push({
+      key,
+      colour: meta.colour,
+      leather: meta.leather,
+      newStyleCount: newStyles,
+      totalStyleCount: totalStyles,
+      newSkuCount: newSkuCount.get(key) ?? 0,
+      totalSkuCount: totalSkuCount.get(key) ?? 0,
+      bucket,
+      action: getAction(bucket),
+    });
+  }
+
+  // Sort by newStyleCount desc, then alphabetically
+  return items.sort((a, b) => b.newStyleCount - a.newStyleCount || a.key.localeCompare(b.key));
+}
+
+const ALL_EXPANSION = buildExpansionData();
+
+function BucketSection({ bucket, items }: { bucket: BucketType; items: ExpansionItem[] }) {
   const config = BUCKET_CONFIG[bucket];
   if (items.length === 0) return null;
 
   return (
     <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--border)" }}>
-      {/* Header */}
       <div
         className="px-5 py-3 flex items-center justify-between"
         style={{ background: config.bg, borderBottom: `1px solid ${config.colour}30` }}
       >
         <div className="flex items-center gap-3">
-          <span
-            className="w-3 h-3 rounded-full flex-shrink-0"
-            style={{ background: config.colour }}
-          />
+          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: config.colour }} />
           <div>
             <span className="font-display font-semibold text-sm" style={{ color: config.colour }}>
               {config.label}
@@ -74,26 +149,25 @@ function BucketSection({
             className="text-xs font-semibold px-2 py-0.5 rounded-full"
             style={{ background: config.colour + "20", color: config.colour }}
           >
-            {items.length} items
+            {items.length} combos
           </span>
         </div>
       </div>
-
-      {/* Items grid */}
       <div className="bg-card p-4">
         <div className="flex flex-wrap gap-2">
           {items.map((item) => (
             <div
-              key={item.name}
+              key={item.key}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm"
               style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+              title={`${item.newSkuCount} new SKUs · ${item.totalSkuCount} total SKUs`}
             >
-              <span className="font-medium text-foreground">{item.name}</span>
+              <span className="font-medium text-foreground">{item.key}</span>
               <span
                 className="text-xs font-semibold tabular-nums px-1.5 py-0.5 rounded"
                 style={{ background: config.colour + "20", color: config.colour }}
               >
-                {item.styleCount}
+                {item.newStyleCount}
               </span>
             </div>
           ))}
@@ -103,61 +177,52 @@ function BucketSection({
   );
 }
 
-type ExpansionItem = { name: string; styleCount: number; bucket: string; action: string };
-
 export default function ExpansionTab() {
-  const [view, setView] = useState<"colours" | "leathers">("colours");
+  const [search, setSearch] = useState("");
 
-  const items: ExpansionItem[] = view === "colours" ? [...skuData.expansion.colours] : [...skuData.expansion.leathers];
+  const filtered = useMemo(() => {
+    if (!search) return ALL_EXPANSION;
+    const q = search.toLowerCase();
+    return ALL_EXPANSION.filter((i) => i.key.toLowerCase().includes(q));
+  }, [search]);
 
   const buckets: Record<BucketType, ExpansionItem[]> = {
-    "Well covered": items.filter((i) => i.bucket === "Well covered"),
-    "Good coverage": items.filter((i) => i.bucket === "Good coverage"),
-    "Expand": items.filter((i) => i.bucket === "Expand"),
-    "Priority expand": items.filter((i) => i.bucket === "Priority expand"),
+    "Well covered": filtered.filter((i) => i.bucket === "Well covered"),
+    "Good coverage": filtered.filter((i) => i.bucket === "Good coverage"),
+    "Expand": filtered.filter((i) => i.bucket === "Expand"),
+    "Priority expand": filtered.filter((i) => i.bucket === "Priority expand"),
   };
 
-  const totalItems = items.length;
   const priorityCount = buckets["Priority expand"].length + buckets["Expand"].length;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div>
           <h3 className="font-display font-semibold text-base text-foreground">
             New SKU Expansion Analysis
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Based on new SKUs only. Shows how many styles each {view === "colours" ? "colour" : "leather"} appears in across the new range.
+            Based on new SKUs only. Shows how many styles each colour/leather combination appears in across the new range.
           </p>
         </div>
-        <div className="flex items-center gap-1 p-1 rounded-lg border bg-card flex-shrink-0" style={{ borderColor: "var(--border)" }}>
-          <button
-            onClick={() => setView("colours")}
-            className="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
-            style={{
-              background: view === "colours" ? "var(--foreground)" : "transparent",
-              color: view === "colours" ? "var(--background)" : "var(--muted-foreground)",
-            }}
-          >
-            Colours
-          </button>
-          <button
-            onClick={() => setView("leathers")}
-            className="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
-            style={{
-              background: view === "leathers" ? "var(--foreground)" : "transparent",
-              color: view === "leathers" ? "var(--background)" : "var(--muted-foreground)",
-            }}
-          >
-            Leathers
-          </button>
+        {/* Search */}
+        <div className="relative flex-shrink-0 w-full sm:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search colour/leather…"
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border bg-card focus:outline-none focus:ring-2"
+            style={{ borderColor: "var(--border)" }}
+          />
         </div>
       </div>
 
-      {/* Summary row */}
-      <div className="grid grid-cols-4 gap-4">
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {(Object.entries(BUCKET_CONFIG) as [BucketType, typeof BUCKET_CONFIG[BucketType]][]).map(([key, config]) => (
           <div
             key={key}
@@ -175,7 +240,7 @@ export default function ExpansionTab() {
         ))}
       </div>
 
-      {priorityCount > 0 && (
+      {priorityCount > 0 && !search && (
         <div
           className="rounded-xl p-4 border flex items-start gap-3"
           style={{ background: "oklch(0.97 0.04 25)", borderColor: "#ef444430" }}
@@ -183,11 +248,11 @@ export default function ExpansionTab() {
           <span className="text-lg">⚠️</span>
           <div>
             <p className="text-sm font-semibold" style={{ color: "#ef4444" }}>
-              {priorityCount} {view} need attention
+              {priorityCount} colour/leather combos need attention
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {buckets["Priority expand"].length} in "Priority Expand" (1–2 styles) and {buckets["Expand"].length} in "Expand" (3–4 styles).
-              Consider adding these to more styles in the range.
+              Consider adding these combinations to more styles in the range.
             </p>
           </div>
         </div>
@@ -200,39 +265,48 @@ export default function ExpansionTab() {
         ))}
       </div>
 
-      {/* Detailed table */}
+      {/* Full table */}
       <div className="rounded-xl border bg-card overflow-hidden" style={{ borderColor: "var(--border)" }}>
         <div className="px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
           <h4 className="font-display font-semibold text-sm text-foreground">
-            Full {view === "colours" ? "Colour" : "Leather"} Breakdown
+            Full Colour/Leather Breakdown
           </h4>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Showing {filtered.length} colour/leather combinations with new SKUs
+          </p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                 <th className="text-left px-5 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">#</th>
-                <th className="text-left px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
-                  {view === "colours" ? "Colour" : "Leather"}
-                </th>
-                <th className="text-right px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Styles</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Colour / Leather</th>
+                <th className="text-right px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">New Styles</th>
+                <th className="text-right px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">New SKUs</th>
+                <th className="text-right px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Total SKUs</th>
                 <th className="text-left px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Status</th>
                 <th className="text-left px-5 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Suggested Action</th>
               </tr>
             </thead>
             <tbody>
-              {items.map((item, i) => {
-                const config = BUCKET_CONFIG[item.bucket as BucketType];
+              {filtered.map((item, i) => {
+                const config = BUCKET_CONFIG[item.bucket];
                 return (
                   <tr
-                    key={item.name}
+                    key={item.key}
                     className="border-b transition-colors hover:bg-muted/30"
                     style={{ borderColor: "var(--border)" }}
                   >
                     <td className="px-5 py-3 text-xs tabular-nums text-muted-foreground">{i + 1}</td>
-                    <td className="px-4 py-3 font-semibold text-foreground">{item.name}</td>
+                    <td className="px-4 py-3 font-semibold text-foreground">{item.key}</td>
                     <td className="px-4 py-3 text-right tabular-nums font-semibold" style={{ color: config.colour }}>
-                      {item.styleCount}
+                      {item.newStyleCount}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-foreground">
+                      {item.newSkuCount}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                      {item.totalSkuCount}
                     </td>
                     <td className="px-4 py-3">
                       <span
