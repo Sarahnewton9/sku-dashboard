@@ -21,13 +21,21 @@ export default function StylesTab() {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   function exportToExcel() {
+    // Build a lookup from style name -> { category, last }
+    const styleMeta: Record<string, { category: string; last: string }> = {};
+    skuData.styles.forEach((s) => {
+      styleMeta[s.style] = { category: s.category, last: s.last };
+    });
     // Build rows: one per SKU, filtered to match the current category filter
     const rows = skuData.rawSkus
-      .filter((sku) => categoryFilter === "All" || sku.category === categoryFilter)
+      .filter((sku) => {
+        const meta = styleMeta[sku.style];
+        return categoryFilter === "All" || meta?.category === categoryFilter;
+      })
       .map((sku) => ({
-        Category: sku.category,
+        Category: styleMeta[sku.style]?.category ?? "",
         Style: sku.style,
-        Last: sku.last,
+        Last: styleMeta[sku.style]?.last ?? "",
         Colour: sku.colour,
         Leather: sku.leather,
         Status: sku.is_new ? "New" : "Existing",
