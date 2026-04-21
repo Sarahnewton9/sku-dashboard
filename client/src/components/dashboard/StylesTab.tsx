@@ -485,7 +485,7 @@ export default function StylesTab() {
                                 )}
 
                                 {/* Column headers */}
-                                <div className="grid gap-1 mb-1" style={{ gridTemplateColumns: "1fr 1fr 1fr auto auto auto auto" }}>
+                                <div className="grid gap-1 mb-1" style={{ gridTemplateColumns: "minmax(120px,2fr) minmax(100px,1.5fr) 80px 48px 56px 56px 100px" }}>
                                   {["Colour", "Leather", "Status", "Sz11", "Sample", "Fit", "Buy Qty"].map((h) => (
                                     <span key={h} className="text-xs font-semibold uppercase tracking-wide text-muted-foreground px-2">{h}</span>
                                   ))}
@@ -504,7 +504,7 @@ export default function StylesTab() {
                                         key={`${sku.colour}-${sku.leather}`}
                                         className="grid items-center gap-1 px-2 py-1.5 rounded-lg"
                                         style={{
-                                          gridTemplateColumns: "1fr 1fr 1fr auto auto auto auto",
+                                          gridTemplateColumns: "minmax(120px,2fr) minmax(100px,1.5fr) 80px 48px 56px 56px 100px",
                                           border: "1px solid var(--border)",
                                           background: sessionQty > 0 ? "oklch(0.97 0.06 65 / 0.5)" : "var(--card)",
                                         }}
