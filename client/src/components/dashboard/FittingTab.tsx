@@ -10,6 +10,12 @@ import { toast } from "sonner";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
+const NEW_LASTS = [
+  "DAZIE", "SIA", "SALLY", "TIANA", "BILLIE", "MATISSE",
+  "EDGY", "EMBER", "TILDA", "LUCY", "ENVY", "FINCH",
+  "HARLEY", "JAYDE", "ROXIE", "VIVA", "PIXIE",
+];
+
 export const FIT_LABELS: Record<string, string> = {
   tts: "True to Size",
   runs_small: "Runs Small",
@@ -35,11 +41,19 @@ interface StyleEntry {
   totalSKUs: number;
 }
 
-// ─── Build style list: all styles with at least one new SKU ─────────────────
+// ─── Build style list: new last OR all-new pattern on existing last ──────────
+// Fitting is required when:
+//   1. The style is on one of the 16 new lasts (last fit unknown)
+//   2. The style is a brand-new pattern (isAllNew = true) on any last
+// Excluded: existing patterns on existing lasts that merely added new colours
 
 function buildStyleList(): StyleEntry[] {
   return skuData.styles
-    .filter((s) => s.hasNew)
+    .filter((s) => {
+      const lastUpper = (s.last ?? "").toUpperCase();
+      const isOnNewLast = NEW_LASTS.some((nl) => lastUpper.includes(nl));
+      return isOnNewLast || s.isAllNew;
+    })
     .map((s) => ({
       style: s.style,
       last: s.last,
@@ -457,7 +471,7 @@ export function FittingTab() {
         <div>
           <h2 className="text-lg font-semibold">Fitting</h2>
           <p className="text-sm text-muted-foreground">
-            {styleList.length} styles with new SKUs this season.
+            {styleList.length} styles requiring fitting — new lasts and brand-new patterns.
             {approvedStyles.length > 0 && ` ${approvedStyles.length} approved, ${activeStyles.length} remaining.`}
           </p>
         </div>

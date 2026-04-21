@@ -207,3 +207,8 @@
 - [x] Change FittingTab to include ALL styles with at least one new SKU (not just styles on new lasts)
 - [x] Group by last name (alphabetical) as before
 - [x] Update header description to reflect the broader scope
+
+## Phase 15: Fitting Tab — Correct Filter Logic
+
+- [x] Filter: show styles on a new last (last name in NEW_LASTS list) OR styles where isAllNew=true (brand new pattern, all SKUs new)
+- [x] Styles on existing lasts with only some new SKUs (e.g. Breeze) are excluded
