@@ -114,3 +114,13 @@
 - [x] Sia – Petal Suede, Sky Suede, Espresso Suede, Wheat Suede: all cancelled
 - [x] Trevi – Black Suede, Petal Suede, Taupe Suede: all cancelled
 - [x] Violet – mark all colours as NOT new
+
+## Phase 8: UX Simplification + Last Approval + Sqft Fix
+
+- [x] Expanded SKU rows: show only New/Existing status, Size 11, Sample status, Buy Qty
+- [x] Buy Qty input only shown for NEW SKUs in expanded rows (existing SKUs show read-only)
+- [x] Fit rating, cost, notes etc. remain in the slide-out detail panel only
+- [x] Add "Last Approval" section/tab: each last with status (Approved / Waiting on Revised)
+- [x] Fix sqft calculations: Dress Sandal=2.15, Court Shoe=2.35, Ankle Boot=3.6, Calf Boot=6.95, Sandal=2.0
+- [x] Investigate Tony Bianco RRP scraping from tonybianco.com.au
+- [x] Implement RRP scraping via Shopify products.json API — "Fetch RRP from Tony Bianco AU" button in Export panel

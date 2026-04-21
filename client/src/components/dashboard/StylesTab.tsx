@@ -485,8 +485,8 @@ export default function StylesTab() {
                                 )}
 
                                 {/* Column headers */}
-                                <div className="grid gap-1 mb-1" style={{ gridTemplateColumns: "minmax(120px,2fr) minmax(100px,1.5fr) 80px 48px 56px 56px 100px" }}>
-                                  {["Colour", "Leather", "Status", "Sz11", "Sample", "Fit", "Buy Qty"].map((h) => (
+                                <div className="grid gap-1 mb-1" style={{ gridTemplateColumns: "minmax(120px,2fr) minmax(100px,1.5fr) 80px 48px 56px 100px" }}>
+                                  {["Colour", "Leather", "Status", "Sz11", "Sample", "Buy Qty"].map((h) => (
                                     <span key={h} className="text-xs font-semibold uppercase tracking-wide text-muted-foreground px-2">{h}</span>
                                   ))}
                                 </div>
@@ -504,7 +504,7 @@ export default function StylesTab() {
                                         key={`${sku.colour}-${sku.leather}`}
                                         className="grid items-center gap-1 px-2 py-1.5 rounded-lg"
                                         style={{
-                                          gridTemplateColumns: "minmax(120px,2fr) minmax(100px,1.5fr) 80px 48px 56px 56px 100px",
+                                          gridTemplateColumns: "minmax(120px,2fr) minmax(100px,1.5fr) 80px 48px 56px 100px",
                                           border: "1px solid var(--border)",
                                           background: sessionQty > 0 ? "oklch(0.97 0.06 65 / 0.5)" : "var(--card)",
                                         }}
@@ -537,34 +537,33 @@ export default function StylesTab() {
                                           ) : <span className="text-muted-foreground">—</span>}
                                         </span>
 
-                                        {/* Fit rating */}
-                                        <span className="text-xs text-muted-foreground truncate">
-                                          {dbMeta?.fitRating === "tts" ? "TTS" : dbMeta?.fitRating === "runs_small" ? "Small" : dbMeta?.fitRating === "runs_large" ? "Large" : "—"}
-                                        </span>
-
-                                        {/* Buy Qty — inline input or read-only */}
+                                        {/* Buy Qty — editable input for NEW SKUs only; existing SKUs show a dash */}
                                         <div className="flex items-center gap-1">
-                                          {!isSessionLocked && selectedSession ? (
-                                            <input
-                                              type="number"
-                                              min={0}
-                                              defaultValue={sessionQty || ""}
-                                              key={`qty-${selectedSessionId}-${skuKey2}`}
-                                              onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, e.target.value)}
-                                              onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather)}
-                                              onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
-                                              placeholder="0"
-                                              className="w-16 px-2 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-right"
-                                              style={{ borderColor: sessionQty > 0 ? "oklch(0.72 0.16 65)" : "var(--border)" }}
-                                              onClick={(e) => e.stopPropagation()}
-                                            />
+                                          {sku.is_new ? (
+                                            !isSessionLocked && selectedSession ? (
+                                              <input
+                                                type="number"
+                                                min={0}
+                                                defaultValue={sessionQty || ""}
+                                                key={`qty-${selectedSessionId}-${skuKey2}`}
+                                                onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, e.target.value)}
+                                                onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather)}
+                                                onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
+                                                placeholder="0"
+                                                className="w-16 px-2 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-right"
+                                                style={{ borderColor: sessionQty > 0 ? "oklch(0.72 0.16 65)" : "var(--border)" }}
+                                                onClick={(e) => e.stopPropagation()}
+                                              />
+                                            ) : (
+                                              <span
+                                                className="w-16 text-right text-sm font-mono font-semibold"
+                                                style={{ color: sessionQty > 0 ? "oklch(0.50 0.14 55)" : "var(--muted-foreground)" }}
+                                              >
+                                                {sessionQty > 0 ? sessionQty : "—"}
+                                              </span>
+                                            )
                                           ) : (
-                                            <span
-                                              className="w-16 text-right text-sm font-mono font-semibold"
-                                              style={{ color: sessionQty > 0 ? "oklch(0.50 0.14 55)" : "var(--muted-foreground)" }}
-                                            >
-                                              {sessionQty > 0 ? sessionQty : "—"}
-                                            </span>
+                                            <span className="w-16 text-right text-xs text-muted-foreground" title="Existing SKUs are not bought in new season buys">—</span>
                                           )}
                                           {/* Detail button */}
                                           <button

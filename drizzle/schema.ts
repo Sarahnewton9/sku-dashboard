@@ -107,3 +107,17 @@ export const buySessionItems = mysqlTable("buy_session_items", {
 
 export type BuySessionItem = typeof buySessionItems.$inferSelect;
 export type InsertBuySessionItem = typeof buySessionItems.$inferInsert;
+
+/**
+ * Last approval status — tracks whether each last has been approved or is waiting on revisions
+ */
+export const lastApprovals = mysqlTable("last_approvals", {
+  id: int("id").autoincrement().primaryKey(),
+  lastName: varchar("lastName", { length: 128 }).notNull().unique(),
+  status: mysqlEnum("status", ["approved", "waiting_revised"]).default("waiting_revised").notNull(),
+  notes: text("notes"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type LastApproval = typeof lastApprovals.$inferSelect;
+export type InsertLastApproval = typeof lastApprovals.$inferInsert;

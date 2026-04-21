@@ -3,12 +3,14 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
+import axios from "axios";
 import {
   getAllSkuMeta, upsertSkuMeta,
   getAllStyleMeta, upsertStyleRrp,
   getFittingImages, addFittingImage, deleteFittingImage, getAllFittingImages,
   getAllBuySessions, getActiveBuySession, createBuySession, lockBuySession,
   getBuySessionItems, upsertBuySessionItem, getSessionTotals,
+  getAllLastApprovals, upsertLastApproval,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -91,6 +93,64 @@ export const appRouter = router({
         }
         return { updated };
       }),
+
+    // Fetch RRPs from Tony Bianco AU Shopify API and bulk-import them
+    fetchFromTonyBianco: publicProcedure
+      .input(z.object({
+        styleNames: z.array(z.string()), // style names to match against
+      }))
+      .mutation(async ({ input }) => {
+        const headers = {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        };
+
+        // Fetch all pages from Shopify products.json
+        const allProducts: Record<string, number> = {};
+        let page = 1;
+        while (page <= 30) {
+          const url = `https://tonybianco.com.au/products.json?limit=250&page=${page}`;
+          const resp = await axios.get(url, { headers, timeout: 30000 });
+          const products = resp.data?.products ?? [];
+          if (!products.length) break;
+          for (const p of products) {
+            const name: string = p.title?.trim();
+            const price = parseFloat(p.variants?.[0]?.price ?? "0");
+            if (name && price > 0 && !allProducts[name]) {
+              allProducts[name] = price;
+            }
+          }
+          page++;
+          await new Promise((r) => setTimeout(r, 300));
+        }
+
+        // Match products to style names
+        const styleRrp: Record<string, number[]> = {};
+        for (const [productName, price] of Object.entries(allProducts)) {
+          for (const style of input.styleNames) {
+            const regex = new RegExp(`^${style.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+            if (regex.test(productName)) {
+              if (!styleRrp[style]) styleRrp[style] = [];
+              styleRrp[style].push(price);
+              break;
+            }
+          }
+        }
+
+        // Pick the most common price per style and save
+        let updated = 0;
+        const results: { style: string; rrp: number }[] = [];
+        for (const [style, prices] of Object.entries(styleRrp)) {
+          // Most common price
+          const freq: Record<number, number> = {};
+          for (const p of prices) freq[p] = (freq[p] ?? 0) + 1;
+          const rrp = parseFloat(Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0]);
+          await upsertStyleRrp(style, rrp);
+          results.push({ style, rrp });
+          updated++;
+        }
+
+        return { updated, results, totalProducts: Object.keys(allProducts).length };
+      }),
   }),
 
   // Buy sessions
@@ -129,6 +189,22 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         await upsertBuySessionItem(input.sessionId, input.style, input.colour, input.leather, input.qty);
+        return { success: true };
+      }),
+  }),
+
+  // Last approvals
+  lastApproval: router({
+    getAll: publicProcedure.query(async () => getAllLastApprovals()),
+
+    upsert: publicProcedure
+      .input(z.object({
+        lastName: z.string(),
+        status: z.enum(["approved", "waiting_revised"]),
+        notes: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await upsertLastApproval(input.lastName, input.status, input.notes ?? null);
         return { success: true };
       }),
   }),

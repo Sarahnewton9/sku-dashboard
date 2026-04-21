@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, users, buySessions, buySessionItems } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, users, buySessions, buySessionItems, lastApprovals } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -270,4 +270,20 @@ export async function upsertBuySessionItem(sessionId: number, style: string, col
   } else {
     await db.insert(buySessionItems).values({ sessionId, style, colour, leather, qty });
   }
+}
+
+// ─── Last Approvals ─────────────────────────────────────────────────────────────────────────────
+
+export async function getAllLastApprovals() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(lastApprovals);
+}
+
+export async function upsertLastApproval(lastName: string, status: "approved" | "waiting_revised", notes?: string | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(lastApprovals)
+    .values({ lastName, status, notes: notes ?? null })
+    .onDuplicateKeyUpdate({ set: { status, notes: notes ?? null } });
 }

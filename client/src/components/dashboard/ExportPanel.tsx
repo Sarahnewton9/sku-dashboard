@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
-import { FileDown, X, FileSpreadsheet, ClipboardList } from "lucide-react";
+import { FileDown, X, FileSpreadsheet, ClipboardList, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -15,9 +15,25 @@ interface Props {
 
 export default function ExportPanel({ onClose }: Props) {
   const [exporting, setExporting] = useState<string | null>(null);
+  const utils = trpc.useUtils();
 
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
   const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
+
+  const fetchRrpMutation = trpc.style.fetchFromTonyBianco.useMutation({
+    onSuccess: (data) => {
+      utils.style.getAll.invalidate();
+      toast.success(`Fetched RRPs for ${data.updated} styles from Tony Bianco AU (${data.totalProducts} products scanned)`);
+    },
+    onError: (err) => {
+      toast.error(`Failed to fetch RRPs: ${err.message}`);
+    },
+  });
+
+  function handleFetchRrp() {
+    const styleNames = skuData.styles.map((s) => s.style);
+    fetchRrpMutation.mutate({ styleNames });
+  }
 
   // Build lookup maps
   const skuMetaMap: Record<string, typeof skuMetaList[0]> = {};
@@ -213,6 +229,25 @@ export default function ExportPanel({ onClose }: Props) {
               </p>
             </div>
             {exporting === "buy" && <span className="ml-auto text-xs text-muted-foreground">Exporting…</span>}
+          </button>
+
+          {/* Fetch RRP from Tony Bianco */}
+          <button
+            onClick={handleFetchRrp}
+            disabled={exporting !== null || fetchRrpMutation.isPending}
+            className="w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all hover:bg-muted/30 disabled:opacity-50"
+            style={{ borderColor: "oklch(0.80 0.10 240)", background: "oklch(0.97 0.02 240)" }}
+          >
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "oklch(0.92 0.06 240)" }}>
+              <RefreshCw className={`w-5 h-5 ${fetchRrpMutation.isPending ? "animate-spin" : ""}`} style={{ color: "oklch(0.40 0.14 240)" }} />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-sm text-foreground">Fetch RRP from Tony Bianco AU</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Pulls current AU prices from tonybianco.com.au and auto-matches to your styles. Takes ~10 seconds.
+              </p>
+            </div>
+            {fetchRrpMutation.isPending && <span className="ml-auto text-xs text-muted-foreground flex-shrink-0">Fetching…</span>}
           </button>
 
           {/* Full Data Export */}

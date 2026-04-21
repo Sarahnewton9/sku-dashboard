@@ -7,17 +7,17 @@ import { skuData } from "@/lib/skuData";
 import { trpc } from "@/lib/trpc";
 import { Calculator } from "lucide-react";
 
-// Footage rates per category (sq ft per pair)
+// Footage rates per category (sq ft per pair) — confirmed by supplier
 const FOOTAGE_RATES: Record<string, number> = {
-  "Dress Sandal": 1.5,
-  "Court Shoe": 1.7,
-  "Dress Shoe": 1.7,
-  "Ankle Boot": 2.5,
-  "Calf Boot": 4.5,
-  "Sandal": 1.0,
-  "Ballet Flat": 1.5,
-  "Loafer": 1.7,
-  "Wedge": 1.5,
+  "Dress Sandal": 2.15,
+  "Court Shoe": 2.35,
+  "Dress Shoe": 2.35,   // Court shoe equivalent
+  "Ankle Boot": 3.6,
+  "Calf Boot": 6.95,
+  "Sandal": 2.0,
+  "Ballet Flat": 2.35,  // Court shoe equivalent
+  "Loafer": 2.35,       // Court shoe equivalent
+  "Wedge": 2.35,        // Court shoe equivalent
 };
 
 export default function LeathersTab() {
