@@ -212,3 +212,11 @@
 
 - [x] Filter: show styles on a new last (last name in NEW_LASTS list) OR styles where isAllNew=true (brand new pattern, all SKUs new)
 - [x] Styles on existing lasts with only some new SKUs (e.g. Breeze) are excluded
+
+## Phase 16: Fit Approved — Move to By Style Tab
+
+- [x] FittingTab: remove the collapsed "Approved" section at the bottom — approved styles no longer appear in Fitting at all
+- [x] FittingTab: update header count to show only pending styles
+- [x] StylesTab: add a collapsed "Fit Approved (N)" section at the bottom of the By Style tab
+- [x] Each approved style in that section is expandable to show fit rating badge, fitting notes, and fitting images
+- [x] Approved styles can still have their approval undone from the By Style section (moves them back to Fitting tab)

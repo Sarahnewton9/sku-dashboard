@@ -269,7 +269,7 @@ export function FittingTab() {
   const [fitModel, setFitModel] = useState("");
   const [fitDate, setFitDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [exporting, setExporting] = useState(false);
-  const [approvedSectionOpen, setApprovedSectionOpen] = useState(false);
+  // approvedSectionOpen removed — approved styles now live in By Style tab
 
   const styleList = buildStyleList();
 
@@ -471,8 +471,8 @@ export function FittingTab() {
         <div>
           <h2 className="text-lg font-semibold">Fitting</h2>
           <p className="text-sm text-muted-foreground">
-            {styleList.length} styles requiring fitting — new lasts and brand-new patterns.
-            {approvedStyles.length > 0 && ` ${approvedStyles.length} approved, ${activeStyles.length} remaining.`}
+            {activeStyles.length} of {styleList.length} styles remaining to fit.
+            {approvedStyles.length > 0 && ` ${approvedStyles.length} approved — see By Style tab.`}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => setExportOpen(true)} className="gap-2">
@@ -525,7 +525,7 @@ export function FittingTab() {
         <div className="text-center py-8 text-muted-foreground">
           <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
           <p className="text-sm font-medium text-green-700">All styles have been approved!</p>
-          <p className="text-xs mt-1">See the Approved section below to review or make changes.</p>
+          <p className="text-xs mt-1">Approved styles are saved in the <strong>By Style</strong> tab under the Fit Approved section.</p>
         </div>
       )}
 
@@ -546,36 +546,7 @@ export function FittingTab() {
 
       {activeStyles.length === 0 && approvedStyles.length === 0 && (
         <div className="text-center py-16 text-muted-foreground">
-          <p className="text-sm">No styles found on new lasts.</p>
-        </div>
-      )}
-
-      {/* Approved section — collapsed by default */}
-      {approvedStyles.length > 0 && (
-        <div className="border border-green-200 rounded-xl overflow-hidden">
-          <button
-            className="w-full flex items-center justify-between px-4 py-3 bg-green-50/60 hover:bg-green-50 transition-colors"
-            onClick={() => setApprovedSectionOpen((v) => !v)}
-          >
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-semibold text-green-800">
-                Approved ({approvedStyles.length} {approvedStyles.length === 1 ? "style" : "styles"})
-              </span>
-              <span className="text-xs text-green-600">— fit confirmed, notes saved</span>
-            </div>
-            {approvedSectionOpen
-              ? <ChevronDown className="w-4 h-4 text-green-600" />
-              : <ChevronRight className="w-4 h-4 text-green-600" />}
-          </button>
-
-          {approvedSectionOpen && (
-            <div className="p-4 space-y-2 bg-green-50/20">
-              {approvedStyles.map((entry) => (
-                <StyleFitRow key={entry.style} entry={entry} {...rowProps} />
-              ))}
-            </div>
-          )}
+          <p className="text-sm">No styles requiring fitting found.</p>
         </div>
       )}
     </div>

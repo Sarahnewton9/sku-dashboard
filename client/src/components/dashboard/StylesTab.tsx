@@ -9,7 +9,7 @@
 import React, { useState, useMemo, useCallback, useRef } from "react";
 import { skuData } from "@/lib/skuData";
 import { trpc } from "@/lib/trpc";
-import { Search, ChevronUp, ChevronDown, Download, Upload, SlidersHorizontal } from "lucide-react";
+import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw } from "lucide-react";
 import * as XLSX from "xlsx";
 import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
 import ImportPanel from "./ImportPanel";
@@ -32,6 +32,8 @@ export default function StylesTab() {
   const [showImport, setShowImport] = useState(false);
   const [expandedStyle, setExpandedStyle] = useState<string | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
+  const [fitApprovedSectionOpen, setFitApprovedSectionOpen] = useState(false);
+  const [expandedApprovedStyle, setExpandedApprovedStyle] = useState<string | null>(null);
 
   // Pending qty changes (local before saving)
   const pendingQty = useRef<Record<string, number>>({});
@@ -41,6 +43,15 @@ export default function StylesTab() {
   // Fetch all SKU meta from DB
   const { data: skuMetaList = [], refetch: refetchSkuMeta } = trpc.sku.getAll.useQuery();
   const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery();
+
+  // Fitting images for approved styles
+  const { data: allFitImages = [], refetch: refetchFitImages } = trpc.styleFitting.getAll.useQuery();
+
+  // Undo approval mutation
+  const undoApprovalMutation = trpc.styleFitting.updateFit.useMutation({
+    onSuccess: () => { refetchStyleMeta(); refetchFitImages(); },
+    onError: (err) => toast.error(`Failed to undo approval: ${err.message}`),
+  });
 
   // Buy sessions
   const { data: allSessions = [], refetch: refetchSessions } = trpc.buy.getSessions.useQuery();
@@ -99,6 +110,21 @@ export default function StylesTab() {
 
   const selectedSession = useMemo(() => allSessions.find((s) => s.id === selectedSessionId), [allSessions, selectedSessionId]);
   const isSessionLocked = selectedSession?.isLocked ?? true;
+
+  // Fit images grouped by style
+  const fitImagesMap = useMemo(() => {
+    const map: Record<string, Array<{ id: number; imageUrl: string; fileKey: string }>> = {};
+    for (const img of allFitImages as Array<{ id: number; style: string; imageUrl: string; fileKey: string }>) {
+      if (!map[img.style]) map[img.style] = [];
+      map[img.style].push({ id: img.id, imageUrl: img.imageUrl, fileKey: img.fileKey });
+    }
+    return map;
+  }, [allFitImages]);
+
+  // Approved styles list (from skuData, filtered by fitApproved in styleMeta)
+  const approvedFitStyles = useMemo(() => {
+    return skuData.styles.filter((s) => styleMetaMap[s.style]?.fitApproved === true);
+  }, [styleMetaMap]);
 
   function handleMetaChange() {
     refetchSkuMeta();
@@ -619,6 +645,110 @@ export default function StylesTab() {
           ))
         )}
       </div>
+
+      {/* Fit Approved section — collapsed, at the bottom of By Style */}
+      {approvedFitStyles.length > 0 && (
+        <div className="mt-4 border rounded-xl overflow-hidden" style={{ borderColor: "oklch(0.85 0.06 155)" }}>
+          <button
+            className="w-full flex items-center justify-between px-4 py-3 transition-colors"
+            style={{ background: fitApprovedSectionOpen ? "oklch(0.97 0.03 155 / 0.4)" : "oklch(0.97 0.03 155 / 0.25)" }}
+            onClick={() => setFitApprovedSectionOpen((v) => !v)}
+          >
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-semibold" style={{ color: "oklch(0.38 0.10 155)" }}>
+                Fit Approved ({approvedFitStyles.length} {approvedFitStyles.length === 1 ? "style" : "styles"})
+              </span>
+              <span className="text-xs" style={{ color: "oklch(0.55 0.08 155)" }}>— fit confirmed, notes saved</span>
+            </div>
+            {fitApprovedSectionOpen
+              ? <ChevronDown className="w-4 h-4" style={{ color: "oklch(0.55 0.08 155)" }} />
+              : <ChevronRight className="w-4 h-4" style={{ color: "oklch(0.55 0.08 155)" }} />}
+          </button>
+
+          {fitApprovedSectionOpen && (
+            <div className="divide-y" style={{ borderColor: "oklch(0.92 0.04 155)" }}>
+              {approvedFitStyles.map((style) => {
+                const sm = styleMetaMap[style.style];
+                const images = fitImagesMap[style.style] ?? [];
+                const isExpanded = expandedApprovedStyle === style.style;
+                const fitLabel = sm?.fitRating === "tts" ? "True to Size" : sm?.fitRating === "runs_small" ? "Runs Small" : sm?.fitRating === "runs_large" ? "Runs Large" : null;
+                const fitBadgeClass = sm?.fitRating === "tts" ? "bg-green-100 text-green-800 border-green-200" : sm?.fitRating === "runs_small" ? "bg-amber-100 text-amber-800 border-amber-200" : sm?.fitRating === "runs_large" ? "bg-blue-100 text-blue-800 border-blue-200" : "";
+                return (
+                  <div key={style.style}>
+                    {/* Style row */}
+                    <div
+                      className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors"
+                      onClick={() => setExpandedApprovedStyle(isExpanded ? null : style.style)}
+                    >
+                      {style.imageUrl && (
+                        <img src={style.imageUrl} alt={style.style} className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold text-foreground">{style.style}</span>
+                          <span className="text-xs text-muted-foreground">{style.last}</span>
+                          {fitLabel && (
+                            <span className={`text-xs px-2 py-0.5 rounded border font-medium ${fitBadgeClass}`}>{fitLabel}</span>
+                          )}
+                        </div>
+                        {sm?.fittingNotes && !isExpanded && (
+                          <p className="text-xs italic text-muted-foreground mt-0.5 truncate">{sm.fittingNotes}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            undoApprovalMutation.mutate({ style: style.style, fitApproved: false });
+                            toast.success(`${style.style} moved back to Fitting tab`);
+                          }}
+                          className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-muted transition-colors text-muted-foreground"
+                          title="Undo approval — move back to Fitting tab"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          Undo
+                        </button>
+                        {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                      </div>
+                    </div>
+
+                    {/* Expanded fit details */}
+                    {isExpanded && (
+                      <div className="px-4 pb-4 pt-2 space-y-3" style={{ background: "oklch(0.98 0.01 155 / 0.4)" }}>
+                        {sm?.fittingNotes && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Fitting Notes</p>
+                            <p className="text-sm text-foreground whitespace-pre-wrap">{sm.fittingNotes}</p>
+                          </div>
+                        )}
+                        {images.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Fitting Images</p>
+                            <div className="flex flex-wrap gap-2">
+                              {images.map((img) => (
+                                <img
+                                  key={img.id}
+                                  src={img.imageUrl}
+                                  alt="Fitting"
+                                  className="w-24 h-24 rounded-lg object-cover border border-border"
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {!sm?.fittingNotes && images.length === 0 && (
+                          <p className="text-xs text-muted-foreground italic">No notes or images saved.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* SKU Detail Panel */}
       {selectedSku && (
