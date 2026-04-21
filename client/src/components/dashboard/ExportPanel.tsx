@@ -1,0 +1,250 @@
+/**
+ * ExportPanel — exports for fitting notes and buy sheet
+ */
+
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { skuData } from "@/lib/skuData";
+import { FileDown, X, FileSpreadsheet, ClipboardList } from "lucide-react";
+import { toast } from "sonner";
+import * as XLSX from "xlsx";
+
+interface Props {
+  onClose: () => void;
+}
+
+export default function ExportPanel({ onClose }: Props) {
+  const [exporting, setExporting] = useState<string | null>(null);
+
+  const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
+  const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
+
+  // Build lookup maps
+  const skuMetaMap: Record<string, typeof skuMetaList[0]> = {};
+  for (const m of skuMetaList) {
+    skuMetaMap[`${m.style}|${m.colour}|${m.leather}`] = m;
+  }
+  const styleMetaMap: Record<string, typeof styleMetaList[0]> = {};
+  for (const m of styleMetaList) {
+    styleMetaMap[m.style] = m;
+  }
+
+  // Style lookup for category/last
+  const styleLookup: Record<string, { category: string; last: string }> = {};
+  for (const s of skuData.styles) {
+    styleLookup[s.style] = { category: s.category, last: s.last };
+  }
+
+  function exportFittingNotes() {
+    setExporting("fitting");
+    try {
+      const rows = skuData.rawSkus
+        .map((sku) => {
+          const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
+          const meta = skuMetaMap[key];
+          return {
+            Style: sku.style,
+            Category: styleLookup[sku.style]?.category ?? "",
+            Last: styleLookup[sku.style]?.last ?? "",
+            Colour: sku.colour,
+            Leather: sku.leather,
+            Status: sku.is_new ? "New" : "Existing",
+            "Size 11": meta?.isSize11 ? "Yes" : "No",
+            "Sample Status": meta?.sampleStatus ?? "waiting",
+            "Fit Rating": meta?.fitRating
+              ? { tts: "True to Size", runs_small: "Runs Small", runs_large: "Runs Large" }[meta.fitRating] ?? meta.fitRating
+              : "",
+            "Fitting Notes": meta?.fittingNotes ?? "",
+            "Cost Price": meta?.costPrice != null ? meta.costPrice : "",
+            RRP: styleMetaMap[sku.style]?.rrp != null ? styleMetaMap[sku.style].rrp : "",
+          };
+        })
+        .filter((r) => r["Fitting Notes"] || r["Fit Rating"] || r["Sample Status"] === "received");
+
+      if (rows.length === 0) {
+        toast.info("No fitting notes or sample data to export yet.");
+        return;
+      }
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [
+        { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 22 },
+        { wch: 10 }, { wch: 8 }, { wch: 14 }, { wch: 16 }, { wch: 40 }, { wch: 12 }, { wch: 10 },
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Fitting Notes");
+      XLSX.writeFile(wb, "SS26_Fitting_Notes.xlsx");
+      toast.success(`Exported ${rows.length} SKUs with fitting data`);
+    } finally {
+      setExporting(null);
+    }
+  }
+
+  function exportBuySheet() {
+    setExporting("buy");
+    try {
+      const rows = skuData.rawSkus
+        .map((sku) => {
+          const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
+          const meta = skuMetaMap[key];
+          const qty = meta?.orderQty ?? 0;
+          return {
+            Style: sku.style,
+            Category: styleLookup[sku.style]?.category ?? "",
+            Last: styleLookup[sku.style]?.last ?? "",
+            Colour: sku.colour,
+            Leather: sku.leather,
+            Status: sku.is_new ? "New" : "Existing",
+            "Size 11": meta?.isSize11 ? "Yes" : "No",
+            "Order Qty": qty,
+            "Cost Price": meta?.costPrice != null ? meta.costPrice : "",
+            RRP: styleMetaMap[sku.style]?.rrp != null ? styleMetaMap[sku.style].rrp : "",
+          };
+        })
+        .filter((r) => r["Order Qty"] > 0);
+
+      if (rows.length === 0) {
+        toast.info("No order quantities set yet. Add order quantities in the By Style tab.");
+        return;
+      }
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [
+        { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 22 },
+        { wch: 10 }, { wch: 8 }, { wch: 12 }, { wch: 12 }, { wch: 10 },
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Buy Sheet");
+      XLSX.writeFile(wb, "SS26_Buy_Sheet.xlsx");
+      toast.success(`Exported buy sheet with ${rows.length} SKUs`);
+    } finally {
+      setExporting(null);
+    }
+  }
+
+  function exportFullData() {
+    setExporting("full");
+    try {
+      const rows = skuData.rawSkus.map((sku) => {
+        const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
+        const meta = skuMetaMap[key];
+        return {
+          Style: sku.style,
+          Category: styleLookup[sku.style]?.category ?? "",
+          Last: styleLookup[sku.style]?.last ?? "",
+          Colour: sku.colour,
+          Leather: sku.leather,
+          Status: sku.is_new ? "New" : "Existing",
+          "Size 11": meta?.isSize11 ? "Yes" : "No",
+          "Sample Status": meta?.sampleStatus ?? "waiting",
+          "Order Qty": meta?.orderQty ?? 0,
+          "Cost Price": meta?.costPrice != null ? meta.costPrice : "",
+          RRP: styleMetaMap[sku.style]?.rrp != null ? styleMetaMap[sku.style].rrp : "",
+          "Fit Rating": meta?.fitRating
+            ? { tts: "True to Size", runs_small: "Runs Small", runs_large: "Runs Large" }[meta.fitRating] ?? meta.fitRating
+            : "",
+          "Fitting Notes": meta?.fittingNotes ?? "",
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [
+        { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 22 },
+        { wch: 10 }, { wch: 8 }, { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 40 },
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Full SKU Data");
+      XLSX.writeFile(wb, "SS26_Full_Export.xlsx");
+      toast.success(`Exported all ${rows.length} SKUs`);
+    } finally {
+      setExporting(null);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.4)" }}>
+      <div className="w-[480px] max-w-full mx-4 rounded-2xl shadow-2xl bg-card overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+          <h2 className="font-display font-bold text-lg text-foreground">Export Data</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+            <X className="w-5 h-5 text-muted-foreground" />
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Choose an export format. All exports include Size 11 flag and current DB data.
+          </p>
+
+          {/* Fitting Notes Export */}
+          <button
+            onClick={exportFittingNotes}
+            disabled={exporting !== null}
+            className="w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all hover:bg-muted/30 disabled:opacity-50"
+            style={{ borderColor: "var(--border)" }}
+          >
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "oklch(0.96 0.08 65)" }}>
+              <ClipboardList className="w-5 h-5" style={{ color: "oklch(0.50 0.14 55)" }} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm text-foreground">Fitting Notes Export</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                SKUs with fitting notes, fit rating, or received samples. For sharing with factory.
+              </p>
+            </div>
+            {exporting === "fitting" && <span className="ml-auto text-xs text-muted-foreground">Exporting…</span>}
+          </button>
+
+          {/* Buy Sheet Export */}
+          <button
+            onClick={exportBuySheet}
+            disabled={exporting !== null}
+            className="w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all hover:bg-muted/30 disabled:opacity-50"
+            style={{ borderColor: "var(--border)" }}
+          >
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "oklch(0.94 0.08 155)" }}>
+              <FileSpreadsheet className="w-5 h-5" style={{ color: "oklch(0.40 0.14 155)" }} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm text-foreground">Buy Sheet Export</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Only SKUs with order qty &gt; 0. Includes style, colour, leather, category, last, qty, cost, RRP.
+              </p>
+            </div>
+            {exporting === "buy" && <span className="ml-auto text-xs text-muted-foreground">Exporting…</span>}
+          </button>
+
+          {/* Full Data Export */}
+          <button
+            onClick={exportFullData}
+            disabled={exporting !== null}
+            className="w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all hover:bg-muted/30 disabled:opacity-50"
+            style={{ borderColor: "var(--border)" }}
+          >
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "var(--muted)" }}>
+              <FileDown className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm text-foreground">Full Data Export</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                All 1,018 SKUs with all fields including size 11, sample status, cost, RRP, fit notes.
+              </p>
+            </div>
+            {exporting === "full" && <span className="ml-auto text-xs text-muted-foreground">Exporting…</span>}
+          </button>
+        </div>
+
+        <div className="flex justify-end px-6 py-4 border-t" style={{ borderColor: "var(--border)" }}>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-muted"
+            style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

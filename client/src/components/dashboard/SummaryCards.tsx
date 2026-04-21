@@ -1,11 +1,12 @@
 /**
  * SummaryCards — Overview tab
- * Shows 8 key metrics + category breakdown bar chart
+ * Shows key metrics + "Waiting on X samples" tile + category breakdown bar chart
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { skuData } from "@/lib/skuData";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { trpc } from "@/lib/trpc";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
   Package,
   Sparkles,
@@ -16,6 +17,8 @@ import {
   Palette,
   Tag,
   RefreshCw,
+  Clock,
+  CheckCircle,
 } from "lucide-react";
 
 const CATEGORY_COLOURS: Record<string, string> = {
@@ -58,24 +61,28 @@ interface MetricCardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon: React.ComponentType<any>;
   accent?: boolean;
+  accentColor?: string;
   sub?: string;
 }
 
-function MetricCard({ label, value, icon: Icon, accent, sub }: MetricCardProps) {
+function MetricCard({ label, value, icon: Icon, accent, accentColor, sub }: MetricCardProps) {
+  const bgColor = accentColor === "green" ? "oklch(0.94 0.08 155)" : "oklch(0.97 0.06 65)";
+  const borderColor = accentColor === "green" ? "oklch(0.85 0.12 155)" : "oklch(0.88 0.10 65)";
+  const iconBg = accentColor === "green" ? "oklch(0.72 0.18 155)" : "oklch(0.72 0.16 65)";
+  const textColor = accentColor === "green" ? "oklch(0.40 0.14 155)" : "oklch(0.45 0.14 55)";
+
   return (
     <div
       className="rounded-xl p-5 border transition-shadow hover:shadow-md"
       style={{
-        background: accent ? "oklch(0.97 0.06 65)" : "var(--card)",
-        borderColor: accent ? "oklch(0.88 0.10 65)" : "var(--border)",
+        background: accent ? bgColor : "var(--card)",
+        borderColor: accent ? borderColor : "var(--border)",
       }}
     >
       <div className="flex items-start justify-between mb-3">
         <div
           className="w-9 h-9 rounded-lg flex items-center justify-center"
-          style={{
-            background: accent ? "oklch(0.72 0.16 65)" : "var(--muted)",
-          }}
+          style={{ background: accent ? iconBg : "var(--muted)" }}
         >
           <span style={{ color: accent ? "white" : "var(--muted-foreground)" }} className="flex items-center justify-center">
             <Icon className="w-4 h-4" />
@@ -84,7 +91,7 @@ function MetricCard({ label, value, icon: Icon, accent, sub }: MetricCardProps) 
       </div>
       <div
         className="text-3xl font-display font-bold tabular-nums"
-        style={{ color: accent ? "oklch(0.45 0.14 55)" : "var(--foreground)" }}
+        style={{ color: accent ? textColor : "var(--foreground)" }}
       >
         <AnimatedNumber value={value} />
       </div>
@@ -103,6 +110,24 @@ function MetricCard({ label, value, icon: Icon, accent, sub }: MetricCardProps) 
 export default function SummaryCards() {
   const s = skuData.summary;
   const pctNew = Math.round((s.newSKUs / s.totalSKUs) * 100);
+
+  // Fetch live sample status counts
+  const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
+
+  const sampleCounts = useMemo(() => {
+    let waiting = 0;
+    let received = 0;
+    for (const m of skuMetaList) {
+      if (m.sampleStatus === "waiting") waiting++;
+      else if (m.sampleStatus === "received") received++;
+    }
+    // Count new SKUs that have no meta entry (default = waiting)
+    const newSkuCount = skuData.rawSkus.filter((s) => s.is_new).length;
+    const trackedNewSkus = skuMetaList.length;
+    // SKUs not yet in DB are implicitly "waiting"
+    const untrackedWaiting = Math.max(0, newSkuCount - trackedNewSkus);
+    return { waiting: waiting + untrackedWaiting, received };
+  }, [skuMetaList]);
 
   const chartData = skuData.categories.map((c) => ({
     name: c.category.replace("Dress ", "D.").replace("Ballet Flat", "Ballet").replace("Ankle Boot", "A.Boot").replace("Calf Boot", "C.Boot"),
@@ -127,6 +152,22 @@ export default function SummaryCards() {
           <MetricCard label="Existing Styles" value={(s as any).existingStyles} icon={RefreshCw} sub="Carrying over unchanged" />
           <MetricCard label="Unique Leathers" value={s.uniqueLeathers} icon={Tag} sub="Distinct types" />
           <MetricCard label="Unique Colours" value={s.uniqueColours} icon={Palette} sub="Distinct colours" />
+          {/* Sample tracking tiles */}
+          <MetricCard
+            label="Waiting on Samples"
+            value={sampleCounts.waiting}
+            icon={Clock}
+            accent
+            sub="New SKUs awaiting sample"
+          />
+          <MetricCard
+            label="Samples Received"
+            value={sampleCounts.received}
+            icon={CheckCircle}
+            accent
+            accentColor="green"
+            sub="Samples confirmed"
+          />
         </div>
       </div>
 
@@ -203,7 +244,7 @@ export default function SummaryCards() {
               </tr>
             </thead>
             <tbody>
-              {skuData.categories.map((cat, i) => (
+              {skuData.categories.map((cat) => (
                 <tr
                   key={cat.category}
                   className="border-b transition-colors hover:bg-muted/40"

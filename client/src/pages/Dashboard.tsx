@@ -6,7 +6,7 @@
  * - Fixed left sidebar, tabbed main content
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState } from "react";
 import { skuData } from "@/lib/skuData";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import CategoryTab from "@/components/dashboard/CategoryTab";
@@ -15,6 +15,7 @@ import LeathersTab from "@/components/dashboard/LeathersTab";
 import ColoursTab from "@/components/dashboard/ColoursTab";
 import ExpansionTab from "@/components/dashboard/ExpansionTab";
 import ColourLeatherTab from "@/components/dashboard/ColourLeatherTab";
+import ExportPanel from "@/components/dashboard/ExportPanel";
 import {
   LayoutDashboard,
   Tag,
@@ -24,6 +25,7 @@ import {
   TrendingUp,
   ChevronRight,
   Combine,
+  Download,
 } from "lucide-react";
 
 type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion";
@@ -41,6 +43,7 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any> }[] = 
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [showExport, setShowExport] = useState(false);
 
   const tabLabel = NAV_ITEMS.find((n) => n.id === activeTab)?.label ?? "";
 
@@ -127,10 +130,10 @@ export default function Dashboard() {
             <p className="text-xs text-muted-foreground mt-0.5">
               {activeTab === "overview" && `${skuData.summary.newSKUs} new SKUs across ${skuData.summary.stylesWithNew} styles`}
               {activeTab === "categories" && `${skuData.categories.length} categories`}
-              {activeTab === "styles" && `${skuData.styles.length} styles`}
+              {activeTab === "styles" && `${skuData.styles.length} styles — click a style to expand SKUs`}
               {activeTab === "leathers" && `${skuData.leathers.length} unique leather types`}
               {activeTab === "colours" && `${skuData.colours.length} unique colours`}
-              {activeTab === "colourleather" && "171 colour/leather combinations"}
+              {activeTab === "colourleather" && "Colour/leather combinations"}
               {activeTab === "expansion" && "New SKU coverage analysis"}
             </p>
           </div>
@@ -144,6 +147,14 @@ export default function Dashboard() {
               style={{ background: "oklch(0.95 0.004 80)", color: "oklch(0.45 0.008 60)" }}>
               {skuData.summary.existingSKUs} Existing
             </span>
+            <button
+              onClick={() => setShowExport(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700"
+              style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+            >
+              <Download className="w-3.5 h-3.5" />
+              Export
+            </button>
           </div>
         </header>
 
@@ -160,6 +171,11 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      {/* Export Panel */}
+      {showExport && (
+        <ExportPanel onClose={() => setShowExport(false)} />
+      )}
     </div>
   );
 }
