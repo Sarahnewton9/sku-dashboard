@@ -180,3 +180,24 @@
 - [x] HTML export: style image + style name + last + fit rating + notes, one style per section
 - [x] Export only includes styles with at least a fit rating or notes filled in
 - [x] Remove fit rating, fitting notes, fitting images from SkuDetailPanel
+
+## Phase 13: Fit Approval Status + By Style Integration
+
+### Database / Backend
+- [x] Add fitApproved boolean field to styleMeta table
+- [x] DB push for schema change
+- [x] Backend: update styleFitting.updateFit to accept fitApproved flag
+- [x] Backend: style.getAll already returns styleMeta — fitApproved included
+
+### Frontend — Fitting Tab
+- [x] Add "Approve Fit" button to each style row in Fitting tab
+- [x] Approved styles collapse into a "Approved (N)" section at the bottom of the Fitting tab
+- [x] Approved section is collapsed by default, expandable to view/edit approved styles
+- [x] Approved styles show an "Undo Approval" button to move them back to active list
+- [x] Fit data (rating, notes, images) remains fully editable regardless of approval status
+
+### Frontend — By Style Tab
+- [x] When a style row is expanded and the style has been fit-approved, show fit badge + notes inline above the SKU list
+- [x] Fit badge shows the fit rating (TTS / Runs Small / Runs Large) in the appropriate colour
+- [x] Fitting notes shown as italic text below the badge
+- [x] Only show fit info for styles that have fitApproved = true

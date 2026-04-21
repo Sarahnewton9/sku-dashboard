@@ -69,7 +69,7 @@ export default function StylesTab() {
 
   // Build lookup maps
   type SkuMetaItem = { style: string; colour: string; leather: string; sampleStatus?: string | null; orderQty?: number | null; isSize11?: boolean | null; costPrice?: number | null; fitRating?: string | null; fittingNotes?: string | null; };
-  type StyleMetaItem = { style: string; rrp?: number | null; };
+  type StyleMetaItem = { style: string; rrp?: number | null; fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; };
 
   const skuMetaMap = useMemo(() => {
     const map: Record<string, SkuMetaItem> = {};
@@ -465,6 +465,24 @@ export default function StylesTab() {
                           {expandedStyle === style.style && (
                             <tr key={`${style.style}-expanded`} className="border-b" style={{ borderColor: "var(--border)" }}>
                               <td colSpan={8} className="px-6 py-3" style={{ background: "oklch(0.98 0.02 65 / 0.5)" }}>
+                                {/* Fit info — shown when style has been fit-approved */}
+                                {(() => {
+                                  const sm = styleMetaMap[style.style];
+                                  if (!sm?.fitApproved) return null;
+                                  const fitLabel = sm.fitRating === "tts" ? "True to Size" : sm.fitRating === "runs_small" ? "Runs Small" : sm.fitRating === "runs_large" ? "Runs Large" : null;
+                                  const fitColourClass = sm.fitRating === "tts" ? "bg-green-100 text-green-800 border-green-200" : sm.fitRating === "runs_small" ? "bg-amber-100 text-amber-800 border-amber-200" : sm.fitRating === "runs_large" ? "bg-blue-100 text-blue-800 border-blue-200" : "";
+                                  return (
+                                    <div className="mb-3 flex items-start gap-3 p-3 rounded-lg border" style={{ background: "oklch(0.97 0.03 155 / 0.3)", borderColor: "oklch(0.85 0.06 155)" }}>
+                                      <span className="text-xs font-semibold text-green-700 flex items-center gap-1 shrink-0">✓ Fit Approved</span>
+                                      {fitLabel && (
+                                        <span className={`text-xs px-2 py-0.5 rounded border font-medium ${fitColourClass}`}>{fitLabel}</span>
+                                      )}
+                                      {sm.fittingNotes && (
+                                        <span className="text-xs italic text-muted-foreground">{sm.fittingNotes}</span>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
                                 {/* Session context */}
                                 {selectedSession && (
                                   <div className="flex items-center gap-2 mb-2">

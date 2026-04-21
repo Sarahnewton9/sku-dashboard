@@ -160,12 +160,19 @@ export async function upsertStyleRrp(style: string, rrp: number | null) {
 
 // ─── Style Fit (style-level fit rating + notes) ──────────────────────────────
 
-export async function upsertStyleFit(style: string, fitRating: "tts" | "runs_small" | "runs_large" | null, fittingNotes: string | null) {
+export async function upsertStyleFit(
+  style: string,
+  fitRating: "tts" | "runs_small" | "runs_large" | null,
+  fittingNotes: string | null,
+  fitApproved?: boolean,
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const updateSet: Record<string, unknown> = { fitRating, fittingNotes };
+  if (fitApproved !== undefined) updateSet.fitApproved = fitApproved;
   await db.insert(styleMeta)
-    .values({ style, fitRating, fittingNotes })
-    .onDuplicateKeyUpdate({ set: { fitRating, fittingNotes } });
+    .values({ style, fitRating, fittingNotes, fitApproved: fitApproved ?? false })
+    .onDuplicateKeyUpdate({ set: updateSet as any });
 }
 
 // ─── Style Fitting Images ─────────────────────────────────────────────────────

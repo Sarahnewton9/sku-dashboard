@@ -43,6 +43,13 @@
       "when": 1776750001693,
       "tag": "0005_secret_reptil",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1776750832071,
+      "tag": "0006_glorious_gauntlet",
+      "breakpoints": true
     }
   ]
 }

@@ -55,6 +55,7 @@ export const styleMeta = mysqlTable("style_meta", {
   rrp: float("rrp"),
   fitRating: mysqlEnum("fitRating", ["tts", "runs_small", "runs_large"]),
   fittingNotes: text("fittingNotes"),
+  fitApproved: boolean("fitApproved").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

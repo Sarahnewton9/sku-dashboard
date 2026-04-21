@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronDown, ChevronRight, Upload, X, ImageIcon, Download } from "lucide-react";
+import { ChevronDown, ChevronRight, Upload, X, ImageIcon, Download, CheckCircle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -16,13 +16,13 @@ const NEW_LASTS = [
   "HARLEY", "JAYDE", "ROXIE", "VIVA", "PIXIE",
 ];
 
-const FIT_LABELS: Record<string, string> = {
+export const FIT_LABELS: Record<string, string> = {
   tts: "True to Size",
   runs_small: "Runs Small",
   runs_large: "Runs Large",
 };
 
-const FIT_COLOURS: Record<string, string> = {
+export const FIT_COLOURS: Record<string, string> = {
   tts: "bg-green-100 text-green-800 border-green-200",
   runs_small: "bg-amber-100 text-amber-800 border-amber-200",
   runs_large: "bg-blue-100 text-blue-800 border-blue-200",
@@ -71,13 +71,17 @@ function StyleFitRow({
   onFitUpdate,
   onImageUpload,
   onImageDelete,
+  onApprove,
+  onUndoApproval,
 }: {
   entry: StyleEntry;
-  styleMeta: Record<string, { fitRating?: string | null; fittingNotes?: string | null; rrp?: number | null }>;
+  styleMeta: Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null }>;
   allImages: Array<{ id: number; style: string; imageUrl: string; fileKey: string }>;
   onFitUpdate: (style: string, fitRating: string | null, notes: string | null) => void;
   onImageUpload: (style: string, file: File) => void;
   onImageDelete: (id: number) => void;
+  onApprove: (style: string) => void;
+  onUndoApproval: (style: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [localFit, setLocalFit] = useState<string | null | undefined>(undefined);
@@ -88,6 +92,7 @@ function StyleFitRow({
   const meta = styleMeta[entry.style];
   const fitRating = localFit !== undefined ? localFit : (meta?.fitRating ?? null);
   const fittingNotes = localNotes !== undefined ? localNotes : (meta?.fittingNotes ?? "");
+  const isApproved = meta?.fitApproved ?? false;
   const images = allImages.filter((img) => img.style === entry.style);
   const hasFitData = !!(fitRating || fittingNotes || images.length > 0);
 
@@ -113,7 +118,7 @@ function StyleFitRow({
   };
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-card">
+    <div className={`border rounded-lg overflow-hidden transition-colors ${isApproved ? "border-green-200 bg-green-50/30" : "border-border bg-card"}`}>
       {/* Header row */}
       <button
         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left"
@@ -140,7 +145,12 @@ function StyleFitRow({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {fitRating && (
+          {isApproved && (
+            <span className="flex items-center gap-1 text-[10px] font-medium text-green-700 bg-green-100 border border-green-200 px-2 py-0.5 rounded">
+              <CheckCircle className="w-3 h-3" /> Approved
+            </span>
+          )}
+          {fitRating && !isApproved && (
             <span className={`text-[10px] px-2 py-0.5 rounded border font-medium ${FIT_COLOURS[fitRating]}`}>
               {FIT_LABELS[fitRating]}
             </span>
@@ -150,7 +160,7 @@ function StyleFitRow({
               <ImageIcon className="w-3 h-3" />{images.length}
             </span>
           )}
-          {hasFitData && !fitRating && (
+          {hasFitData && !fitRating && !isApproved && (
             <span className="text-[10px] text-muted-foreground italic">Has notes</span>
           )}
         </div>
@@ -188,7 +198,7 @@ function StyleFitRow({
                       className="w-14 h-14 object-cover rounded border border-border"
                     />
                     <button
-                      onClick={() => onImageDelete(img.id)}
+                      onClick={(e) => { e.stopPropagation(); onImageDelete(img.id); }}
                       className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full w-4 h-4 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="w-2.5 h-2.5" />
@@ -196,7 +206,7 @@ function StyleFitRow({
                   </div>
                 ))}
                 <button
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
                   className="w-14 h-14 border-2 border-dashed border-border rounded flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
                 >
                   <Upload className="w-4 h-4" />
@@ -217,6 +227,30 @@ function StyleFitRow({
               className="text-sm min-h-[80px] resize-none"
             />
           </div>
+
+          {/* Approve / Undo buttons */}
+          <div className="flex items-center justify-end pt-1 border-t border-border">
+            {!isApproved ? (
+              <Button
+                size="sm"
+                className="gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+                onClick={(e) => { e.stopPropagation(); onApprove(entry.style); setExpanded(false); }}
+              >
+                <CheckCircle className="w-3.5 h-3.5" />
+                Approve Fit
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-muted-foreground"
+                onClick={(e) => { e.stopPropagation(); onUndoApproval(entry.style); }}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Undo Approval
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -230,28 +264,33 @@ export function FittingTab() {
   const [fitModel, setFitModel] = useState("");
   const [fitDate, setFitDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [exporting, setExporting] = useState(false);
+  const [approvedSectionOpen, setApprovedSectionOpen] = useState(false);
 
   const styleList = buildStyleList();
 
-  // Group by last
-  const byLast = styleList.reduce<Record<string, StyleEntry[]>>((acc, s) => {
+  // Data queries
+  const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery();
+  const { data: allImages = [], refetch: refetchImages } = trpc.styleFitting.getAll.useQuery();
+
+  const styleMeta = styleMetaList.reduce<Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; rrp?: number | null }>>(
+    (acc, m) => { acc[m.style] = m; return acc; }, {}
+  );
+
+  // Split into active (not approved) and approved
+  const activeStyles = styleList.filter((s) => !styleMeta[s.style]?.fitApproved);
+  const approvedStyles = styleList.filter((s) => styleMeta[s.style]?.fitApproved);
+
+  // Group active by last
+  const byLast = activeStyles.reduce<Record<string, StyleEntry[]>>((acc, s) => {
     if (!acc[s.last]) acc[s.last] = [];
     acc[s.last].push(s);
     return acc;
   }, {});
   const sortedLasts = Object.keys(byLast).sort();
 
-  // Data queries
-  const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
-  const { data: allImages = [], refetch: refetchImages } = trpc.styleFitting.getAll.useQuery();
-
-  const styleMeta = styleMetaList.reduce<Record<string, { fitRating?: string | null; fittingNotes?: string | null; rrp?: number | null }>>(
-    (acc, m) => { acc[m.style] = m; return acc; }, {}
-  );
-
   // Mutations
   const updateFit = trpc.styleFitting.updateFit.useMutation({
-    onSuccess: () => trpc.useUtils().style.getAll.invalidate(),
+    onSuccess: () => { refetchStyleMeta(); },
   });
 
   const uploadImage = trpc.styleFitting.uploadImage.useMutation({
@@ -267,6 +306,28 @@ export function FittingTab() {
     updateFit.mutate({ style, fitRating: fitRating as "tts" | "runs_small" | "runs_large" | null, fittingNotes: notes });
   }, [updateFit]);
 
+  const handleApprove = useCallback((style: string) => {
+    const meta = styleMetaList.find((m) => m.style === style);
+    updateFit.mutate({
+      style,
+      fitRating: (meta?.fitRating ?? null) as "tts" | "runs_small" | "runs_large" | null,
+      fittingNotes: meta?.fittingNotes ?? null,
+      fitApproved: true,
+    });
+    toast.success(`${style} fit approved`);
+  }, [updateFit, styleMetaList]);
+
+  const handleUndoApproval = useCallback((style: string) => {
+    const meta = styleMetaList.find((m) => m.style === style);
+    updateFit.mutate({
+      style,
+      fitRating: (meta?.fitRating ?? null) as "tts" | "runs_small" | "runs_large" | null,
+      fittingNotes: meta?.fittingNotes ?? null,
+      fitApproved: false,
+    });
+    toast.success(`${style} approval undone`);
+  }, [updateFit, styleMetaList]);
+
   const handleImageUpload = useCallback((style: string, file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -280,14 +341,13 @@ export function FittingTab() {
     deleteImage.mutate({ id });
   }, [deleteImage]);
 
-  // Export fitting report as CSV/text summary (PDF generation in browser)
+  // Export fitting report
   const handleExport = async () => {
     setExporting(true);
     try {
       const stylesWithData = styleList.filter((s) => {
         const meta = styleMeta[s.style];
-        const imgs = allImages.filter((img) => img.style === s.style);
-        return meta?.fitRating || meta?.fittingNotes || imgs.length > 0;
+        return meta?.fitRating || meta?.fittingNotes;
       });
 
       if (stylesWithData.length === 0) {
@@ -296,29 +356,32 @@ export function FittingTab() {
         return;
       }
 
-      // Build HTML for print/PDF
       const rows = stylesWithData.map((s) => {
         const meta = styleMeta[s.style];
         const imgs = allImages.filter((img) => img.style === s.style);
         const fitLabel = meta?.fitRating ? FIT_LABELS[meta.fitRating] : "—";
         const notes = meta?.fittingNotes ?? "—";
+        const approvedBadge = meta?.fitApproved
+          ? `<span style="display:inline-block;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600;">✓ Approved</span>`
+          : "";
         const imgHtml = imgs.length > 0
           ? imgs.map((img) => `<img src="${img.imageUrl}" style="width:80px;height:80px;object-fit:cover;border-radius:4px;margin:2px;" />`).join("")
           : "<span style='color:#999;font-size:12px;'>No images</span>";
+
+        const fitColour = meta?.fitRating === "tts" ? "#166534" : meta?.fitRating === "runs_small" ? "#92400e" : meta?.fitRating === "runs_large" ? "#1e40af" : "#666";
 
         return `
           <tr style="border-bottom:1px solid #eee;page-break-inside:avoid;">
             <td style="padding:12px 8px;vertical-align:top;width:90px;">
               ${s.imageUrl ? `<img src="${s.imageUrl}" style="width:80px;height:80px;object-fit:cover;border-radius:4px;" />` : "<span style='color:#999;font-size:12px;'>No image</span>"}
             </td>
-            <td style="padding:12px 8px;vertical-align:top;width:120px;">
+            <td style="padding:12px 8px;vertical-align:top;width:130px;">
               <strong style="font-size:13px;">${s.style}</strong><br/>
-              <span style="font-size:11px;color:#666;">${s.last} · ${s.category}</span>
+              <span style="font-size:11px;color:#666;">${s.last} · ${s.category}</span><br/>
+              <div style="margin-top:4px;">${approvedBadge}</div>
             </td>
             <td style="padding:12px 8px;vertical-align:top;width:110px;">
-              <span style="font-size:12px;font-weight:600;color:${meta?.fitRating === 'tts' ? '#166534' : meta?.fitRating === 'runs_small' ? '#92400e' : meta?.fitRating === 'runs_large' ? '#1e40af' : '#666'};">
-                ${fitLabel}
-              </span>
+              <span style="font-size:12px;font-weight:600;color:${fitColour};">${fitLabel}</span>
             </td>
             <td style="padding:12px 8px;vertical-align:top;">
               <span style="font-size:12px;color:#333;">${notes}</span>
@@ -348,6 +411,7 @@ export function FittingTab() {
           <div class="meta">
             ${fitModel ? `<strong>Fit Model:</strong> ${fitModel} &nbsp;&nbsp;` : ""}
             ${fitDate ? `<strong>Date:</strong> ${fitDate}` : ""}
+            &nbsp;&nbsp;<strong>Approved:</strong> ${approvedStyles.length} / ${styleList.length} styles
           </div>
           <table>
             <thead>
@@ -373,7 +437,7 @@ export function FittingTab() {
       a.click();
       URL.revokeObjectURL(url);
 
-      toast.success(`Exported ${stylesWithData.length} styles`, { description: "Open the downloaded file in a browser and use Print → Save as PDF." });
+      toast.success(`Exported ${stylesWithData.length} styles`, { description: "Open in browser and use Print → Save as PDF." });
       setExportOpen(false);
     } finally {
       setExporting(false);
@@ -382,9 +446,18 @@ export function FittingTab() {
 
   const stylesWithFitData = styleList.filter((s) => {
     const meta = styleMeta[s.style];
-    const imgs = allImages.filter((img) => img.style === s.style);
-    return meta?.fitRating || meta?.fittingNotes || imgs.length > 0;
+    return meta?.fitRating || meta?.fittingNotes;
   }).length;
+
+  const rowProps = {
+    styleMeta,
+    allImages: allImages as Array<{ id: number; style: string; imageUrl: string; fileKey: string }>,
+    onFitUpdate: handleFitUpdate,
+    onImageUpload: handleImageUpload,
+    onImageDelete: handleImageDelete,
+    onApprove: handleApprove,
+    onUndoApproval: handleUndoApproval,
+  };
 
   return (
     <div className="space-y-6">
@@ -393,8 +466,8 @@ export function FittingTab() {
         <div>
           <h2 className="text-lg font-semibold">Fitting</h2>
           <p className="text-sm text-muted-foreground">
-            All styles on new lasts — {styleList.length} styles across {sortedLasts.length} lasts.
-            {stylesWithFitData > 0 && ` ${stylesWithFitData} with fit data.`}
+            {styleList.length} styles on new lasts.
+            {approvedStyles.length > 0 && ` ${approvedStyles.length} approved, ${activeStyles.length} remaining.`}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => setExportOpen(true)} className="gap-2">
@@ -409,7 +482,7 @@ export function FittingTab() {
           <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
             <h3 className="font-semibold text-base">Export Fitting Report</h3>
             <p className="text-sm text-muted-foreground">
-              Exports all styles with fit ratings, notes, or images. Opens as HTML — print to PDF from your browser.
+              Exports all styles with fit ratings or notes. Open as HTML and print to PDF.
             </p>
             <div className="space-y-3">
               <div className="space-y-1">
@@ -442,7 +515,15 @@ export function FittingTab() {
         </div>
       )}
 
-      {/* Styles grouped by last */}
+      {/* Active styles grouped by last */}
+      {activeStyles.length === 0 && approvedStyles.length > 0 && (
+        <div className="text-center py-8 text-muted-foreground">
+          <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
+          <p className="text-sm font-medium text-green-700">All styles have been approved!</p>
+          <p className="text-xs mt-1">See the Approved section below to review or make changes.</p>
+        </div>
+      )}
+
       {sortedLasts.map((last) => (
         <div key={last} className="space-y-2">
           <div className="flex items-center gap-2">
@@ -452,23 +533,44 @@ export function FittingTab() {
           </div>
           <div className="space-y-2">
             {byLast[last].map((entry) => (
-              <StyleFitRow
-                key={entry.style}
-                entry={entry}
-                styleMeta={styleMeta}
-                allImages={allImages as Array<{ id: number; style: string; imageUrl: string; fileKey: string }>}
-                onFitUpdate={handleFitUpdate}
-                onImageUpload={handleImageUpload}
-                onImageDelete={handleImageDelete}
-              />
+              <StyleFitRow key={entry.style} entry={entry} {...rowProps} />
             ))}
           </div>
         </div>
       ))}
 
-      {styleList.length === 0 && (
+      {activeStyles.length === 0 && approvedStyles.length === 0 && (
         <div className="text-center py-16 text-muted-foreground">
           <p className="text-sm">No styles found on new lasts.</p>
+        </div>
+      )}
+
+      {/* Approved section — collapsed by default */}
+      {approvedStyles.length > 0 && (
+        <div className="border border-green-200 rounded-xl overflow-hidden">
+          <button
+            className="w-full flex items-center justify-between px-4 py-3 bg-green-50/60 hover:bg-green-50 transition-colors"
+            onClick={() => setApprovedSectionOpen((v) => !v)}
+          >
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-semibold text-green-800">
+                Approved ({approvedStyles.length} {approvedStyles.length === 1 ? "style" : "styles"})
+              </span>
+              <span className="text-xs text-green-600">— fit confirmed, notes saved</span>
+            </div>
+            {approvedSectionOpen
+              ? <ChevronDown className="w-4 h-4 text-green-600" />
+              : <ChevronRight className="w-4 h-4 text-green-600" />}
+          </button>
+
+          {approvedSectionOpen && (
+            <div className="p-4 space-y-2 bg-green-50/20">
+              {approvedStyles.map((entry) => (
+                <StyleFitRow key={entry.style} entry={entry} {...rowProps} />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
