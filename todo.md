@@ -132,3 +132,23 @@
 - [x] ImportPanel: RRP import tab already existed — confirmed working
 - [x] Fix RRP display in SkuDetailPanel — confirmed correct, data needs to be imported first
 - [x] SummaryCards: remove Unique Leathers and Unique Colours tiles
+
+## Phase 10: Season Analysis Tab (DONE)
+
+### Database / Backend
+- [x] Add seasonImports table: id, label, uploadedAt, rowCount
+- [x] Add seasonSkuData table: importId, style, colour, leather (derived), totalUnitsSold, lastWeekUnits, lastWeekSellThru, avgWeeklySellThru, auOrigPrice, subCategory, stdSellThru, totalSoh
+- [x] DB push for new tables
+- [x] Backend: season.import — parse uploaded Excel rows, save to DB
+- [x] Backend: season.getAll — list all imports
+- [x] Backend: season.getData — get all rows for an import
+- [x] Backend: season.delete — remove an import and its rows
+
+### Frontend
+- [x] Season Analysis tab in sidebar under Analysis group
+- [x] Import button: upload .xlsm/.xlsx, optional label, parse client-side, save to DB
+- [x] Import history: list previous uploads with date/label and delete option
+- [x] Hot Sellers section: existing styles with strong sales but no new SKUs this season
+- [x] Colour Insights section: colours with highest avg sell-through, flagged if in/out of current range
+- [x] SKU Coverage table: all matched styles with last-season units + sell-thru + new/existing SKU counts, expandable to show individual SKU rows
+- [x] TypeScript clean, all 8 tests pass

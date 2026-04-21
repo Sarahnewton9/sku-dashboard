@@ -19,6 +19,7 @@ import ExportPanel from "@/components/dashboard/ExportPanel";
 import BuySessionsPanel from "@/components/dashboard/BuySessionsPanel";
 import BuyAnalysisTab from "@/components/dashboard/BuyAnalysisTab";
 import LastApprovalTab from "@/components/dashboard/LastApprovalTab";
+import SeasonAnalysisTab from "@/components/dashboard/SeasonAnalysisTab";
 import {
   LayoutDashboard,
   Tag,
@@ -32,9 +33,10 @@ import {
   ShoppingCart,
   BarChart3,
   Stamp,
+  LineChart,
 } from "lucide-react";
 
-type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval";
+type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval" | "season-analysis";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group?: string }[] = [
@@ -48,6 +50,7 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group
   { id: "buy-sessions", label: "Buy Sessions", icon: ShoppingCart, group: "buying" },
   { id: "buy-analysis", label: "Buy Analysis", icon: BarChart3, group: "buying" },
   { id: "last-approval", label: "Last Approval", icon: Stamp, group: "lasts" },
+  { id: "season-analysis", label: "Season Analysis", icon: LineChart, group: "analysis" },
 ];
 
 export default function Dashboard() {
@@ -167,6 +170,33 @@ export default function Dashboard() {
               );
             })}
           </ul>
+          <p className="px-2 mt-4 mb-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "oklch(0.50 0.01 80)" }}>
+            Analysis
+          </p>
+          <ul className="space-y-0.5">
+            {NAV_ITEMS.filter((i) => i.group === "analysis").map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <li key={item.id}>
+                  <button
+                    onClick={() => setActiveTab(item.id)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150"
+                    style={{
+                      background: isActive ? "var(--sidebar-accent)" : "transparent",
+                      color: isActive ? "var(--sidebar-primary)" : "var(--sidebar-foreground)",
+                    }}
+                  >
+                    <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center"><Icon className="w-4 h-4" /></span>
+                    <span>{item.label}</span>
+                    {isActive && (
+                      <ChevronRight className="w-3 h-3 ml-auto opacity-60" />
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </nav>
 
         {/* Footer */}
@@ -201,6 +231,7 @@ export default function Dashboard() {
               {activeTab === "buy-sessions" && "Manage weekly buy rounds — create, lock, and export independently"}
               {activeTab === "buy-analysis" && "Breakdown of pairs bought per session by category, leather, and colour/leather combo"}
               {activeTab === "last-approval" && `${skuData.styles.map((s) => s.last).filter((v, i, a) => a.indexOf(v) === i).length} lasts — track approval status and notes`}
+              {activeTab === "season-analysis" && "Import Total Season reports and surface hot sellers, colour insights, and SKU coverage"}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -237,6 +268,7 @@ export default function Dashboard() {
             {activeTab === "buy-sessions" && <BuySessionsPanel />}
             {activeTab === "buy-analysis" && <BuyAnalysisTab />}
             {activeTab === "last-approval" && <LastApprovalTab />}
+            {activeTab === "season-analysis" && <SeasonAnalysisTab />}
           </div>
         </div>
       </main>

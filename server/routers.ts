@@ -11,6 +11,7 @@ import {
   getAllBuySessions, getActiveBuySession, createBuySession, lockBuySession, deleteBuySession,
   getBuySessionItems, upsertBuySessionItem, getSessionTotals,
   getAllLastApprovals, upsertLastApproval,
+  getAllSeasonImports, createSeasonImport, getSeasonSkuData, deleteSeasonImport,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -243,6 +244,45 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await deleteFittingImage(input.id);
+        return { success: true };
+      }),
+  }),
+
+  // Season Analysis — import Total Season Excel files and analyse vs current range
+  season: router({
+    getAll: publicProcedure.query(async () => getAllSeasonImports()),
+
+    getData: publicProcedure
+      .input(z.object({ importId: z.number() }))
+      .query(async ({ input }) => getSeasonSkuData(input.importId)),
+
+    import: publicProcedure
+      .input(z.object({
+        label: z.string(),
+        rows: z.array(z.object({
+          style: z.string(),
+          colour: z.string(),
+          leather: z.string().default(""),
+          colourDescription: z.string().default(""),
+          subCategory: z.string().nullable().optional(),
+          auOrigPrice: z.number().nullable().optional(),
+          totalUnitsSold: z.number().int().default(0),
+          lastWeekUnits: z.number().int().default(0),
+          lastWeekSellThru: z.number().default(0),
+          avgWeeklySellThru: z.number().default(0),
+          stdSellThru: z.number().nullable().optional(),
+          totalSoh: z.number().int().default(0),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        const newImport = await createSeasonImport(input.label, input.rows);
+        return { success: true, importId: newImport.id, rowCount: input.rows.length };
+      }),
+
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteSeasonImport(input.id);
         return { success: true };
       }),
   }),

@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, users, buySessions, buySessionItems, lastApprovals } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -294,4 +294,47 @@ export async function upsertLastApproval(lastName: string, status: "approved" | 
   await db.insert(lastApprovals)
     .values({ lastName, status, notes: notes ?? null })
     .onDuplicateKeyUpdate({ set: { status, notes: notes ?? null } });
+}
+
+// ─── Season Imports ──────────────────────────────────────────────────────────
+
+export async function getAllSeasonImports() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(seasonImports).orderBy(seasonImports.uploadedAt);
+}
+
+export async function createSeasonImport(label: string, rows: Omit<InsertSeasonSkuData, 'importId'>[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Insert the import record
+  await db.insert(seasonImports).values({ label, rowCount: rows.length });
+  // Get the new import id
+  const result = await db.select().from(seasonImports)
+    .orderBy(seasonImports.uploadedAt)
+    .limit(1);
+  // Get the last inserted (highest id)
+  const allImports = await db.select().from(seasonImports);
+  const newImport = allImports.sort((a, b) => b.id - a.id)[0];
+  if (!newImport) throw new Error("Failed to create season import");
+  // Insert all rows in batches of 200
+  const batchSize = 200;
+  for (let i = 0; i < rows.length; i += batchSize) {
+    const batch = rows.slice(i, i + batchSize).map(r => ({ ...r, importId: newImport.id }));
+    await db.insert(seasonSkuData).values(batch);
+  }
+  return newImport;
+}
+
+export async function getSeasonSkuData(importId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(seasonSkuData).where(eq(seasonSkuData.importId, importId));
+}
+
+export async function deleteSeasonImport(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(seasonSkuData).where(eq(seasonSkuData.importId, id));
+  await db.delete(seasonImports).where(eq(seasonImports.id, id));
 }

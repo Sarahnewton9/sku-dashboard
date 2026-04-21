@@ -121,3 +121,40 @@ export const lastApprovals = mysqlTable("last_approvals", {
 
 export type LastApproval = typeof lastApprovals.$inferSelect;
 export type InsertLastApproval = typeof lastApprovals.$inferInsert;
+
+/**
+ * Season imports — each upload of a Total Season Excel file
+ */
+export const seasonImports = mysqlTable("season_imports", {
+  id: int("id").autoincrement().primaryKey(),
+  label: varchar("label", { length: 128 }).notNull(),
+  rowCount: int("rowCount").default(0).notNull(),
+  uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+});
+
+export type SeasonImport = typeof seasonImports.$inferSelect;
+export type InsertSeasonImport = typeof seasonImports.$inferInsert;
+
+/**
+ * Season SKU data — one row per SKU per import
+ * Stores the key metrics from the Total Season report
+ */
+export const seasonSkuData = mysqlTable("season_sku_data", {
+  id: int("id").autoincrement().primaryKey(),
+  importId: int("importId").notNull(),
+  style: varchar("style", { length: 64 }).notNull(),
+  colour: varchar("colour", { length: 64 }).notNull(),
+  leather: varchar("leather", { length: 128 }).notNull().default(""),
+  colourDescription: varchar("colourDescription", { length: 128 }).notNull().default(""),
+  subCategory: varchar("subCategory", { length: 64 }),
+  auOrigPrice: float("auOrigPrice"),
+  totalUnitsSold: int("totalUnitsSold").default(0).notNull(),
+  lastWeekUnits: int("lastWeekUnits").default(0).notNull(),
+  lastWeekSellThru: float("lastWeekSellThru").default(0).notNull(),
+  avgWeeklySellThru: float("avgWeeklySellThru").default(0).notNull(),
+  stdSellThru: float("stdSellThru"),
+  totalSoh: int("totalSoh").default(0).notNull(),
+});
+
+export type SeasonSkuData = typeof seasonSkuData.$inferSelect;
+export type InsertSeasonSkuData = typeof seasonSkuData.$inferInsert;
