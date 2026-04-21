@@ -46,6 +46,20 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Set Size 11 for ALL SKUs in a style at once
+    updateStyleSize11: publicProcedure
+      .input(z.object({
+        style: z.string(),
+        skus: z.array(z.object({ colour: z.string(), leather: z.string().default("") })),
+        isSize11: z.boolean(),
+      }))
+      .mutation(async ({ input }) => {
+        for (const sku of input.skus) {
+          await upsertSkuMeta({ style: input.style, colour: sku.colour, leather: sku.leather, isSize11: input.isSize11 });
+        }
+        return { updated: input.skus.length };
+      }),
+
     importCosts: publicProcedure
       .input(z.array(z.object({
         style: z.string(),

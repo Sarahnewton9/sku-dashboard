@@ -32,6 +32,8 @@ interface Props {
   }>;
   styleMeta: Record<string, { rrp?: number | null }>;
   onMetaChange: () => void;
+  // All SKUs for the style (for style-level Size 11 toggle)
+  allStyleSkus?: Array<{ colour: string; leather: string }>;
 }
 
 function skuKey(style: string, colour: string, leather: string) {
@@ -44,7 +46,7 @@ const FIT_RATINGS = [
   { value: "runs_large", label: "Runs Large" },
 ];
 
-export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMetaChange }: Props) {
+export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMetaChange, allStyleSkus }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [savingNotes, setSavingNotes] = useState(false);
@@ -116,10 +118,22 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
     }
   }, [sku, updateMutation]);
 
+  // Style-level Size 11 mutation — updates ALL SKUs in the style
+  const updateStyleSize11Mutation = trpc.sku.updateStyleSize11.useMutation({
+    onSuccess: () => { onMetaChange(); },
+    onError: (err) => toast.error(`Failed to update Size 11: ${err.message}`),
+  });
+
   const handleSize11 = useCallback((checked: boolean) => {
     if (!sku) return;
-    updateMutation.mutate({ style: sku.style, colour: sku.colour, leather: sku.leather, isSize11: checked });
-  }, [sku, updateMutation]);
+    // If we have all style SKUs, update them all at once (style-level)
+    if (allStyleSkus && allStyleSkus.length > 0) {
+      updateStyleSize11Mutation.mutate({ style: sku.style, skus: allStyleSkus, isSize11: checked });
+    } else {
+      // Fallback: update just this SKU
+      updateMutation.mutate({ style: sku.style, colour: sku.colour, leather: sku.leather, isSize11: checked });
+    }
+  }, [sku, updateMutation, updateStyleSize11Mutation, allStyleSkus]);
 
   const handleFitRating = useCallback((val: string | null) => {
     if (!sku) return;

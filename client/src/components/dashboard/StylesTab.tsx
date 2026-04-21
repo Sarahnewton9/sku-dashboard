@@ -1,7 +1,8 @@
 /**
- * StylesTab — full filterable table of all styles
- * - Click a style row to expand its SKUs
- * - Inline buy qty editing per SKU linked to the active buy session
+ * StylesTab — filterable table of all styles
+ * - Grouped by last name (alphabetical), then by style within each last
+ * - Click a style row to expand its SKUs with inline buy qty editing
+ * - Size 11 toggle is style-level: toggling one SKU toggles all in the style
  * - Click a SKU's detail icon to open the SkuDetailPanel slide-out
  */
 
@@ -58,6 +59,12 @@ export default function StylesTab() {
 
   const upsertItemMutation = trpc.buy.upsertItem.useMutation({
     onError: (err) => toast.error(`Failed to save qty: ${err.message}`),
+  });
+
+  // Style-level Size 11 mutation — updates ALL SKUs in the style
+  const updateStyleSize11Mutation = trpc.sku.updateStyleSize11.useMutation({
+    onSuccess: () => refetchSkuMeta(),
+    onError: (err) => toast.error(`Failed to update Size 11: ${err.message}`),
   });
 
   // Build lookup maps
@@ -121,6 +128,23 @@ export default function StylesTab() {
     );
   }
 
+  // Toggle Size 11 for the entire style
+  function handleStyleSize11Toggle(styleName: string) {
+    const skus = getSkusForStyle(styleName);
+    // Check if ANY sku in the style currently has size11 = true
+    const anySize11 = skus.some((sku) => {
+      const key = `${sku.style}|${sku.colour}|${sku.leather}`;
+      return skuMetaMap[key]?.isSize11 === true;
+    });
+    // Toggle: if any are on, turn all off; if none are on, turn all on
+    const newValue = !anySize11;
+    updateStyleSize11Mutation.mutate({
+      style: styleName,
+      skus: skus.map((s) => ({ colour: s.colour, leather: s.leather })),
+      isSize11: newValue,
+    });
+  }
+
   function exportToExcel() {
     const styleMetaLookup: Record<string, { category: string; last: string }> = {};
     skuData.styles.forEach((s) => {
@@ -157,6 +181,7 @@ export default function StylesTab() {
     XLSX.writeFile(wb, "SS26_SKU_Export.xlsx");
   }
 
+  // Filter styles
   const filtered = useMemo(() => {
     let data = [...skuData.styles];
 
@@ -184,18 +209,26 @@ export default function StylesTab() {
       data = data.filter((s) => !s.hasNew);
     }
 
-    data.sort((a, b) => {
-      let av: string | number = a[sortKey] as string | number;
-      let bv: string | number = b[sortKey] as string | number;
-      if (typeof av === "string") av = av.toLowerCase();
-      if (typeof bv === "string") bv = bv.toLowerCase();
-      if (av < bv) return sortDir === "asc" ? -1 : 1;
-      if (av > bv) return sortDir === "asc" ? 1 : -1;
-      return 0;
-    });
-
     return data;
-  }, [search, categoryFilter, statusFilter, sortKey, sortDir]);
+  }, [search, categoryFilter, statusFilter]);
+
+  // Group by last, sorted alphabetically by last, then by style within each last
+  const groupedByLast = useMemo(() => {
+    // Sort within each group by style name
+    const groups: Record<string, typeof filtered> = {};
+    for (const s of filtered) {
+      const last = s.last || "UNKNOWN";
+      if (!groups[last]) groups[last] = [];
+      groups[last].push(s);
+    }
+    // Sort styles within each group
+    for (const last of Object.keys(groups)) {
+      groups[last].sort((a, b) => a.style.localeCompare(b.style));
+    }
+    // Sort last names alphabetically
+    const sortedLasts = Object.keys(groups).sort((a, b) => a.localeCompare(b));
+    return sortedLasts.map((last) => ({ last, styles: groups[last] }));
+  }, [filtered]);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -222,6 +255,16 @@ export default function StylesTab() {
       return sum + (sessionItemMap[key] ?? 0);
     }, 0);
   }
+
+  // Check if style has Size 11 enabled (any SKU in the style)
+  function getStyleSize11(styleName: string) {
+    return getSkusForStyle(styleName).some((sku) => {
+      const key = `${sku.style}|${sku.colour}|${sku.leather}`;
+      return skuMetaMap[key]?.isSize11 === true;
+    });
+  }
+
+  const totalFilteredStyles = filtered.length;
 
   return (
     <div className="space-y-4">
@@ -266,7 +309,7 @@ export default function StylesTab() {
           {STATUS_FILTERS.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
 
-        <span className="text-sm text-muted-foreground">{filtered.length} of {skuData.styles.length} styles</span>
+        <span className="text-sm text-muted-foreground">{totalFilteredStyles} of {skuData.styles.length} styles</span>
 
         <button
           onClick={() => setShowImport(true)}
@@ -287,242 +330,278 @@ export default function StylesTab() {
         </button>
       </div>
 
-      {/* Table */}
-      <div className="rounded-xl border bg-card overflow-hidden" style={{ borderColor: "var(--border)" }}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
-                {[
-                  { key: "style" as SortKey, label: "Style" },
-                  { key: "category" as SortKey, label: "Category" },
-                  { key: "last" as SortKey, label: "Last" },
-                  { key: "totalSKUs" as SortKey, label: "Total SKUs" },
-                  { key: "newSKUs" as SortKey, label: "New" },
-                  { key: "existingSKUs" as SortKey, label: "Existing" },
-                ].map(({ key, label }) => (
-                  <th
-                    key={key}
-                    className="px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide cursor-pointer select-none hover:text-foreground transition-colors"
-                    onClick={() => toggleSort(key)}
-                  >
-                    <div className={`flex items-center gap-1 ${key !== "style" && key !== "category" && key !== "last" ? "justify-end" : ""}`}>
-                      {label}
-                      <SortIcon col={key} />
-                    </div>
-                  </th>
-                ))}
-                <th className="px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-left">Leathers</th>
-                <th className="px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-right">
-                  {selectedSession ? `Buy Qty` : "Buy Qty"}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground text-sm">
-                    No styles match your filters.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((style) => {
-                  const sessionTotal = getStyleSessionTotal(style.style);
-                  return (
-                    <>
-                      <tr
-                        key={style.style}
-                        className="border-b transition-colors hover:bg-muted/30 cursor-pointer"
-                        style={{
-                          borderColor: "var(--border)",
-                          background: expandedStyle === style.style
-                            ? "oklch(0.97 0.04 65 / 0.6)"
-                            : style.isAllNew ? "oklch(0.99 0.04 65 / 0.4)" : undefined,
-                        }}
-                        onClick={() => setExpandedStyle(expandedStyle === style.style ? null : style.style)}
-                      >
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-16 h-10 rounded flex-shrink-0 overflow-hidden" style={{ background: "var(--muted)" }}>
-                              {style.imageUrl ? (
-                                <img src={style.imageUrl} alt={style.style} className="w-full h-full object-contain" loading="lazy" />
-                              ) : null}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {style.hasNew && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#f59e0b" }} />}
-                              <span className="font-semibold text-foreground">{style.style}</span>
-                              {style.isAllNew && (
-                                <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}>NEW</span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>
-                            {style.category}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs font-mono">{style.last}</td>
-                        <td className="px-4 py-3 text-right tabular-nums font-semibold text-foreground">{style.totalSKUs}</td>
-                        <td className="px-4 py-3 text-right tabular-nums">
-                          {style.newSKUs > 0 ? (
-                            <span className="font-semibold" style={{ color: "oklch(0.55 0.14 55)" }}>{style.newSKUs}</span>
-                          ) : <span className="text-muted-foreground">—</span>}
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{style.existingSKUs}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-wrap gap-1 max-w-48">
-                            {style.leathers.slice(0, 4).map((l) => (
-                              <span key={l} className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>{l}</span>
-                            ))}
-                            {style.leathers.length > 4 && <span className="text-xs text-muted-foreground">+{style.leathers.length - 4}</span>}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          {sessionTotal > 0 ? (
-                            <span className="text-sm font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{sessionTotal}</span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
-                        </td>
-                      </tr>
+      {/* Table grouped by last */}
+      <div className="space-y-4">
+        {groupedByLast.length === 0 ? (
+          <div className="rounded-xl border bg-card px-4 py-12 text-center text-muted-foreground text-sm" style={{ borderColor: "var(--border)" }}>
+            No styles match your filters.
+          </div>
+        ) : (
+          groupedByLast.map(({ last, styles: lastStyles }) => (
+            <div key={last} className="rounded-xl border bg-card overflow-hidden" style={{ borderColor: "var(--border)" }}>
+              {/* Last group header */}
+              <div
+                className="px-4 py-2 flex items-center gap-3 border-b"
+                style={{
+                  borderColor: "var(--border)",
+                  background: "oklch(0.96 0.03 65 / 0.5)",
+                }}
+              >
+                <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "oklch(0.50 0.14 55)" }}>
+                  {last}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {lastStyles.length} {lastStyles.length === 1 ? "style" : "styles"}
+                </span>
+              </div>
 
-                      {/* Expanded SKU rows with inline buy qty */}
-                      {expandedStyle === style.style && (
-                        <tr key={`${style.style}-expanded`} className="border-b" style={{ borderColor: "var(--border)" }}>
-                          <td colSpan={8} className="px-6 py-3" style={{ background: "oklch(0.98 0.02 65 / 0.5)" }}>
-                            {/* Session context */}
-                            {selectedSession && (
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-xs font-semibold text-muted-foreground">
-                                  {isSessionLocked ? "📋 Viewing:" : "✏️ Entering qtys for:"}
-                                </span>
-                                <span className="text-xs font-semibold" style={{ color: "oklch(0.50 0.14 55)" }}>
-                                  {selectedSession.name}
-                                </span>
-                                {isSessionLocked && (
-                                  <span className="text-xs text-muted-foreground">(locked — read only)</span>
-                                )}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                      {[
+                        { key: "style" as SortKey, label: "Style" },
+                        { key: "category" as SortKey, label: "Category" },
+                        { key: "totalSKUs" as SortKey, label: "Total SKUs" },
+                        { key: "newSKUs" as SortKey, label: "New" },
+                        { key: "existingSKUs" as SortKey, label: "Existing" },
+                      ].map(({ key, label }) => (
+                        <th
+                          key={key}
+                          className="px-4 py-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide cursor-pointer select-none hover:text-foreground transition-colors"
+                          onClick={() => toggleSort(key)}
+                        >
+                          <div className={`flex items-center gap-1 ${key !== "style" && key !== "category" ? "justify-end" : ""}`}>
+                            {label}
+                            <SortIcon col={key} />
+                          </div>
+                        </th>
+                      ))}
+                      <th className="px-4 py-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-left">Leathers</th>
+                      <th className="px-4 py-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-center">Sz11</th>
+                      <th className="px-4 py-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-right">Buy Qty</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lastStyles.map((style) => {
+                      const sessionTotal = getStyleSessionTotal(style.style);
+                      const styleSize11 = getStyleSize11(style.style);
+                      return (
+                        <>
+                          <tr
+                            key={style.style}
+                            className="border-b transition-colors hover:bg-muted/30 cursor-pointer"
+                            style={{
+                              borderColor: "var(--border)",
+                              background: expandedStyle === style.style
+                                ? "oklch(0.97 0.04 65 / 0.6)"
+                                : style.isAllNew ? "oklch(0.99 0.04 65 / 0.4)" : undefined,
+                            }}
+                            onClick={() => setExpandedStyle(expandedStyle === style.style ? null : style.style)}
+                          >
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-16 h-10 rounded flex-shrink-0 overflow-hidden" style={{ background: "var(--muted)" }}>
+                                  {style.imageUrl ? (
+                                    <img src={style.imageUrl} alt={style.style} className="w-full h-full object-contain" loading="lazy" />
+                                  ) : null}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {style.hasNew && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#f59e0b" }} />}
+                                  <span className="font-semibold text-foreground">{style.style}</span>
+                                  {style.isAllNew && (
+                                    <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}>NEW</span>
+                                  )}
+                                </div>
                               </div>
-                            )}
-                            {!selectedSession && (
-                              <p className="text-xs text-muted-foreground mb-2">Create a buy session above to enter quantities.</p>
-                            )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>
+                                {style.category}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right tabular-nums font-semibold text-foreground">{style.totalSKUs}</td>
+                            <td className="px-4 py-3 text-right tabular-nums">
+                              {style.newSKUs > 0 ? (
+                                <span className="font-semibold" style={{ color: "oklch(0.55 0.14 55)" }}>{style.newSKUs}</span>
+                              ) : <span className="text-muted-foreground">—</span>}
+                            </td>
+                            <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{style.existingSKUs}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-wrap gap-1 max-w-48">
+                                {style.leathers.slice(0, 4).map((l) => (
+                                  <span key={l} className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>{l}</span>
+                                ))}
+                                {style.leathers.length > 4 && <span className="text-xs text-muted-foreground">+{style.leathers.length - 4}</span>}
+                              </div>
+                            </td>
+                            {/* Style-level Size 11 toggle */}
+                            <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStyleSize11Toggle(style.style);
+                                }}
+                                title={styleSize11 ? "Size 11 enabled — click to disable for all SKUs" : "Enable Size 11 for all SKUs in this style"}
+                                className="w-7 h-7 rounded flex items-center justify-center transition-colors"
+                                style={{
+                                  background: styleSize11 ? "oklch(0.94 0.06 240)" : "var(--muted)",
+                                  color: styleSize11 ? "oklch(0.45 0.14 240)" : "var(--muted-foreground)",
+                                  border: styleSize11 ? "1px solid oklch(0.80 0.10 240)" : "1px solid var(--border)",
+                                }}
+                              >
+                                <span className="text-xs font-bold">11</span>
+                              </button>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              {sessionTotal > 0 ? (
+                                <span className="text-sm font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{sessionTotal}</span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </td>
+                          </tr>
 
-                            {/* Column headers */}
-                            <div className="grid gap-1 mb-1" style={{ gridTemplateColumns: "1fr 1fr 1fr auto auto auto auto" }}>
-                              {["Colour", "Leather", "Status", "Sz11", "Sample", "Fit", "Buy Qty"].map((h) => (
-                                <span key={h} className="text-xs font-semibold uppercase tracking-wide text-muted-foreground px-2">{h}</span>
-                              ))}
-                            </div>
-
-                            <div className="space-y-1">
-                              {getSkusForStyle(style.style).map((sku) => {
-                                const skuKey2 = `${sku.style}|${sku.colour}|${sku.leather}` as string;
-                                const dbMeta = skuMetaMap[skuKey2];
-                                const sessionQty = sessionItemMap[skuKey2] ?? 0;
-
-                                return (
-                                  <div
-                                    key={`${sku.colour}-${sku.leather}`}
-                                    className="grid items-center gap-1 px-2 py-1.5 rounded-lg"
-                                    style={{
-                                      gridTemplateColumns: "1fr 1fr 1fr auto auto auto auto",
-                                      border: "1px solid var(--border)",
-                                      background: sessionQty > 0 ? "oklch(0.97 0.06 65 / 0.5)" : "var(--card)",
-                                    }}
-                                  >
-                                    {/* Colour */}
-                                    <div className="flex items-center gap-1.5">
-                                      {sku.is_new && (
-                                        <span className="text-xs px-1 py-0.5 rounded font-medium flex-shrink-0" style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}>N</span>
-                                      )}
-                                      <span className="text-sm font-medium text-foreground truncate">{sku.colour}</span>
-                                    </div>
-
-                                    {/* Leather */}
-                                    <span className="text-xs text-muted-foreground truncate">{sku.leather || "—"}</span>
-
-                                    {/* Status */}
-                                    <span className="text-xs text-muted-foreground">{sku.is_new ? "New" : "Existing"}</span>
-
-                                    {/* Size 11 */}
-                                    <span className="text-xs text-center">
-                                      {dbMeta?.isSize11 ? (
-                                        <span className="px-1 py-0.5 rounded text-xs font-medium" style={{ background: "oklch(0.94 0.06 240)", color: "oklch(0.45 0.14 240)" }}>✓</span>
-                                      ) : <span className="text-muted-foreground">—</span>}
+                          {/* Expanded SKU rows with inline buy qty */}
+                          {expandedStyle === style.style && (
+                            <tr key={`${style.style}-expanded`} className="border-b" style={{ borderColor: "var(--border)" }}>
+                              <td colSpan={8} className="px-6 py-3" style={{ background: "oklch(0.98 0.02 65 / 0.5)" }}>
+                                {/* Session context */}
+                                {selectedSession && (
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-xs font-semibold text-muted-foreground">
+                                      {isSessionLocked ? "📋 Viewing:" : "✏️ Entering qtys for:"}
                                     </span>
-
-                                    {/* Sample */}
-                                    <span className="text-xs text-center">
-                                      {dbMeta?.sampleStatus === "received" ? (
-                                        <span className="px-1 py-0.5 rounded text-xs font-medium" style={{ background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)" }}>✓</span>
-                                      ) : <span className="text-muted-foreground">—</span>}
+                                    <span className="text-xs font-semibold" style={{ color: "oklch(0.50 0.14 55)" }}>
+                                      {selectedSession.name}
                                     </span>
-
-                                    {/* Fit rating */}
-                                    <span className="text-xs text-muted-foreground truncate">
-                                      {dbMeta?.fitRating === "tts" ? "TTS" : dbMeta?.fitRating === "runs_small" ? "Small" : dbMeta?.fitRating === "runs_large" ? "Large" : "—"}
-                                    </span>
-
-                                    {/* Buy Qty — inline input or read-only */}
-                                    <div className="flex items-center gap-1">
-                                      {!isSessionLocked && selectedSession ? (
-                                        <input
-                                          type="number"
-                                          min={0}
-                                          defaultValue={sessionQty || ""}
-                                          key={`qty-${selectedSessionId}-${skuKey2}`}
-                                          onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, e.target.value)}
-                                          onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather)}
-                                          onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
-                                          placeholder="0"
-                                          className="w-16 px-2 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-right"
-                                          style={{ borderColor: sessionQty > 0 ? "oklch(0.72 0.16 65)" : "var(--border)" }}
-                                          onClick={(e) => e.stopPropagation()}
-                                        />
-                                      ) : (
-                                        <span
-                                          className="w-16 text-right text-sm font-mono font-semibold"
-                                          style={{ color: sessionQty > 0 ? "oklch(0.50 0.14 55)" : "var(--muted-foreground)" }}
-                                        >
-                                          {sessionQty > 0 ? sessionQty : "—"}
-                                        </span>
-                                      )}
-                                      {/* Detail button */}
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setSelectedSku({
-                                            style: sku.style,
-                                            colour: sku.colour,
-                                            leather: sku.leather,
-                                            isNew: sku.is_new,
-                                            category: style.category,
-                                            last: style.last,
-                                            imageUrl: style.imageUrl,
-                                          });
-                                        }}
-                                        className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0"
-                                        title="View SKU details"
-                                      >
-                                        <SlidersHorizontal className="w-3.5 h-3.5 text-muted-foreground" />
-                                      </button>
-                                    </div>
+                                    {isSessionLocked && (
+                                      <span className="text-xs text-muted-foreground">(locked — read only)</span>
+                                    )}
                                   </div>
-                                );
-                              })}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                                )}
+                                {!selectedSession && (
+                                  <p className="text-xs text-muted-foreground mb-2">Create a buy session above to enter quantities.</p>
+                                )}
+
+                                {/* Column headers */}
+                                <div className="grid gap-1 mb-1" style={{ gridTemplateColumns: "1fr 1fr 1fr auto auto auto auto" }}>
+                                  {["Colour", "Leather", "Status", "Sz11", "Sample", "Fit", "Buy Qty"].map((h) => (
+                                    <span key={h} className="text-xs font-semibold uppercase tracking-wide text-muted-foreground px-2">{h}</span>
+                                  ))}
+                                </div>
+
+                                <div className="space-y-1">
+                                  {getSkusForStyle(style.style).map((sku) => {
+                                    const skuKey2 = `${sku.style}|${sku.colour}|${sku.leather}` as string;
+                                    const dbMeta = skuMetaMap[skuKey2];
+                                    const sessionQty = sessionItemMap[skuKey2] ?? 0;
+                                    // Size 11 is style-level — show the style-level value
+                                    const isSize11 = styleSize11;
+
+                                    return (
+                                      <div
+                                        key={`${sku.colour}-${sku.leather}`}
+                                        className="grid items-center gap-1 px-2 py-1.5 rounded-lg"
+                                        style={{
+                                          gridTemplateColumns: "1fr 1fr 1fr auto auto auto auto",
+                                          border: "1px solid var(--border)",
+                                          background: sessionQty > 0 ? "oklch(0.97 0.06 65 / 0.5)" : "var(--card)",
+                                        }}
+                                      >
+                                        {/* Colour */}
+                                        <div className="flex items-center gap-1.5">
+                                          {sku.is_new && (
+                                            <span className="text-xs px-1 py-0.5 rounded font-medium flex-shrink-0" style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}>N</span>
+                                          )}
+                                          <span className="text-sm font-medium text-foreground truncate">{sku.colour}</span>
+                                        </div>
+
+                                        {/* Leather */}
+                                        <span className="text-xs text-muted-foreground truncate">{sku.leather || "—"}</span>
+
+                                        {/* Status */}
+                                        <span className="text-xs text-muted-foreground">{sku.is_new ? "New" : "Existing"}</span>
+
+                                        {/* Size 11 — style-level indicator (read-only here, toggle via style row) */}
+                                        <span className="text-xs text-center">
+                                          {isSize11 ? (
+                                            <span className="px-1 py-0.5 rounded text-xs font-medium" style={{ background: "oklch(0.94 0.06 240)", color: "oklch(0.45 0.14 240)" }}>✓</span>
+                                          ) : <span className="text-muted-foreground">—</span>}
+                                        </span>
+
+                                        {/* Sample */}
+                                        <span className="text-xs text-center">
+                                          {dbMeta?.sampleStatus === "received" ? (
+                                            <span className="px-1 py-0.5 rounded text-xs font-medium" style={{ background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)" }}>✓</span>
+                                          ) : <span className="text-muted-foreground">—</span>}
+                                        </span>
+
+                                        {/* Fit rating */}
+                                        <span className="text-xs text-muted-foreground truncate">
+                                          {dbMeta?.fitRating === "tts" ? "TTS" : dbMeta?.fitRating === "runs_small" ? "Small" : dbMeta?.fitRating === "runs_large" ? "Large" : "—"}
+                                        </span>
+
+                                        {/* Buy Qty — inline input or read-only */}
+                                        <div className="flex items-center gap-1">
+                                          {!isSessionLocked && selectedSession ? (
+                                            <input
+                                              type="number"
+                                              min={0}
+                                              defaultValue={sessionQty || ""}
+                                              key={`qty-${selectedSessionId}-${skuKey2}`}
+                                              onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, e.target.value)}
+                                              onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather)}
+                                              onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
+                                              placeholder="0"
+                                              className="w-16 px-2 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-right"
+                                              style={{ borderColor: sessionQty > 0 ? "oklch(0.72 0.16 65)" : "var(--border)" }}
+                                              onClick={(e) => e.stopPropagation()}
+                                            />
+                                          ) : (
+                                            <span
+                                              className="w-16 text-right text-sm font-mono font-semibold"
+                                              style={{ color: sessionQty > 0 ? "oklch(0.50 0.14 55)" : "var(--muted-foreground)" }}
+                                            >
+                                              {sessionQty > 0 ? sessionQty : "—"}
+                                            </span>
+                                          )}
+                                          {/* Detail button */}
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setSelectedSku({
+                                                style: sku.style,
+                                                colour: sku.colour,
+                                                leather: sku.leather,
+                                                isNew: sku.is_new,
+                                                category: style.category,
+                                                last: style.last,
+                                                imageUrl: style.imageUrl,
+                                              });
+                                            }}
+                                            className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0"
+                                            title="View SKU details"
+                                          >
+                                            <SlidersHorizontal className="w-3.5 h-3.5 text-muted-foreground" />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* SKU Detail Panel */}
@@ -533,6 +612,7 @@ export default function StylesTab() {
           skuMeta={skuMetaMap as any}
           styleMeta={styleMetaMap as any}
           onMetaChange={handleMetaChange}
+          allStyleSkus={getSkusForStyle(selectedSku.style).map((s) => ({ colour: s.colour, leather: s.leather }))}
         />
       )}
 

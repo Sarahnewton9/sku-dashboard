@@ -70,3 +70,47 @@
 - [x] Change leather calculator to show colour+leather combinations (not just leather)
 - [x] Filter to new SKUs only by default (carry-over styles don't need fresh leather orders)
 - [x] Footage calculation per colour+leather combo
+
+## Phase 7: Data Corrections + UX Fixes
+
+- [x] Size 11 toggle: move to style-level (toggling one SKU toggles all SKUs on that style)
+- [x] By Style: group styles by last name (alphabetical by last, then by style within last)
+- [x] Cappa – Petal Nappa: mark as new
+- [x] Cappi – Turquoise Suede: mark as cancelled
+- [x] Caspian – Willow Nappa: mark as cancelled
+- [x] Celeste – remove duplicate Silver Nappa Metallic
+- [x] Cuba – Willow Nappa: mark as cancelled
+- [x] Curious – Willow Nappa: mark as cancelled
+- [x] Curious – Vanilla Nappa: mark as new colour
+- [x] Curious – add missing Willow Nubuck
+- [x] Dazie – Choc Vintage → rename to Choc Venice
+- [x] Dazie – Taupe Suede: mark as cancelled
+- [x] Dazie – Espresso Suede: mark as cancelled
+- [x] Dazie – Mint Croco: mark as cancelled
+- [x] Dazie – Red Croco: mark as cancelled
+- [x] Donte – add missing Black Speckle
+- [x] Eliza – Black Nappa Patent: mark as cancelled
+- [x] Eliza – Stone Nappa Patent: mark as cancelled
+- [x] Envy – Petal Croco: mark as cancelled
+- [x] Envy – Red Croco: mark as cancelled
+- [x] Envy – add Petal Nappa
+- [x] Kassy – Blush Nubuck: mark as new
+- [x] Kassy – Sky Nubuck: mark as cancelled
+- [x] Kassy – Black Nubuck: mark as cancelled
+- [x] Kimba – fix duplicate Black Nappa (one should be Black Patent)
+- [x] Legacy – add missing Petal Nappa Patent
+- [x] Legacy – add missing Turquoise Nappa Patent
+- [x] Lucy – mark all colours as new
+- [x] Maddi – Willow Nappa: mark as cancelled
+- [x] Marameo – mark all colours as new
+- [x] Matisse – Fuchsia Nubuck: mark as cancelled
+- [x] Matisse – mark all colours as new
+- [x] Molly – Vanilla Vintage: not present in data (no action needed)
+- [x] Paris – mark all colours as NOT new
+- [x] Robyn – mark all colours as new
+- [x] Robyn – fix duplicate Black Suede → Black Nappa + Black Speckle (remove Black Suede)
+- [x] Add new style SAMSON on Sally last: Black Vintage + Peru Nappa (all new)
+- [x] Sia – Black Kid: mark as cancelled
+- [x] Sia – Petal Suede, Sky Suede, Espresso Suede, Wheat Suede: all cancelled
+- [x] Trevi – Black Suede, Petal Suede, Taupe Suede: all cancelled
+- [x] Violet – mark all colours as NOT new
