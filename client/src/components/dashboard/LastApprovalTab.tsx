@@ -3,15 +3,17 @@ import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { CheckCircle2, Clock, ChevronDown, ChevronRight } from "lucide-react";
 
-// Extract all unique lasts from skuData
-const ALL_LASTS = Array.from(new Set(skuData.styles.map((s) => s.last))).sort();
-
-// Build a map of last → styles for context
+// Only include lasts that have at least one new SKU ("new lasts")
 const LAST_TO_STYLES: Record<string, string[]> = {};
+const LAST_NEW_SKU_COUNT: Record<string, number> = {};
 for (const s of skuData.styles) {
   if (!LAST_TO_STYLES[s.last]) LAST_TO_STYLES[s.last] = [];
   LAST_TO_STYLES[s.last].push(s.style);
+  LAST_NEW_SKU_COUNT[s.last] = (LAST_NEW_SKU_COUNT[s.last] ?? 0) + (s.newSKUs ?? 0);
 }
+const ALL_LASTS = Array.from(new Set(skuData.styles.map((s) => s.last)))
+  .filter((l) => (LAST_NEW_SKU_COUNT[l] ?? 0) > 0)
+  .sort();
 
 export default function LastApprovalTab() {
   const { data: approvals, refetch } = trpc.lastApproval.getAll.useQuery();
@@ -119,13 +121,17 @@ export default function LastApprovalTab() {
                 {/* Toggle button */}
                 <button
                   onClick={() => handleToggle(lastName, status)}
-                  className="flex-shrink-0 transition-transform hover:scale-110"
-                  title={status === "approved" ? "Mark as Waiting on Revised" : "Mark as Approved"}
+                  className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all hover:opacity-80"
+                  style={status === "approved"
+                    ? { background: "oklch(0.92 0.08 155)", color: "oklch(0.35 0.14 155)", borderColor: "oklch(0.72 0.14 155)" }
+                    : { background: "oklch(0.95 0.06 65)", color: "oklch(0.50 0.14 55)", borderColor: "oklch(0.72 0.16 65)" }
+                  }
+                  title={status === "approved" ? "Click to mark as Waiting on Revised" : "Click to mark as Approved"}
                 >
                   {status === "approved" ? (
-                    <CheckCircle2 className="w-6 h-6" style={{ color: "oklch(0.45 0.14 155)" }} />
+                    <><CheckCircle2 className="w-3.5 h-3.5" /><span>Approved</span></>
                   ) : (
-                    <Clock className="w-6 h-6" style={{ color: "oklch(0.60 0.12 65)" }} />
+                    <><Clock className="w-3.5 h-3.5" /><span>Waiting on Revised</span></>
                   )}
                 </button>
 
@@ -133,15 +139,8 @@ export default function LastApprovalTab() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-foreground">{lastName}</span>
-                    <span
-                      className="text-xs px-2 py-0.5 rounded-full font-medium"
-                      style={
-                        status === "approved"
-                          ? { background: "oklch(0.92 0.08 155)", color: "oklch(0.35 0.14 155)" }
-                          : { background: "oklch(0.95 0.06 65)", color: "oklch(0.50 0.14 55)" }
-                      }
-                    >
-                      {status === "approved" ? "Approved" : "Waiting on Revised"}
+                    <span className="text-xs text-muted-foreground">
+                      {LAST_NEW_SKU_COUNT[lastName] ?? 0} new SKU{(LAST_NEW_SKU_COUNT[lastName] ?? 0) !== 1 ? 's' : ''}
                     </span>
                   </div>
                   {notes && !isExpanded && (
