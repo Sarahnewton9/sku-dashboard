@@ -124,3 +124,11 @@
 - [x] Fix sqft calculations: Dress Sandal=2.15, Court Shoe=2.35, Ankle Boot=3.6, Calf Boot=6.95, Sandal=2.0
 - [x] Investigate Tony Bianco RRP scraping from tonybianco.com.au
 - [x] Implement RRP scraping via Shopify products.json API — "Fetch RRP from Tony Bianco AU" button in Export panel
+
+## Phase 9: Session Delete + RRP Import + Overview Cleanup
+
+- [x] Backend: buySession.delete — delete session and all its items
+- [x] BuySessionsPanel: add delete button per session row with confirmation
+- [x] ImportPanel: RRP import tab already existed — confirmed working
+- [x] Fix RRP display in SkuDetailPanel — confirmed correct, data needs to be imported first
+- [x] SummaryCards: remove Unique Leathers and Unique Colours tiles

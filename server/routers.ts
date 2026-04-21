@@ -8,7 +8,7 @@ import {
   getAllSkuMeta, upsertSkuMeta,
   getAllStyleMeta, upsertStyleRrp,
   getFittingImages, addFittingImage, deleteFittingImage, getAllFittingImages,
-  getAllBuySessions, getActiveBuySession, createBuySession, lockBuySession,
+  getAllBuySessions, getActiveBuySession, createBuySession, lockBuySession, deleteBuySession,
   getBuySessionItems, upsertBuySessionItem, getSessionTotals,
   getAllLastApprovals, upsertLastApproval,
 } from "./db";
@@ -186,6 +186,13 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         await upsertBuySessionItem(input.sessionId, input.style, input.colour, input.leather, input.qty);
+        return { success: true };
+      }),
+
+    delete: publicProcedure
+      .input(z.object({ sessionId: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteBuySession(input.sessionId);
         return { success: true };
       }),
   }),

@@ -272,6 +272,14 @@ export async function upsertBuySessionItem(sessionId: number, style: string, col
   }
 }
 
+export async function deleteBuySession(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Delete all items first, then the session
+  await db.delete(buySessionItems).where(eq(buySessionItems.sessionId, id));
+  await db.delete(buySessions).where(eq(buySessions.id, id));
+}
+
 // ─── Last Approvals ─────────────────────────────────────────────────────────────────────────────
 
 export async function getAllLastApprovals() {

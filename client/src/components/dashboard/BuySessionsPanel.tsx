@@ -6,7 +6,7 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
-import { Lock, Download, Plus, Clock, CheckCircle, Package } from "lucide-react";
+import { Lock, Download, Plus, Clock, CheckCircle, Package, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -45,6 +45,21 @@ export default function BuySessionsPanel() {
     },
     onError: (err) => toast.error(`Failed to lock: ${err.message}`),
   });
+
+  const deleteMutation = trpc.buy.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Session deleted");
+      setSelectedSessionId(null);
+      refetchSessions();
+      refetchActive();
+    },
+    onError: (err) => toast.error(`Failed to delete: ${err.message}`),
+  });
+
+  function handleDelete(sessionId: number, sessionName: string) {
+    if (!confirm(`Delete "${sessionName}"? This will permanently remove the session and all its buy quantities. This cannot be undone.`)) return;
+    deleteMutation.mutate({ sessionId });
+  }
 
   // Build lookup maps
   const styleInfoMap = useMemo(() => {
@@ -260,6 +275,18 @@ export default function BuySessionsPanel() {
                         Lock
                       </button>
                     )}
+
+                    {/* Delete button */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(session.id, session.name); }}
+                      disabled={deleteMutation.isPending}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors hover:bg-red-50 hover:border-red-300 hover:text-red-700"
+                      style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
+                      title="Delete this session and all its quantities"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete
+                    </button>
 
                     {/* Export button */}
                     <button

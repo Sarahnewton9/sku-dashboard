@@ -14,8 +14,6 @@ import {
   Layers,
   Star,
   TrendingUp,
-  Palette,
-  Tag,
   RefreshCw,
   Clock,
   CheckCircle,
@@ -150,8 +148,6 @@ export default function SummaryCards() {
           <MetricCard label="Brand New Styles" value={s.brandNewStyles} icon={Star} accent sub="All SKUs are new" />
           <MetricCard label="Styles with New SKUs" value={(s as any).stylesWithNew} icon={TrendingUp} sub="Have ≥1 new SKU" />
           <MetricCard label="Existing Styles" value={(s as any).existingStyles} icon={RefreshCw} sub="Carrying over unchanged" />
-          <MetricCard label="Unique Leathers" value={s.uniqueLeathers} icon={Tag} sub="Distinct types" />
-          <MetricCard label="Unique Colours" value={s.uniqueColours} icon={Palette} sub="Distinct colours" />
           {/* Sample tracking tiles */}
           <MetricCard
             label="Waiting on Samples"
