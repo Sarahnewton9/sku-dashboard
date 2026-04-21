@@ -152,3 +152,10 @@
 - [x] Colour Insights section: colours with highest avg sell-through, flagged if in/out of current range
 - [x] SKU Coverage table: all matched styles with last-season units + sell-thru + new/existing SKU counts, expandable to show individual SKU rows
 - [x] TypeScript clean, all 8 tests pass
+
+## Phase 11: Last Approval Notes Import
+
+- [ ] Last Approval tab: add Excel import button (columns: Last, Notes, optional Status)
+- [ ] Parse uploaded Excel client-side, preview matched rows before committing
+- [ ] On confirm: upsert notes (and optionally status) for each matched last via existing lastApproval.upsert route
+- [ ] Show unmatched last names in the preview so user can spot typos
