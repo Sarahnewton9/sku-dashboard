@@ -47,12 +47,14 @@ export type SkuMeta = typeof skuMeta.$inferSelect;
 export type InsertSkuMeta = typeof skuMeta.$inferInsert;
 
 /**
- * Per-style metadata: RRP
+ * Per-style metadata: RRP, fit rating, fitting notes
  */
 export const styleMeta = mysqlTable("style_meta", {
   id: int("id").autoincrement().primaryKey(),
   style: varchar("style", { length: 64 }).notNull().unique(),
   rrp: float("rrp"),
+  fitRating: mysqlEnum("fitRating", ["tts", "runs_small", "runs_large"]),
+  fittingNotes: text("fittingNotes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -61,7 +63,7 @@ export type StyleMeta = typeof styleMeta.$inferSelect;
 export type InsertStyleMeta = typeof styleMeta.$inferInsert;
 
 /**
- * Fitting images — multiple images per SKU
+ * Fitting images — multiple images per SKU (legacy, kept for backwards compat)
  */
 export const fittingImages = mysqlTable("fitting_images", {
   id: int("id").autoincrement().primaryKey(),
@@ -76,6 +78,20 @@ export const fittingImages = mysqlTable("fitting_images", {
 
 export type FittingImage = typeof fittingImages.$inferSelect;
 export type InsertFittingImage = typeof fittingImages.$inferInsert;
+
+/**
+ * Style-level fitting images — one set of images per style (not per SKU)
+ */
+export const styleFittingImages = mysqlTable("style_fitting_images", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull(),
+  imageUrl: text("imageUrl").notNull(),
+  fileKey: text("fileKey").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type StyleFittingImage = typeof styleFittingImages.$inferSelect;
+export type InsertStyleFittingImage = typeof styleFittingImages.$inferInsert;
 
 /**
  * Buy sessions — each represents one weekly/periodic buy round

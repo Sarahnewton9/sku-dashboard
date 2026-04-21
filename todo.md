@@ -155,7 +155,28 @@
 
 ## Phase 11: Last Approval Notes Import
 
-- [ ] Last Approval tab: add Excel import button (columns: Last, Notes, optional Status)
-- [ ] Parse uploaded Excel client-side, preview matched rows before committing
-- [ ] On confirm: upsert notes (and optionally status) for each matched last via existing lastApproval.upsert route
-- [ ] Show unmatched last names in the preview so user can spot typos
+- [x] Last Approval tab: add Excel import button (columns: Last, Notes, optional Status)
+- [x] Parse uploaded Excel client-side, preview matched rows before committing
+- [x] On confirm: upsert notes (and optionally status) for each matched last via existing lastApproval.upsert route
+- [x] Show unmatched last names in the preview so user can spot typos
+
+## Phase 12: Approval Section Restructure
+
+### Database / Backend
+- [x] Add fitRating, fittingNotes fields to styleMeta table (style-level fit data)
+- [x] Add styleFittingImages table: id, styleName, imageUrl, fileKey, createdAt
+- [x] DB push for new tables
+- [x] Backend: styleFitting.updateFit — upsert fitRating + fittingNotes for a style
+- [x] Backend: styleFitting.uploadImage — upload image to S3, save to styleFittingImages
+- [x] Backend: styleFitting.getImages — get all images for a style
+- [x] Backend: styleFitting.deleteImage — delete a fitting image by id
+
+### Frontend
+- [x] Rename "LASTS" sidebar section to "APPROVAL"
+- [x] Add "Fitting" sub-tab alongside "Last Approval" in the Approval section
+- [x] Fitting tab: flat list of all styles on the 16 new lasts, grouped by last
+- [x] Each style row: expand to show fit rating dropdown, fitting notes textarea, image upload/gallery
+- [x] Fitting tab: Export button — opens modal with Fit Model + Date fields, generates HTML for print-to-PDF
+- [x] HTML export: style image + style name + last + fit rating + notes, one style per section
+- [x] Export only includes styles with at least a fit rating or notes filled in
+- [x] Remove fit rating, fitting notes, fitting images from SkuDetailPanel

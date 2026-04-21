@@ -1,11 +1,12 @@
 /**
  * SkuDetailPanel — slide-out panel for a single SKU
- * Shows: fitting images, fit rating, fitting notes, sample status, order qty, size 11, cost, RRP
+ * Shows: sample status, order qty, size 11, cost price, RRP
+ * Fit rating/notes/images are now at style level — see FittingTab
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
-import { X, Upload, Trash2, Camera, CheckCircle, Clock, Star } from "lucide-react";
+import { X, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 export interface SkuPanelData {
@@ -27,8 +28,6 @@ interface Props {
     orderQty?: number;
     isSize11?: boolean;
     costPrice?: number | null;
-    fitRating?: string | null;
-    fittingNotes?: string | null;
   }>;
   styleMeta: Record<string, { rrp?: number | null }>;
   onMetaChange: () => void;
@@ -40,68 +39,18 @@ function skuKey(style: string, colour: string, leather: string) {
   return `${style}|${colour}|${leather}`;
 }
 
-const FIT_RATINGS = [
-  { value: "tts", label: "True to Size" },
-  { value: "runs_small", label: "Runs Small" },
-  { value: "runs_large", label: "Runs Large" },
-];
-
 export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMetaChange, allStyleSkus }: Props) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [savingNotes, setSavingNotes] = useState(false);
-  const [localNotes, setLocalNotes] = useState<string | null>(null);
-  const [localFitRating, setLocalFitRating] = useState<string | null | undefined>(undefined);
+  const [savingQty, setSavingQty] = useState(false);
 
   const utils = trpc.useUtils();
 
   const meta = sku ? skuMeta[skuKey(sku.style, sku.colour, sku.leather)] : undefined;
   const styleRrp = sku ? styleMeta[sku.style]?.rrp : undefined;
 
-  // Fitting images query
-  const { data: images = [], refetch: refetchImages } = trpc.fitting.getImages.useQuery(
-    sku ? { style: sku.style, colour: sku.colour, leather: sku.leather } : { style: "", colour: "", leather: "" },
-    { enabled: !!sku }
-  );
-
   const updateMutation = trpc.sku.update.useMutation({
     onSuccess: () => { onMetaChange(); },
     onError: (err) => toast.error(`Save failed: ${err.message}`),
   });
-
-  const uploadMutation = trpc.fitting.uploadImage.useMutation({
-    onSuccess: () => { refetchImages(); toast.success("Image uploaded"); },
-    onError: (err) => toast.error(`Upload failed: ${err.message}`),
-  });
-
-  const deleteMutation = trpc.fitting.deleteImage.useMutation({
-    onSuccess: () => { refetchImages(); toast.success("Image deleted"); },
-    onError: (err) => toast.error(`Delete failed: ${err.message}`),
-  });
-
-  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!sku || !e.target.files?.length) return;
-    const files = Array.from(e.target.files);
-    setUploading(true);
-    try {
-      for (const file of files) {
-        if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} is too large (max 10MB)`); continue; }
-        const reader = new FileReader();
-        const dataUrl = await new Promise<string>((resolve, reject) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-        await uploadMutation.mutateAsync({
-          style: sku.style, colour: sku.colour, leather: sku.leather,
-          imageData: dataUrl, mimeType: file.type,
-        });
-      }
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  }, [sku, uploadMutation]);
 
   const handleSampleToggle = useCallback(() => {
     if (!sku) return;
@@ -126,40 +75,18 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
 
   const handleSize11 = useCallback((checked: boolean) => {
     if (!sku) return;
-    // If we have all style SKUs, update them all at once (style-level)
     if (allStyleSkus && allStyleSkus.length > 0) {
       updateStyleSize11Mutation.mutate({ style: sku.style, skus: allStyleSkus, isSize11: checked });
     } else {
-      // Fallback: update just this SKU
       updateMutation.mutate({ style: sku.style, colour: sku.colour, leather: sku.leather, isSize11: checked });
     }
   }, [sku, updateMutation, updateStyleSize11Mutation, allStyleSkus]);
-
-  const handleFitRating = useCallback((val: string | null) => {
-    if (!sku) return;
-    setLocalFitRating(val);
-    updateMutation.mutate({ style: sku.style, colour: sku.colour, leather: sku.leather, fitRating: val as any });
-  }, [sku, updateMutation]);
-
-  const handleSaveNotes = useCallback(async () => {
-    if (!sku || localNotes === null) return;
-    setSavingNotes(true);
-    try {
-      await updateMutation.mutateAsync({ style: sku.style, colour: sku.colour, leather: sku.leather, fittingNotes: localNotes });
-      setLocalNotes(null);
-      toast.success("Notes saved");
-    } finally {
-      setSavingNotes(false);
-    }
-  }, [sku, localNotes, updateMutation]);
 
   if (!sku) return null;
 
   const sampleStatus = meta?.sampleStatus ?? "waiting";
   const orderQty = meta?.orderQty ?? 0;
   const isSize11 = meta?.isSize11 ?? false;
-  const fitRating = localFitRating !== undefined ? localFitRating : (meta?.fitRating ?? null);
-  const notes = localNotes !== null ? localNotes : (meta?.fittingNotes ?? "");
 
   return (
     <div className="fixed inset-0 z-50 flex" style={{ pointerEvents: "auto" }}>
@@ -168,7 +95,7 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
 
       {/* Panel */}
       <div
-        className="w-[480px] max-w-full h-full flex flex-col bg-card shadow-2xl overflow-y-auto"
+        className="w-[420px] max-w-full h-full flex flex-col bg-card shadow-2xl overflow-y-auto"
         style={{ borderLeft: "1px solid var(--border)" }}
       >
         {/* Header */}
@@ -181,7 +108,7 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
               )}
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {sku.colour} · {sku.leather}
+              {sku.colour}{sku.leather ? ` · ${sku.leather}` : ""}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {sku.category} · Last: {sku.last}
@@ -192,7 +119,18 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
           </button>
         </div>
 
-        <div className="flex-1 px-6 py-5 space-y-6">
+        {/* Style image */}
+        {sku.imageUrl && (
+          <div className="px-6 pt-5">
+            <img
+              src={sku.imageUrl}
+              alt={sku.style}
+              className="w-full max-h-48 object-contain rounded-lg bg-muted"
+            />
+          </div>
+        )}
+
+        <div className="flex-1 px-6 py-5 space-y-4">
 
           {/* Sample Status + Order Qty */}
           <div className="grid grid-cols-2 gap-4">
@@ -216,7 +154,7 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
               <p className="text-xs text-muted-foreground mt-2">Click to toggle</p>
             </div>
 
-            {/* Order Qty (new SKUs only) */}
+            {/* Order Qty */}
             <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)" }}>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Order Qty</p>
               <input
@@ -271,114 +209,10 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
             )}
           </div>
 
-          {/* Fit Rating */}
-          <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)" }}>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Fit Rating</p>
-            <div className="flex gap-2">
-              {FIT_RATINGS.map((r) => (
-                <button
-                  key={r.value}
-                  onClick={() => handleFitRating(fitRating === r.value ? null : r.value)}
-                  className="flex-1 px-2 py-2 rounded-lg text-xs font-medium transition-all border"
-                  style={{
-                    background: fitRating === r.value ? "oklch(0.96 0.08 65)" : "transparent",
-                    borderColor: fitRating === r.value ? "oklch(0.88 0.10 65)" : "var(--border)",
-                    color: fitRating === r.value ? "oklch(0.50 0.14 55)" : "var(--muted-foreground)",
-                  }}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Fitting Notes */}
-          <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)" }}>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Fitting Notes</p>
-            <textarea
-              value={notes}
-              onChange={(e) => setLocalNotes(e.target.value)}
-              placeholder="Add fitting notes for the factory…"
-              rows={4}
-              className="w-full px-3 py-2 rounded-lg border text-sm text-foreground bg-background resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-              style={{ borderColor: "var(--border)" }}
-            />
-            {localNotes !== null && (
-              <button
-                onClick={handleSaveNotes}
-                disabled={savingNotes}
-                className="mt-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
-                style={{ background: "#f59e0b", color: "white" }}
-              >
-                {savingNotes ? "Saving…" : "Save Notes"}
-              </button>
-            )}
-          </div>
-
-          {/* Fitting Images */}
-          <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)" }}>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Fitting Images ({images.length})
-              </p>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                style={{ background: "oklch(0.96 0.04 65)", color: "oklch(0.50 0.14 55)" }}
-              >
-                <Upload className="w-3.5 h-3.5" />
-                {uploading ? "Uploading…" : "Upload"}
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleFileUpload}
-              />
-            </div>
-
-            {images.length === 0 ? (
-              <div
-                className="flex flex-col items-center justify-center py-8 rounded-lg border-2 border-dashed cursor-pointer"
-                style={{ borderColor: "var(--border)" }}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Camera className="w-8 h-8 text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">Click to upload fitting images</p>
-                <p className="text-xs text-muted-foreground mt-1">JPG, PNG up to 10MB each</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {images.map((img) => (
-                  <div key={img.id} className="relative group rounded-lg overflow-hidden aspect-square bg-muted">
-                    <img src={img.imageUrl} alt="Fitting" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                      <button
-                        onClick={() => deleteMutation.mutate({ id: img.id })}
-                        className="opacity-0 group-hover:opacity-100 p-2 rounded-full bg-red-500 text-white transition-all"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <p className="absolute bottom-1 left-1 right-1 text-xs text-white/80 truncate px-1">
-                      {new Date(img.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                ))}
-                {/* Add more button */}
-                <div
-                  className="aspect-square rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
-                  style={{ borderColor: "var(--border)" }}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="w-5 h-5 text-muted-foreground" />
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Hint about fitting */}
+          <p className="text-xs text-muted-foreground text-center px-2">
+            Fit rating, notes &amp; images are tracked per style in the <strong>Fitting</strong> tab (Approval section).
+          </p>
 
         </div>
       </div>

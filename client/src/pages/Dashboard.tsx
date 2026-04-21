@@ -19,6 +19,7 @@ import ExportPanel from "@/components/dashboard/ExportPanel";
 import BuySessionsPanel from "@/components/dashboard/BuySessionsPanel";
 import BuyAnalysisTab from "@/components/dashboard/BuyAnalysisTab";
 import LastApprovalTab from "@/components/dashboard/LastApprovalTab";
+import { FittingTab } from "@/components/dashboard/FittingTab";
 import SeasonAnalysisTab from "@/components/dashboard/SeasonAnalysisTab";
 import {
   LayoutDashboard,
@@ -34,9 +35,10 @@ import {
   BarChart3,
   Stamp,
   LineChart,
+  Ruler,
 } from "lucide-react";
 
-type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval" | "season-analysis";
+type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval" | "fitting" | "season-analysis";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group?: string }[] = [
@@ -49,7 +51,8 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group
   { id: "expansion", label: "Expansion Analysis", icon: TrendingUp },
   { id: "buy-sessions", label: "Buy Sessions", icon: ShoppingCart, group: "buying" },
   { id: "buy-analysis", label: "Buy Analysis", icon: BarChart3, group: "buying" },
-  { id: "last-approval", label: "Last Approval", icon: Stamp, group: "lasts" },
+  { id: "last-approval", label: "Last Approval", icon: Stamp, group: "approval" },
+  { id: "fitting", label: "Fitting", icon: Ruler, group: "approval" },
   { id: "season-analysis", label: "Season Analysis", icon: LineChart, group: "analysis" },
 ];
 
@@ -144,10 +147,10 @@ export default function Dashboard() {
             })}
           </ul>
           <p className="px-2 mt-4 mb-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "oklch(0.50 0.01 80)" }}>
-            Lasts
+            Approval
           </p>
           <ul className="space-y-0.5">
-            {NAV_ITEMS.filter((i) => i.group === "lasts").map((item) => {
+            {NAV_ITEMS.filter((i) => i.group === "approval").map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
@@ -230,7 +233,8 @@ export default function Dashboard() {
               {activeTab === "expansion" && "New SKU coverage analysis"}
               {activeTab === "buy-sessions" && "Manage weekly buy rounds — create, lock, and export independently"}
               {activeTab === "buy-analysis" && "Breakdown of pairs bought per session by category, leather, and colour/leather combo"}
-              {activeTab === "last-approval" && `${skuData.styles.map((s) => s.last).filter((v, i, a) => a.indexOf(v) === i).length} lasts — track approval status and notes`}
+              {activeTab === "last-approval" && "16 new lasts — track approval status and notes per last"}
+              {activeTab === "fitting" && "Style-level fit commentary and imagery for all styles on new lasts"}
               {activeTab === "season-analysis" && "Import Total Season reports and surface hot sellers, colour insights, and SKU coverage"}
             </p>
           </div>
@@ -268,6 +272,7 @@ export default function Dashboard() {
             {activeTab === "buy-sessions" && <BuySessionsPanel />}
             {activeTab === "buy-analysis" && <BuyAnalysisTab />}
             {activeTab === "last-approval" && <LastApprovalTab />}
+            {activeTab === "fitting" && <FittingTab />}
             {activeTab === "season-analysis" && <SeasonAnalysisTab />}
           </div>
         </div>

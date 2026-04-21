@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -158,7 +158,47 @@ export async function upsertStyleRrp(style: string, rrp: number | null) {
   await db.insert(styleMeta).values({ style, rrp }).onDuplicateKeyUpdate({ set: { rrp } });
 }
 
-// ─── Fitting Images ───────────────────────────────────────────────────────────
+// ─── Style Fit (style-level fit rating + notes) ──────────────────────────────
+
+export async function upsertStyleFit(style: string, fitRating: "tts" | "runs_small" | "runs_large" | null, fittingNotes: string | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(styleMeta)
+    .values({ style, fitRating, fittingNotes })
+    .onDuplicateKeyUpdate({ set: { fitRating, fittingNotes } });
+}
+
+// ─── Style Fitting Images ─────────────────────────────────────────────────────
+
+export async function getStyleFittingImages(style: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(styleFittingImages).where(eq(styleFittingImages.style, style));
+}
+
+export async function getAllStyleFittingImages() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(styleFittingImages);
+}
+
+export async function addStyleFittingImage(data: { style: string; imageUrl: string; fileKey: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(styleFittingImages).values(data);
+  const result = await db.select().from(styleFittingImages)
+    .where(eq(styleFittingImages.fileKey, data.fileKey))
+    .limit(1);
+  return result[0];
+}
+
+export async function deleteStyleFittingImage(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(styleFittingImages).where(eq(styleFittingImages.id, id));
+}
+
+// ─── Fitting Images (legacy SKU-level) ───────────────────────────────────────
 
 export async function getFittingImages(style: string, colour: string, leather: string) {
   const db = await getDb();

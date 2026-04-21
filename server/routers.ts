@@ -6,7 +6,8 @@ import { publicProcedure, router } from "./_core/trpc";
 import axios from "axios";
 import {
   getAllSkuMeta, upsertSkuMeta,
-  getAllStyleMeta, upsertStyleRrp,
+  getAllStyleMeta, upsertStyleRrp, upsertStyleFit,
+  getStyleFittingImages, getAllStyleFittingImages, addStyleFittingImage, deleteStyleFittingImage,
   getFittingImages, addFittingImage, deleteFittingImage, getAllFittingImages,
   getAllBuySessions, getActiveBuySession, createBuySession, lockBuySession, deleteBuySession,
   getBuySessionItems, upsertBuySessionItem, getSessionTotals,
@@ -214,7 +215,49 @@ export const appRouter = router({
       }),
   }),
 
-  // Fitting images
+  // Style-level fitting (fit rating, notes, images)
+  styleFitting: router({
+    getAll: publicProcedure.query(async () => getAllStyleFittingImages()),
+
+    getImages: publicProcedure
+      .input(z.object({ style: z.string() }))
+      .query(async ({ input }) => getStyleFittingImages(input.style)),
+
+    updateFit: publicProcedure
+      .input(z.object({
+        style: z.string(),
+        fitRating: z.enum(["tts", "runs_small", "runs_large"]).nullable().optional(),
+        fittingNotes: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await upsertStyleFit(input.style, input.fitRating ?? null, input.fittingNotes ?? null);
+        return { success: true };
+      }),
+
+    uploadImage: publicProcedure
+      .input(z.object({
+        style: z.string(),
+        imageData: z.string(),
+        mimeType: z.string().default("image/jpeg"),
+      }))
+      .mutation(async ({ input }) => {
+        const base64 = input.imageData.replace(/^data:[^;]+;base64,/, "");
+        const buffer = Buffer.from(base64, "base64");
+        const fileKey = `style-fitting/${input.style}-${nanoid(8)}.jpg`.replace(/\s+/g, "_");
+        const { url } = await storagePut(fileKey, buffer, input.mimeType);
+        const saved = await addStyleFittingImage({ style: input.style, imageUrl: url, fileKey });
+        return { id: saved?.id, url, fileKey };
+      }),
+
+    deleteImage: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteStyleFittingImage(input.id);
+        return { success: true };
+      }),
+  }),
+
+  // Fitting images (legacy SKU-level)
   fitting: router({
     getImages: publicProcedure
       .input(z.object({ style: z.string(), colour: z.string(), leather: z.string().default("") }))
