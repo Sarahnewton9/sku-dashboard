@@ -3,7 +3,27 @@ import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { CheckCircle2, Clock, ChevronDown, ChevronRight } from "lucide-react";
 
-// Only include lasts that have at least one new SKU ("new lasts")
+// Brand new lasts this season — manually confirmed list
+const ALL_LASTS = [
+  "BILLIE",
+  "DAZIE",
+  "EDGY/EMBER",
+  "ENVY",
+  "FINCH",
+  "HARLEY",
+  "JAYDE",
+  "LUCY",
+  "MATISSE",
+  "PIXIE",
+  "ROXIE",
+  "SALLY",
+  "SIA",
+  "TIANA",
+  "TILDA",
+  "VIVA",
+];
+
+// Build style lookup per last
 const LAST_TO_STYLES: Record<string, string[]> = {};
 const LAST_NEW_SKU_COUNT: Record<string, number> = {};
 for (const s of skuData.styles) {
@@ -11,9 +31,6 @@ for (const s of skuData.styles) {
   LAST_TO_STYLES[s.last].push(s.style);
   LAST_NEW_SKU_COUNT[s.last] = (LAST_NEW_SKU_COUNT[s.last] ?? 0) + (s.newSKUs ?? 0);
 }
-const ALL_LASTS = Array.from(new Set(skuData.styles.map((s) => s.last)))
-  .filter((l) => (LAST_NEW_SKU_COUNT[l] ?? 0) > 0)
-  .sort();
 
 export default function LastApprovalTab() {
   const { data: approvals, refetch } = trpc.lastApproval.getAll.useQuery();
