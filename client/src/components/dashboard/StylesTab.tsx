@@ -6,7 +6,7 @@
  * - Click a SKU's detail icon to open the SkuDetailPanel slide-out
  */
 
-import { useState, useMemo, useCallback, useRef } from "react";
+import React, { useState, useMemo, useCallback, useRef } from "react";
 import { skuData } from "@/lib/skuData";
 import { trpc } from "@/lib/trpc";
 import { Search, ChevronUp, ChevronDown, Download, Upload, SlidersHorizontal } from "lucide-react";
@@ -387,9 +387,8 @@ export default function StylesTab() {
                       const sessionTotal = getStyleSessionTotal(style.style);
                       const styleSize11 = getStyleSize11(style.style);
                       return (
-                        <>
+                        <React.Fragment key={style.style}>
                           <tr
-                            key={style.style}
                             className="border-b transition-colors hover:bg-muted/30 cursor-pointer"
                             style={{
                               borderColor: "var(--border)",
@@ -592,7 +591,7 @@ export default function StylesTab() {
                               </td>
                             </tr>
                           )}
-                        </>
+                        </React.Fragment>
                       );
                     })}
                   </tbody>
