@@ -136,14 +136,11 @@ export const appRouter = router({
           }
         }
 
-        // Pick the most common price per style and save
+        // Always use the HIGHEST price per style — markdowns are excluded, full price is the max
         let updated = 0;
         const results: { style: string; rrp: number }[] = [];
         for (const [style, prices] of Object.entries(styleRrp)) {
-          // Most common price
-          const freq: Record<number, number> = {};
-          for (const p of prices) freq[p] = (freq[p] ?? 0) + 1;
-          const rrp = parseFloat(Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0]);
+          const rrp = Math.max(...prices);
           await upsertStyleRrp(style, rrp);
           results.push({ style, rrp });
           updated++;
