@@ -201,3 +201,9 @@
 - [x] Fit badge shows the fit rating (TTS / Runs Small / Runs Large) in the appropriate colour
 - [x] Fitting notes shown as italic text below the badge
 - [x] Only show fit info for styles that have fitApproved = true
+
+## Phase 14: Fitting Tab — All New Styles
+
+- [x] Change FittingTab to include ALL styles with at least one new SKU (not just styles on new lasts)
+- [x] Group by last name (alphabetical) as before
+- [x] Update header description to reflect the broader scope

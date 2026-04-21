@@ -10,12 +10,6 @@ import { toast } from "sonner";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const NEW_LASTS = [
-  "DAZIE", "SIA", "SALLY", "TIANA", "BILLIE", "MATISSE",
-  "EDGY", "EMBER", "TILDA", "LUCY", "ENVY", "FINCH",
-  "HARLEY", "JAYDE", "ROXIE", "VIVA", "PIXIE",
-];
-
 export const FIT_LABELS: Record<string, string> = {
   tts: "True to Size",
   runs_small: "Runs Small",
@@ -41,14 +35,11 @@ interface StyleEntry {
   totalSKUs: number;
 }
 
-// ─── Build style list: all styles on new lasts ───────────────────────────────
+// ─── Build style list: all styles with at least one new SKU ─────────────────
 
 function buildStyleList(): StyleEntry[] {
   return skuData.styles
-    .filter((s) => {
-      const lastUpper = s.last?.toUpperCase() ?? "";
-      return NEW_LASTS.some((nl) => lastUpper.includes(nl));
-    })
+    .filter((s) => s.hasNew)
     .map((s) => ({
       style: s.style,
       last: s.last,
@@ -466,7 +457,7 @@ export function FittingTab() {
         <div>
           <h2 className="text-lg font-semibold">Fitting</h2>
           <p className="text-sm text-muted-foreground">
-            {styleList.length} styles on new lasts.
+            {styleList.length} styles with new SKUs this season.
             {approvedStyles.length > 0 && ` ${approvedStyles.length} approved, ${activeStyles.length} remaining.`}
           </p>
         </div>
