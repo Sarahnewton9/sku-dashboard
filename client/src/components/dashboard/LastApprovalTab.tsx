@@ -17,21 +17,35 @@ const ALL_LASTS = Array.from(new Set(skuData.styles.map((s) => s.last)))
 
 export default function LastApprovalTab() {
   const { data: approvals, refetch } = trpc.lastApproval.getAll.useQuery();
-  const upsert = trpc.lastApproval.upsert.useMutation({ onSuccess: () => refetch() });
+  const upsert = trpc.lastApproval.upsert.useMutation({
+    onSuccess: () => refetch(),
+    onError: (err) => console.error('[LastApproval] upsert error:', err),
+  });
+
+  // Optimistic local state so the UI responds instantly without waiting for refetch
+  const [localOverrides, setLocalOverrides] = useState<Record<string, "approved" | "waiting_revised">>({});
 
   const [expandedLast, setExpandedLast] = useState<string | null>(null);
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [notesValue, setNotesValue] = useState("");
   const [filter, setFilter] = useState<"all" | "approved" | "waiting_revised">("all");
 
-  // Build a map of lastName → approval record
+  // Build a map of lastName → approval record (with local optimistic overrides applied)
   const approvalMap = useMemo(() => {
     const map: Record<string, { status: "approved" | "waiting_revised"; notes: string | null }> = {};
     for (const a of approvals ?? []) {
       map[a.lastName] = { status: a.status, notes: a.notes ?? null };
     }
+    // Apply local overrides on top
+    for (const [lastName, status] of Object.entries(localOverrides)) {
+      if (map[lastName]) {
+        map[lastName] = { ...map[lastName], status };
+      } else {
+        map[lastName] = { status, notes: null };
+      }
+    }
     return map;
-  }, [approvals]);
+  }, [approvals, localOverrides]);
 
   const filteredLasts = useMemo(() => {
     return ALL_LASTS.filter((last) => {
@@ -46,7 +60,17 @@ export default function LastApprovalTab() {
 
   const handleToggle = (lastName: string, current: "approved" | "waiting_revised") => {
     const next = current === "approved" ? "waiting_revised" : "approved";
-    upsert.mutate({ lastName, status: next, notes: approvalMap[lastName]?.notes ?? null });
+    // Apply optimistic update immediately
+    setLocalOverrides((prev) => ({ ...prev, [lastName]: next }));
+    upsert.mutate(
+      { lastName, status: next, notes: approvalMap[lastName]?.notes ?? null },
+      {
+        onError: () => {
+          // Rollback on error
+          setLocalOverrides((prev) => ({ ...prev, [lastName]: current }));
+        },
+      }
+    );
   };
 
   const handleSaveNotes = (lastName: string) => {
