@@ -53,15 +53,15 @@ export default function LeathersTab() {
     return map;
   }, []);
 
-  // Calculate leather usage
+  // Calculate leather usage — by colour+leather combo, new SKUs only
   const leatherUsage = useMemo(() => {
     if (!showCalculator) return [];
 
-    // Group rawSkus by leather
-    const leatherMap: Record<string, { skuCount: number; footage: number; weightedFootage: number }> = {};
+    // Group rawSkus by colour+leather combo — always new SKUs only for ordering purposes
+    const comboMap: Record<string, { skuCount: number; footage: number; weightedFootage: number }> = {};
 
-    for (const sku of skuData.rawSkus) {
-      if (showNewOnly && !sku.is_new) continue;
+    for (const sku of (skuData.rawSkus as unknown as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)) {
+      if (!sku.is_new) continue; // Always new SKUs only — carry-overs don't need fresh leather
       if (!sku.leather) continue;
 
       const category = styleLookup[sku.style] ?? "Dress Shoe";
@@ -69,18 +69,19 @@ export default function LeathersTab() {
       const skuKey = `${sku.style}|${sku.colour}|${sku.leather}` as string;
       const orderQty = useOrderQty ? (skuMetaMap[skuKey] ?? 0) : 1;
 
-      if (!leatherMap[sku.leather]) {
-        leatherMap[sku.leather] = { skuCount: 0, footage: 0, weightedFootage: 0 };
+      const comboKey = `${sku.colour} / ${sku.leather}`;
+      if (!comboMap[comboKey]) {
+        comboMap[comboKey] = { skuCount: 0, footage: 0, weightedFootage: 0 };
       }
-      leatherMap[sku.leather].skuCount++;
-      leatherMap[sku.leather].footage += rate;
-      leatherMap[sku.leather].weightedFootage += rate * orderQty;
+      comboMap[comboKey].skuCount++;
+      comboMap[comboKey].footage += rate;
+      comboMap[comboKey].weightedFootage += rate * orderQty;
     }
 
-    return Object.entries(leatherMap)
+    return Object.entries(comboMap)
       .map(([name, stats]) => ({ name, ...stats }))
       .sort((a, b) => b.footage - a.footage);
-  }, [showCalculator, showNewOnly, useOrderQty, skuMetaMap, styleLookup]);
+  }, [showCalculator, useOrderQty, skuMetaMap, styleLookup]);
 
   const totalFootage = useMemo(() => leatherUsage.reduce((sum, l) => sum + (useOrderQty ? l.weightedFootage : l.footage), 0), [leatherUsage, useOrderQty]);
 
@@ -141,7 +142,7 @@ export default function LeathersTab() {
             <div>
               <h4 className="font-display font-semibold text-sm text-foreground">Leather Usage Calculator</h4>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Estimated square footage per leather type
+                Estimated sq ft per colour / leather combination · new SKUs only
                 {useOrderQty ? " (weighted by order qty)" : " (1 unit per SKU)"}
               </p>
             </div>
@@ -190,7 +191,7 @@ export default function LeathersTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ background: "var(--muted)" }}>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Leather</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">Colour / Leather</th>
                   <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">SKUs</th>
                   <th className="px-4 py-2 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     {useOrderQty ? "Weighted Footage" : "Est. Footage"}

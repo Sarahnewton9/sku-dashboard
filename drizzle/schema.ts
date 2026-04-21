@@ -76,3 +76,34 @@ export const fittingImages = mysqlTable("fitting_images", {
 
 export type FittingImage = typeof fittingImages.$inferSelect;
 export type InsertFittingImage = typeof fittingImages.$inferInsert;
+
+/**
+ * Buy sessions — each represents one weekly/periodic buy round
+ * e.g. "Week 1 Buy — 2024-04-21"
+ */
+export const buySessions = mysqlTable("buy_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  isLocked: boolean("isLocked").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lockedAt: timestamp("lockedAt"),
+});
+
+export type BuySession = typeof buySessions.$inferSelect;
+export type InsertBuySession = typeof buySessions.$inferInsert;
+
+/**
+ * Buy session items — one row per SKU per session
+ */
+export const buySessionItems = mysqlTable("buy_session_items", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull(),
+  style: varchar("style", { length: 64 }).notNull(),
+  colour: varchar("colour", { length: 64 }).notNull(),
+  leather: varchar("leather", { length: 64 }).notNull().default(""),
+  qty: int("qty").default(0).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BuySessionItem = typeof buySessionItems.$inferSelect;
+export type InsertBuySessionItem = typeof buySessionItems.$inferInsert;

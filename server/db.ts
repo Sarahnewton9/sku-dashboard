@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, users } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, users, buySessions, buySessionItems } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -193,4 +193,81 @@ export async function getAllFittingImages() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(fittingImages);
+}
+
+// ─── Buy Sessions ─────────────────────────────────────────────────────────────
+
+export async function getAllBuySessions() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(buySessions).orderBy(buySessions.createdAt);
+}
+
+export async function getActiveBuySession() {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(buySessions)
+    .where(eq(buySessions.isLocked, false))
+    .orderBy(buySessions.createdAt)
+    .limit(1);
+  return result[0];
+}
+
+export async function createBuySession(name: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(buySessions).values({ name, isLocked: false });
+  // Return the newly created session
+  const result = await db.select().from(buySessions)
+    .where(eq(buySessions.name, name))
+    .orderBy(buySessions.createdAt)
+    .limit(1);
+  return result[0];
+}
+
+export async function lockBuySession(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(buySessions)
+    .set({ isLocked: true, lockedAt: new Date() })
+    .where(eq(buySessions.id, id));
+}
+
+export async function getBuySessionItems(sessionId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(buySessionItems)
+    .where(eq(buySessionItems.sessionId, sessionId));
+}
+
+export async function getSessionTotals(): Promise<Record<number, number>> {
+  const db = await getDb();
+  if (!db) return {};
+  const rows = await db.select().from(buySessionItems);
+  const totals: Record<number, number> = {};
+  for (const row of rows) {
+    totals[row.sessionId] = (totals[row.sessionId] ?? 0) + (row.qty ?? 0);
+  }
+  return totals;
+}
+
+export async function upsertBuySessionItem(sessionId: number, style: string, colour: string, leather: string, qty: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Check if item exists
+  const existing = await db.select().from(buySessionItems)
+    .where(and(
+      eq(buySessionItems.sessionId, sessionId),
+      eq(buySessionItems.style, style),
+      eq(buySessionItems.colour, colour),
+      eq(buySessionItems.leather, leather)
+    ))
+    .limit(1);
+  if (existing.length > 0) {
+    await db.update(buySessionItems)
+      .set({ qty })
+      .where(eq(buySessionItems.id, existing[0].id));
+  } else {
+    await db.insert(buySessionItems).values({ sessionId, style, colour, leather, qty });
+  }
 }

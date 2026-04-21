@@ -32,3 +32,41 @@
 - [x] TypeScript compilation clean (no errors)
 - [x] Vitest tests for key procedures
 - [x] Checkpoint saved
+
+## Phase 6: Buy Sessions + Inline Qty + Leather Combos
+
+### Database / Backend
+- [x] Add buySession table: id, name, date, isLocked, createdAt
+- [x] Add buySessionItem table: sessionId, style, colour, leather, qty
+- [x] DB push for new tables
+- [x] backend: buySession.create (creates new active session)
+- [x] backend: buySession.getAll (list all sessions)
+- [x] backend: buySession.getItems (get all items for a session)
+- [x] backend: buySession.upsertItem (set qty for a SKU in a session)
+- [x] backend: buySession.lock (lock a session, prevent further edits)
+- [x] backend: buySession.getActive (get current unlocked session)
+
+### Inline Buy Qty Editing
+- [x] Expanded style rows show inline qty input per SKU (linked to active buy session)
+- [x] Qty auto-saves on blur/enter
+- [x] Show session name/date above the expanded rows
+
+### Buy Session Management UI
+- [x] Buy Sessions panel/tab: list all sessions with date, name, total pairs, locked status
+- [x] Create new session button (with date picker and optional name)
+- [x] Lock session button (confirms, prevents further edits)
+- [x] Export session as Excel (only items in that session with qty > 0)
+- [x] View session items (read-only for locked sessions)
+
+### Buy Analysis Tab
+- [x] New "Buy Analysis" section or tab
+- [x] Summary: total pairs bought per session
+- [x] Breakdown by category (pairs per category)
+- [x] Breakdown by leather (pairs per leather)
+- [x] Breakdown by colour/leather combination (pairs per combo, new SKUs only)
+- [x] Selector to choose which session to analyse
+
+### Leather Calculator Fix
+- [x] Change leather calculator to show colour+leather combinations (not just leather)
+- [x] Filter to new SKUs only by default (carry-over styles don't need fresh leather orders)
+- [x] Footage calculation per colour+leather combo

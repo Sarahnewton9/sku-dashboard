@@ -7,6 +7,8 @@ import {
   getAllSkuMeta, upsertSkuMeta,
   getAllStyleMeta, upsertStyleRrp,
   getFittingImages, addFittingImage, deleteFittingImage, getAllFittingImages,
+  getAllBuySessions, getActiveBuySession, createBuySession, lockBuySession,
+  getBuySessionItems, upsertBuySessionItem, getSessionTotals,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -74,6 +76,46 @@ export const appRouter = router({
           updated++;
         }
         return { updated };
+      }),
+  }),
+
+  // Buy sessions
+  buy: router({
+    getSessions: publicProcedure.query(async () => getAllBuySessions()),
+
+    getSessionTotals: publicProcedure.query(async () => getSessionTotals()),
+
+    getActive: publicProcedure.query(async () => getActiveBuySession()),
+
+    getItems: publicProcedure
+      .input(z.object({ sessionId: z.number() }))
+      .query(async ({ input }) => getBuySessionItems(input.sessionId)),
+
+    create: publicProcedure
+      .input(z.object({ name: z.string().min(1) }))
+      .mutation(async ({ input }) => {
+        const session = await createBuySession(input.name);
+        return session;
+      }),
+
+    lock: publicProcedure
+      .input(z.object({ sessionId: z.number() }))
+      .mutation(async ({ input }) => {
+        await lockBuySession(input.sessionId);
+        return { success: true };
+      }),
+
+    upsertItem: publicProcedure
+      .input(z.object({
+        sessionId: z.number(),
+        style: z.string(),
+        colour: z.string(),
+        leather: z.string().default(""),
+        qty: z.number().int().min(0),
+      }))
+      .mutation(async ({ input }) => {
+        await upsertBuySessionItem(input.sessionId, input.style, input.colour, input.leather, input.qty);
+        return { success: true };
       }),
   }),
 
