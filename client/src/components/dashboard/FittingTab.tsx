@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronDown, ChevronRight, Upload, X, ImageIcon, Download, CheckCircle, RotateCcw } from "lucide-react";
+import { ChevronDown, ChevronRight, Upload, X, ImageIcon, Download, CheckCircle, RotateCcw, Search } from "lucide-react";
 import { toast } from "sonner";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -269,7 +269,7 @@ export function FittingTab() {
   const [fitModel, setFitModel] = useState("");
   const [fitDate, setFitDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [exporting, setExporting] = useState(false);
-  // approvedSectionOpen removed — approved styles now live in By Style tab
+  const [search, setSearch] = useState("");
 
   const styleList = buildStyleList();
 
@@ -285,8 +285,14 @@ export function FittingTab() {
   const activeStyles = styleList.filter((s) => !styleMeta[s.style]?.fitApproved);
   const approvedStyles = styleList.filter((s) => styleMeta[s.style]?.fitApproved);
 
+  // Apply search filter to active styles
+  const q = search.trim().toLowerCase();
+  const filteredActive = q
+    ? activeStyles.filter((s) => s.style.toLowerCase().includes(q) || s.last.toLowerCase().includes(q) || s.category.toLowerCase().includes(q))
+    : activeStyles;
+
   // Group active by last
-  const byLast = activeStyles.reduce<Record<string, StyleEntry[]>>((acc, s) => {
+  const byLast = filteredActive.reduce<Record<string, StyleEntry[]>>((acc, s) => {
     if (!acc[s.last]) acc[s.last] = [];
     acc[s.last].push(s);
     return acc;
@@ -467,7 +473,7 @@ export function FittingTab() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold">Fitting</h2>
           <p className="text-sm text-muted-foreground">
@@ -475,10 +481,35 @@ export function FittingTab() {
             {approvedStyles.length > 0 && ` ${approvedStyles.length} approved — see By Style tab.`}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setExportOpen(true)} className="gap-2">
-          <Download className="w-4 h-4" />
-          Export Report
-        </Button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search styles..."
+              className="pl-8 pr-3 py-1.5 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring w-44"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          {q && (
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {filteredActive.length} {filteredActive.length === 1 ? "match" : "matches"}
+            </span>
+          )}
+          <Button variant="outline" size="sm" onClick={() => setExportOpen(true)} className="gap-2">
+            <Download className="w-4 h-4" />
+            Export Report
+          </Button>
+        </div>
       </div>
 
       {/* Export dialog */}
@@ -544,7 +575,15 @@ export function FittingTab() {
         </div>
       ))}
 
-      {activeStyles.length === 0 && approvedStyles.length === 0 && (
+      {filteredActive.length === 0 && q && (
+        <div className="text-center py-12 text-muted-foreground">
+          <Search className="w-6 h-6 mx-auto mb-2 opacity-40" />
+          <p className="text-sm">No styles match &ldquo;{search}&rdquo;</p>
+          <button onClick={() => setSearch("")} className="text-xs underline mt-1 hover:text-foreground">Clear search</button>
+        </div>
+      )}
+
+      {activeStyles.length === 0 && approvedStyles.length === 0 && !q && (
         <div className="text-center py-16 text-muted-foreground">
           <p className="text-sm">No styles requiring fitting found.</p>
         </div>

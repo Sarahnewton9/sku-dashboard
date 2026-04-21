@@ -220,3 +220,9 @@
 - [x] StylesTab: add a collapsed "Fit Approved (N)" section at the bottom of the By Style tab
 - [x] Each approved style in that section is expandable to show fit rating badge, fitting notes, and fitting images
 - [x] Approved styles can still have their approval undone from the By Style section (moves them back to Fitting tab)
+
+## Phase 17: Fitting Tab Search
+
+- [x] Add search input to Fitting tab header area
+- [x] Filter active styles by search query (style name, last name)
+- [x] Show match count when search is active
