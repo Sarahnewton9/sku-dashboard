@@ -7,7 +7,10 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { skuData } from "@/lib/skuData";
 import { trpc } from "@/lib/trpc";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { Package, Sparkles, Archive, Layers, Star, RefreshCw, FlaskConical } from "lucide-react";
+import { Package, Sparkles, Archive, Layers, Star, RefreshCw, FlaskConical, CheckCircle2 } from "lucide-react";
+
+// Hardcoded list of brand new lasts this season
+const TOTAL_NEW_LASTS = 16;
 
 const CATEGORY_COLOURS: Record<string, string> = {
   "Dress Shoe": "#f59e0b",
@@ -106,6 +109,10 @@ export default function SummaryCards() {
 
   // Fetch live sample status counts
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
+
+  // Fetch last approval data
+  const { data: lastApprovals = [] } = trpc.lastApproval.getAll.useQuery();
+  const approvedLastsCount = lastApprovals.filter((a) => a.status === "approved").length;
 
   const sampleCounts = useMemo(() => {
     let waiting = 0;
@@ -206,6 +213,66 @@ export default function SummaryCards() {
               <span className="text-sm font-medium" style={{ color: "oklch(0.45 0.14 55)" }}>Waiting</span>
               <span className="text-xl font-display font-bold tabular-nums" style={{ color: "oklch(0.45 0.14 55)" }}>
                 <AnimatedNumber value={sampleCounts.waiting} />
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Last Approval progress */}
+      <div>
+        <h3 className="font-display font-semibold text-base mb-4 text-foreground">Lasts</h3>
+        <div
+          className="rounded-xl border p-5 transition-shadow hover:shadow-md"
+          style={{ borderColor: "var(--border)", background: "var(--card)" }}
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "var(--muted)" }}>
+              <CheckCircle2 className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="font-semibold text-foreground text-sm">Last Approvals</p>
+              <p className="text-xs text-muted-foreground">{TOTAL_NEW_LASTS} new lasts this season</p>
+            </div>
+            <div className="ml-auto text-right">
+              <p className="text-2xl font-display font-bold tabular-nums" style={{ color: approvedLastsCount === TOTAL_NEW_LASTS ? "oklch(0.40 0.14 155)" : "oklch(0.45 0.14 55)" }}>
+                {approvedLastsCount}/{TOTAL_NEW_LASTS}
+              </p>
+              <p className="text-xs text-muted-foreground">approved</p>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="h-3 rounded-full overflow-hidden mb-3" style={{ background: "var(--muted)" }}>
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${Math.round((approvedLastsCount / TOTAL_NEW_LASTS) * 100)}%`,
+                background: approvedLastsCount === TOTAL_NEW_LASTS
+                  ? "linear-gradient(90deg, oklch(0.72 0.18 155), oklch(0.60 0.20 155))"
+                  : "linear-gradient(90deg, oklch(0.72 0.16 65), oklch(0.60 0.18 55))",
+              }}
+            />
+          </div>
+
+          {/* Counts row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div
+              className="rounded-lg px-4 py-3 flex items-center justify-between"
+              style={{ background: "oklch(0.94 0.08 155)", border: "1px solid oklch(0.85 0.12 155)" }}
+            >
+              <span className="text-sm font-medium" style={{ color: "oklch(0.40 0.14 155)" }}>Approved</span>
+              <span className="text-xl font-display font-bold tabular-nums" style={{ color: "oklch(0.40 0.14 155)" }}>
+                <AnimatedNumber value={approvedLastsCount} />
+              </span>
+            </div>
+            <div
+              className="rounded-lg px-4 py-3 flex items-center justify-between"
+              style={{ background: "oklch(0.97 0.06 65)", border: "1px solid oklch(0.88 0.10 65)" }}
+            >
+              <span className="text-sm font-medium" style={{ color: "oklch(0.45 0.14 55)" }}>Waiting on Revised</span>
+              <span className="text-xl font-display font-bold tabular-nums" style={{ color: "oklch(0.45 0.14 55)" }}>
+                <AnimatedNumber value={TOTAL_NEW_LASTS - approvedLastsCount} />
               </span>
             </div>
           </div>
