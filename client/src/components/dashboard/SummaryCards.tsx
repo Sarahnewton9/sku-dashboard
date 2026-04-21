@@ -114,6 +114,15 @@ export default function SummaryCards() {
   const { data: lastApprovals = [] } = trpc.lastApproval.getAll.useQuery();
   const approvedLastsCount = lastApprovals.filter((a) => a.status === "approved").length;
 
+  // Build a style → category map from skuData.styles
+  const styleCategoryMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const s of skuData.styles) {
+      map[s.style] = s.category;
+    }
+    return map;
+  }, []);
+
   const sampleCounts = useMemo(() => {
     let waiting = 0;
     let received = 0;
@@ -126,6 +135,36 @@ export default function SummaryCards() {
     const untrackedWaiting = Math.max(0, newSkuCount - skuMetaList.length);
     return { waiting: waiting + untrackedWaiting, received, total: newSkuCount };
   }, [skuMetaList]);
+
+  // Per-category sample breakdown
+  const categorySampleBreakdown = useMemo(() => {
+    // Build a map of style → sampleStatus from DB records
+    const skuStatusMap: Record<string, "waiting" | "received"> = {};
+    for (const m of skuMetaList) {
+      const key = `${m.style}|${m.colour}|${m.leather}`;
+      skuStatusMap[key] = m.sampleStatus as "waiting" | "received";
+    }
+
+    // Aggregate per category for new SKUs only
+    const catMap: Record<string, { received: number; waiting: number; total: number }> = {};
+    for (const sku of skuData.rawSkus) {
+      if (!sku.is_new) continue;
+      const cat = styleCategoryMap[sku.style] ?? "Other";
+      if (!catMap[cat]) catMap[cat] = { received: 0, waiting: 0, total: 0 };
+      catMap[cat].total++;
+      const key = `${sku.style}|${sku.colour}|${sku.leather}`;
+      if (skuStatusMap[key] === "received") {
+        catMap[cat].received++;
+      } else {
+        catMap[cat].waiting++;
+      }
+    }
+
+    // Sort by category name
+    return Object.entries(catMap)
+      .map(([category, counts]) => ({ category, ...counts }))
+      .sort((a, b) => a.category.localeCompare(b.category));
+  }, [skuMetaList, styleCategoryMap]);
 
   const pctReceived = sampleCounts.total > 0
     ? Math.round((sampleCounts.received / sampleCounts.total) * 100)
@@ -196,7 +235,7 @@ export default function SummaryCards() {
           </div>
 
           {/* Counts row */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 mb-5">
             <div
               className="rounded-lg px-4 py-3 flex items-center justify-between"
               style={{ background: "oklch(0.94 0.08 155)", border: "1px solid oklch(0.85 0.12 155)" }}
@@ -214,6 +253,41 @@ export default function SummaryCards() {
               <span className="text-xl font-display font-bold tabular-nums" style={{ color: "oklch(0.45 0.14 55)" }}>
                 <AnimatedNumber value={sampleCounts.waiting} />
               </span>
+            </div>
+          </div>
+
+          {/* Category breakdown */}
+          <div className="border-t pt-4" style={{ borderColor: "var(--border)" }}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">By Category</p>
+            <div className="space-y-2.5">
+              {categorySampleBreakdown.map(({ category, received, waiting, total }) => {
+                const pct = total > 0 ? Math.round((received / total) * 100) : 0;
+                const allDone = received === total;
+                return (
+                  <div key={category}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-foreground">{category}</span>
+                      <span className="text-xs tabular-nums" style={{ color: allDone ? "oklch(0.40 0.14 155)" : "var(--muted-foreground)" }}>
+                        {received}/{total}
+                        {waiting > 0 && (
+                          <span className="ml-1.5" style={{ color: "oklch(0.55 0.12 55)" }}>({waiting} waiting)</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${pct}%`,
+                          background: allDone
+                            ? "oklch(0.60 0.20 155)"
+                            : "oklch(0.72 0.16 65)",
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
