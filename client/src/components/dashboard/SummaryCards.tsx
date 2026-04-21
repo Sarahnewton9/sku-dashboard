@@ -1,23 +1,13 @@
 /**
  * SummaryCards — Overview tab
- * Shows key metrics + "Waiting on X samples" tile + category breakdown bar chart
+ * Simplified: SKU counts, Style counts, combined Samples tile, category chart
  */
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import { skuData } from "@/lib/skuData";
 import { trpc } from "@/lib/trpc";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import {
-  Package,
-  Sparkles,
-  Archive,
-  Layers,
-  Star,
-  TrendingUp,
-  RefreshCw,
-  Clock,
-  CheckCircle,
-} from "lucide-react";
+import { Package, Sparkles, Archive, Layers, Star, RefreshCw, FlaskConical } from "lucide-react";
 
 const CATEGORY_COLOURS: Record<string, string> = {
   "Dress Shoe": "#f59e0b",
@@ -59,55 +49,60 @@ interface MetricCardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon: React.ComponentType<any>;
   accent?: boolean;
-  accentColor?: string;
+  accentColor?: "amber" | "green" | "neutral";
   sub?: string;
 }
 
-function MetricCard({ label, value, icon: Icon, accent, accentColor, sub }: MetricCardProps) {
-  const bgColor = accentColor === "green" ? "oklch(0.94 0.08 155)" : "oklch(0.97 0.06 65)";
-  const borderColor = accentColor === "green" ? "oklch(0.85 0.12 155)" : "oklch(0.88 0.10 65)";
-  const iconBg = accentColor === "green" ? "oklch(0.72 0.18 155)" : "oklch(0.72 0.16 65)";
-  const textColor = accentColor === "green" ? "oklch(0.40 0.14 155)" : "oklch(0.45 0.14 55)";
+function MetricCard({ label, value, icon: Icon, accent, accentColor = "amber", sub }: MetricCardProps) {
+  const bgMap = {
+    amber: "oklch(0.97 0.06 65)",
+    green: "oklch(0.94 0.08 155)",
+    neutral: "var(--card)",
+  };
+  const borderMap = {
+    amber: "oklch(0.88 0.10 65)",
+    green: "oklch(0.85 0.12 155)",
+    neutral: "var(--border)",
+  };
+  const iconBgMap = {
+    amber: "oklch(0.72 0.16 65)",
+    green: "oklch(0.72 0.18 155)",
+    neutral: "var(--muted)",
+  };
+  const textMap = {
+    amber: "oklch(0.45 0.14 55)",
+    green: "oklch(0.40 0.14 155)",
+    neutral: "var(--foreground)",
+  };
+
+  const bg = accent ? bgMap[accentColor] : "var(--card)";
+  const border = accent ? borderMap[accentColor] : "var(--border)";
+  const iconBg = accent ? iconBgMap[accentColor] : "var(--muted)";
+  const textColor = accent ? textMap[accentColor] : "var(--foreground)";
 
   return (
     <div
       className="rounded-xl p-5 border transition-shadow hover:shadow-md"
-      style={{
-        background: accent ? bgColor : "var(--card)",
-        borderColor: accent ? borderColor : "var(--border)",
-      }}
+      style={{ background: bg, borderColor: border }}
     >
       <div className="flex items-start justify-between mb-3">
-        <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center"
-          style={{ background: accent ? iconBg : "var(--muted)" }}
-        >
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: iconBg }}>
           <span style={{ color: accent ? "white" : "var(--muted-foreground)" }} className="flex items-center justify-center">
             <Icon className="w-4 h-4" />
           </span>
         </div>
       </div>
-      <div
-        className="text-3xl font-display font-bold tabular-nums"
-        style={{ color: accent ? textColor : "var(--foreground)" }}
-      >
+      <div className="text-3xl font-display font-bold tabular-nums" style={{ color: textColor }}>
         <AnimatedNumber value={value} />
       </div>
-      <p className="text-sm font-medium mt-1" style={{ color: "var(--muted-foreground)" }}>
-        {label}
-      </p>
-      {sub && (
-        <p className="text-xs mt-0.5" style={{ color: "oklch(0.65 0.01 80)" }}>
-          {sub}
-        </p>
-      )}
+      <p className="text-sm font-medium mt-1" style={{ color: "var(--muted-foreground)" }}>{label}</p>
+      {sub && <p className="text-xs mt-0.5" style={{ color: "oklch(0.65 0.01 80)" }}>{sub}</p>}
     </div>
   );
 }
 
 export default function SummaryCards() {
   const s = skuData.summary;
-  const pctNew = Math.round((s.newSKUs / s.totalSKUs) * 100);
 
   // Fetch live sample status counts
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
@@ -119,13 +114,15 @@ export default function SummaryCards() {
       if (m.sampleStatus === "waiting") waiting++;
       else if (m.sampleStatus === "received") received++;
     }
-    // Count new SKUs that have no meta entry (default = waiting)
+    // New SKUs not yet in DB are implicitly "waiting"
     const newSkuCount = skuData.rawSkus.filter((s) => s.is_new).length;
-    const trackedNewSkus = skuMetaList.length;
-    // SKUs not yet in DB are implicitly "waiting"
-    const untrackedWaiting = Math.max(0, newSkuCount - trackedNewSkus);
-    return { waiting: waiting + untrackedWaiting, received };
+    const untrackedWaiting = Math.max(0, newSkuCount - skuMetaList.length);
+    return { waiting: waiting + untrackedWaiting, received, total: newSkuCount };
   }, [skuMetaList]);
+
+  const pctReceived = sampleCounts.total > 0
+    ? Math.round((sampleCounts.received / sampleCounts.total) * 100)
+    : 0;
 
   const chartData = skuData.categories.map((c) => ({
     name: c.category.replace("Dress ", "D.").replace("Ballet Flat", "Ballet").replace("Ankle Boot", "A.Boot").replace("Calf Boot", "C.Boot"),
@@ -137,40 +134,88 @@ export default function SummaryCards() {
 
   return (
     <div className="space-y-8">
-      {/* Metric cards grid */}
+      {/* SKU counts */}
       <div>
-        <h3 className="font-display font-semibold text-base mb-4 text-foreground">Key Metrics</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <MetricCard label="Total SKUs" value={s.totalSKUs} icon={Package} sub={`${pctNew}% new this season`} />
-          <MetricCard label="New SKUs" value={s.newSKUs} icon={Sparkles} accent sub="Highlighted in PDF" />
+        <h3 className="font-display font-semibold text-base mb-4 text-foreground">SKUs</h3>
+        <div className="grid grid-cols-3 gap-4">
+          <MetricCard label="Total SKUs" value={s.totalSKUs} icon={Package} />
+          <MetricCard label="New SKUs" value={s.newSKUs} icon={Sparkles} accent accentColor="amber" sub="New this season" />
           <MetricCard label="Existing SKUs" value={s.existingSKUs} icon={Archive} sub="Carried over" />
+        </div>
+      </div>
+
+      {/* Style counts */}
+      <div>
+        <h3 className="font-display font-semibold text-base mb-4 text-foreground">Styles</h3>
+        <div className="grid grid-cols-3 gap-4">
           <MetricCard label="Total Styles" value={s.totalStyles} icon={Layers} />
-          <MetricCard label="Brand New Styles" value={s.brandNewStyles} icon={Star} accent sub="All SKUs are new" />
-          <MetricCard label="Styles with New SKUs" value={(s as any).stylesWithNew} icon={TrendingUp} sub="Have ≥1 new SKU" />
-          <MetricCard label="Existing Styles" value={(s as any).existingStyles} icon={RefreshCw} sub="Carrying over unchanged" />
-          {/* Sample tracking tiles */}
-          <MetricCard
-            label="Waiting on Samples"
-            value={sampleCounts.waiting}
-            icon={Clock}
-            accent
-            sub="New SKUs awaiting sample"
-          />
-          <MetricCard
-            label="Samples Received"
-            value={sampleCounts.received}
-            icon={CheckCircle}
-            accent
-            accentColor="green"
-            sub="Samples confirmed"
-          />
+          <MetricCard label="New Styles" value={s.brandNewStyles} icon={Star} accent accentColor="amber" sub="All SKUs are new" />
+          <MetricCard label="Existing Styles" value={(s as any).existingStyles} icon={RefreshCw} sub="Carrying over" />
+        </div>
+      </div>
+
+      {/* Samples — combined tile */}
+      <div>
+        <h3 className="font-display font-semibold text-base mb-4 text-foreground">Samples</h3>
+        <div
+          className="rounded-xl border p-5 transition-shadow hover:shadow-md"
+          style={{ borderColor: "var(--border)", background: "var(--card)" }}
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "var(--muted)" }}>
+              <FlaskConical className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="font-semibold text-foreground text-sm">Sample Tracking</p>
+              <p className="text-xs text-muted-foreground">{sampleCounts.total} new SKUs total</p>
+            </div>
+            <div className="ml-auto text-right">
+              <p className="text-2xl font-display font-bold tabular-nums" style={{ color: "oklch(0.40 0.14 155)" }}>
+                {pctReceived}%
+              </p>
+              <p className="text-xs text-muted-foreground">received</p>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="h-3 rounded-full overflow-hidden mb-3" style={{ background: "var(--muted)" }}>
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${pctReceived}%`,
+                background: "linear-gradient(90deg, oklch(0.72 0.18 155), oklch(0.60 0.20 155))",
+              }}
+            />
+          </div>
+
+          {/* Counts row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div
+              className="rounded-lg px-4 py-3 flex items-center justify-between"
+              style={{ background: "oklch(0.94 0.08 155)", border: "1px solid oklch(0.85 0.12 155)" }}
+            >
+              <span className="text-sm font-medium" style={{ color: "oklch(0.40 0.14 155)" }}>Received</span>
+              <span className="text-xl font-display font-bold tabular-nums" style={{ color: "oklch(0.40 0.14 155)" }}>
+                <AnimatedNumber value={sampleCounts.received} />
+              </span>
+            </div>
+            <div
+              className="rounded-lg px-4 py-3 flex items-center justify-between"
+              style={{ background: "oklch(0.97 0.06 65)", border: "1px solid oklch(0.88 0.10 65)" }}
+            >
+              <span className="text-sm font-medium" style={{ color: "oklch(0.45 0.14 55)" }}>Waiting</span>
+              <span className="text-xl font-display font-bold tabular-nums" style={{ color: "oklch(0.45 0.14 55)" }}>
+                <AnimatedNumber value={sampleCounts.waiting} />
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* New vs Existing bar */}
       <div className="rounded-xl border p-5 bg-card" style={{ borderColor: "var(--border)" }}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display font-semibold text-base text-foreground">New vs Existing SKUs</h3>
+          <h3 className="font-display font-semibold text-base text-foreground">New vs Existing SKUs by Category</h3>
           <div className="flex items-center gap-4 text-xs">
             <span className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "#f59e0b" }} />
@@ -265,7 +310,7 @@ export default function SummaryCards() {
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--muted)", minWidth: 60 }}>
                         <div
-                          className="h-full rounded-full bar-fill"
+                          className="h-full rounded-full"
                           style={{
                             width: `${cat.pctNew}%`,
                             background: "linear-gradient(90deg, #f59e0b, #fbbf24)",
