@@ -450,3 +450,9 @@
 - [x] By Style tab: default to no session selected on load (remove auto-select of most recent session)
 - [x] Add a "— No session —" option at the top of the session selector dropdown so user can explicitly deselect
 - [x] Session selector only shows buy qty inputs when a session is actively selected
+
+## Phase 40: Always Show Buy Qty (Read-Only When No Session)
+
+- [x] When no session is selected, show buy qty as read-only text from the most recent session (so units are always visible)
+- [x] When a session is selected and unlocked, show editable inputs as before
+- [x] When a session is selected and locked, show read-only text as before

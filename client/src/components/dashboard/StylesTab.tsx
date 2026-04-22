@@ -139,6 +139,18 @@ export default function StylesTab() {
     { enabled: selectedSessionId !== null }
   );
 
+  // When no session is selected, fall back to the most recent session's items for read-only display
+  const mostRecentSessionId = (allSessions as Array<{ id: number; createdAt: Date }>).length > 0
+    ? [...(allSessions as Array<{ id: number; createdAt: Date }>)].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0]?.id
+    : null;
+  const { data: fallbackItems = [] } = trpc.buy.getItems.useQuery(
+    { sessionId: mostRecentSessionId ?? 0 },
+    { enabled: selectedSessionId === null && mostRecentSessionId !== null }
+  );
+
+  // The items to use for display: selected session items if a session is chosen, otherwise fallback
+  const displayItems = selectedSessionId !== null ? sessionItems : fallbackItems;
+
   // No auto-select: default is no session selected.
   // User can click into a session via the session selector in the Buy Session bar.
 
@@ -203,15 +215,15 @@ export default function StylesTab() {
     return map;
   }, [styleMetaList]);
 
-  // Buy session item lookup — tracks AU and USA qty separately
+  // Buy session item lookup — uses selected session items, or falls back to most recent session for read-only display
   const sessionItemMap = useMemo(() => {
     const map: Record<string, { auQty: number; usaQty: number }> = {};
-    for (const item of sessionItems) {
+    for (const item of displayItems) {
       const key = `${item.style}|${item.colour}|${item.leather}` as string;
       map[key] = { auQty: (item as any).auQty ?? 0, usaQty: (item as any).usaQty ?? 0 };
     }
     return map;
-  }, [sessionItems]);
+  }, [displayItems]);
 
   const selectedSession = useMemo(() => allSessions.find((s) => s.id === selectedSessionId), [allSessions, selectedSessionId]);
   const isSessionLocked = selectedSession?.isLocked ?? true;
