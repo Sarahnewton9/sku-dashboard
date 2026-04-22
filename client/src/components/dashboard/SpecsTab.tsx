@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy,
+  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy, Upload, AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -19,6 +19,7 @@ import {
   type SpecComponent, type ShoeCategory,
 } from "@shared/specTemplates";
 import { exportSpecSheet } from "@/lib/exportSpecSheet";
+import { parseSpecSheetFile, type ParsedSpecSheet } from "@/lib/importSpecSheet";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -333,8 +334,8 @@ function SpecForm({
           </thead>
           <tbody>
             {Object.entries(sections).map(([sectionKey, components]) => (
-              <>
-                <tr key={`section-${sectionKey}`} className="bg-muted/20">
+              <React.Fragment key={sectionKey}>
+                <tr className="bg-muted/20">
                   <td
                     colSpan={entry.colours.length + 1}
                     className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b"
@@ -369,7 +370,7 @@ function SpecForm({
                     })}
                   </tr>
                 ))}
-              </>
+              </React.Fragment>
             ))}
           </tbody>
         </table>
@@ -386,6 +387,10 @@ export default function SpecsTab({}: SpecsTabProps) {
   const styleList = buildStyleList();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [importParsed, setImportParsed] = useState<ParsedSpecSheet | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importSaving, setImportSaving] = useState(false);
+  const importFileRef = React.useRef<HTMLInputElement>(null);
 
   const filtered = styleList.filter((s) => {
     const q = search.toLowerCase();
@@ -474,6 +479,47 @@ export default function SpecsTab({}: SpecsTabProps) {
       }, 800);
     } else {
       upsertMetaMutation.mutate({ style: selectedStyle, ...patch });
+    }
+  }
+
+  // ── Import handler ────────────────────────────────────────────────────────
+  async function handleImportFile(file: File) {
+    setImportLoading(true);
+    setImportParsed(null);
+    try {
+      const parsed = await parseSpecSheetFile(file);
+      setImportParsed(parsed);
+      // Auto-select the style if it matches one in the list
+      const match = styleList.find(
+        (s) => s.style.toLowerCase() === parsed.styleName.toLowerCase()
+      );
+      if (match) setSelectedStyle(match.style);
+    } catch (e: unknown) {
+      toast.error(`Import failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setImportLoading(false);
+    }
+  }
+
+  async function handleSaveImport() {
+    if (!importParsed || !selectedStyle) return;
+    setImportSaving(true);
+    let count = 0;
+    try {
+      for (const [colour, compMap] of Object.entries(importParsed.colourSpecs)) {
+        for (const [component, value] of Object.entries(compMap)) {
+          if (!value.trim()) continue;
+          await upsertMutation.mutateAsync({ style: selectedStyle, colour, component, value });
+          count++;
+        }
+      }
+      await refetchSpecs();
+      toast.success(`Imported ${count} spec values for ${selectedStyle}`);
+      setImportParsed(null);
+    } catch {
+      toast.error("Failed to save imported specs");
+    } finally {
+      setImportSaving(false);
     }
   }
 
@@ -572,30 +618,94 @@ export default function SpecsTab({}: SpecsTabProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Export button */}
-            <div className="flex justify-end">
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-2"
-                onClick={() => {
-                  exportSpecSheet({
-                    style: selectedEntry.style,
-                    last: selectedEntry.last,
-                    category: selectedEntry.category,
-                    colours: selectedEntry.colours,
-                    specs,
-                    hasBuckle: specMeta?.hasBuckle ?? false,
-                    dressShoeSubType: specMeta?.dressShoeSubType ?? null,
-                    imageUrl: selectedEntry.imageUrl,
-                  });
-                  toast.success(`Exported ${selectedEntry.style} spec sheet`);
-                }}
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-                Export to Excel
-              </Button>
+            {/* Import/Export buttons */}
+            <div className="flex justify-between items-center gap-2">
+              {/* Import button */}
+              <div className="flex items-center gap-2">
+                <input
+                  ref={importFileRef}
+                  type="file"
+                  accept=".xls,.xlsx"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleImportFile(f);
+                    e.target.value = "";
+                  }}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                  disabled={importLoading}
+                  onClick={() => importFileRef.current?.click()}
+                >
+                  <Upload className="w-4 h-4" />
+                  {importLoading ? "Parsing…" : "Import from Excel"}
+                </Button>
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => {
+                    exportSpecSheet({
+                      style: selectedEntry.style,
+                      last: selectedEntry.last,
+                      category: selectedEntry.category,
+                      colours: selectedEntry.colours,
+                      specs,
+                      hasBuckle: specMeta?.hasBuckle ?? false,
+                      dressShoeSubType: specMeta?.dressShoeSubType ?? null,
+                      imageUrl: selectedEntry.imageUrl,
+                    });
+                    toast.success(`Exported ${selectedEntry.style} spec sheet`);
+                  }}
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Export to Excel
+                </Button>
+              </div>
             </div>
+            {/* Import preview banner */}
+            {importParsed && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+                      Ready to import: {importParsed.styleName}
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                      {Object.keys(importParsed.colourSpecs).length} colours detected
+                      {importParsed.unmatchedComponents.length > 0 && (
+                        <span className="ml-2 text-amber-600 dark:text-amber-400">
+                          · {importParsed.unmatchedComponents.length} unrecognised fields skipped
+                        </span>
+                      )}
+                    </p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {Object.keys(importParsed.colourSpecs).map((c) => (
+                        <span key={c} className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded px-1.5 py-0.5">{c}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <button onClick={() => setImportParsed(null)} className="text-blue-400 hover:text-blue-600 text-lg leading-none">×</button>
+                </div>
+                {importParsed.unmatchedComponents.length > 0 && (
+                  <div className="flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400">
+                    <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                    <span>Skipped: {importParsed.unmatchedComponents.join(", ")}</span>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Button size="sm" disabled={importSaving} onClick={handleSaveImport} className="gap-1.5">
+                    {importSaving ? "Saving…" : "Save to dashboard"}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setImportParsed(null)}>Cancel</Button>
+                </div>
+              </div>
+            )}
 
             <SpecForm
               entry={selectedEntry}

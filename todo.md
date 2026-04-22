@@ -254,3 +254,12 @@
 - [x] Fetch style image as base64 in the browser before export
 - [x] Embed image into Excel using ExcelJS addImage
 - [x] Image appears in the header area of the spec sheet (top-right, alongside style name/last/season)
+
+## Phase 20: Spec Import + Key Fix
+
+- [x] Fix missing key prop warning in SpecForm (add key to mapped elements)
+- [x] Add Import button to Specs tab header
+- [x] Parse uploaded factory spec sheet Excel (component in col A, colours in subsequent cols)
+- [x] Map parsed component labels to internal component keys using fuzzy matching
+- [x] Save parsed values to DB via specs.upsert (overwrite existing)
+- [x] Show import summary (X components imported for Y colours)

@@ -255,3 +255,55 @@ export const SECTION_LABELS: Record<string, string> = {
   heel: "Heel",
   packaging: "Packaging",
 };
+
+/**
+ * Flat map of component labels (uppercase) → internal key.
+ * Built from all templates + common factory aliases.
+ * Used by the spec sheet importer to match factory labels to internal keys.
+ */
+export const COMPONENT_LABEL_TO_KEY: Record<string, string> = (() => {
+  const map: Record<string, string> = {};
+  // Core components from all base arrays
+  const allComps = [
+    ...UPPER_BASE, ...SOCK_BASE, ...SOLE_BASE, ...HEEL_BASE, ...PACKAGING,
+    BUCKLE_COMPONENT, SLING_BACK_COMPONENT,
+  ];
+  for (const comp of allComps) {
+    map[comp.label.toUpperCase()] = comp.key;
+  }
+  // All template-specific components
+  for (const comps of Object.values(SPEC_TEMPLATES)) {
+    for (const comp of comps) {
+      map[comp.label.toUpperCase()] = comp.key;
+    }
+  }
+  // Factory spec sheet label aliases
+  map["UPPER 1"] = "upper_1";
+  map["GROSGRAIN TOPLINE"] = "topline";
+  map["ELASTIC BOW"] = "bow";
+  map["HEEL COUNTER"] = "heel_counter";
+  map["SOCK TREATMENT"] = "sock_treatment";
+  map["INSOLE BINDING"] = "insole_binding";
+  map["INSOLE NAME"] = "insole_name";
+  map["SOLE NAME"] = "sole_name";
+  map["SOLE COLOUR"] = "sole_colour";
+  map["SOLE EDGE"] = "sole_edge";
+  map["SOLE TREATMENT"] = "sole_treatment";
+  map["HEEL NAME"] = "heel_name";
+  map["HEEL COVER"] = "heel_cover";
+  map["TOP LIFT"] = "top_lift";
+  map["TOE PUFF"] = "toe_puff";
+  map["TOE PIECE"] = "toe_piece";
+  map["SHOE BOX"] = "shoe_box";
+  map["COMMERCIAL MARKINGS"] = "commercial_markings";
+  map["COMMERCIAL MARKINGS POSITION"] = "commercial_markings_position";
+  map["FOOT BED COVER"] = "foot_bed_cover";
+  map["PLATFORM NAME"] = "platform_name";
+  map["PLATFORM COVER"] = "platform_cover";
+  map["WEDGE NAME"] = "wedge_name";
+  map["WEDGE COVER"] = "wedge_cover";
+  map["LEG HEIGHT"] = "leg_height";
+  map["SOCK LOGO"] = "sock_logo";
+  map["SLING BACK ELASTIC"] = "sling_back_elastic";
+  return map;
+})();
