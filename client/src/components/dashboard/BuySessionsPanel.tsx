@@ -69,7 +69,7 @@ export default function BuySessionsPanel() {
   }, []);
 
   const skuMetaMap = useMemo(() => {
-    const map: Record<string, { costPrice?: number | null }> = {};
+    const map: Record<string, { costPrice?: number | null; isSize11?: boolean }> = {};
     for (const m of skuMetaList as any[]) {
       map[`${m.style}|${m.colour}|${m.leather}`] = m;
     }
@@ -95,7 +95,7 @@ export default function BuySessionsPanel() {
   }
 
   function exportSession(sessionId: number, sessionName: string) {
-    // Export only items for this session with qty > 0
+    // Export only items for this session with AU or USA qty > 0
     const items = sessionId === selectedSessionId ? sessionItems : [];
     if (items.length === 0) {
       toast.error("No items to export — select this session first to load its data, then export.");
@@ -103,44 +103,42 @@ export default function BuySessionsPanel() {
       return;
     }
 
-    const rows = items
-      .filter((item) => (item.qty ?? 0) > 0)
+    const rows = (items as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number; qty?: number }>)
+      .filter((item) => ((item.auQty ?? 0) + (item.usaQty ?? 0)) > 0)
       .map((item) => {
         const skuKey = `${item.style}|${item.colour}|${item.leather}`;
         const dbMeta = skuMetaMap[skuKey];
         const styleInfo = styleInfoMap[item.style];
-        const rrp = styleMetaMap[item.style]?.rrp;
-        const cost = dbMeta?.costPrice;
-        const qty = item.qty ?? 0;
         return {
-          Category: styleInfo?.category ?? "",
-          Style: item.style,
-          Last: styleInfo?.last ?? "",
-          Colour: item.colour,
-          Leather: item.leather,
-          Qty: qty,
-          "Cost Price": cost != null ? cost : "",
-          RRP: rrp != null ? rrp : "",
-          "Total Cost": cost != null ? +(cost * qty).toFixed(2) : "",
-          "Total RRP": rrp != null ? +(rrp * qty).toFixed(2) : "",
+          "LAST": styleInfo?.last ?? "",
+          "SIZE 11": dbMeta?.isSize11 ? "Y" : "N",
+          "STYLE": item.style,
+          "COLOUR": item.colour,
+          "LEATHER": item.leather,
+          "AU QTY": item.auQty ?? 0,
+          "US QTY": item.usaQty ?? 0,
         };
       });
 
     if (rows.length === 0) {
-      toast.error("No SKUs with qty > 0 in this session.");
+      toast.error("No SKUs with AU or USA quantities in this session.");
       return;
     }
 
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, "0");
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
     const ws = XLSX.utils.json_to_sheet(rows);
+    ws["!cols"] = [{ wch: 18 }, { wch: 8 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 10 }, { wch: 10 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Buy Sheet");
-    const fileName = `Buy_Sheet_${sessionName.replace(/[^a-zA-Z0-9\-_]/g, "_")}.xlsx`;
+    const fileName = `SUMMER 26 BUY ${dd}.${mm}.xlsx`;
     XLSX.writeFile(wb, fileName);
     toast.success(`Exported ${rows.length} SKUs`);
   }
 
   const selectedSession = allSessions.find((s) => s.id === selectedSessionId);
-  const selectedTotal = sessionItems.reduce((sum, item) => sum + (item.qty || 0), 0);
+  const selectedTotal = (sessionItems as Array<{ auQty?: number; usaQty?: number; qty?: number }>).reduce((sum, item) => sum + (item.auQty ?? 0) + (item.usaQty ?? 0), 0);
 
   return (
     <div className="space-y-6">
@@ -305,7 +303,7 @@ export default function BuySessionsPanel() {
                   <div className="mt-4 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        SKUs in this session ({sessionItems.filter((i) => i.qty > 0).length} with qty)
+                        SKUs in this session ({(sessionItems as Array<{ auQty?: number; usaQty?: number }>).filter((i) => ((i.auQty ?? 0) + (i.usaQty ?? 0)) > 0).length} with qty)
                       </span>
                       <span className="text-sm font-bold" style={{ color: "oklch(0.50 0.14 55)" }}>
                         {selectedTotal} total pairs
@@ -318,32 +316,23 @@ export default function BuySessionsPanel() {
                             <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wide">Style</th>
                             <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wide">Colour</th>
                             <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wide">Leather</th>
-                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">Qty</th>
-                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">Cost</th>
-                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">RRP</th>
+                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">AU</th>
+                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">USA</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {sessionItems
-                            .filter((i) => i.qty > 0)
+                          {(sessionItems as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number }>)
+                            .filter((i) => ((i.auQty ?? 0) + (i.usaQty ?? 0)) > 0)
                             .sort((a, b) => a.style.localeCompare(b.style))
                             .map((item) => {
-                              const skuKey = `${item.style}|${item.colour}|${item.leather}`;
-                              const cost = skuMetaMap[skuKey]?.costPrice;
-                              const rrp = styleMetaMap[item.style]?.rrp;
                               return (
                                 <tr key={`${item.style}-${item.colour}-${item.leather}`}
                                   className="border-t" style={{ borderColor: "var(--border)" }}>
                                   <td className="px-3 py-2 font-medium text-foreground">{item.style}</td>
                                   <td className="px-3 py-2 text-muted-foreground">{item.colour}</td>
                                   <td className="px-3 py-2 text-muted-foreground">{item.leather || "—"}</td>
-                                  <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{item.qty}</td>
-                                  <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
-                                    {cost != null ? `$${cost.toFixed(2)}` : "—"}
-                                  </td>
-                                  <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
-                                    {rrp != null ? `$${rrp.toFixed(2)}` : "—"}
-                                  </td>
+                                  <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{item.auQty ?? 0}</td>
+                                  <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.15 240)" }}>{item.usaQty ?? 0}</td>
                                 </tr>
                               );
                             })}
@@ -351,24 +340,11 @@ export default function BuySessionsPanel() {
                         <tfoot>
                           <tr className="border-t" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                             <td colSpan={3} className="px-3 py-2 font-semibold text-foreground text-xs">Total</td>
-                            <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{selectedTotal}</td>
-                            <td className="px-3 py-2 text-right tabular-nums font-semibold text-foreground text-xs">
-                              {(() => {
-                                const total = sessionItems.filter((i) => i.qty > 0).reduce((sum, item) => {
-                                  const cost = skuMetaMap[`${item.style}|${item.colour}|${item.leather}`]?.costPrice;
-                                  return sum + (cost != null ? cost * item.qty : 0);
-                                }, 0);
-                                return total > 0 ? `$${total.toFixed(2)}` : "—";
-                              })()}
+                            <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>
+                              {(sessionItems as Array<{ auQty?: number }>).reduce((s, i) => s + (i.auQty ?? 0), 0)}
                             </td>
-                            <td className="px-3 py-2 text-right tabular-nums font-semibold text-foreground text-xs">
-                              {(() => {
-                                const total = sessionItems.filter((i) => i.qty > 0).reduce((sum, item) => {
-                                  const rrp = styleMetaMap[item.style]?.rrp;
-                                  return sum + (rrp != null ? rrp * item.qty : 0);
-                                }, 0);
-                                return total > 0 ? `$${total.toFixed(2)}` : "—";
-                              })()}
+                            <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.15 240)" }}>
+                              {(sessionItems as Array<{ usaQty?: number }>).reduce((s, i) => s + (i.usaQty ?? 0), 0)}
                             </td>
                           </tr>
                         </tfoot>

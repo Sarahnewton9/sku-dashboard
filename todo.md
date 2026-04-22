@@ -398,3 +398,10 @@
 ## Phase 30: Buy Export Size 11 Column
 
 - [x] Buy export: add Size 11 (Y/N) column after Leather
+
+## Phase 31: Buy Export Exact Format
+
+- [x] Buy session export: filename = "SUMMER 26 BUY DD.MM" (season + today's date)
+- [x] Buy session export: columns = LAST, SIZE 11 (Y/N), STYLE, COLOUR, LEATHER, AU QTY, US QTY
+- [x] Buy session export: sheet name = "Buy Sheet"
+- [ ] ExportPanel buy export: same filename and column format (deferred — main export via Buy Sessions panel)
