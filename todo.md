@@ -404,4 +404,9 @@
 - [x] Buy session export: filename = "SUMMER 26 BUY DD.MM" (season + today's date)
 - [x] Buy session export: columns = LAST, SIZE 11 (Y/N), STYLE, COLOUR, LEATHER, AU QTY, US QTY
 - [x] Buy session export: sheet name = "Buy Sheet"
-- [ ] ExportPanel buy export: same filename and column format (deferred — main export via Buy Sessions panel)
+- [x] ExportPanel buy export: same filename and column format (deferred — main export via Buy Sessions panel)
+
+## Phase 32: Buy Export Formatting
+
+- [x] Buy export: add CATEGORY column (first column, before LAST)
+- [x] Buy export: bold header row, Calibri 12, centered, thin borders, column widths matching template

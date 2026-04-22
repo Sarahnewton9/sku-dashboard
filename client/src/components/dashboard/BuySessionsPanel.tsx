@@ -110,6 +110,7 @@ export default function BuySessionsPanel() {
         const dbMeta = skuMetaMap[skuKey];
         const styleInfo = styleInfoMap[item.style];
         return {
+          "CATEGORY": styleInfo?.category ?? "",
           "LAST": styleInfo?.last ?? "",
           "SIZE 11": dbMeta?.isSize11 ? "Y" : "N",
           "STYLE": item.style,
@@ -128,12 +129,59 @@ export default function BuySessionsPanel() {
     const now = new Date();
     const dd = String(now.getDate()).padStart(2, "0");
     const mm = String(now.getMonth() + 1).padStart(2, "0");
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [{ wch: 18 }, { wch: 8 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 10 }, { wch: 10 }];
+
+    // Build worksheet manually for formatting control
+    const headers = ["CATEGORY", "LAST", "SIZE 11", "STYLE", "COLOUR", "LEATHER", "AU QTY", "US QTY"];
+    const wsData: (string | number)[][] = [headers, ...rows.map(r => [
+      r["CATEGORY"], r["LAST"], r["SIZE 11"], r["STYLE"], r["COLOUR"], r["LEATHER"], r["AU QTY"], r["US QTY"]
+    ])];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Column widths matching template (A=14.25, B=14.25, C=9.875, D=11.125, E=15.125, F=12.125, G=10, H=10)
+    ws["!cols"] = [
+      { wch: 16 }, // CATEGORY
+      { wch: 14.25 }, // LAST
+      { wch: 9.875 }, // SIZE 11
+      { wch: 11.125 }, // STYLE
+      { wch: 11.125 }, // COLOUR
+      { wch: 15.125 }, // LEATHER
+      { wch: 12.125 }, // AU QTY
+      { wch: 12.125 }, // US QTY
+    ];
+
+    // Apply Calibri 12 bold centered to header row, Calibri 12 to data rows
+    const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1");
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const headerAddr = XLSX.utils.encode_cell({ r: 0, c: C });
+      if (!ws[headerAddr]) ws[headerAddr] = { v: headers[C], t: "s" };
+      ws[headerAddr].s = {
+        font: { name: "Calibri", sz: 12, bold: true },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin" }, bottom: { style: "thin" },
+          left: { style: "thin" }, right: { style: "thin" },
+        },
+      };
+    }
+    for (let R = 1; R <= rows.length; R++) {
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const addr = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!ws[addr]) ws[addr] = { v: "", t: "s" };
+        ws[addr].s = {
+          font: { name: "Calibri", sz: 12, bold: false },
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            top: { style: "thin" }, bottom: { style: "thin" },
+            left: { style: "thin" }, right: { style: "thin" },
+          },
+        };
+      }
+    }
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Buy Sheet");
     const fileName = `SUMMER 26 BUY ${dd}.${mm}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+    XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
     toast.success(`Exported ${rows.length} SKUs`);
   }
 
