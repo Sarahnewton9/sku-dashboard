@@ -252,12 +252,12 @@ export async function getAllBuySessions() {
 
 export async function getActiveBuySession() {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db.select().from(buySessions)
     .where(eq(buySessions.isLocked, false))
     .orderBy(buySessions.createdAt)
     .limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function createBuySession(name: string) {

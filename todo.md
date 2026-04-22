@@ -355,16 +355,16 @@
 - [x] Add Cancelled Styles section at bottom of By Style tab (collapsed, with Restore button per style)
 - [x] Filter cancelled styles from Fit Approved section in By Style tab
 
-## Phase 28: Buying Improvements
+## Phase 28: Buying Improvements (superseded — see Phase 28 v2 below)
 
-- [ ] Server: add buy.unlockSession procedure (sets isLocked = false)
-- [ ] BuySessionBar / BuySessionsPanel: add Unlock button on locked sessions with confirmation
-- [ ] Server: add buy.addCustomSku procedure — saves a custom colour/leather combo for a style into a new customSkus table
-- [ ] DB: add customSkus table (id, style, colour, leather, createdAt)
-- [ ] DB push for new table
-- [ ] StylesTab: in expanded style rows (when session is unlocked), show "Add Colour" button at the bottom of the SKU list
-- [ ] "Add Colour" opens an inline form: colour text input + leather text input + confirm
-- [ ] Custom SKUs appear in the expanded row with a buy qty input (treated as new SKUs)
+- [x] Server: add buy.unlockSession procedure (sets isLocked = false)
+- [x] BuySessionBar / BuySessionsPanel: add Unlock button on locked sessions with confirmation
+- [x] Server: add buy.addCustomSku procedure — saves a custom colour/leather combo for a style into a new customSkus table
+- [x] DB: add customSkus table (id, style, colour, leather, createdAt)
+- [x] DB push for new table
+- [x] StylesTab: in expanded style rows (when session is unlocked), show "Add Colour" button at the bottom of the SKU list
+- [x] "Add Colour" opens an inline form: colour text input + leather text input + confirm
+- [x] Custom SKUs appear in the expanded row with a buy qty input (treated as new SKUs)
 - [ ] Custom SKUs also appear in the buy sheet export
 
 ## Phase 28: Buying Improvements — Unlock Session + Add Custom SKU
