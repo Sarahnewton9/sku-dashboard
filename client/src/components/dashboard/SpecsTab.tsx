@@ -10,8 +10,12 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy, Upload, AlertCircle,
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
+import {
+  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -46,6 +50,20 @@ function buildColourLeatherMap(): Record<string, Record<string, string>> {
   return map;
 }
 const COLOUR_LEATHER_MAP = buildColourLeatherMap();
+
+// ─── All colour+leather combos from rawSkus (for upper_1 dropdown) ───────────
+function buildAllColourLeatherOptions(): string[] {
+  const rawSkus = (skuData as any).rawSkus ?? [];
+  const seen = new Set<string>();
+  for (const sku of rawSkus) {
+    const colour = sku.colour as string;
+    const leather = sku.leather as string;
+    if (colour && leather) seen.add(`${colour} ${leather}`);
+    else if (colour) seen.add(colour);
+  }
+  return Array.from(seen).sort((a, b) => a.localeCompare(b));
+}
+const ALL_COLOUR_LEATHER_OPTIONS = buildAllColourLeatherOptions();
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -98,67 +116,101 @@ interface DropdownCellProps {
   savedOptions: string[];
   onSave: (val: string) => void;
   onAddOption: (val: string) => void;
+  /** If provided, overrides the default option list (used for upper_1) */
+  overrideOptions?: string[];
 }
 
-function DropdownCell({ component, value, savedOptions, onSave, onAddOption }: DropdownCellProps) {
-  const defaults = DEFAULT_DROPDOWN_OPTIONS[component.key] ?? [];
-  // Merge defaults + saved options, deduplicated
-  const allOptions = Array.from(new Set([...defaults, ...savedOptions])).filter(Boolean);
+function DropdownCell({ component, value, savedOptions, onSave, onAddOption, overrideOptions }: DropdownCellProps) {
+  const defaults = overrideOptions ?? DEFAULT_DROPDOWN_OPTIONS[component.key] ?? [];
+  // Merge defaults + saved options, deduplicated, sorted alphabetically
+  const allOptions = Array.from(new Set([...defaults, ...savedOptions]))
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
 
-  const [inputMode, setInputMode] = useState(false);
-  const [inputVal, setInputVal] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
-  function handleSelectChange(val: string) {
-    if (val === "__add_new__") {
-      setInputMode(true);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    } else {
-      onSave(val);
-    }
+  // Filtered options based on search query
+  const filtered = query
+    ? allOptions.filter((o) => o.toLowerCase().includes(query.toLowerCase()))
+    : allOptions;
+
+  function handleSelect(val: string) {
+    onSave(val);
+    setOpen(false);
+    setQuery("");
   }
 
-  function handleInputSubmit() {
-    const trimmed = inputVal.trim();
-    if (!trimmed) { setInputMode(false); return; }
+  function handleAddNew() {
+    const trimmed = query.trim();
+    if (!trimmed) return;
     onAddOption(trimmed);
     onSave(trimmed);
-    setInputVal("");
-    setInputMode(false);
-  }
-
-  if (inputMode) {
-    return (
-      <div className="flex gap-1">
-        <Input
-          ref={inputRef}
-          value={inputVal}
-          onChange={(e) => setInputVal(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleInputSubmit();
-            if (e.key === "Escape") { setInputMode(false); setInputVal(""); }
-          }}
-          placeholder="Type new value…"
-          className="h-8 text-xs"
-        />
-        <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={handleInputSubmit}>Add</Button>
-        <Button size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={() => { setInputMode(false); setInputVal(""); }}>✕</Button>
-      </div>
-    );
+    setOpen(false);
+    setQuery("");
   }
 
   return (
-    <Select value={value || ""} onValueChange={handleSelectChange}>
-      <SelectTrigger className="h-8 text-xs min-w-[140px]">
-        <SelectValue placeholder="— select —" />
-      </SelectTrigger>
-      <SelectContent>
-        {allOptions.map((opt) => (
-          <SelectItem key={opt} value={opt} className="text-xs">{opt}</SelectItem>
-        ))}
-        <SelectItem value="__add_new__" className="text-xs text-blue-600 font-medium">+ Add new option…</SelectItem>
-      </SelectContent>
-    </Select>
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setQuery(""); }}>
+      <PopoverTrigger asChild>
+        <button
+          className="h-8 px-2 flex items-center justify-between gap-1 text-xs rounded border border-input bg-background hover:bg-accent hover:text-accent-foreground min-w-[160px] w-full text-left"
+        >
+          <span className={value ? "text-foreground" : "text-muted-foreground"}>
+            {value || "— select —"}
+          </span>
+          <ChevronsUpDown className="w-3 h-3 text-muted-foreground shrink-0" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search or type new…"
+            value={query}
+            onValueChange={setQuery}
+            className="text-xs h-8"
+          />
+          <CommandList className="max-h-52">
+            {filtered.length === 0 && query.trim() === "" && (
+              <CommandEmpty className="text-xs py-3">No options.</CommandEmpty>
+            )}
+            {filtered.length === 0 && query.trim() !== "" && (
+              <div className="px-2 py-1.5">
+                <button
+                  className="w-full text-left text-xs text-blue-600 font-medium px-2 py-1.5 rounded hover:bg-accent"
+                  onMouseDown={(e) => { e.preventDefault(); handleAddNew(); }}
+                >
+                  + Add "{query.trim()}" as new option
+                </button>
+              </div>
+            )}
+            <CommandGroup>
+              {filtered.map((opt) => (
+                <CommandItem
+                  key={opt}
+                  value={opt}
+                  onSelect={() => handleSelect(opt)}
+                  className="text-xs"
+                >
+                  <Check className={`w-3 h-3 mr-1 shrink-0 ${value === opt ? "opacity-100" : "opacity-0"}`} />
+                  {opt}
+                </CommandItem>
+              ))}
+              {/* Show "Add new" at bottom when query has no exact match */}
+              {query.trim() !== "" && !filtered.some((o) => o.toLowerCase() === query.trim().toLowerCase()) && (
+                <CommandItem
+                  value={`__add__${query}`}
+                  onSelect={handleAddNew}
+                  className="text-xs text-blue-600 font-medium"
+                >
+                  + Add "{query.trim()}" as new option
+                </CommandItem>
+              )}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -327,6 +379,24 @@ function SpecForm({
     toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s)`);
   }
 
+  // Auto-fill upper_1 with the colour+leather label for each colour that has no saved value
+  const autoFillDoneRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    entry.colours.forEach((colour, colIdx) => {
+      const key = `${entry.style}:${colour}`;
+      if (autoFillDoneRef.current.has(key)) return;
+      const existing = specs[colour]?.["upper_1"];
+      if (!existing) {
+        const label = entry.colourLabels[colIdx] ?? colour;
+        autoFillDoneRef.current.add(key);
+        onUpsert(colour, "upper_1", label);
+      } else {
+        autoFillDoneRef.current.add(key);
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entry.style, entry.colours.join(",")]);
+
   // Count filled cells
   const totalCells = template.length * entry.colours.length;
   const filledCells = entry.colours.reduce((sum, colour) => {
@@ -440,18 +510,26 @@ function SpecForm({
                 {components.map((comp) => (
                   <tr key={comp.key} className="border-b hover:bg-muted/10">
                     <td className="px-3 py-1.5 font-medium text-muted-foreground align-middle">{comp.label}</td>
-                    {entry.colours.map((colour) => {
+                    {entry.colours.map((colour, colIdx) => {
                       const val = specs[colour]?.[comp.key] ?? "";
                       const savedOpts = allDropdownOptions[comp.key] ?? [];
+
+                      // Upper 1: use all real colour+leather combos as options;
+                      // show the colour+leather label as the effective value when not yet saved
+                      const isUpper1 = comp.key === "upper_1";
+                      const upper1AutoValue = entry.colourLabels[colIdx] ?? colour;
+                      const upper1EffectiveVal = isUpper1 && !val ? upper1AutoValue : val;
+
                       return (
                         <td key={colour} className="px-2 py-1 align-middle">
                           {comp.type === "dropdown" ? (
                             <DropdownCell
                               component={comp}
-                              value={val}
+                              value={upper1EffectiveVal}
                               savedOptions={savedOpts}
                               onSave={(v) => onUpsert(colour, comp.key, v)}
                               onAddOption={(v) => onAddDropdownOption(comp.key, v)}
+                              overrideOptions={isUpper1 ? ALL_COLOUR_LEATHER_OPTIONS : undefined}
                             />
                           ) : (
                             <TextCell

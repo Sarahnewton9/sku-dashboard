@@ -319,3 +319,10 @@
 - [x] Fix: add uniqueIndex on (style, colour, component) to style_specs table so onDuplicateKeyUpdate works correctly and prevents duplicate rows
 - [x] DB: run pnpm db:push to apply unique index migration
 - [x] DB: clean up existing bad data (CAPPA rows with full-label colour keys migrated to raw colour keys, duplicates removed)
+
+## Phase 24: Spec Dropdown UX Improvements
+
+- [x] Spec dropdowns: replace plain Select with searchable combobox (Popover + Command) — type to filter options
+- [x] Spec dropdowns: sort all options alphabetically (defaults + saved options merged and sorted)
+- [x] Upper 1 field: auto-fill with the colour+leather label for that column (e.g. "DOVE NAPPA") — pre-filled on first load, still editable
+- [x] Upper 1 field: build its options list from all real colour+leather combos in skuData.rawSkus (not the hard-coded defaults)
