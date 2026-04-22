@@ -85,6 +85,20 @@
       "when": 1776835629073,
       "tag": "0011_quiet_epoch",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1776838530176,
+      "tag": "0012_misty_magdalene",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1776839491381,
+      "tag": "0013_orange_apocalypse",
+      "breakpoints": true
     }
   ]
 }

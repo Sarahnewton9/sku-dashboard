@@ -23,6 +23,9 @@ import {
   cancelStyle, restoreStyle, listCancelledStyles,
   addCustomSku, getAllCustomSkus, deleteCustomSku,
   unlockBuySession,
+  cancelSku, restoreSku, listCancelledSkus,
+  getAllStyleSubCategories, upsertStyleSubCategory,
+  getAllStyleTrendFlags,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -194,10 +197,11 @@ export const appRouter = router({
         style: z.string(),
         colour: z.string(),
         leather: z.string().default(""),
-        qty: z.number().int().min(0),
+        auQty: z.number().int().min(0).default(0),
+        usaQty: z.number().int().min(0).default(0),
       }))
       .mutation(async ({ input }) => {
-        await upsertBuySessionItem(input.sessionId, input.style, input.colour, input.leather, input.qty);
+        await upsertBuySessionItem(input.sessionId, input.style, input.colour, input.leather, input.auQty, input.usaQty);
         return { success: true };
       }),
 
@@ -511,6 +515,39 @@ export const appRouter = router({
         await deleteCustomSku(input.id);
         return { success: true };
       }),
+  }),
+
+  cancelledSku: router({
+    list: publicProcedure.query(async () => listCancelledSkus()),
+
+    cancel: publicProcedure
+      .input(z.object({ style: z.string(), colour: z.string(), leather: z.string() }))
+      .mutation(async ({ input }) => {
+        await cancelSku(input.style, input.colour, input.leather);
+        return { success: true };
+      }),
+
+    restore: publicProcedure
+      .input(z.object({ style: z.string(), colour: z.string(), leather: z.string() }))
+      .mutation(async ({ input }) => {
+        await restoreSku(input.style, input.colour, input.leather);
+        return { success: true };
+      }),
+  }),
+
+  styleSubCategory: router({
+    getAll: publicProcedure.query(async () => getAllStyleSubCategories()),
+
+    upsert: publicProcedure
+      .input(z.object({ style: z.string(), subCategory: z.string() }))
+      .mutation(async ({ input }) => {
+        await upsertStyleSubCategory(input.style, input.subCategory);
+        return { success: true };
+      }),
+  }),
+
+  trendFlag: router({
+    getAll: publicProcedure.query(async () => getAllStyleTrendFlags()),
   }),
 });
 

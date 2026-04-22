@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -287,21 +287,28 @@ export async function getBuySessionItems(sessionId: number) {
     .where(eq(buySessionItems.sessionId, sessionId));
 }
 
-export async function getSessionTotals(): Promise<Record<number, number>> {
+export async function getSessionTotals(): Promise<Record<number, { au: number; usa: number; total: number }>> {
   const db = await getDb();
   if (!db) return {};
   const rows = await db.select().from(buySessionItems);
-  const totals: Record<number, number> = {};
+  const totals: Record<number, { au: number; usa: number; total: number }> = {};
   for (const row of rows) {
-    totals[row.sessionId] = (totals[row.sessionId] ?? 0) + (row.qty ?? 0);
+    const au = row.auQty ?? 0;
+    const usa = row.usaQty ?? 0;
+    if (!totals[row.sessionId]) totals[row.sessionId] = { au: 0, usa: 0, total: 0 };
+    totals[row.sessionId].au += au;
+    totals[row.sessionId].usa += usa;
+    totals[row.sessionId].total += au + usa;
   }
   return totals;
 }
 
-export async function upsertBuySessionItem(sessionId: number, style: string, colour: string, leather: string, qty: number) {
+export async function upsertBuySessionItem(
+  sessionId: number, style: string, colour: string, leather: string,
+  auQty: number, usaQty: number
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  // Check if item exists
   const existing = await db.select().from(buySessionItems)
     .where(and(
       eq(buySessionItems.sessionId, sessionId),
@@ -310,12 +317,60 @@ export async function upsertBuySessionItem(sessionId: number, style: string, col
       eq(buySessionItems.leather, leather)
     ))
     .limit(1);
+  const qty = auQty + usaQty; // keep legacy qty in sync
   if (existing.length > 0) {
     await db.update(buySessionItems)
-      .set({ qty })
+      .set({ auQty, usaQty, qty })
       .where(eq(buySessionItems.id, existing[0].id));
   } else {
-    await db.insert(buySessionItems).values({ sessionId, style, colour, leather, qty });
+    await db.insert(buySessionItems).values({ sessionId, style, colour, leather, auQty, usaQty, qty });
+  }
+}
+
+// ─── Cancelled SKUs ─────────────────────────────────────────────────────────────────────────────
+
+export async function cancelSku(style: string, colour: string, leather: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(cancelledSkus).values({ style, colour, leather })
+    .onDuplicateKeyUpdate({ set: { cancelledAt: new Date() } });
+}
+
+export async function restoreSku(style: string, colour: string, leather: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(cancelledSkus).where(
+    and(
+      eq(cancelledSkus.style, style),
+      eq(cancelledSkus.colour, colour),
+      eq(cancelledSkus.leather, leather)
+    )
+  );
+}
+
+export async function listCancelledSkus() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(cancelledSkus);
+}
+
+// ─── Style Sub-Categories ─────────────────────────────────────────────────────────────────────────
+
+export async function getAllStyleSubCategories() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(styleSubCategories);
+}
+
+export async function upsertStyleSubCategory(style: string, subCategory: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select().from(styleSubCategories)
+    .where(eq(styleSubCategories.style, style)).limit(1);
+  if (existing.length > 0) {
+    await db.update(styleSubCategories).set({ subCategory }).where(eq(styleSubCategories.style, style));
+  } else {
+    await db.insert(styleSubCategories).values({ style, subCategory });
   }
 }
 
@@ -626,4 +681,11 @@ export async function unlockBuySession(id: number): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(buySessions).set({ isLocked: false }).where(eq(buySessions.id, id));
+}
+
+// ─── Style Trend Flags ────────────────────────────────────────────────────────
+export async function getAllStyleTrendFlags() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(styleTrendFlags);
 }

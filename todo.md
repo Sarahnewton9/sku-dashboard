@@ -379,3 +379,22 @@
 - [x] "Add colour" inline form: colour + leather inputs, confirm adds to DB and buy session
 - [x] Custom SKUs marked as new automatically
 - [x] BuySessionBar: Unlock button on locked sessions with confirmation; Lock button hidden when already locked
+
+## Phase 29: Buying & Category Improvements
+
+- [x] AU/USA qty split: add auQty + usaQty columns to buy_session_items table (replace single qty)
+- [x] AU/USA qty split: update server procedures (upsertSessionItem, getSessionItems) for dual qty
+- [x] AU/USA qty split: update StylesTab buy qty UI to show two inputs (AU / USA) side by side
+- [x] Multi-session buy analysis: allow selecting multiple sessions in BuyAnalysisTab (checkbox multi-select)
+- [x] SKU-level cancel: add cancelled_skus DB table (style, colour, leather, cancelledAt)
+- [x] SKU-level cancel: add server procedures (cancelSku, restoreSku, listCancelledSkus)
+- [x] SKU-level cancel: add Cancel button per SKU row in StylesTab expanded rows
+- [x] SKU-level cancel: add Cancelled SKUs section (restorable) at bottom of StylesTab
+- [x] Buy export: update to columns: Category, Style, Colour, Leather, AU Units, USA Units
+- [x] Ballet/Loafer: change from category to trend flag (new trendFlag field on style meta)
+- [x] Ballet/Loafer: update By Style view to show CASUAL FLAT as category + trend flag badge
+- [x] Wedge/Boot sub-categories: add sub-category override table in DB + seed from user Excel
+- [x] Wedge/Boot sub-categories: apply in By Style view via useStyleCategories hook
+- [x] useStyleCategories hook: fetches sub-categories + trend flags, provides getCategory/getTrendFlag
+- [x] BuyAnalysisTab: AU/USA split in summary cards + bar charts (amber=AU, blue=USA)
+- [x] BuyAnalysisTab: runtime category overrides via useStyleCategories hook

@@ -253,9 +253,9 @@ export default function BuySessionsPanel() {
                             · Locked {new Date(session.lockedAt).toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" })}
                           </span>
                         )}
-                        {((sessionTotals as Record<number, number>)[session.id] ?? 0) > 0 && (
+                        {((sessionTotals as Record<number, { au: number; usa: number; total: number }>)[session.id]?.total ?? 0) > 0 && (
                           <span className="text-xs font-semibold" style={{ color: "oklch(0.50 0.14 55)" }}>
-                            · {(sessionTotals as Record<number, number>)[session.id]} pairs
+                            · {(sessionTotals as Record<number, { au: number; usa: number; total: number }>)[session.id].total} pairs
                           </span>
                         )}
                       </div>

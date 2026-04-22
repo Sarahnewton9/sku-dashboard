@@ -11,6 +11,7 @@ import { skuData } from "@/lib/skuData";
 import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
+import { useStyleCategories } from "@/hooks/useStyleCategories";
 import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock } from "lucide-react";
 import * as XLSX from "xlsx";
 import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
@@ -21,7 +22,19 @@ import { toast } from "sonner";
 type SortKey = "style" | "category" | "last" | "totalSKUs" | "newSKUs" | "existingSKUs";
 type SortDir = "asc" | "desc";
 
-const CATEGORIES = ["All", "Dress Shoe", "Dress Sandal", "Ballet Flat", "Loafer", "Wedge", "Sandal", "Ankle Boot", "Calf Boot"];
+const CATEGORIES = [
+  "All",
+  "Dress Shoe",
+  "Dress Sandal",
+  "Casual Flat",
+  "Casual Wedge",
+  "Dress Wedge",
+  "Sandal",
+  "Dress Ankle Boot",
+  "Dress Calf Boot",
+  "Casual Ankle Boot",
+  "Casual Calf Boot",
+];
 const STATUS_FILTERS = ["All", "Has New SKUs", "All New", "No New SKUs"];
 
 export default function StylesTab() {
@@ -56,6 +69,28 @@ export default function StylesTab() {
     onError: (err) => toast.error(`Failed to restore style: ${err.message}`),
   });
 
+  // Cancelled SKUs
+  const { data: cancelledSkuList = [], refetch: refetchCancelledSkus } = trpc.cancelledSku.list.useQuery();
+  const [cancelledSkuSectionOpen, setCancelledSkuSectionOpen] = useState(false);
+
+  const cancelledSkuSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const item of cancelledSkuList as Array<{ style: string; colour: string; leather: string }>) {
+      s.add(`${item.style}|${item.colour}|${item.leather}`);
+    }
+    return s;
+  }, [cancelledSkuList]);
+
+  const cancelSkuMutation = trpc.cancelledSku.cancel.useMutation({
+    onSuccess: () => { refetchCancelledSkus(); },
+    onError: (err) => toast.error(`Failed to cancel SKU: ${err.message}`),
+  });
+
+  const restoreSkuMutation = trpc.cancelledSku.restore.useMutation({
+    onSuccess: () => { refetchCancelledSkus(); },
+    onError: (err) => toast.error(`Failed to restore SKU: ${err.message}`),
+  });
+
   // Fetch all SKU meta from DB
   const { data: skuMetaList = [], refetch: refetchSkuMeta } = trpc.sku.getAll.useQuery();
   const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery();
@@ -72,6 +107,9 @@ export default function StylesTab() {
   // Custom SKUs (added during buy)
   const { mergedRawSkus, mergedStyles, customSkus, refetch: refetchCustomSkus } = useCustomSkus();
 
+  // Category overrides (sub-categories + trend flags from DB)
+  const { getCategory, getTrendFlag } = useStyleCategories();
+
   // Add colour inline form state: key = style name, value = { colour, leather } draft
   const [addColourDraft, setAddColourDraft] = useState<Record<string, { colour: string; leather: string }>>({});
 
@@ -80,7 +118,7 @@ export default function StylesTab() {
       refetchCustomSkus();
       // Also add to active buy session if one is selected and unlocked
       if (selectedSessionId && !isSessionLocked) {
-        upsertItemMutation.mutate({ sessionId: selectedSessionId, style: vars.style, colour: vars.colour, leather: vars.leather, qty: 0 });
+        upsertItemMutation.mutate({ sessionId: selectedSessionId, style: vars.style, colour: vars.colour, leather: vars.leather, auQty: 0, usaQty: 0 });
       }
       setAddColourDraft((prev) => { const n = { ...prev }; delete n[vars.style]; return n; });
       toast.success(`${vars.colour} ${vars.leather} added to ${vars.style}`);
@@ -138,12 +176,12 @@ export default function StylesTab() {
     return map;
   }, [styleMetaList]);
 
-  // Buy session item lookup
+  // Buy session item lookup — tracks AU and USA qty separately
   const sessionItemMap = useMemo(() => {
-    const map: Record<string, number> = {};
+    const map: Record<string, { auQty: number; usaQty: number }> = {};
     for (const item of sessionItems) {
       const key = `${item.style}|${item.colour}|${item.leather}` as string;
-      map[key] = item.qty;
+      map[key] = { auQty: (item as any).auQty ?? 0, usaQty: (item as any).usaQty ?? 0 };
     }
     return map;
   }, [sessionItems]);
@@ -175,22 +213,26 @@ export default function StylesTab() {
     refetchActive();
   }
 
-  function handleQtyChange(style: string, colour: string, leather: string, val: string) {
-    const key = `${style}|${colour}|${leather}`;
+  function handleQtyChange(style: string, colour: string, leather: string, field: 'au' | 'usa', val: string) {
+    const key = `${style}|${colour}|${leather}|${field}`;
     const qty = parseInt(val, 10);
     if (!isNaN(qty) && qty >= 0) {
       pendingQty.current[key] = qty;
     }
   }
 
-  function handleQtyBlur(style: string, colour: string, leather: string) {
+  function handleQtyBlur(style: string, colour: string, leather: string, field: 'au' | 'usa') {
     if (!selectedSessionId || isSessionLocked) return;
-    const key = `${style}|${colour}|${leather}`;
-    const qty = pendingQty.current[key];
-    if (qty === undefined) return;
+    const baseKey = `${style}|${colour}|${leather}`;
+    const fieldKey = `${baseKey}|${field}`;
+    const newVal = pendingQty.current[fieldKey];
+    if (newVal === undefined) return;
+    const current = sessionItemMap[baseKey] ?? { auQty: 0, usaQty: 0 };
+    const auQty = field === 'au' ? newVal : current.auQty;
+    const usaQty = field === 'usa' ? newVal : current.usaQty;
     upsertItemMutation.mutate(
-      { sessionId: selectedSessionId, style, colour, leather, qty },
-      { onSuccess: () => { refetchItems(); delete pendingQty.current[key]; } }
+      { sessionId: selectedSessionId, style, colour, leather, auQty, usaQty },
+      { onSuccess: () => { refetchItems(); delete pendingQty.current[fieldKey]; } }
     );
   }
 
@@ -247,9 +289,20 @@ export default function StylesTab() {
     XLSX.writeFile(wb, "SS26_SKU_Export.xlsx");
   }
 
+  // Apply runtime category overrides (sub-categories + trend flags)
+  const stylesWithCategories = useMemo(() => {
+    return mergedStyles
+      .filter((s) => !cancelledSet.has(s.style))
+      .map((s) => ({
+        ...s,
+        category: getCategory(s.style, s.category),
+        trendFlag: getTrendFlag(s.style),
+      }));
+  }, [mergedStyles, cancelledSet, getCategory, getTrendFlag]);
+
   // Filter styles (uses mergedStyles which includes custom SKUs)
   const filtered = useMemo(() => {
-    let data = mergedStyles.filter((s) => !cancelledSet.has(s.style));
+    let data = stylesWithCategories;
 
     if (search.trim()) {
       const q = search.trim().toLowerCase();
@@ -311,14 +364,15 @@ export default function StylesTab() {
   }
 
   function getSkusForStyle(styleName: string) {
-    return mergedRawSkus.filter((s) => s.style === styleName);
+    return mergedRawSkus.filter((s) => s.style === styleName && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`));
   }
 
-  // Session buy total for a style
+  // Session buy total for a style (AU + USA combined)
   function getStyleSessionTotal(styleName: string) {
     return getSkusForStyle(styleName).reduce((sum, sku) => {
       const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
-      return sum + (sessionItemMap[key] ?? 0);
+      const item = sessionItemMap[key];
+      return sum + (item ? item.auQty + item.usaQty : 0);
     }, 0);
   }
 
@@ -482,9 +536,16 @@ export default function StylesTab() {
                               </div>
                             </td>
                             <td className="px-4 py-3">
-                              <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>
-                                {style.category}
-                              </span>
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>
+                                  {style.category}
+                                </span>
+                                {style.trendFlag && (
+                                  <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: "oklch(0.95 0.06 300)", color: "oklch(0.45 0.15 300)" }}>
+                                    {style.trendFlag}
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td className="px-4 py-3 text-right tabular-nums font-semibold text-foreground">{style.totalSKUs}</td>
                             <td className="px-4 py-3 text-right tabular-nums">
@@ -650,7 +711,10 @@ export default function StylesTab() {
                                   {getSkusForStyle(style.style).map((sku) => {
                                     const skuKey2 = `${sku.style}|${sku.colour}|${sku.leather}` as string;
                                     const dbMeta = skuMetaMap[skuKey2];
-                                    const sessionQty = sessionItemMap[skuKey2] ?? 0;
+                                    const sessionQtyObj = sessionItemMap[skuKey2] ?? { auQty: 0, usaQty: 0 };
+                                    const sessionAuQty = sessionQtyObj.auQty;
+                                    const sessionUsaQty = sessionQtyObj.usaQty;
+                                    const sessionTotalQty = sessionAuQty + sessionUsaQty;
                                     // Size 11 is style-level — show the style-level value
                                     const isSize11 = styleSize11;
 
@@ -659,9 +723,9 @@ export default function StylesTab() {
                                         key={`${sku.colour}-${sku.leather}`}
                                         className="grid items-center gap-1 px-2 py-1.5 rounded-lg"
                                         style={{
-                                          gridTemplateColumns: "minmax(120px,2fr) minmax(100px,1.5fr) 80px 48px 56px 100px",
+                                          gridTemplateColumns: "minmax(120px,2fr) minmax(100px,1.5fr) 80px 48px 56px minmax(140px,auto)",
                                           border: "1px solid var(--border)",
-                                          background: sessionQty > 0 ? "oklch(0.97 0.06 65 / 0.5)" : "var(--card)",
+                                          background: sessionTotalQty > 0 ? "oklch(0.97 0.06 65 / 0.5)" : "var(--card)",
                                         }}
                                       >
                                         {/* Colour */}
@@ -692,33 +756,54 @@ export default function StylesTab() {
                                           ) : <span className="text-muted-foreground">—</span>}
                                         </span>
 
-                                        {/* Buy Qty — editable input for NEW SKUs only; existing SKUs show a dash */}
-                                        <div className="flex items-center gap-1">
+                                        {/* Buy Qty — AU and USA split inputs for NEW SKUs only */}
+                                        <div className="flex items-center gap-1.5">
                                           {sku.is_new ? (
                                             !isSessionLocked && selectedSession ? (
-                                              <input
-                                                type="number"
-                                                min={0}
-                                                defaultValue={sessionQty || ""}
-                                                key={`qty-${selectedSessionId}-${skuKey2}`}
-                                                onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, e.target.value)}
-                                                onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather)}
-                                                onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
-                                                placeholder="0"
-                                                className="w-16 px-2 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-right"
-                                                style={{ borderColor: sessionQty > 0 ? "oklch(0.72 0.16 65)" : "var(--border)" }}
-                                                onClick={(e) => e.stopPropagation()}
-                                              />
+                                              <>
+                                                <div className="flex flex-col items-center gap-0.5">
+                                                  <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground leading-none">AU</span>
+                                                  <input
+                                                    type="number" min={0}
+                                                    defaultValue={sessionAuQty || ""}
+                                                    key={`au-${selectedSessionId}-${skuKey2}`}
+                                                    onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, 'au', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, 'au')}
+                                                    onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
+                                                    placeholder="0"
+                                                    className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-right"
+                                                    style={{ borderColor: sessionAuQty > 0 ? "oklch(0.72 0.16 65)" : "var(--border)" }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                  />
+                                                </div>
+                                                <div className="flex flex-col items-center gap-0.5">
+                                                  <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground leading-none">USA</span>
+                                                  <input
+                                                    type="number" min={0}
+                                                    defaultValue={sessionUsaQty || ""}
+                                                    key={`usa-${selectedSessionId}-${skuKey2}`}
+                                                    onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, 'usa', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, 'usa')}
+                                                    onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
+                                                    placeholder="0"
+                                                    className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-blue-400/40 text-right"
+                                                    style={{ borderColor: sessionUsaQty > 0 ? "oklch(0.65 0.14 240)" : "var(--border)" }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                  />
+                                                </div>
+                                              </>
                                             ) : (
-                                              <span
-                                                className="w-16 text-right text-sm font-mono font-semibold"
-                                                style={{ color: sessionQty > 0 ? "oklch(0.50 0.14 55)" : "var(--muted-foreground)" }}
-                                              >
-                                                {sessionQty > 0 ? sessionQty : "—"}
-                                              </span>
+                                              <div className="flex gap-2">
+                                                <span className="text-xs font-mono" style={{ color: sessionAuQty > 0 ? "oklch(0.50 0.14 55)" : "var(--muted-foreground)" }}>
+                                                  AU: {sessionAuQty > 0 ? sessionAuQty : "—"}
+                                                </span>
+                                                <span className="text-xs font-mono" style={{ color: sessionUsaQty > 0 ? "oklch(0.45 0.14 240)" : "var(--muted-foreground)" }}>
+                                                  USA: {sessionUsaQty > 0 ? sessionUsaQty : "—"}
+                                                </span>
+                                              </div>
                                             )
                                           ) : (
-                                            <span className="w-16 text-right text-xs text-muted-foreground" title="Existing SKUs are not bought in new season buys">—</span>
+                                            <span className="text-xs text-muted-foreground" title="Existing SKUs are not bought in new season buys">—</span>
                                           )}
                                           {/* Detail button */}
                                           <button
@@ -738,6 +823,19 @@ export default function StylesTab() {
                                             title="View SKU details"
                                           >
                                             <SlidersHorizontal className="w-3.5 h-3.5 text-muted-foreground" />
+                                          </button>
+                                          {/* Cancel SKU button */}
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (confirm(`Cancel ${sku.colour} ${sku.leather} from ${sku.style}? It will be hidden from the range.`)) {
+                                                cancelSkuMutation.mutate({ style: sku.style, colour: sku.colour, leather: sku.leather });
+                                              }
+                                            }}
+                                            className="p-1 rounded hover:bg-red-50 transition-colors flex-shrink-0"
+                                            title="Cancel this SKU"
+                                          >
+                                            <Ban className="w-3.5 h-3.5 text-muted-foreground hover:text-red-500" />
                                           </button>
                                         </div>
                                       </div>
@@ -911,6 +1009,51 @@ export default function StylesTab() {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Cancelled SKUs section */}
+      {cancelledSkuList.length > 0 && (
+        <div className="mt-4 border rounded-xl overflow-hidden" style={{ borderColor: "oklch(0.82 0.06 20)" }}>
+          <button
+            className="w-full flex items-center justify-between px-4 py-3 transition-colors"
+            style={{ background: cancelledSkuSectionOpen ? "oklch(0.97 0.03 20 / 0.4)" : "oklch(0.97 0.03 20 / 0.25)" }}
+            onClick={() => setCancelledSkuSectionOpen((v) => !v)}
+          >
+            <div className="flex items-center gap-2">
+              <Ban className="w-4 h-4" style={{ color: "oklch(0.55 0.12 20)" }} />
+              <span className="text-sm font-semibold" style={{ color: "oklch(0.45 0.12 20)" }}>
+                Cancelled SKUs ({cancelledSkuList.length})
+              </span>
+              <span className="text-xs" style={{ color: "oklch(0.60 0.08 20)" }}>— hidden from range</span>
+            </div>
+            {cancelledSkuSectionOpen
+              ? <ChevronDown className="w-4 h-4" style={{ color: "oklch(0.55 0.08 20)" }} />
+              : <ChevronRight className="w-4 h-4" style={{ color: "oklch(0.55 0.08 20)" }} />}
+          </button>
+          {cancelledSkuSectionOpen && (
+            <div className="divide-y" style={{ borderColor: "oklch(0.90 0.04 20)" }}>
+              {(cancelledSkuList as Array<{ style: string; colour: string; leather: string }>).map((row) => (
+                <div key={`${row.style}|${row.colour}|${row.leather}`} className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-semibold text-muted-foreground line-through">{row.colour} {row.leather}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{row.style}</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      restoreSkuMutation.mutate({ style: row.style, colour: row.colour, leather: row.leather });
+                      toast.success(`${row.colour} ${row.leather} restored to ${row.style}`);
+                    }}
+                    className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-muted transition-colors text-muted-foreground"
+                    title="Restore this SKU"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Restore
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>

@@ -118,7 +118,9 @@ export const buySessionItems = mysqlTable("buy_session_items", {
   style: varchar("style", { length: 64 }).notNull(),
   colour: varchar("colour", { length: 64 }).notNull(),
   leather: varchar("leather", { length: 64 }).notNull().default(""),
-  qty: int("qty").default(0).notNull(),
+  qty: int("qty").default(0).notNull(),       // legacy — kept for backwards compat
+  auQty: int("auQty").default(0).notNull(),   // AU buy quantity
+  usaQty: int("usaQty").default(0).notNull(), // USA buy quantity
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
@@ -295,3 +297,48 @@ export const customSkus = mysqlTable("custom_skus", {
 });
 export type CustomSku = typeof customSkus.$inferSelect;
 export type InsertCustomSku = typeof customSkus.$inferInsert;
+
+/**
+ * Cancelled SKUs — individual colour/leather combos removed from the active range.
+ * Can be restored at any time.
+ */
+export const cancelledSkus = mysqlTable("cancelled_skus", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull(),
+  colour: varchar("colour", { length: 64 }).notNull(),
+  leather: varchar("leather", { length: 64 }).notNull().default(""),
+  cancelledAt: timestamp("cancelledAt").defaultNow().notNull(),
+}, (t) => ({
+  uniq: uniqueIndex("cancelled_skus_uniq").on(t.style, t.colour, t.leather),
+}));
+
+export type CancelledSku = typeof cancelledSkus.$inferSelect;
+export type InsertCancelledSku = typeof cancelledSkus.$inferInsert;
+
+/**
+ * Style sub-category overrides — maps styles to their specific sub-category
+ * (e.g. Wedge -> Casual Wedge, Ankle Boot -> Dress Ankle Boot)
+ */
+export const styleSubCategories = mysqlTable("style_sub_categories", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull().unique(),
+  subCategory: varchar("subCategory", { length: 64 }).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type StyleSubCategory = typeof styleSubCategories.$inferSelect;
+export type InsertStyleSubCategory = typeof styleSubCategories.$inferInsert;
+
+/**
+ * Style trend flags — marks Ballet Flat and Loafer styles as trend flags
+ * These styles have their category overridden to CASUAL FLAT in the UI
+ */
+export const styleTrendFlags = mysqlTable("style_trend_flags", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull().unique(),
+  trendFlag: varchar("trendFlag", { length: 64 }).notNull(), // e.g. "Ballet Flat", "Loafer"
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type StyleTrendFlag = typeof styleTrendFlags.$inferSelect;
+export type InsertStyleTrendFlag = typeof styleTrendFlags.$inferInsert;
