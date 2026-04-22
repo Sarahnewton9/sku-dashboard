@@ -419,3 +419,9 @@
 
 - [x] SpecsTab: filter out cancelled styles from the sidebar list
 - [x] SpecsTab: merge custom SKU colours into the spec columns for each style (so new colours appear as spec columns)
+
+## Phase 35: Fix Disappearing Buy Quantities
+
+- [x] Bug: By Style tab showed "No session selected" on load when there was no active (unlocked) session, causing all buy quantities to appear blank
+- [x] Root cause: auto-select logic used `useMemo` (wrong hook for side effects) and only checked for an active session — locked sessions were never auto-selected
+- [x] Fix: replaced `useMemo` with `useEffect`; now falls back to the most recently created session if no active session exists

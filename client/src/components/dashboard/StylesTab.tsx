@@ -6,7 +6,7 @@
  * - Click a SKU's detail icon to open the SkuDetailPanel slide-out
  */
 
-import React, { useState, useMemo, useCallback, useRef } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { skuData } from "@/lib/skuData";
 import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
@@ -139,12 +139,18 @@ export default function StylesTab() {
     { enabled: selectedSessionId !== null }
   );
 
-  // Auto-select active session on load
-  useMemo(() => {
-    if (activeSession && selectedSessionId === null) {
+  // Auto-select session on load:
+  // Prefer the active (unlocked) session; fall back to the most recent locked session
+  useEffect(() => {
+    if (selectedSessionId !== null) return; // already selected
+    if (activeSession) {
       setSelectedSessionId(activeSession.id);
+    } else if (allSessions.length > 0) {
+      // No active session — pick the most recently created one
+      const mostRecent = [...allSessions].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+      setSelectedSessionId(mostRecent.id);
     }
-  }, [activeSession]);
+  }, [activeSession, allSessions, selectedSessionId]);
 
   const upsertItemMutation = trpc.buy.upsertItem.useMutation({
     onError: (err) => toast.error(`Failed to save qty: ${err.message}`),
