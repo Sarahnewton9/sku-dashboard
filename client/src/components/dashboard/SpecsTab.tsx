@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { Badge } from "@/components/ui/badge";
@@ -556,7 +556,7 @@ function SpecForm({
 interface SpecsTabProps {}
 
 export default function SpecsTab({}: SpecsTabProps) {
-  const styleList = buildStyleList();
+  const baseStyleList = buildStyleList();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [completedCollapsed, setCompletedCollapsed] = useState(true);
@@ -564,6 +564,44 @@ export default function SpecsTab({}: SpecsTabProps) {
   const [importLoading, setImportLoading] = useState(false);
   const [importSaving, setImportSaving] = useState(false);
   const importFileRef = React.useRef<HTMLInputElement>(null);
+
+  // ── Cancelled styles + custom SKUs ────────────────────────────────────────
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
+  const cancelledSet = useMemo(
+    () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),
+    [cancelledStylesRaw]
+  );
+
+  const { data: customSkusRaw = [] } = trpc.customSku.getAll.useQuery();
+  // Build a map: style → Set<colour> for custom SKUs
+  const customColourMap = useMemo(() => {
+    const map: Record<string, Array<{ colour: string; leather: string }>> = {};
+    for (const sku of customSkusRaw as any[]) {
+      if (!map[sku.style]) map[sku.style] = [];
+      map[sku.style].push({ colour: sku.colour, leather: sku.leather });
+    }
+    return map;
+  }, [customSkusRaw]);
+
+  // Merge custom SKU colours into style entries, then filter cancelled
+  const styleList = useMemo(() => {
+    return baseStyleList
+      .filter((s) => !cancelledSet.has(s.style))
+      .map((s) => {
+        const extras = customColourMap[s.style] ?? [];
+        if (extras.length === 0) return s;
+        const existingColours = new Set(s.colours);
+        const newColours = extras.filter((e) => !existingColours.has(e.colour));
+        if (newColours.length === 0) return s;
+        const addedColours = newColours.map((e) => e.colour);
+        const addedLabels = newColours.map((e) => e.leather ? `${e.colour} ${e.leather}` : e.colour);
+        return {
+          ...s,
+          colours: [...s.colours, ...addedColours],
+          colourLabels: [...s.colourLabels, ...addedLabels],
+        };
+      });
+  }, [baseStyleList, cancelledSet, customColourMap]);
 
   const filtered = styleList.filter((s) => {
     const q = search.toLowerCase();

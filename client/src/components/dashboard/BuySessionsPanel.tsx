@@ -24,6 +24,8 @@ export default function BuySessionsPanel() {
   const { data: sessionTotals = {} } = trpc.buy.getSessionTotals.useQuery();
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
   const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
+  const { data: subCategoryList = [] } = trpc.styleSubCategory.getAll.useQuery();
+  const { data: trendFlagList = [] } = trpc.trendFlag.getAll.useQuery();
 
   const createMutation = trpc.buy.create.useMutation({
     onSuccess: (session) => {
@@ -68,6 +70,20 @@ export default function BuySessionsPanel() {
     return map;
   }, []);
 
+  // Resolved category: sub-category override > trend flag (CASUAL FLAT) > static category
+  const resolvedCategoryMap = useMemo(() => {
+    const subCatMap: Record<string, string> = {};
+    for (const sc of subCategoryList as any[]) subCatMap[sc.style] = sc.subCategory;
+    const trendStyleSet = new Set((trendFlagList as any[]).map((t: any) => t.style));
+    const map: Record<string, string> = {};
+    skuData.styles.forEach((s) => {
+      if (subCatMap[s.style]) map[s.style] = subCatMap[s.style];
+      else if (trendStyleSet.has(s.style)) map[s.style] = "CASUAL FLAT";
+      else map[s.style] = s.category;
+    });
+    return map;
+  }, [subCategoryList, trendFlagList]);
+
   const skuMetaMap = useMemo(() => {
     const map: Record<string, { costPrice?: number | null; isSize11?: boolean }> = {};
     for (const m of skuMetaList as any[]) {
@@ -110,7 +126,7 @@ export default function BuySessionsPanel() {
         const dbMeta = skuMetaMap[skuKey];
         const styleInfo = styleInfoMap[item.style];
         return {
-          "CATEGORY": styleInfo?.category ?? "",
+          "CATEGORY": resolvedCategoryMap[item.style] ?? styleInfo?.category ?? "",
           "LAST": styleInfo?.last ?? "",
           "SIZE 11": dbMeta?.isSize11 ? "Y" : "N",
           "STYLE": item.style,

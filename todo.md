@@ -410,3 +410,12 @@
 
 - [x] Buy export: add CATEGORY column (first column, before LAST)
 - [x] Buy export: bold header row, Calibri 12, centered, thin borders, column widths matching template
+
+## Phase 33: Category Overrides in Buy Export
+
+- [x] Buy export CATEGORY column: use resolved category (sub-category overrides + CASUAL FLAT for Ballet Flat/Loafer)
+
+## Phase 34: Specs Sync with Cancelled Styles and Custom SKUs
+
+- [x] SpecsTab: filter out cancelled styles from the sidebar list
+- [x] SpecsTab: merge custom SKU colours into the spec columns for each style (so new colours appear as spec columns)
