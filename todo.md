@@ -444,3 +444,9 @@
 - [x] SKU row layout: split expanded style into two sections — Existing (colour/leather/size11) and New (colour/leather/size11/sample/buy qty) — with aligned columns and proper spacing
 - [x] Add colour: always show the Add Colour button regardless of session state; if no session open, save as custom SKU only; if session open, also add to session
 - [x] Custom SKUs: ColourLeatherTab now dynamically merges custom SKUs from DB (same pattern as SpecsTab)
+
+## Phase 39: Session Default = None
+
+- [x] By Style tab: default to no session selected on load (remove auto-select of most recent session)
+- [x] Add a "— No session —" option at the top of the session selector dropdown so user can explicitly deselect
+- [x] Session selector only shows buy qty inputs when a session is actively selected

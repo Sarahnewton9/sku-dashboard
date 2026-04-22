@@ -13,6 +13,7 @@ interface Props {
   allSessions: { id: number; name: string; isLocked: boolean; createdAt: Date; lockedAt: Date | null }[];
   selectedSessionId: number | null;
   onSelectSession: (id: number) => void;
+  onDeselect: () => void;
   onSessionChange: () => void;
 }
 
@@ -21,6 +22,7 @@ export default function BuySessionBar({
   allSessions,
   selectedSessionId,
   onSelectSession,
+  onDeselect,
   onSessionChange,
 }: Props) {
   const [showCreate, setShowCreate] = useState(false);
@@ -108,6 +110,14 @@ export default function BuySessionBar({
                 <div className="px-3 py-2 border-b" style={{ borderColor: "var(--border)" }}>
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">All Buy Sessions</p>
                 </div>
+                {/* No session option */}
+                <button
+                  onClick={() => { onDeselect(); setShowHistory(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-muted/50 transition-colors border-b"
+                  style={{ borderColor: "var(--border)", background: selectedSessionId === null ? "oklch(0.97 0.04 65 / 0.6)" : undefined }}
+                >
+                  <span className="text-muted-foreground text-sm">— No session —</span>
+                </button>
                 {allSessions.length === 0 ? (
                   <div className="px-3 py-4 text-sm text-muted-foreground text-center">No sessions yet</div>
                 ) : (
@@ -224,7 +234,7 @@ export default function BuySessionBar({
       {/* Hint */}
       {!selectedSession && (
         <p className="text-xs text-muted-foreground mt-2">
-          Create a new buy session to start entering quantities. Each session is independent — lock it when done to preserve the record.
+          Select a session to view or enter buy quantities, or create a new one to start a fresh buy round.
         </p>
       )}
       {selectedSession && selectedSession.isLocked && (

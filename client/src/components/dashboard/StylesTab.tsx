@@ -139,18 +139,8 @@ export default function StylesTab() {
     { enabled: selectedSessionId !== null }
   );
 
-  // Auto-select session on load:
-  // Prefer the active (unlocked) session; fall back to the most recent locked session
-  useEffect(() => {
-    if (selectedSessionId !== null) return; // already selected
-    if (activeSession) {
-      setSelectedSessionId(activeSession.id);
-    } else if (allSessions.length > 0) {
-      // No active session — pick the most recently created one
-      const mostRecent = [...allSessions].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-      setSelectedSessionId(mostRecent.id);
-    }
-  }, [activeSession, allSessions, selectedSessionId]);
+  // No auto-select: default is no session selected.
+  // User can click into a session via the session selector in the Buy Session bar.
 
   const upsertItemMutation = trpc.buy.upsertItem.useMutation({
     onError: (err) => toast.error(`Failed to save qty: ${err.message}`),
@@ -431,6 +421,7 @@ export default function StylesTab() {
         allSessions={allSessions as any}
         selectedSessionId={selectedSessionId}
         onSelectSession={setSelectedSessionId}
+        onDeselect={() => setSelectedSessionId(null)}
         onSessionChange={handleSessionChange}
       />
 
