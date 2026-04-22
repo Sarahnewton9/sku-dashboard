@@ -23,7 +23,9 @@ interface ExportSpecSheetParams {
 
 async function fetchImageAsBase64(url: string): Promise<{ base64: string; extension: "jpeg" | "png" | "gif" } | null> {
   try {
-    const resp = await fetch(url);
+    // Use server-side proxy to avoid CORS issues when fetching CDN images
+    const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(url)}`;
+    const resp = await fetch(proxyUrl);
     if (!resp.ok) return null;
     const blob = await resp.blob();
     const mimeType = blob.type || "image/jpeg";

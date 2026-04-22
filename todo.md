@@ -263,3 +263,8 @@
 - [x] Map parsed component labels to internal component keys using fuzzy matching
 - [x] Save parsed values to DB via specs.upsert (overwrite existing)
 - [x] Show import summary (X components imported for Y colours)
+
+## Phase 21: Fix Image in Spec Export
+
+- [x] Add server-side /api/image-proxy?url=... endpoint to fetch CDN images and return them (avoids CORS)
+- [x] Update exportSpecSheet.ts to fetch image via /api/image-proxy instead of direct CDN fetch
