@@ -268,3 +268,41 @@
 
 - [x] Add server-side /api/image-proxy?url=... endpoint to fetch CDN images and return them (avoids CORS)
 - [x] Update exportSpecSheet.ts to fetch image via /api/image-proxy instead of direct CDN fetch
+
+## Phase 22: Fitting Sessions, Image Updates, Spec Copy & Export Formatting
+
+### Image Updates (all tabs)
+- [x] DB: styleImageOverride table — style, imageUrl, fileKey, createdAt
+- [x] Backend: styleImage.upload — upload image to S3, save override, return url
+- [x] Backend: styleImage.revert — delete override, return original CDN url
+- [x] Backend: styleImage.getAll — get all image overrides
+- [x] UI: "Update Image" button on style header in Specs tab
+- [x] UI: clicking Update Image opens file picker, uploads, replaces image in Specs
+- [x] UI: "Revert to original" link shown when override exists
+
+### Fitting Sessions
+- [x] DB: fittingSessions table — id, style, fitModel, sessionDate, notes, createdAt
+- [x] DB: fittingSessionImages table — id, sessionId, imageUrl, fileKey, createdAt
+- [x] DB push for new tables
+- [x] Backend: fittingSession.create({ style, fitModel, sessionDate, notes })
+- [x] Backend: fittingSession.getForStyle(style) — list all sessions with images
+- [x] Backend: fittingSession.update({ id, fitModel, sessionDate, notes })
+- [x] Backend: fittingSession.delete(id)
+- [x] Backend: fittingSession.uploadImage({ sessionId, base64, mimeType }) — upload to S3, link to session
+- [x] FittingTab: replace flat image upload with session-based UI
+- [x] FittingTab: "Add Fitting Session" button — opens form for fit model name + date
+- [x] FittingTab: each session shows model name, date, image gallery with lightbox
+- [x] FittingTab: lightbox — click image to open full-screen overlay
+- [x] FittingTab: export modal — choose which session to export by date
+- [x] Fitting export report: shows session model name, date, images, fit rating, notes
+
+### Spec Copy (selective colour-to-colour)
+- [x] Remove "Copy all specs from X → all others" button
+- [x] ColourCopyPanel: select source colour from dropdown
+- [x] ColourCopyPanel: tick target colours to copy to
+- [x] User ticks target colours, clicks Copy — copies all component values from source to selected targets
+
+### Spec Export Formatting
+- [x] Analyse MOMA spec sheet exact formatting (font name, sizes, bold rows, colours, borders)
+- [x] Rewrite exportSpecSheet.ts: Arial throughout, bold rules, no coloured backgrounds, blank spacer rows, 2-col merged colour columns
+- [x] Ensure style image is embedded correctly in header area (top-right, rows 1-8)

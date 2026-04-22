@@ -220,3 +220,50 @@ export const styleSpecMeta = mysqlTable("style_spec_meta", {
 
 export type StyleSpecMeta = typeof styleSpecMeta.$inferSelect;
 export type InsertStyleSpecMeta = typeof styleSpecMeta.$inferInsert;
+
+/**
+ * Fitting sessions — each represents one fitting event for a style
+ * A style can have multiple sessions (e.g. fitted on different models)
+ */
+export const fittingSessions = mysqlTable("fitting_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull(),
+  fitModel: varchar("fitModel", { length: 128 }).notNull().default(""),
+  sessionDate: varchar("sessionDate", { length: 32 }).notNull().default(""),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FittingSession = typeof fittingSessions.$inferSelect;
+export type InsertFittingSession = typeof fittingSessions.$inferInsert;
+
+/**
+ * Fitting session images — images linked to a specific fitting session
+ */
+export const fittingSessionImages = mysqlTable("fitting_session_images", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("sessionId").notNull(),
+  style: varchar("style", { length: 64 }).notNull(),
+  imageUrl: text("imageUrl").notNull(),
+  fileKey: text("fileKey").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FittingSessionImage = typeof fittingSessionImages.$inferSelect;
+export type InsertFittingSessionImage = typeof fittingSessionImages.$inferInsert;
+
+/**
+ * Style image overrides — manual image uploads that replace the CDN image for a style
+ */
+export const styleImageOverrides = mysqlTable("style_image_overrides", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull().unique(),
+  imageUrl: text("imageUrl").notNull(),
+  fileKey: text("fileKey").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type StyleImageOverride = typeof styleImageOverrides.$inferSelect;
+export type InsertStyleImageOverride = typeof styleImageOverrides.$inferInsert;

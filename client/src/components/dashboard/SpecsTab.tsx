@@ -180,6 +180,82 @@ function TextCell({ value, onSave }: TextCellProps) {
   );
 }
 
+// ─── Colour Copy Panel ───────────────────────────────────────────────────────
+
+interface ColourCopyPanelProps {
+  colours: string[];
+  onCopy: (source: string, targets: string[]) => void;
+}
+
+function ColourCopyPanel({ colours, onCopy }: ColourCopyPanelProps) {
+  const [source, setSource] = useState<string | null>(null);
+  const [targets, setTargets] = useState<Set<string>>(new Set());
+
+  function toggleTarget(colour: string) {
+    setTargets((prev) => {
+      const next = new Set(prev);
+      if (next.has(colour)) next.delete(colour); else next.add(colour);
+      return next;
+    });
+  }
+
+  function handleCopy() {
+    if (!source || targets.size === 0) return;
+    onCopy(source, Array.from(targets));
+    setSource(null);
+    setTargets(new Set());
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/20 rounded-lg border text-xs">
+      <span className="text-muted-foreground font-medium whitespace-nowrap">Copy specs from:</span>
+      <Select value={source ?? ""} onValueChange={(v) => { setSource(v); setTargets(new Set()); }}>
+        <SelectTrigger className="h-7 w-36 text-xs">
+          <SelectValue placeholder="Select colour…" />
+        </SelectTrigger>
+        <SelectContent>
+          {colours.map((c) => (
+            <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {source && (
+        <>
+          <span className="text-muted-foreground">to:</span>
+          {colours.filter((c) => c !== source).map((c) => (
+            <button
+              key={c}
+              onClick={() => toggleTarget(c)}
+              className={`px-2 py-1 rounded border text-xs transition-colors ${
+                targets.has(c)
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background border-border hover:bg-muted"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+          <Button
+            size="sm"
+            className="h-7 text-xs gap-1"
+            disabled={targets.size === 0}
+            onClick={handleCopy}
+          >
+            <Copy className="w-3 h-3" />
+            Copy
+          </Button>
+          <button
+            onClick={() => { setSource(null); setTargets(new Set()); }}
+            className="text-muted-foreground hover:text-foreground text-sm leading-none"
+          >
+            ×
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── Spec Form for a single style ─────────────────────────────────────────────
 
 interface SpecFormProps {
@@ -187,13 +263,14 @@ interface SpecFormProps {
   specMeta: { hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null } | null;
   specs: Record<string, Record<string, string>>; // colour → component → value
   allDropdownOptions: Record<string, string[]>;
+  imageOverride?: string;
   onUpsert: (colour: string, component: string, value: string) => void;
   onAddDropdownOption: (component: string, value: string) => void;
   onMetaChange: (meta: Partial<{ hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null }>) => void;
 }
 
 function SpecForm({
-  entry, specMeta, specs, allDropdownOptions, onUpsert, onAddDropdownOption, onMetaChange,
+  entry, specMeta, specs, allDropdownOptions, imageOverride, onUpsert, onAddDropdownOption, onMetaChange,
 }: SpecFormProps) {
   const hasBuckle = specMeta?.hasBuckle ?? false;
   const dressShoeSubType = specMeta?.dressShoeSubType ?? null;
@@ -234,8 +311,8 @@ function SpecForm({
     <div className="space-y-4">
       {/* Style header */}
       <div className="flex items-start gap-4 pb-4 border-b">
-        {entry.imageUrl && (
-          <img src={entry.imageUrl} alt={entry.style} className="w-16 h-16 object-cover rounded-lg border" />
+        {(imageOverride || entry.imageUrl) && (
+          <img src={imageOverride ?? entry.imageUrl} alt={entry.style} className="w-16 h-16 object-cover rounded-lg border" />
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -300,23 +377,12 @@ function SpecForm({
         </div>
       </div>
 
-      {/* Copy from colour */}
+      {/* Selective colour-to-colour copy */}
       {entry.colours.length > 1 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-muted-foreground font-medium">Copy all specs from:</span>
-          {entry.colours.map((colour) => (
-            <Button
-              key={colour}
-              size="sm"
-              variant="outline"
-              className="h-7 text-xs gap-1"
-              onClick={() => handleCopyFrom(colour, entry.colours.filter((c) => c !== colour))}
-            >
-              <Copy className="w-3 h-3" />
-              {colour} → all others
-            </Button>
-          ))}
-        </div>
+        <ColourCopyPanel
+          colours={entry.colours}
+          onCopy={handleCopyFrom}
+        />
       )}
 
       {/* Spec grid */}
@@ -438,6 +504,28 @@ export default function SpecsTab({}: SpecsTabProps) {
         notes: rawMeta.notes ?? null,
       }
     : null;
+
+  // Style image overrides
+  const { data: imageOverrideList = [], refetch: refetchImageOverrides } = trpc.styleImage.getAll.useQuery();
+  const imageOverrides = imageOverrideList.reduce<Record<string, string>>((acc, o) => { acc[o.style] = o.imageUrl; return acc; }, {});
+  const imageUploadRef = React.useRef<HTMLInputElement>(null);
+  const uploadImageMutation = trpc.styleImage.upload.useMutation({
+    onSuccess: () => { refetchImageOverrides(); toast.success("Image updated"); },
+    onError: () => toast.error("Image upload failed"),
+  });
+  const revertImageMutation = trpc.styleImage.revert.useMutation({
+    onSuccess: () => { refetchImageOverrides(); toast.success("Reverted to original image"); },
+  });
+  function handleImageUpload(file: File) {
+    if (!selectedStyle) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      const base64 = dataUrl.split(",")[1];
+      uploadImageMutation.mutate({ style: selectedStyle, imageBase64: base64, mimeType: file.type });
+    };
+    reader.readAsDataURL(file);
+  }
 
   // ── Mutations ─────────────────────────────────────────────────────────────
   const upsertMutation = trpc.specs.upsert.useMutation({
@@ -567,8 +655,8 @@ export default function SpecsTab({}: SpecsTabProps) {
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  {entry.imageUrl && (
-                    <img src={entry.imageUrl} alt={entry.style} className="w-8 h-8 object-cover rounded flex-shrink-0" />
+                  {(entry.imageUrl || imageOverrides[entry.style]) && (
+                    <img src={imageOverrides[entry.style] ?? entry.imageUrl} alt={entry.style} className="w-8 h-8 object-cover rounded flex-shrink-0" />
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="font-medium text-xs truncate">{entry.style}</div>
@@ -620,8 +708,39 @@ export default function SpecsTab({}: SpecsTabProps) {
           <div className="space-y-4">
             {/* Import/Export buttons */}
             <div className="flex justify-between items-center gap-2">
-              {/* Import button */}
+              {/* Image upload + Import buttons */}
               <div className="flex items-center gap-2">
+                <input
+                  ref={imageUploadRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleImageUpload(f);
+                    e.target.value = "";
+                  }}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => imageUploadRef.current?.click()}
+                  disabled={uploadImageMutation.isPending}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  {uploadImageMutation.isPending ? "Uploading…" : "Update Image"}
+                </Button>
+                {imageOverrides[selectedEntry.style] && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-xs text-muted-foreground"
+                    onClick={() => revertImageMutation.mutate({ style: selectedEntry.style })}
+                  >
+                    Revert
+                  </Button>
+                )}
                 <input
                   ref={importFileRef}
                   type="file"
@@ -658,7 +777,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                       specs,
                       hasBuckle: specMeta?.hasBuckle ?? false,
                       dressShoeSubType: specMeta?.dressShoeSubType ?? null,
-                      imageUrl: selectedEntry.imageUrl,
+                      imageUrl: imageOverrides[selectedEntry.style] ?? selectedEntry.imageUrl,
                     });
                     toast.success(`Exported ${selectedEntry.style} spec sheet`);
                   }}
@@ -712,6 +831,7 @@ export default function SpecsTab({}: SpecsTabProps) {
               specMeta={specMeta}
               specs={specs}
               allDropdownOptions={allDropdownOptions}
+              imageOverride={imageOverrides[selectedEntry.style]}
               onUpsert={handleUpsert}
               onAddDropdownOption={handleAddDropdownOption}
               onMetaChange={handleMetaChange}

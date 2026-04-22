@@ -17,6 +17,9 @@ import {
   getAllDropdownOptions, getDropdownOptions, addDropdownOption, deleteDropdownOption,
   getStyleSpecMeta, getAllStyleSpecMeta, upsertStyleSpecMeta,
   getSpecCountsForAllStyles,
+  createFittingSession, updateFittingSession, deleteFittingSession, getFittingSessionsForStyle,
+  addFittingSessionImage, deleteFittingSessionImage,
+  upsertStyleImageOverride, deleteStyleImageOverride, getAllStyleImageOverrides,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -400,6 +403,66 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
-});
 
+  fittingSession: router({
+    getForStyle: publicProcedure
+      .input(z.object({ style: z.string() }))
+      .query(async ({ input }) => getFittingSessionsForStyle(input.style)),
+    create: publicProcedure
+      .input(z.object({ style: z.string(), fitModel: z.string(), sessionDate: z.string(), notes: z.string().optional() }))
+      .mutation(async ({ input }) => {
+        const id = await createFittingSession(input);
+        return { id };
+      }),
+    update: publicProcedure
+      .input(z.object({ id: z.number(), fitModel: z.string().optional(), sessionDate: z.string().optional(), notes: z.string().nullable().optional() }))
+      .mutation(async ({ input }) => {
+        await updateFittingSession(input);
+        return { success: true };
+      }),
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteFittingSession(input.id);
+        return { success: true };
+      }),
+    uploadImage: publicProcedure
+      .input(z.object({ sessionId: z.number(), style: z.string(), imageBase64: z.string(), mimeType: z.string() }))
+      .mutation(async ({ input }) => {
+        const buffer = Buffer.from(input.imageBase64, 'base64');
+        const ext = input.mimeType.split('/')[1] || 'jpg';
+        const fileKey = `fitting-sessions/${input.style}-${input.sessionId}-${nanoid(8)}.${ext}`;
+        const { url } = await storagePut(fileKey, buffer, input.mimeType);
+        await addFittingSessionImage({ sessionId: input.sessionId, style: input.style, imageUrl: url, fileKey });
+        return { url, fileKey };
+      }),
+    deleteImage: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteFittingSessionImage(input.id);
+        return { success: true };
+      }),
+  }),
+
+  styleImage: router({
+    getAll: publicProcedure
+      .query(async () => getAllStyleImageOverrides()),
+    upload: publicProcedure
+      .input(z.object({ style: z.string(), imageBase64: z.string(), mimeType: z.string() }))
+      .mutation(async ({ input }) => {
+        const buffer = Buffer.from(input.imageBase64, 'base64');
+        const ext = input.mimeType.split('/')[1] || 'jpg';
+        const fileKey = `style-images/${input.style}-${nanoid(8)}.${ext}`;
+        const { url } = await storagePut(fileKey, buffer, input.mimeType);
+        await upsertStyleImageOverride({ style: input.style, imageUrl: url, fileKey });
+        return { url };
+      }),
+    revert: publicProcedure
+      .input(z.object({ style: z.string() }))
+      .mutation(async ({ input }) => {
+        await deleteStyleImageOverride(input.style);
+        return { success: true };
+      }),
+  }),
+});
 export type AppRouter = typeof appRouter;

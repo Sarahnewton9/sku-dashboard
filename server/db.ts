@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -497,4 +497,84 @@ export async function getSpecCountsForAllStyles(): Promise<{ style: string; fill
     .where(sql`${styleSpecs.value} IS NOT NULL AND ${styleSpecs.value} != ''`)
     .groupBy(styleSpecs.style);
   return rows.map((r) => ({ style: r.style, filledCount: Number(r.filledCount) }));
+}
+
+// ─── Fitting Sessions ─────────────────────────────────────────────────────────
+export async function createFittingSession(data: { style: string; fitModel: string; sessionDate: string; notes?: string }): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(fittingSessions).values({
+    style: data.style,
+    fitModel: data.fitModel,
+    sessionDate: data.sessionDate,
+    notes: data.notes ?? null,
+  });
+  return (result[0] as { insertId: number }).insertId;
+}
+
+export async function updateFittingSession(data: { id: number; fitModel?: string; sessionDate?: string; notes?: string | null }): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const updateSet: Record<string, unknown> = {};
+  if (data.fitModel !== undefined) updateSet.fitModel = data.fitModel;
+  if (data.sessionDate !== undefined) updateSet.sessionDate = data.sessionDate;
+  if (data.notes !== undefined) updateSet.notes = data.notes;
+  if (Object.keys(updateSet).length === 0) return;
+  await db.update(fittingSessions).set(updateSet).where(eq(fittingSessions.id, data.id));
+}
+
+export async function deleteFittingSession(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Delete images first
+  await db.delete(fittingSessionImages).where(eq(fittingSessionImages.sessionId, id));
+  await db.delete(fittingSessions).where(eq(fittingSessions.id, id));
+}
+
+export async function getFittingSessionsForStyle(style: string): Promise<Array<{
+  id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; createdAt: Date;
+  images: Array<{ id: number; imageUrl: string; fileKey: string; createdAt: Date }>;
+}>> {
+  const db = await getDb();
+  if (!db) return [];
+  const sessions = await db.select().from(fittingSessions).where(eq(fittingSessions.style, style)).orderBy(fittingSessions.sessionDate);
+  const images = await db.select().from(fittingSessionImages).where(eq(fittingSessionImages.style, style));
+  return sessions.map((s) => ({
+    ...s,
+    images: images.filter((img) => img.sessionId === s.id),
+  }));
+}
+
+export async function addFittingSessionImage(data: { sessionId: number; style: string; imageUrl: string; fileKey: string }): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(fittingSessionImages).values(data);
+}
+
+export async function deleteFittingSessionImage(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(fittingSessionImages).where(eq(fittingSessionImages.id, id));
+}
+
+// ─── Style Image Overrides ────────────────────────────────────────────────────
+export async function upsertStyleImageOverride(data: { style: string; imageUrl: string; fileKey: string }): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(styleImageOverrides)
+    .values(data)
+    .onDuplicateKeyUpdate({ set: { imageUrl: data.imageUrl, fileKey: data.fileKey } });
+}
+
+export async function deleteStyleImageOverride(style: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(styleImageOverrides).where(eq(styleImageOverrides.style, style));
+}
+
+export async function getAllStyleImageOverrides(): Promise<{ style: string; imageUrl: string }[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select({ style: styleImageOverrides.style, imageUrl: styleImageOverrides.imageUrl }).from(styleImageOverrides);
+  return rows;
 }
