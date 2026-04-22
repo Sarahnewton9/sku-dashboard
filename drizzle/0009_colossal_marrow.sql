@@ -1,0 +1,1 @@
+ALTER TABLE `style_specs` ADD CONSTRAINT `style_colour_component_uniq` UNIQUE(`style`,`colour`,`component`);

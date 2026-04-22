@@ -622,10 +622,22 @@ export default function SpecsTab({}: SpecsTabProps) {
     setImportSaving(true);
     let count = 0;
     try {
-      for (const [colour, compMap] of Object.entries(importParsed.colourSpecs)) {
+      // Build a reverse map: full label (e.g. "DOVE NAPPA") → raw colour key (e.g. "DOVE")
+      // so that imported colour names from the factory spec sheet are saved under the correct key.
+      const styleColourMap = COLOUR_LEATHER_MAP[selectedStyle] ?? {};
+      const labelToRawColour: Record<string, string> = {};
+      for (const [rawColour, label] of Object.entries(styleColourMap)) {
+        labelToRawColour[label.toUpperCase()] = rawColour;
+        // Also map the raw colour itself (in case the factory sheet uses just the colour name)
+        labelToRawColour[rawColour.toUpperCase()] = rawColour;
+      }
+
+      for (const [importedColour, compMap] of Object.entries(importParsed.colourSpecs)) {
+        // Resolve the raw colour key: try exact label match first, then fall back to the imported name
+        const rawColour = labelToRawColour[importedColour.toUpperCase()] ?? importedColour;
         for (const [component, value] of Object.entries(compMap)) {
           if (!value.trim()) continue;
-          await upsertMutation.mutateAsync({ style: selectedStyle, colour, component, value });
+          await upsertMutation.mutateAsync({ style: selectedStyle, colour: rawColour, component, value });
           count++;
         }
       }

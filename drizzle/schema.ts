@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, float, boolean } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, float, boolean, uniqueIndex } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -187,7 +187,9 @@ export const styleSpecs = mysqlTable("style_specs", {
   component: varchar("component", { length: 128 }).notNull(),
   value: text("value"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  uniq: uniqueIndex("style_colour_component_uniq").on(t.style, t.colour, t.component),
+}));
 
 export type StyleSpec = typeof styleSpecs.$inferSelect;
 export type InsertStyleSpec = typeof styleSpecs.$inferInsert;

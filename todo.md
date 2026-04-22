@@ -311,3 +311,11 @@
 
 - [x] SpecsTab: show full colour+leather name as column header (e.g. "DOVE NAPPA") instead of "COLOUR 1"
 - [x] exportSpecSheet.ts: use full colour+leather name in colour column headers
+
+## Phase 23 Bug Fix: Spec Import Colour Key Mismatch
+
+- [x] Fix: imported specs were saved with full colour+leather label (e.g. "DOVE NAPPA") instead of raw colour key ("DOVE"), causing them not to display in the spec grid
+- [x] Fix: handleSaveImport now maps full labels back to raw colour keys using COLOUR_LEATHER_MAP reverse lookup
+- [x] Fix: add uniqueIndex on (style, colour, component) to style_specs table so onDuplicateKeyUpdate works correctly and prevents duplicate rows
+- [x] DB: run pnpm db:push to apply unique index migration
+- [x] DB: clean up existing bad data (CAPPA rows with full-label colour keys migrated to raw colour keys, duplicates removed)
