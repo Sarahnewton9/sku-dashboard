@@ -559,6 +559,7 @@ export default function SpecsTab({}: SpecsTabProps) {
   const styleList = buildStyleList();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [completedCollapsed, setCompletedCollapsed] = useState(true);
   const [importParsed, setImportParsed] = useState<ParsedSpecSheet | null>(null);
   const [importLoading, setImportLoading] = useState(false);
   const [importSaving, setImportSaving] = useState(false);
@@ -762,33 +763,35 @@ export default function SpecsTab({}: SpecsTabProps) {
           </p>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {filtered.map((entry) => {
-            const isSelected = selectedStyle === entry.style;
-            return (
-              <button
-                key={entry.style}
-                onClick={() => setSelectedStyle(entry.style)}
-                className={`w-full text-left px-3 py-2.5 border-b transition-colors hover:bg-muted/50 ${
-                  isSelected ? "bg-primary/10 border-l-2 border-l-primary" : ""
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  {(entry.imageUrl || imageOverrides[entry.style]) && (
-                    <img src={imageOverrides[entry.style] ?? entry.imageUrl} alt={entry.style} className="w-8 h-8 object-cover rounded flex-shrink-0" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium text-xs truncate">{entry.style}</div>
-                    <div className="text-xs text-muted-foreground truncate">{entry.category} · {entry.last}</div>
-                    <div className="text-xs text-muted-foreground">{entry.colours.length} colours</div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    {entry.isAllNew && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" title="New pattern" />
+          {(() => {
+            const inProgress = filtered.filter((e) => getCompletionPct(e) < 100);
+            const completed = filtered.filter((e) => getCompletionPct(e) >= 100);
+
+            function StyleRow({ entry }: { entry: StyleEntry }) {
+              const isSelected = selectedStyle === entry.style;
+              const pct = getCompletionPct(entry);
+              return (
+                <button
+                  key={entry.style}
+                  onClick={() => setSelectedStyle(entry.style)}
+                  className={`w-full text-left px-3 py-2.5 border-b transition-colors hover:bg-muted/50 ${
+                    isSelected ? "bg-primary/10 border-l-2 border-l-primary" : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {(entry.imageUrl || imageOverrides[entry.style]) && (
+                      <img src={imageOverrides[entry.style] ?? entry.imageUrl} alt={entry.style} className="w-8 h-8 object-cover rounded flex-shrink-0" />
                     )}
-                    {(() => {
-                      const pct = getCompletionPct(entry);
-                      if (pct === 0) return null;
-                      return (
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-xs truncate">{entry.style}</div>
+                      <div className="text-xs text-muted-foreground truncate">{entry.category} · {entry.last}</div>
+                      <div className="text-xs text-muted-foreground">{entry.colours.length} colours</div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      {entry.isAllNew && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" title="New pattern" />
+                      )}
+                      {pct > 0 && (
                         <div className="flex items-center gap-1">
                           <div className="w-10 h-1 bg-muted rounded-full overflow-hidden">
                             <div
@@ -797,16 +800,52 @@ export default function SpecsTab({}: SpecsTabProps) {
                             />
                           </div>
                         </div>
-                      );
-                    })()}
+                      )}
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+              );
+            }
+
+            return (
+              <>
+                {/* In Progress section */}
+                {inProgress.length > 0 && (
+                  <>
+                    <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide bg-muted/30 border-b flex items-center justify-between">
+                      <span>In Progress</span>
+                      <span className="text-muted-foreground font-normal">{inProgress.length}</span>
+                    </div>
+                    {inProgress.map((entry) => <StyleRow key={entry.style} entry={entry} />)}
+                  </>
+                )}
+
+                {/* Completed section */}
+                {completed.length > 0 && (
+                  <>
+                    <button
+                      className="w-full px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide bg-muted/30 border-b flex items-center justify-between hover:bg-muted/50 transition-colors"
+                      onClick={() => setCompletedCollapsed((v) => !v)}
+                    >
+                      <span className="flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3 text-green-500" />
+                        Completed
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="text-muted-foreground font-normal">{completed.length}</span>
+                        <ChevronDown className={`w-3 h-3 transition-transform ${completedCollapsed ? "" : "rotate-180"}`} />
+                      </span>
+                    </button>
+                    {!completedCollapsed && completed.map((entry) => <StyleRow key={entry.style} entry={entry} />)}
+                  </>
+                )}
+
+                {filtered.length === 0 && (
+                  <div className="p-4 text-center text-xs text-muted-foreground">No styles match "{search}"</div>
+                )}
+              </>
             );
-          })}
-          {filtered.length === 0 && (
-            <div className="p-4 text-center text-xs text-muted-foreground">No styles match "{search}"</div>
-          )}
+          })()}
         </div>
       </div>
 

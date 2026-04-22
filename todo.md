@@ -326,3 +326,10 @@
 - [x] Spec dropdowns: sort all options alphabetically (defaults + saved options merged and sorted)
 - [x] Upper 1 field: auto-fill with the colour+leather label for that column (e.g. "DOVE NAPPA") — pre-filled on first load, still editable
 - [x] Upper 1 field: build its options list from all real colour+leather combos in skuData.rawSkus (not the hard-coded defaults)
+
+## Phase 25: Spec Sidebar Completed Section
+
+- [x] Split spec sidebar into two collapsible groups: "In Progress" (open by default) and "Completed" (collapsed by default)
+- [x] Styles move to Completed group when completion percentage reaches 100%
+- [x] Completed group shows count badge (e.g. "Completed (12)")
+- [x] In Progress group shows count badge (e.g. "In Progress (35)")
