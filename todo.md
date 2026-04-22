@@ -336,11 +336,7 @@
 
 ## Phase 26: Edit/Delete Fitting Comments
 
-- [ ] Server: add updateFittingComment procedure (takes commentId + new text, protected)
-- [ ] Server: add deleteFittingComment procedure (takes commentId, protected)
-- [ ] UI: add inline edit mode on each comment (pencil icon → editable textarea → Save/Cancel)
-- [ ] UI: add delete button on each comment (trash icon → confirm → delete)
-- [ ] Optimistic updates for both edit and delete
+- [x] User confirmed edit/delete fitting comments already works — no changes needed
 
 ## Phase 26: Buy Sheet Export Column Order
 
@@ -365,7 +361,7 @@
 - [x] StylesTab: in expanded style rows (when session is unlocked), show "Add Colour" button at the bottom of the SKU list
 - [x] "Add Colour" opens an inline form: colour text input + leather text input + confirm
 - [x] Custom SKUs appear in the expanded row with a buy qty input (treated as new SKUs)
-- [ ] Custom SKUs also appear in the buy sheet export
+- [x] Custom SKUs also appear in the buy sheet export (included via ExportPanel allSkus merge)
 
 ## Phase 28: Buying Improvements — Unlock Session + Add Custom SKU
 
@@ -398,3 +394,7 @@
 - [x] useStyleCategories hook: fetches sub-categories + trend flags, provides getCategory/getTrendFlag
 - [x] BuyAnalysisTab: AU/USA split in summary cards + bar charts (amber=AU, blue=USA)
 - [x] BuyAnalysisTab: runtime category overrides via useStyleCategories hook
+
+## Phase 30: Buy Export Size 11 Column
+
+- [x] Buy export: add Size 11 (Y/N) column after Leather

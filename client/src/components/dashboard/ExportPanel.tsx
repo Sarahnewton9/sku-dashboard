@@ -137,20 +137,23 @@ export default function ExportPanel({ onClose }: Props) {
             const key = `${sku.style}|${sku.colour}|${sku.leather}`;
             const item = itemMap[key];
             if (!item || (item.auQty === 0 && item.usaQty === 0)) return null;
+            const skuKey = `${sku.style}|${sku.colour}|${sku.leather}`;
+            const skuMeta = skuMetaMap[skuKey];
             return {
               Category: styleLookup[sku.style]?.category ?? "",
               Style: sku.style,
               Colour: sku.colour,
               Leather: sku.leather,
+              "Size 11": skuMeta?.isSize11 ? "Yes" : "No",
               "AU Units": item.auQty,
               "USA Units": item.usaQty,
             };
           })
-          .filter(Boolean) as Array<{ Category: string; Style: string; Colour: string; Leather: string; "AU Units": number; "USA Units": number }>;
+          .filter(Boolean) as Array<{ Category: string; Style: string; Colour: string; Leather: string; "Size 11": string; "AU Units": number; "USA Units": number }>;
 
         if (rows.length > 0) {
           const ws = XLSX.utils.json_to_sheet(rows);
-          ws["!cols"] = [{ wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 12 }, { wch: 12 }];
+          ws["!cols"] = [{ wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 12 }, { wch: 12 }];
           const sheetName = session.name.slice(0, 31); // Excel sheet name limit
           XLSX.utils.book_append_sheet(wb, ws, sheetName);
           totalRows += rows.length;
