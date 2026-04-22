@@ -587,6 +587,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                     specs,
                     hasBuckle: specMeta?.hasBuckle ?? false,
                     dressShoeSubType: specMeta?.dressShoeSubType ?? null,
+                    imageUrl: selectedEntry.imageUrl,
                   });
                   toast.success(`Exported ${selectedEntry.style} spec sheet`);
                 }}

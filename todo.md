@@ -248,3 +248,9 @@
 - [x] SpecsTab: completion indicator per style (e.g. filled / empty)
 - [x] Excel export: generates spec sheet matching factory format (header rows + component rows + colour columns)
 - [x] Sidebar: add Specs nav item under Approval section
+
+## Phase 19: Spec Sheet Export — Image
+
+- [x] Fetch style image as base64 in the browser before export
+- [x] Embed image into Excel using ExcelJS addImage
+- [x] Image appears in the header area of the spec sheet (top-right, alongside style name/last/season)
