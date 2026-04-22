@@ -425,3 +425,8 @@
 - [x] Bug: By Style tab showed "No session selected" on load when there was no active (unlocked) session, causing all buy quantities to appear blank
 - [x] Root cause: auto-select logic used `useMemo` (wrong hook for side effects) and only checked for an active session — locked sessions were never auto-selected
 - [x] Fix: replaced `useMemo` with `useEffect`; now falls back to the most recently created session if no active session exists
+
+## Phase 36: Buy Export — Session Date + Presentation Formatting
+
+- [x] Buy export filename: use session's own date (from session.createdAt or session.name) instead of today's date
+- [x] Buy export: redesign layout to be clean and presentation-ready (title row, styled header, alternating rows, category grouping with subtotals, totals row)
