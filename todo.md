@@ -306,3 +306,8 @@
 - [x] Analyse MOMA spec sheet exact formatting (font name, sizes, bold rows, colours, borders)
 - [x] Rewrite exportSpecSheet.ts: Arial throughout, bold rules, no coloured backgrounds, blank spacer rows, 2-col merged colour columns
 - [x] Ensure style image is embedded correctly in header area (top-right, rows 1-8)
+
+## Phase 23: Spec Colour Column Headers
+
+- [x] SpecsTab: show full colour+leather name as column header (e.g. "DOVE NAPPA") instead of "COLOUR 1"
+- [x] exportSpecSheet.ts: use full colour+leather name in colour column headers

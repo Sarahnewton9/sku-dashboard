@@ -23,7 +23,8 @@ interface ExportSpecSheetParams {
   last: string;
   category: string;
   season?: string;
-  colours: string[];
+  colours: string[];           // raw colour keys (used as spec lookup keys)
+  colourLabels?: string[];     // full display labels e.g. "BLACK NAPPA" — used as column headers
   specs: Record<string, Record<string, string>>; // colour → component → value
   hasBuckle?: boolean;
   dressShoeSubType?: "court" | "sling" | null;
@@ -77,6 +78,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     category,
     season = "SS26",
     colours,
+    colourLabels,
     specs,
     hasBuckle = false,
     dressShoeSubType = null,
@@ -188,7 +190,8 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     const colEnd = colStart + 1;
     ws.mergeCells(9, colStart, 9, colEnd);
     const cell = ws.getCell(9, colStart);
-    cell.value = `COLOUR ${i + 1}`;
+    // Use full colour+leather label if provided, otherwise fall back to raw colour name
+    cell.value = (colourLabels?.[i] ?? colours[i]).toUpperCase();
     cell.font = arialBold8();
     cell.alignment = { horizontal: "center", vertical: "middle" };
   }

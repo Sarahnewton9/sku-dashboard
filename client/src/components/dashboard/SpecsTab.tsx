@@ -29,6 +29,24 @@ const NEW_LASTS = [
   "HARLEY", "JAYDE", "ROXIE", "VIVA", "PIXIE",
 ];
 
+// ─── Build colour+leather lookup from rawSkus ────────────────────────────────
+// Maps style → { colour → "COLOUR LEATHER" } e.g. MOMA → { BLACK: "BLACK NAPPA" }
+function buildColourLeatherMap(): Record<string, Record<string, string>> {
+  const map: Record<string, Record<string, string>> = {};
+  const rawSkus = (skuData as any).rawSkus ?? [];
+  for (const sku of rawSkus) {
+    const style = sku.style as string;
+    const colour = sku.colour as string;
+    const leather = sku.leather as string;
+    if (!map[style]) map[style] = {};
+    if (!map[style][colour]) {
+      map[style][colour] = leather ? `${colour} ${leather}` : colour;
+    }
+  }
+  return map;
+}
+const COLOUR_LEATHER_MAP = buildColourLeatherMap();
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface StyleEntry {
@@ -36,7 +54,8 @@ interface StyleEntry {
   last: string;
   category: string;
   imageUrl?: string;
-  colours: string[];
+  colours: string[];       // raw colour names e.g. ["BLACK", "PETAL"]
+  colourLabels: string[];  // full labels e.g. ["BLACK NAPPA", "PETAL NAPPA"]
   isAllNew: boolean;
   hasNew: boolean;
   totalSKUs: number;
@@ -53,17 +72,21 @@ function buildStyleList(): StyleEntry[] {
       const isOnNewLast = NEW_LASTS.some((nl) => lastUpper.includes(nl));
       return isOnNewLast || s.isAllNew;
     })
-    .map((s) => ({
-      style: s.style,
-      last: s.last,
-      category: s.category,
-      imageUrl: (s as any).imageUrl,
-      colours: (s as any).colours ?? [],
-      isAllNew: s.isAllNew,
-      hasNew: s.hasNew,
-      totalSKUs: s.totalSKUs,
-      newSKUs: s.newSKUs,
-    }))
+    .map((s) => {
+      const rawColours: string[] = (s as any).colours ?? [];
+      return {
+        style: s.style,
+        last: s.last,
+        category: s.category,
+        imageUrl: (s as any).imageUrl,
+        colours: rawColours,
+        colourLabels: rawColours.map((c) => COLOUR_LEATHER_MAP[s.style]?.[c] ?? c),
+        isAllNew: s.isAllNew,
+        hasNew: s.hasNew,
+        totalSKUs: s.totalSKUs,
+        newSKUs: s.newSKUs,
+      };
+    })
     .sort((a, b) => a.style.localeCompare(b.style));
 }
 
@@ -183,13 +206,17 @@ function TextCell({ value, onSave }: TextCellProps) {
 // ─── Colour Copy Panel ───────────────────────────────────────────────────────
 
 interface ColourCopyPanelProps {
-  colours: string[];
+  colours: string[];       // raw colour keys (used for copy logic)
+  colourLabels: string[];  // full display labels e.g. "BLACK NAPPA"
   onCopy: (source: string, targets: string[]) => void;
 }
 
-function ColourCopyPanel({ colours, onCopy }: ColourCopyPanelProps) {
+function ColourCopyPanel({ colours, colourLabels, onCopy }: ColourCopyPanelProps) {
   const [source, setSource] = useState<string | null>(null);
   const [targets, setTargets] = useState<Set<string>>(new Set());
+
+  // Build a map from raw colour → display label for quick lookup
+  const labelMap = Object.fromEntries(colours.map((c, i) => [c, colourLabels[i] ?? c]));
 
   function toggleTarget(colour: string) {
     setTargets((prev) => {
@@ -210,12 +237,12 @@ function ColourCopyPanel({ colours, onCopy }: ColourCopyPanelProps) {
     <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/20 rounded-lg border text-xs">
       <span className="text-muted-foreground font-medium whitespace-nowrap">Copy specs from:</span>
       <Select value={source ?? ""} onValueChange={(v) => { setSource(v); setTargets(new Set()); }}>
-        <SelectTrigger className="h-7 w-36 text-xs">
+        <SelectTrigger className="h-7 w-48 text-xs">
           <SelectValue placeholder="Select colour…" />
         </SelectTrigger>
         <SelectContent>
           {colours.map((c) => (
-            <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
+            <SelectItem key={c} value={c} className="text-xs">{labelMap[c]}</SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -232,7 +259,7 @@ function ColourCopyPanel({ colours, onCopy }: ColourCopyPanelProps) {
                   : "bg-background border-border hover:bg-muted"
               }`}
             >
-              {c}
+              {labelMap[c]}
             </button>
           ))}
           <Button
@@ -381,6 +408,7 @@ function SpecForm({
       {entry.colours.length > 1 && (
         <ColourCopyPanel
           colours={entry.colours}
+          colourLabels={entry.colourLabels}
           onCopy={handleCopyFrom}
         />
       )}
@@ -390,10 +418,10 @@ function SpecForm({
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr className="bg-muted/50">
-              <th className="text-left px-3 py-2 font-medium text-muted-foreground w-40 border-b">Component</th>
-              {entry.colours.map((colour) => (
+              <th className="text-left px-3 py-2 font-medium text-muted-foreground w-40 border-b">Colour</th>
+              {entry.colours.map((colour, i) => (
                 <th key={colour} className="text-left px-3 py-2 font-medium border-b min-w-[160px]">
-                  {colour}
+                  {entry.colourLabels[i] ?? colour}
                 </th>
               ))}
             </tr>
@@ -774,6 +802,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                       last: selectedEntry.last,
                       category: selectedEntry.category,
                       colours: selectedEntry.colours,
+                      colourLabels: selectedEntry.colourLabels,
                       specs,
                       hasBuckle: specMeta?.hasBuckle ?? false,
                       dressShoeSubType: specMeta?.dressShoeSubType ?? null,
