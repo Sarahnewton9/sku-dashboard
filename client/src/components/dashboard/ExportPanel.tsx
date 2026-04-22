@@ -105,9 +105,9 @@ export default function ExportPanel({ onClose }: Props) {
           const meta = skuMetaMap[key];
           const qty = meta?.orderQty ?? 0;
           return {
+            Last: styleLookup[sku.style]?.last ?? "",
             Style: sku.style,
             Category: styleLookup[sku.style]?.category ?? "",
-            Last: styleLookup[sku.style]?.last ?? "",
             Colour: sku.colour,
             Leather: sku.leather,
             Status: sku.is_new ? "New" : "Existing",

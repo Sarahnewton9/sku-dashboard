@@ -333,3 +333,15 @@
 - [x] Styles move to Completed group when completion percentage reaches 100%
 - [x] Completed group shows count badge (e.g. "Completed (12)")
 - [x] In Progress group shows count badge (e.g. "In Progress (35)")
+
+## Phase 26: Edit/Delete Fitting Comments
+
+- [ ] Server: add updateFittingComment procedure (takes commentId + new text, protected)
+- [ ] Server: add deleteFittingComment procedure (takes commentId, protected)
+- [ ] UI: add inline edit mode on each comment (pencil icon → editable textarea → Save/Cancel)
+- [ ] UI: add delete button on each comment (trash icon → confirm → delete)
+- [ ] Optimistic updates for both edit and delete
+
+## Phase 26: Buy Sheet Export Column Order
+
+- [x] Buy sheet export: move Last column before Style Name column
