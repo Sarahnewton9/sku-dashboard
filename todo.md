@@ -226,3 +226,25 @@
 - [x] Add search input to Fitting tab header area
 - [x] Filter active styles by search query (style name, last name)
 - [x] Show match count when search is active
+
+## Phase 18: Specs Section
+
+- [x] DB: styleSpecs table — id, style, colour, component, value, updatedAt
+- [x] DB: specDropdownOptions table — id, component, value, createdAt (stores custom dropdown values per field)
+- [x] DB push for new tables
+- [x] Backend: specs.getForStyle(style) — returns all saved component values for a style grouped by colour
+- [x] Backend: specs.upsert({ style, colour, component, value }) — save one cell
+- [x] Backend: specs.getDropdownOptions(component) — return saved options for a field
+- [x] Backend: specs.addDropdownOption({ component, value }) — add a new option
+- [x] Shared: spec templates per category (component rows, order) — Dress Shoe (Court/Sling), Ballet Flat, Loafer, Platform, Boot, Sandal, Wedge
+- [x] Shared: default dropdown options per component (pre-seeded from spec sheets)
+- [x] Buckle toggle Y/N on every template — when Y, shows Buckle Colour dropdown per colour
+- [x] SpecsTab: style list on left (new patterns only, same filter as Fitting tab)
+- [x] SpecsTab: clicking a style loads spec form on right
+- [x] SpecsTab: per-colour columns (one column per colour in the style)
+- [x] SpecsTab: editable dropdown cells — type to add new option, saved to DB
+- [x] SpecsTab: free-text Notes field per style
+- [x] SpecsTab: Copy From button — duplicate one colour's values to all others
+- [x] SpecsTab: completion indicator per style (e.g. filled / empty)
+- [x] Excel export: generates spec sheet matching factory format (header rows + component rows + colour columns)
+- [x] Sidebar: add Specs nav item under Approval section

@@ -13,6 +13,10 @@ import {
   getBuySessionItems, upsertBuySessionItem, getSessionTotals,
   getAllLastApprovals, upsertLastApproval,
   getAllSeasonImports, createSeasonImport, getSeasonSkuData, deleteSeasonImport,
+  getSpecsForStyle, upsertStyleSpec, deleteStyleSpecs,
+  getAllDropdownOptions, getDropdownOptions, addDropdownOption, deleteDropdownOption,
+  getStyleSpecMeta, getAllStyleSpecMeta, upsertStyleSpecMeta,
+  getSpecCountsForAllStyles,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -327,6 +331,72 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await deleteSeasonImport(input.id);
+        return { success: true };
+      }),
+  }),
+  // Specs — product specification sheets per style
+  specs: router({
+    getForStyle: publicProcedure
+      .input(z.object({ style: z.string() }))
+      .query(async ({ input }) => getSpecsForStyle(input.style)),
+
+    upsert: publicProcedure
+      .input(z.object({
+        style: z.string(),
+        colour: z.string(),
+        component: z.string(),
+        value: z.string().nullable(),
+      }))
+      .mutation(async ({ input }) => {
+        await upsertStyleSpec(input.style, input.colour, input.component, input.value);
+        return { success: true };
+      }),
+
+    deleteAll: publicProcedure
+      .input(z.object({ style: z.string() }))
+      .mutation(async ({ input }) => {
+        await deleteStyleSpecs(input.style);
+        return { success: true };
+      }),
+
+    // Dropdown options
+    getDropdownOptions: publicProcedure
+      .input(z.object({ component: z.string() }))
+      .query(async ({ input }) => getDropdownOptions(input.component)),
+
+    getAllDropdownOptions: publicProcedure
+      .query(async () => getAllDropdownOptions()),
+
+    addDropdownOption: publicProcedure
+      .input(z.object({ component: z.string(), value: z.string() }))
+      .mutation(async ({ input }) => addDropdownOption(input.component, input.value)),
+
+    deleteDropdownOption: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteDropdownOption(input.id);
+        return { success: true };
+      }),
+
+    // Style spec meta (buckle, sub-type, notes)
+    getMeta: publicProcedure
+      .input(z.object({ style: z.string() }))
+      .query(async ({ input }) => getStyleSpecMeta(input.style)),
+
+    getAllMeta: publicProcedure
+      .query(async () => getAllStyleSpecMeta()),
+    getCounts: publicProcedure
+      .query(async () => getSpecCountsForAllStyles()),
+
+    upsertMeta: publicProcedure
+      .input(z.object({
+        style: z.string(),
+        hasBuckle: z.boolean().optional(),
+        dressShoeSubType: z.enum(["court", "sling"]).nullable().optional(),
+        notes: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await upsertStyleSpecMeta(input);
         return { success: true };
       }),
   }),

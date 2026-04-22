@@ -1,0 +1,613 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+import { trpc } from "@/lib/trpc";
+import { skuData } from "@/lib/skuData";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  getTemplateForCategory, DEFAULT_DROPDOWN_OPTIONS, SECTION_LABELS,
+  type SpecComponent, type ShoeCategory,
+} from "@shared/specTemplates";
+import { exportSpecSheet } from "@/lib/exportSpecSheet";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const NEW_LASTS = [
+  "DAZIE", "SIA", "SALLY", "TIANA", "BILLIE", "MATISSE",
+  "EDGY", "EMBER", "TILDA", "LUCY", "ENVY", "FINCH",
+  "HARLEY", "JAYDE", "ROXIE", "VIVA", "PIXIE",
+];
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface StyleEntry {
+  style: string;
+  last: string;
+  category: string;
+  imageUrl?: string;
+  colours: string[];
+  isAllNew: boolean;
+  hasNew: boolean;
+  totalSKUs: number;
+  newSKUs: number;
+}
+
+// ─── Build style list: same filter as FittingTab ─────────────────────────────
+// Specs required for: new lasts OR all-new patterns (same logic as fitting)
+
+function buildStyleList(): StyleEntry[] {
+  return skuData.styles
+    .filter((s) => {
+      const lastUpper = (s.last ?? "").toUpperCase();
+      const isOnNewLast = NEW_LASTS.some((nl) => lastUpper.includes(nl));
+      return isOnNewLast || s.isAllNew;
+    })
+    .map((s) => ({
+      style: s.style,
+      last: s.last,
+      category: s.category,
+      imageUrl: (s as any).imageUrl,
+      colours: (s as any).colours ?? [],
+      isAllNew: s.isAllNew,
+      hasNew: s.hasNew,
+      totalSKUs: s.totalSKUs,
+      newSKUs: s.newSKUs,
+    }))
+    .sort((a, b) => a.style.localeCompare(b.style));
+}
+
+// ─── Editable Dropdown Cell ───────────────────────────────────────────────────
+
+interface DropdownCellProps {
+  component: SpecComponent;
+  value: string;
+  savedOptions: string[];
+  onSave: (val: string) => void;
+  onAddOption: (val: string) => void;
+}
+
+function DropdownCell({ component, value, savedOptions, onSave, onAddOption }: DropdownCellProps) {
+  const defaults = DEFAULT_DROPDOWN_OPTIONS[component.key] ?? [];
+  // Merge defaults + saved options, deduplicated
+  const allOptions = Array.from(new Set([...defaults, ...savedOptions])).filter(Boolean);
+
+  const [inputMode, setInputMode] = useState(false);
+  const [inputVal, setInputVal] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function handleSelectChange(val: string) {
+    if (val === "__add_new__") {
+      setInputMode(true);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    } else {
+      onSave(val);
+    }
+  }
+
+  function handleInputSubmit() {
+    const trimmed = inputVal.trim();
+    if (!trimmed) { setInputMode(false); return; }
+    onAddOption(trimmed);
+    onSave(trimmed);
+    setInputVal("");
+    setInputMode(false);
+  }
+
+  if (inputMode) {
+    return (
+      <div className="flex gap-1">
+        <Input
+          ref={inputRef}
+          value={inputVal}
+          onChange={(e) => setInputVal(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleInputSubmit();
+            if (e.key === "Escape") { setInputMode(false); setInputVal(""); }
+          }}
+          placeholder="Type new value…"
+          className="h-8 text-xs"
+        />
+        <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={handleInputSubmit}>Add</Button>
+        <Button size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={() => { setInputMode(false); setInputVal(""); }}>✕</Button>
+      </div>
+    );
+  }
+
+  return (
+    <Select value={value || ""} onValueChange={handleSelectChange}>
+      <SelectTrigger className="h-8 text-xs min-w-[140px]">
+        <SelectValue placeholder="— select —" />
+      </SelectTrigger>
+      <SelectContent>
+        {allOptions.map((opt) => (
+          <SelectItem key={opt} value={opt} className="text-xs">{opt}</SelectItem>
+        ))}
+        <SelectItem value="__add_new__" className="text-xs text-blue-600 font-medium">+ Add new option…</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+
+// ─── Text Cell ────────────────────────────────────────────────────────────────
+
+interface TextCellProps {
+  value: string;
+  onSave: (val: string) => void;
+}
+
+function TextCell({ value, onSave }: TextCellProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setDraft(value); }, [value]);
+
+  if (editing) {
+    return (
+      <Input
+        ref={inputRef}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => { onSave(draft); setEditing(false); }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { onSave(draft); setEditing(false); }
+          if (e.key === "Escape") { setDraft(value); setEditing(false); }
+        }}
+        className="h-8 text-xs min-w-[140px]"
+        autoFocus
+      />
+    );
+  }
+
+  return (
+    <div
+      className="h-8 px-2 flex items-center text-xs rounded border border-transparent hover:border-border cursor-text min-w-[140px] text-foreground"
+      onClick={() => { setEditing(true); setTimeout(() => inputRef.current?.focus(), 10); }}
+    >
+      {value || <span className="text-muted-foreground">— type —</span>}
+    </div>
+  );
+}
+
+// ─── Spec Form for a single style ─────────────────────────────────────────────
+
+interface SpecFormProps {
+  entry: StyleEntry;
+  specMeta: { hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null } | null;
+  specs: Record<string, Record<string, string>>; // colour → component → value
+  allDropdownOptions: Record<string, string[]>;
+  onUpsert: (colour: string, component: string, value: string) => void;
+  onAddDropdownOption: (component: string, value: string) => void;
+  onMetaChange: (meta: Partial<{ hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null }>) => void;
+}
+
+function SpecForm({
+  entry, specMeta, specs, allDropdownOptions, onUpsert, onAddDropdownOption, onMetaChange,
+}: SpecFormProps) {
+  const hasBuckle = specMeta?.hasBuckle ?? false;
+  const dressShoeSubType = specMeta?.dressShoeSubType ?? null;
+  const notes = specMeta?.notes ?? "";
+  const isDressShoe = entry.category === "Dress Shoe";
+
+  const template = getTemplateForCategory(entry.category, {
+    hasBuckle,
+    dressShoeSubType: isDressShoe ? dressShoeSubType : null,
+  });
+
+  // Group components by section
+  const sections = template.reduce<Record<string, SpecComponent[]>>((acc, comp) => {
+    if (!acc[comp.section]) acc[comp.section] = [];
+    acc[comp.section].push(comp);
+    return acc;
+  }, {});
+
+  function handleCopyFrom(sourceColour: string, targetColours: string[]) {
+    const sourceValues = specs[sourceColour] ?? {};
+    for (const colour of targetColours) {
+      for (const comp of template) {
+        const val = sourceValues[comp.key];
+        if (val) onUpsert(colour, comp.key, val);
+      }
+    }
+    toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s)`);
+  }
+
+  // Count filled cells
+  const totalCells = template.length * entry.colours.length;
+  const filledCells = entry.colours.reduce((sum, colour) => {
+    return sum + template.filter((c) => !!(specs[colour]?.[c.key])).length;
+  }, 0);
+  const pct = totalCells > 0 ? Math.round((filledCells / totalCells) * 100) : 0;
+
+  return (
+    <div className="space-y-4">
+      {/* Style header */}
+      <div className="flex items-start gap-4 pb-4 border-b">
+        {entry.imageUrl && (
+          <img src={entry.imageUrl} alt={entry.style} className="w-16 h-16 object-cover rounded-lg border" />
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-lg font-semibold">{entry.style}</h2>
+            <Badge variant="outline" className="text-xs">{entry.category}</Badge>
+            <Badge variant="outline" className="text-xs">{entry.last}</Badge>
+            {entry.isAllNew && <Badge className="text-xs bg-blue-100 text-blue-800 border-blue-200">New Pattern</Badge>}
+          </div>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="text-sm text-muted-foreground">{entry.colours.length} colours · {entry.totalSKUs} SKUs</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+              </div>
+              <span className="text-xs text-muted-foreground">{pct}% complete</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Style-level settings */}
+      <div className="flex flex-wrap gap-6 items-start p-3 bg-muted/30 rounded-lg border">
+        {/* Buckle toggle */}
+        <div className="flex items-center gap-2">
+          <Switch
+            id="buckle-toggle"
+            checked={hasBuckle}
+            onCheckedChange={(v) => onMetaChange({ hasBuckle: v })}
+          />
+          <Label htmlFor="buckle-toggle" className="text-sm font-medium cursor-pointer">Has Buckle</Label>
+        </div>
+
+        {/* Dress shoe sub-type */}
+        {isDressShoe && (
+          <div className="flex items-center gap-2">
+            <Label className="text-sm font-medium">Sub-type:</Label>
+            <Select
+              value={dressShoeSubType ?? "none"}
+              onValueChange={(v) => onMetaChange({ dressShoeSubType: v === "none" ? null : v as "court" | "sling" })}
+            >
+              <SelectTrigger className="h-8 w-36 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none" className="text-xs">— not set —</SelectItem>
+                <SelectItem value="court" className="text-xs">Court (full)</SelectItem>
+                <SelectItem value="sling" className="text-xs">Sling Back</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Notes */}
+        <div className="flex-1 min-w-[200px]">
+          <Label className="text-sm font-medium block mb-1">Notes</Label>
+          <Textarea
+            value={notes}
+            onChange={(e) => onMetaChange({ notes: e.target.value })}
+            placeholder="Free-text notes for this style…"
+            className="text-xs min-h-[60px] resize-none"
+          />
+        </div>
+      </div>
+
+      {/* Copy from colour */}
+      {entry.colours.length > 1 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-muted-foreground font-medium">Copy all specs from:</span>
+          {entry.colours.map((colour) => (
+            <Button
+              key={colour}
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs gap-1"
+              onClick={() => handleCopyFrom(colour, entry.colours.filter((c) => c !== colour))}
+            >
+              <Copy className="w-3 h-3" />
+              {colour} → all others
+            </Button>
+          ))}
+        </div>
+      )}
+
+      {/* Spec grid */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs border-collapse">
+          <thead>
+            <tr className="bg-muted/50">
+              <th className="text-left px-3 py-2 font-medium text-muted-foreground w-40 border-b">Component</th>
+              {entry.colours.map((colour) => (
+                <th key={colour} className="text-left px-3 py-2 font-medium border-b min-w-[160px]">
+                  {colour}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(sections).map(([sectionKey, components]) => (
+              <>
+                <tr key={`section-${sectionKey}`} className="bg-muted/20">
+                  <td
+                    colSpan={entry.colours.length + 1}
+                    className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b"
+                  >
+                    {SECTION_LABELS[sectionKey] ?? sectionKey}
+                  </td>
+                </tr>
+                {components.map((comp) => (
+                  <tr key={comp.key} className="border-b hover:bg-muted/10">
+                    <td className="px-3 py-1.5 font-medium text-muted-foreground align-middle">{comp.label}</td>
+                    {entry.colours.map((colour) => {
+                      const val = specs[colour]?.[comp.key] ?? "";
+                      const savedOpts = allDropdownOptions[comp.key] ?? [];
+                      return (
+                        <td key={colour} className="px-2 py-1 align-middle">
+                          {comp.type === "dropdown" ? (
+                            <DropdownCell
+                              component={comp}
+                              value={val}
+                              savedOptions={savedOpts}
+                              onSave={(v) => onUpsert(colour, comp.key, v)}
+                              onAddOption={(v) => onAddDropdownOption(comp.key, v)}
+                            />
+                          ) : (
+                            <TextCell
+                              value={val}
+                              onSave={(v) => onUpsert(colour, comp.key, v)}
+                            />
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main SpecsTab ────────────────────────────────────────────────────────────
+
+interface SpecsTabProps {}
+
+export default function SpecsTab({}: SpecsTabProps) {
+  const styleList = buildStyleList();
+  const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  const filtered = styleList.filter((s) => {
+    const q = search.toLowerCase();
+    return !q || s.style.toLowerCase().includes(q) || s.last.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
+  });
+
+  const selectedEntry = styleList.find((s) => s.style === selectedStyle) ?? null;
+
+  // ── Data queries ──────────────────────────────────────────────────────────
+  const { data: rawSpecs = [], refetch: refetchSpecs } = trpc.specs.getForStyle.useQuery(
+    { style: selectedStyle! },
+    { enabled: !!selectedStyle }
+  );
+
+  const { data: rawMeta, refetch: refetchMeta } = trpc.specs.getMeta.useQuery(
+    { style: selectedStyle! },
+    { enabled: !!selectedStyle }
+  );
+
+  const { data: rawDropdownOptions = [], refetch: refetchDropdowns } = trpc.specs.getAllDropdownOptions.useQuery();
+
+  // Spec counts for all styles (for sidebar completion dots)
+  const { data: specCounts = [] } = trpc.specs.getCounts.useQuery();
+  const specCountMap = Object.fromEntries(specCounts.map((r) => [r.style, r.filledCount]));
+
+  // ── Derived data ──────────────────────────────────────────────────────────
+  // specs: colour → component → value
+  const specs: Record<string, Record<string, string>> = {};
+  for (const row of rawSpecs) {
+    if (!specs[row.colour]) specs[row.colour] = {};
+    specs[row.colour][row.component] = row.value ?? "";
+  }
+
+  // allDropdownOptions: component → string[]
+  const allDropdownOptions: Record<string, string[]> = {};
+  for (const opt of rawDropdownOptions) {
+    if (!allDropdownOptions[opt.component]) allDropdownOptions[opt.component] = [];
+    allDropdownOptions[opt.component].push(opt.value);
+  }
+
+  const specMeta = rawMeta
+    ? {
+        hasBuckle: rawMeta.hasBuckle ?? false,
+        dressShoeSubType: rawMeta.dressShoeSubType as "court" | "sling" | null ?? null,
+        notes: rawMeta.notes ?? null,
+      }
+    : null;
+
+  // ── Mutations ─────────────────────────────────────────────────────────────
+  const upsertMutation = trpc.specs.upsert.useMutation({
+    onError: () => toast.error("Failed to save spec value"),
+  });
+
+  const addDropdownMutation = trpc.specs.addDropdownOption.useMutation({
+    onSuccess: () => refetchDropdowns(),
+    onError: () => toast.error("Failed to add dropdown option"),
+  });
+
+  const upsertMetaMutation = trpc.specs.upsertMeta.useMutation({
+    onSuccess: () => refetchMeta(),
+    onError: () => toast.error("Failed to save style settings"),
+  });
+
+  // Debounced notes save
+  const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleUpsert(colour: string, component: string, value: string) {
+    if (!selectedStyle) return;
+    upsertMutation.mutate(
+      { style: selectedStyle, colour, component, value },
+      { onSuccess: () => refetchSpecs() }
+    );
+  }
+
+  function handleAddDropdownOption(component: string, value: string) {
+    addDropdownMutation.mutate({ component, value });
+  }
+
+  function handleMetaChange(patch: Partial<{ hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null }>) {
+    if (!selectedStyle) return;
+    if ("notes" in patch) {
+      // Debounce notes saves
+      if (notesTimer.current) clearTimeout(notesTimer.current);
+      notesTimer.current = setTimeout(() => {
+        upsertMetaMutation.mutate({ style: selectedStyle, ...patch });
+      }, 800);
+    } else {
+      upsertMetaMutation.mutate({ style: selectedStyle, ...patch });
+    }
+  }
+
+  // Completion stats — uses live rawSpecs for selected style, DB counts for others
+  function getCompletionPct(entry: StyleEntry): number {
+    const template = getTemplateForCategory(entry.category, {
+      hasBuckle: false,
+      dressShoeSubType: null,
+    });
+    const total = template.length * entry.colours.length;
+    if (total === 0) return 0;
+    const filled = entry.style === selectedStyle
+      ? rawSpecs.filter((r) => r.value && r.value.trim()).length
+      : (specCountMap[entry.style] ?? 0);
+    return Math.min(100, Math.round((filled / total) * 100));
+  }
+
+  return (
+    <div className="flex h-full overflow-hidden">
+      {/* Left: style list */}
+      <div className="w-64 flex-shrink-0 border-r flex flex-col bg-muted/20">
+        <div className="p-3 border-b">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search styles…"
+              className="pl-8 h-8 text-xs"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            {filtered.length} of {styleList.length} styles
+          </p>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          {filtered.map((entry) => {
+            const isSelected = selectedStyle === entry.style;
+            return (
+              <button
+                key={entry.style}
+                onClick={() => setSelectedStyle(entry.style)}
+                className={`w-full text-left px-3 py-2.5 border-b transition-colors hover:bg-muted/50 ${
+                  isSelected ? "bg-primary/10 border-l-2 border-l-primary" : ""
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {entry.imageUrl && (
+                    <img src={entry.imageUrl} alt={entry.style} className="w-8 h-8 object-cover rounded flex-shrink-0" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-xs truncate">{entry.style}</div>
+                    <div className="text-xs text-muted-foreground truncate">{entry.category} · {entry.last}</div>
+                    <div className="text-xs text-muted-foreground">{entry.colours.length} colours</div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    {entry.isAllNew && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" title="New pattern" />
+                    )}
+                    {(() => {
+                      const pct = getCompletionPct(entry);
+                      if (pct === 0) return null;
+                      return (
+                        <div className="flex items-center gap-1">
+                          <div className="w-10 h-1 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{ width: `${pct}%`, background: pct >= 100 ? 'oklch(0.65 0.15 145)' : 'oklch(0.70 0.15 55)' }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+          {filtered.length === 0 && (
+            <div className="p-4 text-center text-xs text-muted-foreground">No styles match "{search}"</div>
+          )}
+        </div>
+      </div>
+
+      {/* Right: spec form */}
+      <div className="flex-1 overflow-y-auto p-6">
+        {!selectedEntry ? (
+          <div className="flex flex-col items-center justify-center h-full text-center gap-3">
+            <FileSpreadsheet className="w-12 h-12 text-muted-foreground/40" />
+            <div>
+              <p className="font-medium text-muted-foreground">Select a style to view its spec sheet</p>
+              <p className="text-sm text-muted-foreground/70 mt-1">
+                {styleList.length} styles require specs this season
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Export button */}
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={() => {
+                  exportSpecSheet({
+                    style: selectedEntry.style,
+                    last: selectedEntry.last,
+                    category: selectedEntry.category,
+                    colours: selectedEntry.colours,
+                    specs,
+                    hasBuckle: specMeta?.hasBuckle ?? false,
+                    dressShoeSubType: specMeta?.dressShoeSubType ?? null,
+                  });
+                  toast.success(`Exported ${selectedEntry.style} spec sheet`);
+                }}
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                Export to Excel
+              </Button>
+            </div>
+
+            <SpecForm
+              entry={selectedEntry}
+              specMeta={specMeta}
+              specs={specs}
+              allDropdownOptions={allDropdownOptions}
+              onUpsert={handleUpsert}
+              onAddDropdownOption={handleAddDropdownOption}
+              onMetaChange={handleMetaChange}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

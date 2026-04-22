@@ -175,3 +175,48 @@ export const seasonSkuData = mysqlTable("season_sku_data", {
 
 export type SeasonSkuData = typeof seasonSkuData.$inferSelect;
 export type InsertSeasonSkuData = typeof seasonSkuData.$inferInsert;
+
+/**
+ * Style specs — one row per (style, colour, component) combination
+ * Stores the value for each spec field per colour per style
+ */
+export const styleSpecs = mysqlTable("style_specs", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull(),
+  colour: varchar("colour", { length: 64 }).notNull(),
+  component: varchar("component", { length: 128 }).notNull(),
+  value: text("value"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type StyleSpec = typeof styleSpecs.$inferSelect;
+export type InsertStyleSpec = typeof styleSpecs.$inferInsert;
+
+/**
+ * Spec dropdown options — stores custom/additional dropdown values per component field
+ * Seeded with defaults; users can add new values which are persisted here
+ */
+export const specDropdownOptions = mysqlTable("spec_dropdown_options", {
+  id: int("id").autoincrement().primaryKey(),
+  component: varchar("component", { length: 128 }).notNull(),
+  value: varchar("value", { length: 256 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SpecDropdownOption = typeof specDropdownOptions.$inferSelect;
+export type InsertSpecDropdownOption = typeof specDropdownOptions.$inferInsert;
+
+/**
+ * Style spec metadata — style-level spec settings (buckle Y/N, dress shoe sub-type, notes)
+ */
+export const styleSpecMeta = mysqlTable("style_spec_meta", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull().unique(),
+  hasBuckle: boolean("hasBuckle").default(false).notNull(),
+  dressShoeSubType: mysqlEnum("dressShoeSubType", ["court", "sling"]),
+  notes: text("notes"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type StyleSpecMeta = typeof styleSpecMeta.$inferSelect;
+export type InsertStyleSpecMeta = typeof styleSpecMeta.$inferInsert;

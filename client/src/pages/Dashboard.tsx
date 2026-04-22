@@ -21,6 +21,7 @@ import BuyAnalysisTab from "@/components/dashboard/BuyAnalysisTab";
 import LastApprovalTab from "@/components/dashboard/LastApprovalTab";
 import { FittingTab } from "@/components/dashboard/FittingTab";
 import SeasonAnalysisTab from "@/components/dashboard/SeasonAnalysisTab";
+import SpecsTab from "@/components/dashboard/SpecsTab";
 import {
   LayoutDashboard,
   Tag,
@@ -36,9 +37,10 @@ import {
   Stamp,
   LineChart,
   Ruler,
+  ClipboardList,
 } from "lucide-react";
 
-type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval" | "fitting" | "season-analysis";
+type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval" | "fitting" | "specs" | "season-analysis";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group?: string }[] = [
@@ -53,6 +55,7 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group
   { id: "buy-analysis", label: "Buy Analysis", icon: BarChart3, group: "buying" },
   { id: "last-approval", label: "Last Approval", icon: Stamp, group: "approval" },
   { id: "fitting", label: "Fitting", icon: Ruler, group: "approval" },
+  { id: "specs", label: "Specs", icon: ClipboardList, group: "approval" },
   { id: "season-analysis", label: "Season Analysis", icon: LineChart, group: "analysis" },
 ];
 
@@ -235,6 +238,7 @@ export default function Dashboard() {
               {activeTab === "buy-analysis" && "Breakdown of pairs bought per session by category, leather, and colour/leather combo"}
               {activeTab === "last-approval" && "16 new lasts — track approval status and notes per last"}
               {activeTab === "fitting" && "Style-level fit commentary and imagery for all styles on new lasts"}
+              {activeTab === "specs" && "Product specification sheets — per-colour component details for all new styles"}
               {activeTab === "season-analysis" && "Import Total Season reports and surface hot sellers, colour insights, and SKU coverage"}
             </p>
           </div>
@@ -259,23 +263,31 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* Scrollable content area */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="px-8 py-6">
-            {activeTab === "overview" && <SummaryCards />}
-            {activeTab === "categories" && <CategoryTab />}
-            {activeTab === "styles" && <StylesTab />}
-            {activeTab === "leathers" && <LeathersTab />}
-            {activeTab === "colours" && <ColoursTab />}
-            {activeTab === "colourleather" && <ColourLeatherTab />}
-            {activeTab === "expansion" && <ExpansionTab />}
-            {activeTab === "buy-sessions" && <BuySessionsPanel />}
-            {activeTab === "buy-analysis" && <BuyAnalysisTab />}
-            {activeTab === "last-approval" && <LastApprovalTab />}
-            {activeTab === "fitting" && <FittingTab />}
-            {activeTab === "season-analysis" && <SeasonAnalysisTab />}
+        {/* Scrollable content area — hidden when Specs is active (needs full height) */}
+        {activeTab !== "specs" && (
+          <div className="flex-1 overflow-y-auto">
+            <div className="px-8 py-6">
+              {activeTab === "overview" && <SummaryCards />}
+              {activeTab === "categories" && <CategoryTab />}
+              {activeTab === "styles" && <StylesTab />}
+              {activeTab === "leathers" && <LeathersTab />}
+              {activeTab === "colours" && <ColoursTab />}
+              {activeTab === "colourleather" && <ColourLeatherTab />}
+              {activeTab === "expansion" && <ExpansionTab />}
+              {activeTab === "buy-sessions" && <BuySessionsPanel />}
+              {activeTab === "buy-analysis" && <BuyAnalysisTab />}
+              {activeTab === "last-approval" && <LastApprovalTab />}
+              {activeTab === "fitting" && <FittingTab />}
+              {activeTab === "season-analysis" && <SeasonAnalysisTab />}
+            </div>
           </div>
-        </div>
+        )}
+        {/* Specs tab — full height, split-pane layout */}
+        {activeTab === "specs" && (
+          <div className="flex-1 overflow-hidden">
+            <SpecsTab />
+          </div>
+        )}
       </main>
 
       {/* Export Panel */}

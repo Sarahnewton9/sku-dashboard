@@ -1,6 +1,6 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -384,4 +384,117 @@ export async function deleteSeasonImport(id: number) {
   if (!db) throw new Error("Database not available");
   await db.delete(seasonSkuData).where(eq(seasonSkuData.importId, id));
   await db.delete(seasonImports).where(eq(seasonImports.id, id));
+}
+
+// ─── Style Specs ──────────────────────────────────────────────────────────────
+
+
+
+export async function getSpecsForStyle(style: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(styleSpecs).where(eq(styleSpecs.style, style));
+}
+
+export async function upsertStyleSpec(style: string, colour: string, component: string, value: string | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(styleSpecs)
+    .values({ style, colour, component, value })
+    .onDuplicateKeyUpdate({ set: { value } });
+}
+
+export async function deleteStyleSpecs(style: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(styleSpecs).where(eq(styleSpecs.style, style));
+}
+
+// ─── Spec Dropdown Options ────────────────────────────────────────────────────
+
+export async function getDropdownOptions(component: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(specDropdownOptions)
+    .where(eq(specDropdownOptions.component, component))
+    .orderBy(specDropdownOptions.createdAt);
+}
+
+export async function getAllDropdownOptions() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(specDropdownOptions).orderBy(specDropdownOptions.component, specDropdownOptions.createdAt);
+}
+
+export async function addDropdownOption(component: string, value: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Avoid exact duplicates
+  const existing = await db.select().from(specDropdownOptions)
+    .where(and(eq(specDropdownOptions.component, component), eq(specDropdownOptions.value, value)))
+    .limit(1);
+  if (existing.length > 0) return existing[0];
+  await db.insert(specDropdownOptions).values({ component, value });
+  const result = await db.select().from(specDropdownOptions)
+    .where(and(eq(specDropdownOptions.component, component), eq(specDropdownOptions.value, value)))
+    .limit(1);
+  return result[0];
+}
+
+export async function deleteDropdownOption(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(specDropdownOptions).where(eq(specDropdownOptions.id, id));
+}
+
+// ─── Style Spec Meta (buckle, sub-type, notes) ────────────────────────────────
+
+export async function getStyleSpecMeta(style: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(styleSpecMeta).where(eq(styleSpecMeta.style, style)).limit(1);
+  return result[0];
+}
+
+export async function getAllStyleSpecMeta() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(styleSpecMeta);
+}
+
+export async function upsertStyleSpecMeta(data: {
+  style: string;
+  hasBuckle?: boolean;
+  dressShoeSubType?: "court" | "sling" | null;
+  notes?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const updateSet: Record<string, unknown> = {};
+  if (data.hasBuckle !== undefined) updateSet.hasBuckle = data.hasBuckle;
+  if (data.dressShoeSubType !== undefined) updateSet.dressShoeSubType = data.dressShoeSubType;
+  if (data.notes !== undefined) updateSet.notes = data.notes;
+  await db.insert(styleSpecMeta)
+    .values({
+      style: data.style,
+      hasBuckle: data.hasBuckle ?? false,
+      dressShoeSubType: data.dressShoeSubType ?? null,
+      notes: data.notes ?? null,
+    })
+    .onDuplicateKeyUpdate({ set: updateSet });
+}
+
+// ─── Spec counts per style (for sidebar completion indicators) ────────────────
+export async function getSpecCountsForAllStyles(): Promise<{ style: string; filledCount: number }[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({
+      style: styleSpecs.style,
+      filledCount: sql<number>`COUNT(*)`,
+    })
+    .from(styleSpecs)
+    .where(sql`${styleSpecs.value} IS NOT NULL AND ${styleSpecs.value} != ''`)
+    .groupBy(styleSpecs.style);
+  return rows.map((r) => ({ style: r.style, filledCount: Number(r.filledCount) }));
 }
