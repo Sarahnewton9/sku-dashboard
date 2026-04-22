@@ -92,6 +92,84 @@ export const appRouter = router({
         }
         return { updated };
       }),
+
+    // Fetch size 11 availability from tonybianco.com.au Shopify API
+    // Uses the 'available:size:11' and 'hidden:size:11' product tags to determine availability
+    fetchSize11FromTonyBianco: publicProcedure
+      .input(z.object({
+        // All SKUs to update, grouped by style
+        skusByStyle: z.record(z.string(), z.array(z.object({
+          colour: z.string(),
+          leather: z.string().default(""),
+        }))),
+      }))
+      .mutation(async ({ input }) => {
+        const headers = {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "application/json",
+        };
+
+        // Fetch all pages from Shopify products.json
+        const styleSize11Map: Record<string, boolean> = {};
+        let page = 1;
+        while (page <= 10) {
+          const url = `https://tonybianco.com.au/collections/all/products.json?limit=250&page=${page}`;
+          const resp = await axios.get(url, { headers, timeout: 30000 });
+          const products = resp.data?.products ?? [];
+          if (!products.length) break;
+
+          for (const p of products) {
+            const title: string = p.title?.trim() ?? "";
+            const styleName = title.split(" ")[0]?.toUpperCase();
+            if (!styleName) continue;
+
+            const tags: string[] = p.tags ?? [];
+            let has11: boolean;
+            if (tags.includes("available:size:11")) {
+              has11 = true;
+            } else if (tags.includes("hidden:size:11")) {
+              has11 = false;
+            } else {
+              // Fallback: check variants
+              has11 = (p.variants ?? []).some((v: Record<string, string>) =>
+                [v.option1, v.option2, v.option3].includes("11")
+              );
+            }
+
+            // True wins — if any colourway has size 11, the style has size 11
+            if (!(styleName in styleSize11Map) || has11) {
+              styleSize11Map[styleName] = has11;
+            }
+          }
+
+          if (products.length < 250) break;
+          page++;
+          await new Promise((r) => setTimeout(r, 300));
+        }
+
+        // Apply to all SKUs in the input
+        let updated = 0;
+        const results: { style: string; isSize11: boolean }[] = [];
+        for (const [style, skus] of Object.entries(input.skusByStyle)) {
+          const isSize11 = styleSize11Map[style.toUpperCase()];
+          if (isSize11 === undefined) continue; // style not found on website — skip
+          for (const sku of skus) {
+            await upsertSkuMeta({ style, colour: sku.colour, leather: sku.leather, isSize11 });
+            updated++;
+          }
+          results.push({ style, isSize11 });
+        }
+
+        return {
+          updated,
+          results,
+          totalWebsiteStyles: Object.keys(styleSize11Map).length,
+          matchedStyles: results.length,
+          notFoundStyles: Object.keys(input.skusByStyle).filter(
+            (s) => !(s.toUpperCase() in styleSize11Map)
+          ),
+        };
+      }),
   }),
 
   // Style metadata: RRP

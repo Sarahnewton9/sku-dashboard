@@ -162,6 +162,37 @@ export default function StylesTab() {
     onError: (err) => toast.error(`Failed to update Size 11: ${err.message}`),
   });
 
+  // Fetch size 11 availability from tonybianco.com.au
+  const [isFetchingSize11, setIsFetchingSize11] = useState(false);
+  const fetchSize11Mutation = trpc.sku.fetchSize11FromTonyBianco.useMutation({
+    onSuccess: (result) => {
+      refetchSkuMeta();
+      const with11 = result.results.filter((r: { style: string; isSize11: boolean }) => r.isSize11).length;
+      const without11 = result.results.filter((r: { style: string; isSize11: boolean }) => !r.isSize11).length;
+      toast.success(
+        `Size 11 updated: ${with11} styles YES, ${without11} styles NO. ` +
+        `${result.notFoundStyles.length} new styles not yet on website.`
+      );
+      setIsFetchingSize11(false);
+    },
+    onError: (err) => {
+      toast.error(`Failed to fetch size 11 data: ${err.message}`);
+      setIsFetchingSize11(false);
+    },
+  });
+
+  function handleFetchSize11() {
+    if (isFetchingSize11) return;
+    setIsFetchingSize11(true);
+    // Build skusByStyle from all merged SKUs
+    const skusByStyle: Record<string, Array<{ colour: string; leather: string }>> = {};
+    for (const sku of mergedRawSkus) {
+      if (!skusByStyle[sku.style]) skusByStyle[sku.style] = [];
+      skusByStyle[sku.style].push({ colour: sku.colour, leather: sku.leather ?? "" });
+    }
+    fetchSize11Mutation.mutate({ skusByStyle });
+  }
+
   // Build lookup maps
   type SkuMetaItem = { style: string; colour: string; leather: string; sampleStatus?: string | null; orderQty?: number | null; isSize11?: boolean | null; costPrice?: number | null; fitRating?: string | null; fittingNotes?: string | null; };
   type StyleMetaItem = { style: string; rrp?: number | null; fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; };
@@ -453,6 +484,20 @@ export default function StylesTab() {
         >
           <Download className="w-4 h-4" />
           Export Excel
+        </button>
+
+        <button
+          onClick={handleFetchSize11}
+          disabled={isFetchingSize11}
+          title="Reads tonybianco.com.au to auto-fill which styles come in size 11"
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-green-50 hover:border-green-400 hover:text-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+        >
+          {isFetchingSize11 ? (
+            <><RefreshCw className="w-4 h-4 animate-spin" /> Fetching…</>
+          ) : (
+            <><RefreshCw className="w-4 h-4" /> Sync Size 11</>
+          )}
         </button>
       </div>
 

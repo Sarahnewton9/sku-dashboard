@@ -430,3 +430,10 @@
 
 - [x] Buy export filename: use session's own date (from session.createdAt or session.name) instead of today's date
 - [x] Buy export: redesign layout to be clean and presentation-ready (title row, styled header, alternating rows, category grouping with subtotals, totals row)
+
+## Phase 37: Auto-fill Size 11 from tonybianco.com.au
+
+- [x] Scrape tonybianco.com.au product pages to check which styles are available in size 11
+- [x] Add server-side tRPC procedure: sku.fetchSize11FromTonyBianco — fetches all product pages, uses available:size:11 / hidden:size:11 tags
+- [x] Add "Sync Size 11" button in By Style tab filter bar
+- [x] On click: calls scrape procedure, bulk-updates isSize11 for all matched styles, shows toast with results
