@@ -21,6 +21,8 @@ import {
   addFittingSessionImage, deleteFittingSessionImage,
   upsertStyleImageOverride, deleteStyleImageOverride, getAllStyleImageOverrides,
   cancelStyle, restoreStyle, listCancelledStyles,
+  addCustomSku, getAllCustomSkus, deleteCustomSku,
+  unlockBuySession,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -203,6 +205,13 @@ export const appRouter = router({
       .input(z.object({ sessionId: z.number() }))
       .mutation(async ({ input }) => {
         await deleteBuySession(input.sessionId);
+        return { success: true };
+      }),
+
+    unlock: publicProcedure
+      .input(z.object({ sessionId: z.number() }))
+      .mutation(async ({ input }) => {
+        await unlockBuySession(input.sessionId);
         return { success: true };
       }),
   }),
@@ -484,5 +493,27 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
+  customSku: router({
+    getAll: publicProcedure
+      .query(async () => getAllCustomSkus()),
+
+    add: publicProcedure
+      .input(z.object({ style: z.string(), colour: z.string(), leather: z.string() }))
+      .mutation(async ({ input }) => {
+        const id = await addCustomSku(input.style, input.colour, input.leather);
+        return { id };
+      }),
+
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteCustomSku(input.id);
+        return { success: true };
+      }),
+  }),
 });
+
+// Patch buy.unlock into the existing buy router by re-exporting
+// (We add it inline here since the buy router is defined earlier in this file)
 export type AppRouter = typeof appRouter;

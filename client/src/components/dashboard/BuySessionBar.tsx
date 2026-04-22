@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Lock, Plus, ChevronDown, CheckCircle, Clock } from "lucide-react";
+import { Lock, Unlock, Plus, ChevronDown, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -47,6 +47,20 @@ export default function BuySessionBar({
     },
     onError: (err) => toast.error(`Failed to lock session: ${err.message}`),
   });
+
+  const unlockMutation = trpc.buy.unlock.useMutation({
+    onSuccess: () => {
+      toast.success("Buy session unlocked — you can now edit quantities");
+      onSessionChange();
+    },
+    onError: (err) => toast.error(`Failed to unlock session: ${err.message}`),
+  });
+
+  function handleUnlock() {
+    if (!selectedSession) return;
+    if (!confirm(`Unlock "${selectedSession.name}"? This will allow quantities to be edited again.`)) return;
+    unlockMutation.mutate({ sessionId: selectedSession.id });
+  }
 
   function handleCreate() {
     const name = newName.trim() || `Buy — ${new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" })}`;
@@ -139,8 +153,21 @@ export default function BuySessionBar({
 
         {/* Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Unlock selected locked session */}
+          {selectedSession?.isLocked && (
+            <button
+              onClick={handleUnlock}
+              disabled={unlockMutation.isPending}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700"
+              style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
+            >
+              <Unlock className="w-3.5 h-3.5" />
+              Unlock Session
+            </button>
+          )}
+
           {/* Lock active session */}
-          {activeSession && selectedSessionId === activeSession.id && (
+          {activeSession && selectedSessionId === activeSession.id && !activeSession.isLocked && (
             <button
               onClick={handleLock}
               disabled={lockMutation.isPending}

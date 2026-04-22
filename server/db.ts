@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -599,4 +599,31 @@ export async function listCancelledStyles(): Promise<{ style: string; cancelledA
   const db = await getDb();
   if (!db) return [];
   return db.select({ style: cancelledStyles.style, cancelledAt: cancelledStyles.cancelledAt }).from(cancelledStyles);
+}
+
+// ─── Custom SKUs ───────────────────────────────────────────────────────────────
+export async function addCustomSku(style: string, colour: string, leather: string): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(customSkus).values({ style, colour, leather });
+  return (result[0] as any).insertId as number;
+}
+
+export async function getAllCustomSkus(): Promise<{ id: number; style: string; colour: string; leather: string; createdAt: Date }[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(customSkus);
+}
+
+export async function deleteCustomSku(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(customSkus).where(eq(customSkus.id, id));
+}
+
+// ─── Unlock Buy Session ────────────────────────────────────────────────────────
+export async function unlockBuySession(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(buySessions).set({ isLocked: false }).where(eq(buySessions.id, id));
 }

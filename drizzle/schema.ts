@@ -282,3 +282,16 @@ export const cancelledStyles = mysqlTable("cancelled_styles", {
 
 export type CancelledStyle = typeof cancelledStyles.$inferSelect;
 export type InsertCancelledStyle = typeof cancelledStyles.$inferInsert;
+/**
+ * Custom SKUs — colours/leathers added manually during the buying process.
+ * These are treated as new SKUs and appear across all dashboard sections.
+ */
+export const customSkus = mysqlTable("custom_skus", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull(),
+  colour: varchar("colour", { length: 64 }).notNull(),
+  leather: varchar("leather", { length: 64 }).notNull().default(""),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CustomSku = typeof customSkus.$inferSelect;
+export type InsertCustomSku = typeof customSkus.$inferInsert;

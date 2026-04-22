@@ -10,7 +10,8 @@ import React, { useState, useMemo, useCallback, useRef } from "react";
 import { skuData } from "@/lib/skuData";
 import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
-import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw } from "lucide-react";
+import { useCustomSkus } from "@/hooks/useCustomSkus";
+import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock } from "lucide-react";
 import * as XLSX from "xlsx";
 import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
 import ImportPanel from "./ImportPanel";
@@ -66,6 +67,30 @@ export default function StylesTab() {
   const undoApprovalMutation = trpc.styleFitting.updateFit.useMutation({
     onSuccess: () => { refetchStyleMeta(); refetchFitImages(); },
     onError: (err) => toast.error(`Failed to undo approval: ${err.message}`),
+  });
+
+  // Custom SKUs (added during buy)
+  const { mergedRawSkus, mergedStyles, customSkus, refetch: refetchCustomSkus } = useCustomSkus();
+
+  // Add colour inline form state: key = style name, value = { colour, leather } draft
+  const [addColourDraft, setAddColourDraft] = useState<Record<string, { colour: string; leather: string }>>({});
+
+  const addCustomSkuMutation = trpc.customSku.add.useMutation({
+    onSuccess: (_data, vars) => {
+      refetchCustomSkus();
+      // Also add to active buy session if one is selected and unlocked
+      if (selectedSessionId && !isSessionLocked) {
+        upsertItemMutation.mutate({ sessionId: selectedSessionId, style: vars.style, colour: vars.colour, leather: vars.leather, qty: 0 });
+      }
+      setAddColourDraft((prev) => { const n = { ...prev }; delete n[vars.style]; return n; });
+      toast.success(`${vars.colour} ${vars.leather} added to ${vars.style}`);
+    },
+    onError: (err) => toast.error(`Failed to add colour: ${err.message}`),
+  });
+
+  const unlockSessionMutation = trpc.buy.unlock.useMutation({
+    onSuccess: () => { refetchSessions(); refetchActive(); toast.success("Session unlocked"); },
+    onError: (err) => toast.error(`Failed to unlock: ${err.message}`),
   });
 
   // Buy sessions
@@ -222,9 +247,9 @@ export default function StylesTab() {
     XLSX.writeFile(wb, "SS26_SKU_Export.xlsx");
   }
 
-  // Filter styles
+  // Filter styles (uses mergedStyles which includes custom SKUs)
   const filtered = useMemo(() => {
-    let data = skuData.styles.filter((s) => !cancelledSet.has(s.style));
+    let data = mergedStyles.filter((s) => !cancelledSet.has(s.style));
 
     if (search.trim()) {
       const q = search.trim().toLowerCase();
@@ -251,7 +276,7 @@ export default function StylesTab() {
     }
 
     return data;
-  }, [search, categoryFilter, statusFilter]);
+  }, [search, categoryFilter, statusFilter, mergedStyles, cancelledSet]);
 
   // Group by last, sorted alphabetically by last, then by style within each last
   const groupedByLast = useMemo(() => {
@@ -286,7 +311,7 @@ export default function StylesTab() {
   }
 
   function getSkusForStyle(styleName: string) {
-    return skuData.rawSkus.filter((s) => s.style === styleName);
+    return mergedRawSkus.filter((s) => s.style === styleName);
   }
 
   // Session buy total for a style
@@ -565,6 +590,61 @@ export default function StylesTab() {
                                     <span key={h} className="text-xs font-semibold uppercase tracking-wide text-muted-foreground px-2">{h}</span>
                                   ))}
                                 </div>
+
+                                {/* Add Colour button + inline form — only when session is unlocked */}
+                                {selectedSession && !isSessionLocked && (() => {
+                                  const draft = addColourDraft[style.style];
+                                  return (
+                                    <div className="mb-2">
+                                      {draft ? (
+                                        <div className="flex items-center gap-2 p-2 rounded-lg border" style={{ borderColor: "oklch(0.80 0.10 65)", background: "oklch(0.98 0.02 65 / 0.5)" }}>
+                                          <input
+                                            type="text"
+                                            placeholder="Colour (e.g. DOVE)"
+                                            value={draft.colour}
+                                            onChange={(e) => setAddColourDraft((prev) => ({ ...prev, [style.style]: { ...prev[style.style], colour: e.target.value.toUpperCase() } }))}
+                                            className="flex-1 px-2 py-1 rounded border text-xs bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                          <input
+                                            type="text"
+                                            placeholder="Leather (e.g. NAPPA)"
+                                            value={draft.leather}
+                                            onChange={(e) => setAddColourDraft((prev) => ({ ...prev, [style.style]: { ...prev[style.style], leather: e.target.value.toUpperCase() } }))}
+                                            className="flex-1 px-2 py-1 rounded border text-xs bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (!draft.colour.trim()) return;
+                                              addCustomSkuMutation.mutate({ style: style.style, colour: draft.colour.trim(), leather: draft.leather.trim() });
+                                            }}
+                                            disabled={!draft.colour.trim() || addCustomSkuMutation.isPending}
+                                            className="px-3 py-1 rounded text-xs font-semibold text-white disabled:opacity-50"
+                                            style={{ background: "oklch(0.65 0.16 65)" }}
+                                          >
+                                            {addCustomSkuMutation.isPending ? "Adding..." : "Add"}
+                                          </button>
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setAddColourDraft((prev) => { const n = { ...prev }; delete n[style.style]; return n; }); }}
+                                            className="px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground"
+                                          >
+                                            Cancel
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); setAddColourDraft((prev) => ({ ...prev, [style.style]: { colour: "", leather: "" } })); }}
+                                          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted/50 transition-colors"
+                                        >
+                                          <Plus className="w-3 h-3" />
+                                          Add colour
+                                        </button>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
 
                                 <div className="space-y-1">
                                   {getSkusForStyle(style.style).map((sku) => {
