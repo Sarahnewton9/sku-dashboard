@@ -9,7 +9,8 @@
 import React, { useState, useMemo, useCallback, useRef } from "react";
 import { skuData } from "@/lib/skuData";
 import { trpc } from "@/lib/trpc";
-import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw } from "lucide-react";
+import { useCancelledStyles } from "@/hooks/useCancelledStyles";
+import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw } from "lucide-react";
 import * as XLSX from "xlsx";
 import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
 import ImportPanel from "./ImportPanel";
@@ -39,6 +40,20 @@ export default function StylesTab() {
   const pendingQty = useRef<Record<string, number>>({});
 
   const utils = trpc.useUtils();
+
+  // Cancelled styles
+  const { cancelledSet, raw: cancelledList } = useCancelledStyles();
+  const [cancelledSectionOpen, setCancelledSectionOpen] = useState(false);
+
+  const cancelStyleMutation = trpc.styles.cancel.useMutation({
+    onSuccess: () => { utils.styles.listCancelled.invalidate(); },
+    onError: (err) => toast.error(`Failed to cancel style: ${err.message}`),
+  });
+
+  const restoreStyleMutation = trpc.styles.restore.useMutation({
+    onSuccess: () => { utils.styles.listCancelled.invalidate(); },
+    onError: (err) => toast.error(`Failed to restore style: ${err.message}`),
+  });
 
   // Fetch all SKU meta from DB
   const { data: skuMetaList = [], refetch: refetchSkuMeta } = trpc.sku.getAll.useQuery();
@@ -121,10 +136,10 @@ export default function StylesTab() {
     return map;
   }, [allFitImages]);
 
-  // Approved styles list (from skuData, filtered by fitApproved in styleMeta)
+  // Approved styles list (from skuData, filtered by fitApproved in styleMeta, excluding cancelled)
   const approvedFitStyles = useMemo(() => {
-    return skuData.styles.filter((s) => styleMetaMap[s.style]?.fitApproved === true);
-  }, [styleMetaMap]);
+    return skuData.styles.filter((s) => !cancelledSet.has(s.style) && styleMetaMap[s.style]?.fitApproved === true);
+  }, [styleMetaMap, cancelledSet]);
 
   function handleMetaChange() {
     refetchSkuMeta();
@@ -209,7 +224,7 @@ export default function StylesTab() {
 
   // Filter styles
   const filtered = useMemo(() => {
-    let data = [...skuData.styles];
+    let data = skuData.styles.filter((s) => !cancelledSet.has(s.style));
 
     if (search.trim()) {
       const q = search.trim().toLowerCase();
@@ -406,6 +421,7 @@ export default function StylesTab() {
                       <th className="px-4 py-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-left">Leathers</th>
                       <th className="px-4 py-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-center">Sz11</th>
                       <th className="px-4 py-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-right">Buy Qty</th>
+                      <th className="px-4 py-2.5 w-10" />
                     </tr>
                   </thead>
                   <tbody>
@@ -484,6 +500,22 @@ export default function StylesTab() {
                               ) : (
                                 <span className="text-xs text-muted-foreground">—</span>
                               )}
+                            </td>
+                            {/* Cancel style button */}
+                            <td className="px-3 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Cancel ${style.style}? It will be hidden across the dashboard. You can restore it later.`)) {
+                                    cancelStyleMutation.mutate({ style: style.style });
+                                    toast.success(`${style.style} cancelled`);
+                                  }
+                                }}
+                                title="Cancel this style — hides it across the dashboard"
+                                className="p-1.5 rounded hover:bg-red-50 hover:text-red-600 transition-colors text-muted-foreground"
+                              >
+                                <Ban className="w-3.5 h-3.5" />
+                              </button>
                             </td>
                           </tr>
 
@@ -742,6 +774,60 @@ export default function StylesTab() {
                         )}
                       </div>
                     )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Cancelled Styles section */}
+      {cancelledList.length > 0 && (
+        <div className="mt-4 border rounded-xl overflow-hidden" style={{ borderColor: "oklch(0.82 0.06 20)" }}>
+          <button
+            className="w-full flex items-center justify-between px-4 py-3 transition-colors"
+            style={{ background: cancelledSectionOpen ? "oklch(0.97 0.03 20 / 0.4)" : "oklch(0.97 0.03 20 / 0.25)" }}
+            onClick={() => setCancelledSectionOpen((v) => !v)}
+          >
+            <div className="flex items-center gap-2">
+              <Ban className="w-4 h-4" style={{ color: "oklch(0.55 0.12 20)" }} />
+              <span className="text-sm font-semibold" style={{ color: "oklch(0.45 0.12 20)" }}>
+                Cancelled ({cancelledList.length} {cancelledList.length === 1 ? "style" : "styles"})
+              </span>
+              <span className="text-xs" style={{ color: "oklch(0.60 0.08 20)" }}>— hidden from dashboard</span>
+            </div>
+            {cancelledSectionOpen
+              ? <ChevronDown className="w-4 h-4" style={{ color: "oklch(0.55 0.08 20)" }} />
+              : <ChevronRight className="w-4 h-4" style={{ color: "oklch(0.55 0.08 20)" }} />}
+          </button>
+
+          {cancelledSectionOpen && (
+            <div className="divide-y" style={{ borderColor: "oklch(0.90 0.04 20)" }}>
+              {cancelledList.map((row) => {
+                const styleInfo = skuData.styles.find((s) => s.style === row.style);
+                return (
+                  <div key={row.style} className="flex items-center gap-3 px-4 py-3">
+                    {styleInfo?.imageUrl && (
+                      <img src={styleInfo.imageUrl} alt={row.style} className="w-10 h-10 rounded object-cover flex-shrink-0 opacity-50" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-semibold text-muted-foreground line-through">{row.style}</span>
+                      {styleInfo && (
+                        <span className="ml-2 text-xs text-muted-foreground">{styleInfo.last} · {styleInfo.category}</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => {
+                        restoreStyleMutation.mutate({ style: row.style });
+                        toast.success(`${row.style} restored`);
+                      }}
+                      className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-muted transition-colors text-muted-foreground"
+                      title="Restore this style"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      Restore
+                    </button>
                   </div>
                 );
               })}

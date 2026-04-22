@@ -269,3 +269,16 @@ export const styleImageOverrides = mysqlTable("style_image_overrides", {
 
 export type StyleImageOverride = typeof styleImageOverrides.$inferSelect;
 export type InsertStyleImageOverride = typeof styleImageOverrides.$inferInsert;
+
+/**
+ * Cancelled styles — styles that have been removed from the active range
+ * Can be restored at any time
+ */
+export const cancelledStyles = mysqlTable("cancelled_styles", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull().unique(),
+  cancelledAt: timestamp("cancelledAt").defaultNow().notNull(),
+});
+
+export type CancelledStyle = typeof cancelledStyles.$inferSelect;
+export type InsertCancelledStyle = typeof cancelledStyles.$inferInsert;

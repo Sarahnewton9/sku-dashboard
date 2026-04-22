@@ -345,3 +345,12 @@
 ## Phase 26: Buy Sheet Export Column Order
 
 - [x] Buy sheet export: move Last column before Style Name column
+
+## Phase 27: Cancel Style Feature
+
+- [x] DB: add cancelled_styles table (style text, cancelledAt timestamp)
+- [x] Server: add styles.cancel, styles.restore, styles.listCancelled tRPC procedures
+- [x] Client: add useCancelledStyles hook; filter cancelled styles from By Style view
+- [x] By Style: add Cancel button per style row (Ban icon, with confirm dialog)
+- [x] Add Cancelled Styles section at bottom of By Style tab (collapsed, with Restore button per style)
+- [x] Filter cancelled styles from Fit Approved section in By Style tab

@@ -20,6 +20,7 @@ import {
   createFittingSession, updateFittingSession, deleteFittingSession, getFittingSessionsForStyle,
   addFittingSessionImage, deleteFittingSessionImage,
   upsertStyleImageOverride, deleteStyleImageOverride, getAllStyleImageOverrides,
+  cancelStyle, restoreStyle, listCancelledStyles,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -461,6 +462,25 @@ export const appRouter = router({
       .input(z.object({ style: z.string() }))
       .mutation(async ({ input }) => {
         await deleteStyleImageOverride(input.style);
+        return { success: true };
+      }),
+  }),
+
+  styles: router({
+    listCancelled: publicProcedure
+      .query(async () => listCancelledStyles()),
+
+    cancel: publicProcedure
+      .input(z.object({ style: z.string() }))
+      .mutation(async ({ input }) => {
+        await cancelStyle(input.style);
+        return { success: true };
+      }),
+
+    restore: publicProcedure
+      .input(z.object({ style: z.string() }))
+      .mutation(async ({ input }) => {
+        await restoreStyle(input.style);
         return { success: true };
       }),
   }),

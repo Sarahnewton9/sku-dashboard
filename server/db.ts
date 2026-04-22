@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -577,4 +577,26 @@ export async function getAllStyleImageOverrides(): Promise<{ style: string; imag
   if (!db) return [];
   const rows = await db.select({ style: styleImageOverrides.style, imageUrl: styleImageOverrides.imageUrl }).from(styleImageOverrides);
   return rows;
+}
+
+// ─── Cancelled Styles ─────────────────────────────────────────────────────────
+
+export async function cancelStyle(style: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(cancelledStyles)
+    .values({ style })
+    .onDuplicateKeyUpdate({ set: { style } }); // idempotent
+}
+
+export async function restoreStyle(style: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(cancelledStyles).where(eq(cancelledStyles.style, style));
+}
+
+export async function listCancelledStyles(): Promise<{ style: string; cancelledAt: Date }[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({ style: cancelledStyles.style, cancelledAt: cancelledStyles.cancelledAt }).from(cancelledStyles);
 }
