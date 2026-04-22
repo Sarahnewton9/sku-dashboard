@@ -437,3 +437,10 @@
 - [x] Add server-side tRPC procedure: sku.fetchSize11FromTonyBianco — fetches all product pages, uses available:size:11 / hidden:size:11 tags
 - [x] Add "Sync Size 11" button in By Style tab filter bar
 - [x] On click: calls scrape procedure, bulk-updates isSize11 for all matched styles, shows toast with results
+
+## Phase 38: By Style UX Fixes + Custom SKU Propagation
+
+- [x] Size 11: only show a positive badge on styles that have size 11 — nothing shown if they don't
+- [x] SKU row layout: split expanded style into two sections — Existing (colour/leather/size11) and New (colour/leather/size11/sample/buy qty) — with aligned columns and proper spacing
+- [x] Add colour: always show the Add Colour button regardless of session state; if no session open, save as custom SKU only; if session open, also add to session
+- [x] Custom SKUs: ColourLeatherTab now dynamically merges custom SKUs from DB (same pattern as SpecsTab)

@@ -8,6 +8,7 @@
 import { useState, useMemo } from "react";
 import { ChevronDown, ChevronRight, Search, Star } from "lucide-react";
 import { skuData } from "@/lib/skuData";
+import { trpc } from "@/lib/trpc";
 
 interface ComboSku {
   style: string;
@@ -112,12 +113,60 @@ function buildCombosFromRaw(): Combo[] {
   return Array.from(map.values()).sort((a, b) => b.totalCount - a.totalCount || a.key.localeCompare(b.key));
 }
 
-const ALL_COMBOS = buildCombosFromRaw();
+// ALL_COMBOS is now built dynamically inside the component to include custom SKUs
 
 export default function ColourLeatherTab() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "new" | "existing">("all");
   const [openKeys, setOpenKeys] = useState<Set<string>>(new Set());
+
+  // Fetch custom SKUs from DB so they appear like regular SKUs
+  const { data: customSkusRaw = [] } = trpc.customSku.getAll.useQuery();
+
+  // Build combos dynamically, merging custom SKUs into the static data
+  const ALL_COMBOS = useMemo(() => {
+    // Build image map from static styles
+    const imageMap = new Map<string, string>();
+    for (const s of skuData.styles) imageMap.set(s.style, (s as any).imageUrl ?? "");
+
+    // Build style info map for category/last
+    const styleInfoMap = new Map<string, { category: string; last: string }>();
+    for (const s of skuData.styles) styleInfoMap.set(s.style, { category: s.category, last: s.last });
+
+    // Combine static rawSkus + custom SKUs
+    const existingKeys = new Set(skuData.rawSkus.map((s) => `${s.style}|${s.colour}|${s.leather}`));
+    const customEntries = (customSkusRaw as Array<{ style: string; colour: string; leather: string }>)
+      .filter((c) => !existingKeys.has(`${c.style}|${c.colour}|${c.leather}`))
+      .map((c) => ({ style: c.style, colour: c.colour, leather: c.leather, is_new: true as const }));
+    const allRawSkus = [
+      ...(skuData.rawSkus as unknown as Array<{ style: string; colour: string; leather: string; is_new: boolean }>),
+      ...customEntries,
+    ];
+
+    const map = new Map<string, Combo>();
+    for (const sku of allRawSkus) {
+      const col = sku.colour ?? "";
+      const lth = sku.leather ?? "";
+      const key = `${col} ${lth}`.trim();
+      if (!key) continue;
+      if (!map.has(key)) {
+        map.set(key, { key, colour: col, leather: lth, totalCount: 0, newCount: 0, existingCount: 0, skus: [] });
+      }
+      const combo = map.get(key)!;
+      combo.totalCount++;
+      if (sku.is_new) combo.newCount++;
+      else combo.existingCount++;
+      const info = styleInfoMap.get(sku.style);
+      combo.skus.push({
+        style: sku.style,
+        category: info?.category ?? "",
+        last: info?.last ?? "",
+        isNew: sku.is_new,
+        imageUrl: imageMap.get(sku.style) ?? "",
+      });
+    }
+    return Array.from(map.values()).sort((a, b) => b.totalCount - a.totalCount || a.key.localeCompare(b.key));
+  }, [customSkusRaw]);
 
   const filtered = useMemo(() => {
     const results = ALL_COMBOS.filter((combo) => {
@@ -156,8 +205,8 @@ export default function ColourLeatherTab() {
   const expandAll = () => setOpenKeys(new Set(filtered.map((c) => c.key)));
   const collapseAll = () => setOpenKeys(new Set());
 
-  const totalNew = ALL_COMBOS.reduce((s, c) => s + c.newCount, 0);
-  const totalExisting = ALL_COMBOS.reduce((s, c) => s + c.existingCount, 0);
+  const totalNew = useMemo(() => ALL_COMBOS.reduce((s, c) => s + c.newCount, 0), [ALL_COMBOS]);
+  const totalExisting = useMemo(() => ALL_COMBOS.reduce((s, c) => s + c.existingCount, 0), [ALL_COMBOS]);
 
   return (
     <div className="space-y-5">

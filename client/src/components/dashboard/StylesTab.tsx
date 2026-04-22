@@ -613,23 +613,27 @@ export default function StylesTab() {
                                 {style.leathers.length > 4 && <span className="text-xs text-muted-foreground">+{style.leathers.length - 4}</span>}
                               </div>
                             </td>
-                            {/* Style-level Size 11 toggle */}
+                            {/* Style-level Size 11 — badge only when true, click to toggle */}
                             <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleStyleSize11Toggle(style.style);
-                                }}
-                                title={styleSize11 ? "Size 11 enabled — click to disable for all SKUs" : "Enable Size 11 for all SKUs in this style"}
-                                className="w-7 h-7 rounded flex items-center justify-center transition-colors"
-                                style={{
-                                  background: styleSize11 ? "oklch(0.94 0.06 240)" : "var(--muted)",
-                                  color: styleSize11 ? "oklch(0.45 0.14 240)" : "var(--muted-foreground)",
-                                  border: styleSize11 ? "1px solid oklch(0.80 0.10 240)" : "1px solid var(--border)",
-                                }}
-                              >
-                                <span className="text-xs font-bold">11</span>
-                              </button>
+                              {styleSize11 ? (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleStyleSize11Toggle(style.style); }}
+                                  title="Size 11 — click to remove"
+                                  className="px-2 py-0.5 rounded text-xs font-semibold transition-colors"
+                                  style={{ background: "oklch(0.94 0.06 240)", color: "oklch(0.45 0.14 240)", border: "1px solid oklch(0.80 0.10 240)" }}
+                                >
+                                  11
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleStyleSize11Toggle(style.style); }}
+                                  title="Mark as Size 11"
+                                  className="px-2 py-0.5 rounded text-xs text-transparent hover:text-muted-foreground transition-colors"
+                                  style={{ border: "1px solid transparent" }}
+                                >
+                                  11
+                                </button>
+                              )}
                             </td>
                             <td className="px-4 py-3 text-right">
                               {sessionTotal > 0 ? (
@@ -656,10 +660,10 @@ export default function StylesTab() {
                             </td>
                           </tr>
 
-                          {/* Expanded SKU rows with inline buy qty */}
+                            {/* Expanded SKU rows with inline buy qty */}
                           {expandedStyle === style.style && (
                             <tr key={`${style.style}-expanded`} className="border-b" style={{ borderColor: "var(--border)" }}>
-                              <td colSpan={8} className="px-6 py-3" style={{ background: "oklch(0.98 0.02 65 / 0.5)" }}>
+                              <td colSpan={8} className="px-6 py-4" style={{ background: "oklch(0.98 0.02 65 / 0.5)" }}>
                                 {/* Fit info — shown when style has been fit-approved */}
                                 {(() => {
                                   const sm = styleMetaMap[style.style];
@@ -678,9 +682,10 @@ export default function StylesTab() {
                                     </div>
                                   );
                                 })()}
+
                                 {/* Session context */}
                                 {selectedSession && (
-                                  <div className="flex items-center gap-2 mb-2">
+                                  <div className="flex items-center gap-2 mb-3">
                                     <span className="text-xs font-semibold text-muted-foreground">
                                       {isSessionLocked ? "📋 Viewing:" : "✏️ Entering qtys for:"}
                                     </span>
@@ -692,22 +697,12 @@ export default function StylesTab() {
                                     )}
                                   </div>
                                 )}
-                                {!selectedSession && (
-                                  <p className="text-xs text-muted-foreground mb-2">Create a buy session above to enter quantities.</p>
-                                )}
 
-                                {/* Column headers */}
-                                <div className="grid gap-1 mb-1" style={{ gridTemplateColumns: "minmax(120px,2fr) minmax(100px,1.5fr) 80px 48px 56px 100px" }}>
-                                  {["Colour", "Leather", "Status", "Sz11", "Sample", "Buy Qty"].map((h) => (
-                                    <span key={h} className="text-xs font-semibold uppercase tracking-wide text-muted-foreground px-2">{h}</span>
-                                  ))}
-                                </div>
-
-                                {/* Add Colour button + inline form — only when session is unlocked */}
-                                {selectedSession && !isSessionLocked && (() => {
+                                {/* Add Colour button + inline form — always visible */}
+                                {(() => {
                                   const draft = addColourDraft[style.style];
                                   return (
-                                    <div className="mb-2">
+                                    <div className="mb-3">
                                       {draft ? (
                                         <div className="flex items-center gap-2 p-2 rounded-lg border" style={{ borderColor: "oklch(0.80 0.10 65)", background: "oklch(0.98 0.02 65 / 0.5)" }}>
                                           <input
@@ -758,59 +753,53 @@ export default function StylesTab() {
                                   );
                                 })()}
 
-                                <div className="space-y-1">
-                                  {getSkusForStyle(style.style).map((sku) => {
-                                    const skuKey2 = `${sku.style}|${sku.colour}|${sku.leather}` as string;
+                                {/* Split into Existing and New SKU sections */}
+                                {(() => {
+                                  const allSkus = getSkusForStyle(style.style);
+                                  const existingSkus = allSkus.filter((s) => !s.is_new);
+                                  const newSkus = allSkus.filter((s) => s.is_new);
+
+                                  const renderRow = (sku: typeof allSkus[0], isNew: boolean) => {
+                                    const skuKey2 = `${sku.style}|${sku.colour}|${sku.leather}`;
                                     const dbMeta = skuMetaMap[skuKey2];
                                     const sessionQtyObj = sessionItemMap[skuKey2] ?? { auQty: 0, usaQty: 0 };
                                     const sessionAuQty = sessionQtyObj.auQty;
                                     const sessionUsaQty = sessionQtyObj.usaQty;
                                     const sessionTotalQty = sessionAuQty + sessionUsaQty;
-                                    // Size 11 is style-level — show the style-level value
-                                    const isSize11 = styleSize11;
-
                                     return (
                                       <div
                                         key={`${sku.colour}-${sku.leather}`}
-                                        className="grid items-center gap-1 px-2 py-1.5 rounded-lg"
+                                        className="grid items-center gap-2 px-3 py-2 rounded-lg"
                                         style={{
-                                          gridTemplateColumns: "minmax(120px,2fr) minmax(100px,1.5fr) 80px 48px 56px minmax(140px,auto)",
+                                          gridTemplateColumns: isNew
+                                            ? "minmax(130px,2fr) minmax(110px,1.5fr) 36px 64px minmax(170px,auto) 32px 28px"
+                                            : "minmax(130px,2fr) minmax(110px,1.5fr) 36px 32px 28px",
                                           border: "1px solid var(--border)",
                                           background: sessionTotalQty > 0 ? "oklch(0.97 0.06 65 / 0.5)" : "var(--card)",
                                         }}
                                       >
                                         {/* Colour */}
-                                        <div className="flex items-center gap-1.5">
-                                          {sku.is_new && (
-                                            <span className="text-xs px-1 py-0.5 rounded font-medium flex-shrink-0" style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}>N</span>
-                                          )}
-                                          <span className="text-sm font-medium text-foreground truncate">{sku.colour}</span>
-                                        </div>
-
+                                        <span className="text-sm font-medium text-foreground truncate">{sku.colour}</span>
                                         {/* Leather */}
                                         <span className="text-xs text-muted-foreground truncate">{sku.leather || "—"}</span>
-
-                                        {/* Status */}
-                                        <span className="text-xs text-muted-foreground">{sku.is_new ? "New" : "Existing"}</span>
-
-                                        {/* Size 11 — style-level indicator (read-only here, toggle via style row) */}
+                                        {/* Size 11 — only show badge if YES */}
                                         <span className="text-xs text-center">
-                                          {isSize11 ? (
-                                            <span className="px-1 py-0.5 rounded text-xs font-medium" style={{ background: "oklch(0.94 0.06 240)", color: "oklch(0.45 0.14 240)" }}>✓</span>
-                                          ) : <span className="text-muted-foreground">—</span>}
+                                          {styleSize11 ? (
+                                            <span className="px-1 py-0.5 rounded text-xs font-semibold" style={{ background: "oklch(0.94 0.06 240)", color: "oklch(0.45 0.14 240)" }}>11</span>
+                                          ) : null}
                                         </span>
-
-                                        {/* Sample */}
-                                        <span className="text-xs text-center">
-                                          {dbMeta?.sampleStatus === "received" ? (
-                                            <span className="px-1 py-0.5 rounded text-xs font-medium" style={{ background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)" }}>✓</span>
-                                          ) : <span className="text-muted-foreground">—</span>}
-                                        </span>
-
-                                        {/* Buy Qty — AU and USA split inputs for NEW SKUs only */}
-                                        <div className="flex items-center gap-1.5">
-                                          {sku.is_new ? (
-                                            !isSessionLocked && selectedSession ? (
+                                        {/* Sample — new SKUs only */}
+                                        {isNew && (
+                                          <span className="text-xs text-center">
+                                            {dbMeta?.sampleStatus === "received" ? (
+                                              <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={{ background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)" }}>✓ Rcvd</span>
+                                            ) : <span className="text-muted-foreground text-xs">—</span>}
+                                          </span>
+                                        )}
+                                        {/* Buy Qty — new SKUs only */}
+                                        {isNew && (
+                                          <div className="flex items-center gap-1.5">
+                                            {!isSessionLocked && selectedSession ? (
                                               <>
                                                 <div className="flex flex-col items-center gap-0.5">
                                                   <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground leading-none">AU</span>
@@ -852,47 +841,88 @@ export default function StylesTab() {
                                                   USA: {sessionUsaQty > 0 ? sessionUsaQty : "—"}
                                                 </span>
                                               </div>
-                                            )
-                                          ) : (
-                                            <span className="text-xs text-muted-foreground" title="Existing SKUs are not bought in new season buys">—</span>
-                                          )}
-                                          {/* Detail button */}
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setSelectedSku({
-                                                style: sku.style,
-                                                colour: sku.colour,
-                                                leather: sku.leather,
-                                                isNew: sku.is_new,
-                                                category: style.category,
-                                                last: style.last,
-                                                imageUrl: style.imageUrl,
-                                              });
-                                            }}
-                                            className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0"
-                                            title="View SKU details"
-                                          >
-                                            <SlidersHorizontal className="w-3.5 h-3.5 text-muted-foreground" />
-                                          </button>
-                                          {/* Cancel SKU button */}
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              if (confirm(`Cancel ${sku.colour} ${sku.leather} from ${sku.style}? It will be hidden from the range.`)) {
-                                                cancelSkuMutation.mutate({ style: sku.style, colour: sku.colour, leather: sku.leather });
-                                              }
-                                            }}
-                                            className="p-1 rounded hover:bg-red-50 transition-colors flex-shrink-0"
-                                            title="Cancel this SKU"
-                                          >
-                                            <Ban className="w-3.5 h-3.5 text-muted-foreground hover:text-red-500" />
-                                          </button>
-                                        </div>
+                                            )}
+                                          </div>
+                                        )}
+                                        {/* Detail button */}
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedSku({
+                                              style: sku.style,
+                                              colour: sku.colour,
+                                              leather: sku.leather,
+                                              isNew: sku.is_new,
+                                              category: style.category,
+                                              last: style.last,
+                                              imageUrl: style.imageUrl,
+                                            });
+                                          }}
+                                          className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0"
+                                          title="View SKU details"
+                                        >
+                                          <SlidersHorizontal className="w-3.5 h-3.5 text-muted-foreground" />
+                                        </button>
+                                        {/* Cancel SKU button */}
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (confirm(`Cancel ${sku.colour} ${sku.leather} from ${sku.style}? It will be hidden from the range.`)) {
+                                              cancelSkuMutation.mutate({ style: sku.style, colour: sku.colour, leather: sku.leather });
+                                            }
+                                          }}
+                                          className="p-1 rounded hover:bg-red-50 transition-colors flex-shrink-0"
+                                          title="Cancel this SKU"
+                                        >
+                                          <Ban className="w-3.5 h-3.5 text-muted-foreground hover:text-red-500" />
+                                        </button>
                                       </div>
                                     );
-                                  })}
-                                </div>
+                                  };
+
+                                  return (
+                                    <div className="space-y-3">
+                                      {/* Existing SKUs section */}
+                                      {existingSkus.length > 0 && (
+                                        <div>
+                                          <div className="flex items-center gap-2 mb-1.5 px-1">
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Existing</span>
+                                            <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+                                            {/* Column labels for existing */}
+                                            <div className="flex items-center gap-8 pr-1">
+                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-36">Colour</span>
+                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-28">Leather</span>
+                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-9 text-center">Sz11</span>
+                                            </div>
+                                          </div>
+                                          <div className="space-y-1">
+                                            {existingSkus.map((sku) => renderRow(sku, false))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {/* New SKUs section */}
+                                      {newSkus.length > 0 && (
+                                        <div>
+                                          <div className="flex items-center gap-2 mb-1.5 px-1">
+                                            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "oklch(0.55 0.14 55)" }}>New</span>
+                                            <div className="flex-1 h-px" style={{ background: "oklch(0.85 0.06 65)" }} />
+                                            {/* Column labels for new */}
+                                            <div className="flex items-center gap-4 pr-1">
+                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-36">Colour</span>
+                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-28">Leather</span>
+                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-9 text-center">Sz11</span>
+                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-16 text-center">Sample</span>
+                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-36 text-center">Buy Qty</span>
+                                            </div>
+                                          </div>
+                                          <div className="space-y-1">
+                                            {newSkus.map((sku) => renderRow(sku, true))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
                               </td>
                             </tr>
                           )}
