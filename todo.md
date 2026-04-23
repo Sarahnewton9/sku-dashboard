@@ -504,3 +504,11 @@
 - [x] FittingTab: fetches cancelled styles via trpc.styles.listCancelled
 - [x] Filters cancelled styles from the fitting style list using cancelledStyleSet
 - [x] Note: FittingTab is style-level only (no per-SKU rows), so cancelled style filter is sufficient
+
+## Phase 49: Fitting Tab — Speed Up Session Loading
+
+- [x] Added getAllFittingSessions DB helper (2 queries: all sessions + all images, then joined in memory)
+- [x] Added fittingSession.getAll tRPC procedure on the server
+- [x] FittingTab now fetches all sessions in one bulk query and builds a sessionsByStyle map
+- [x] StyleFitRowWithSessions now receives preloadedSessions as a prop instead of firing its own per-style query
+- [x] Eliminated N+1 query pattern — sessions load in a single round-trip regardless of style count

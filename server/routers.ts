@@ -17,7 +17,7 @@ import {
   getAllDropdownOptions, getDropdownOptions, addDropdownOption, deleteDropdownOption,
   getStyleSpecMeta, getAllStyleSpecMeta, upsertStyleSpecMeta,
   getSpecCountsForAllStyles,
-  createFittingSession, updateFittingSession, deleteFittingSession, getFittingSessionsForStyle,
+  createFittingSession, updateFittingSession, deleteFittingSession, getFittingSessionsForStyle, getAllFittingSessions,
   addFittingSessionImage, deleteFittingSessionImage,
   upsertStyleImageOverride, deleteStyleImageOverride, getAllStyleImageOverrides,
   cancelStyle, restoreStyle, listCancelledStyles,
@@ -497,6 +497,8 @@ export const appRouter = router({
   }),
 
   fittingSession: router({
+    getAll: publicProcedure
+      .query(async () => getAllFittingSessions()),
     getForStyle: publicProcedure
       .input(z.object({ style: z.string() }))
       .query(async ({ input }) => getFittingSessionsForStyle(input.style)),

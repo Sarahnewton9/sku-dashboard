@@ -689,18 +689,18 @@ export function FittingTab() {
     (acc, o) => { acc[o.style] = o.imageUrl; return acc; }, {}
   );
 
-  // Fetch sessions for all styles in the fitting list
-  // We fetch all sessions per style using a combined query approach
-  const { data: allSessionsRaw = [], refetch: refetchSessions } = trpc.fittingSession.getForStyle.useQuery(
-    { style: "__ALL__" },
-    { enabled: false } // We'll use per-style queries below
-  );
-  void allSessionsRaw; // suppress unused warning
+  // ── Bulk session fetch (single query for all styles) ────────────────────────
+  const { data: allSessionsRaw = [], refetch: refetchSessions } = trpc.fittingSession.getAll.useQuery();
 
-  // Use individual queries per style — but that's too many. Instead, we'll use a single
-  // "get all sessions" approach by fetching each style's sessions in the component.
-  // For now, use a workaround: fetch sessions for each style individually via a map.
-  // We'll use a single aggregated query approach via the existing infrastructure.
+  // Build a map: style -> sessions[] so each row can look up its sessions instantly
+  const sessionsByStyle = useMemo(() => {
+    const map: Record<string, typeof allSessionsRaw> = {};
+    for (const s of allSessionsRaw) {
+      if (!map[s.style]) map[s.style] = [];
+      map[s.style].push(s);
+    }
+    return map;
+  }, [allSessionsRaw]);
 
   // Split into active (not approved) and approved
   const activeStyles = styleList.filter((s) => !styleMeta[s.style]?.fitApproved);
@@ -855,10 +855,12 @@ export function FittingTab() {
                 entry={entry}
                 styleMeta={styleMeta}
                 imageOverrides={imageOverrides}
+                preloadedSessions={sessionsByStyle[entry.style] ?? []}
                 onFitUpdate={handleFitUpdate}
                 onCreateSession={handleCreateSession}
                 onApprove={handleApprove}
                 onUndoApproval={handleUndoApproval}
+                onRefreshSessions={refetchSessions}
               />
             ))}
           </div>
@@ -882,28 +884,30 @@ export function FittingTab() {
   );
 }
 
-// ─── Style Fit Row With Sessions (fetches own session data) ───────────────────
+// ─── Style Fit Row With Sessions (receives pre-fetched sessions as prop) ────────
 
 function StyleFitRowWithSessions({
   entry,
   styleMeta,
   imageOverrides,
+  preloadedSessions,
   onFitUpdate,
   onCreateSession,
   onApprove,
   onUndoApproval,
+  onRefreshSessions,
 }: {
   entry: StyleEntry;
   styleMeta: Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null }>;
   imageOverrides: Record<string, string>;
+  preloadedSessions: Array<{ id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; createdAt: Date; images: Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string; createdAt: Date }> }>;
   onFitUpdate: (style: string, fitRating: string | null, notes: string | null) => void;
   onCreateSession: (style: string) => void;
   onApprove: (style: string) => void;
   onUndoApproval: (style: string) => void;
+  onRefreshSessions: () => void;
 }) {
-  const { data: rawSessions = [], refetch: refetchSessions } = trpc.fittingSession.getForStyle.useQuery({ style: entry.style });
-
-  const sessions: FittingSession[] = rawSessions.map((s) => ({
+  const sessions: FittingSession[] = preloadedSessions.map((s) => ({
     id: s.id,
     style: s.style,
     fitModel: s.fitModel,
@@ -912,13 +916,13 @@ function StyleFitRowWithSessions({
     images: ((s.images ?? []) as unknown) as Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string }>,
   }));
 
-  const updateSession = trpc.fittingSession.update.useMutation({ onSuccess: () => refetchSessions() });
-  const deleteSession = trpc.fittingSession.delete.useMutation({ onSuccess: () => refetchSessions() });
+  const updateSession = trpc.fittingSession.update.useMutation({ onSuccess: () => onRefreshSessions() });
+  const deleteSession = trpc.fittingSession.delete.useMutation({ onSuccess: () => onRefreshSessions() });
   const uploadImage = trpc.fittingSession.uploadImage.useMutation({
-    onSuccess: () => refetchSessions(),
+    onSuccess: () => onRefreshSessions(),
     onError: () => toast.error("Upload failed"),
   });
-  const deleteImage = trpc.fittingSession.deleteImage.useMutation({ onSuccess: () => refetchSessions() });
+  const deleteImage = trpc.fittingSession.deleteImage.useMutation({ onSuccess: () => onRefreshSessions() });
 
   const handleUploadImage = useCallback((sessionId: number, style: string, file: File) => {
     const reader = new FileReader();

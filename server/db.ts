@@ -600,6 +600,20 @@ export async function getFittingSessionsForStyle(style: string): Promise<Array<{
   }));
 }
 
+export async function getAllFittingSessions(): Promise<Array<{
+  id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; createdAt: Date;
+  images: Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string; createdAt: Date }>;
+}>> {
+  const db = await getDb();
+  if (!db) return [];
+  const sessions = await db.select().from(fittingSessions).orderBy(fittingSessions.style, fittingSessions.sessionDate);
+  const images = await db.select().from(fittingSessionImages);
+  return sessions.map((s) => ({
+    ...s,
+    images: images.filter((img) => img.sessionId === s.id),
+  }));
+}
+
 export async function addFittingSessionImage(data: { sessionId: number; style: string; imageUrl: string; fileKey: string }): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
