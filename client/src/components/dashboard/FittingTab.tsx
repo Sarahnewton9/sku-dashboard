@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { Badge } from "@/components/ui/badge";
@@ -663,7 +663,19 @@ export function FittingTab() {
   const [newSessionStyle, setNewSessionStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  const styleList = buildStyleList();
+  const baseStyleList = buildStyleList();
+
+  // ── Cancelled styles + cancelled SKUs ─────────────────────────────────────
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
+  const cancelledStyleSet = useMemo(
+    () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),
+    [cancelledStylesRaw]
+  );
+
+  const styleList = useMemo(
+    () => baseStyleList.filter((s) => !cancelledStyleSet.has(s.style)),
+    [baseStyleList, cancelledStyleSet]
+  );
 
   // Data queries
   const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery();

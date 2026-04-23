@@ -498,3 +498,9 @@
 - [x] SpecsTab: fetches cancelled SKUs via trpc.cancelledSku.list
 - [x] Builds cancelledSkuSet of style|colour|leather keys
 - [x] Colour columns for each style now exclude individually cancelled SKUs; styles with all colours cancelled are also removed from the sidebar
+
+## Phase 48: Fitting Tab — Hide Cancelled Styles and SKUs
+
+- [x] FittingTab: fetches cancelled styles via trpc.styles.listCancelled
+- [x] Filters cancelled styles from the fitting style list using cancelledStyleSet
+- [x] Note: FittingTab is style-level only (no per-SKU rows), so cancelled style filter is sufficient
