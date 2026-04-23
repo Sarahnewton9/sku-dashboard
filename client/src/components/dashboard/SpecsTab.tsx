@@ -565,12 +565,22 @@ export default function SpecsTab({}: SpecsTabProps) {
   const [importSaving, setImportSaving] = useState(false);
   const importFileRef = React.useRef<HTMLInputElement>(null);
 
-  // ── Cancelled styles + custom SKUs ────────────────────────────────────────
+  // ── Cancelled styles + cancelled SKUs + custom SKUs ─────────────────────
   const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
   const cancelledSet = useMemo(
     () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),
     [cancelledStylesRaw]
   );
+
+  // Individually cancelled SKUs (style|colour|leather)
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+  const cancelledSkuSet = useMemo(() => {
+    const set = new Set<string>();
+    for (const row of cancelledSkusRaw as any[]) {
+      set.add(`${row.style}|${row.colour}|${row.leather}`);
+    }
+    return set;
+  }, [cancelledSkusRaw]);
 
   const { data: customSkusRaw = [] } = trpc.customSku.getAll.useQuery();
   // Build a map: style → Set<colour> for custom SKUs
@@ -583,25 +593,47 @@ export default function SpecsTab({}: SpecsTabProps) {
     return map;
   }, [customSkusRaw]);
 
-  // Merge custom SKU colours into style entries, then filter cancelled
+  // Merge custom SKU colours into style entries, filter cancelled styles + cancelled SKUs
   const styleList = useMemo(() => {
     return baseStyleList
       .filter((s) => !cancelledSet.has(s.style))
       .map((s) => {
+        // Filter out individually cancelled colours
+        const filteredColours: string[] = [];
+        const filteredLabels: string[] = [];
+        for (let i = 0; i < s.colours.length; i++) {
+          const colour = s.colours[i];
+          // Look up the leather for this colour from the raw SKU map
+          const leather = COLOUR_LEATHER_MAP[s.style]?.[colour]
+            ? COLOUR_LEATHER_MAP[s.style][colour].replace(colour, "").trim()
+            : "";
+          const key = `${s.style}|${colour}|${leather}`;
+          if (!cancelledSkuSet.has(key)) {
+            filteredColours.push(colour);
+            filteredLabels.push(s.colourLabels[i]);
+          }
+        }
+
+        // Add custom SKU colours (also check they're not cancelled)
         const extras = customColourMap[s.style] ?? [];
-        if (extras.length === 0) return s;
-        const existingColours = new Set(s.colours);
-        const newColours = extras.filter((e) => !existingColours.has(e.colour));
-        if (newColours.length === 0) return s;
+        const existingColours = new Set(filteredColours);
+        const newColours = extras.filter((e) => {
+          if (existingColours.has(e.colour)) return false;
+          const key = `${s.style}|${e.colour}|${e.leather ?? ""}`;
+          return !cancelledSkuSet.has(key);
+        });
         const addedColours = newColours.map((e) => e.colour);
         const addedLabels = newColours.map((e) => e.leather ? `${e.colour} ${e.leather}` : e.colour);
+
         return {
           ...s,
-          colours: [...s.colours, ...addedColours],
-          colourLabels: [...s.colourLabels, ...addedLabels],
+          colours: [...filteredColours, ...addedColours],
+          colourLabels: [...filteredLabels, ...addedLabels],
         };
-      });
-  }, [baseStyleList, cancelledSet, customColourMap]);
+      })
+      // Remove styles that end up with no colours after filtering
+      .filter((s) => s.colours.length > 0);
+  }, [baseStyleList, cancelledSet, cancelledSkuSet, customColourMap]);
 
   const filtered = styleList.filter((s) => {
     const q = search.toLowerCase();

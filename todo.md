@@ -492,3 +492,9 @@
 - [x] By Category tab: Ballet Flat and Loafer now merged under single CASUAL FLAT card using useStyleCategories hook
 - [x] Trend breakdown tags (Ballet Flat / Loafer with style counts) shown on the CASUAL FLAT card and in the comparison table
 - [x] SKU counts (new/existing/total) roll up correctly under the merged Casual Flat group
+
+## Phase 47: Specs Tab — Hide Cancelled SKUs from Colour Columns
+
+- [x] SpecsTab: fetches cancelled SKUs via trpc.cancelledSku.list
+- [x] Builds cancelledSkuSet of style|colour|leather keys
+- [x] Colour columns for each style now exclude individually cancelled SKUs; styles with all colours cancelled are also removed from the sidebar
