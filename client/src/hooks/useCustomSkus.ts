@@ -63,8 +63,8 @@ export function useCustomSkus() {
       const existingColours = new Set(s.colours);
       const existingLeathers = new Set(s.leathers);
 
-      const newColours = extra.map((e) => e.colour).filter((c) => !existingColours.has(c as any)) as any[];
-      const newLeathers = extra.map((e) => e.leather).filter((l) => l && !existingLeathers.has(l as any)) as any[];
+      const newColours = Array.from(new Set(extra.map((e) => e.colour).filter((c) => !existingColours.has(c as any)))) as any[];
+      const newLeathers = Array.from(new Set(extra.map((e) => e.leather).filter((l) => l && !existingLeathers.has(l as any)))) as any[];
 
       return {
         ...s,
