@@ -883,20 +883,27 @@ export default function StylesTab() {
                                     );
                                   };
 
+                                  // Grid template columns must match renderRow exactly
+                                  const existingCols = "minmax(130px,2fr) minmax(110px,1.5fr) 36px 32px 28px";
+                                  const newCols = "minmax(130px,2fr) minmax(110px,1.5fr) 36px 64px minmax(170px,auto) 32px 28px";
+
                                   return (
                                     <div className="space-y-3">
                                       {/* Existing SKUs section */}
                                       {existingSkus.length > 0 && (
                                         <div>
-                                          <div className="flex items-center gap-2 mb-1.5 px-1">
+                                          {/* Section label */}
+                                          <div className="flex items-center gap-2 mb-1 px-1">
                                             <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Existing</span>
                                             <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-                                            {/* Column labels for existing */}
-                                            <div className="flex items-center gap-8 pr-1">
-                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-36">Colour</span>
-                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-28">Leather</span>
-                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-9 text-center">Sz11</span>
-                                            </div>
+                                          </div>
+                                          {/* Column headers — same grid as data rows */}
+                                          <div className="grid px-3 mb-0.5" style={{ gridTemplateColumns: existingCols, gap: "0.5rem" }}>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Colour</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Leather</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Sz11</span>
+                                            <span />{/* detail btn col */}
+                                            <span />{/* cancel btn col */}
                                           </div>
                                           <div className="space-y-1">
                                             {existingSkus.map((sku) => renderRow(sku, false))}
@@ -906,17 +913,20 @@ export default function StylesTab() {
                                       {/* New SKUs section */}
                                       {newSkus.length > 0 && (
                                         <div>
-                                          <div className="flex items-center gap-2 mb-1.5 px-1">
+                                          {/* Section label */}
+                                          <div className="flex items-center gap-2 mb-1 px-1">
                                             <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "oklch(0.55 0.14 55)" }}>New</span>
                                             <div className="flex-1 h-px" style={{ background: "oklch(0.85 0.06 65)" }} />
-                                            {/* Column labels for new */}
-                                            <div className="flex items-center gap-4 pr-1">
-                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-36">Colour</span>
-                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-28">Leather</span>
-                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-9 text-center">Sz11</span>
-                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-16 text-center">Sample</span>
-                                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground w-36 text-center">Buy Qty</span>
-                                            </div>
+                                          </div>
+                                          {/* Column headers — same grid as data rows */}
+                                          <div className="grid px-3 mb-0.5" style={{ gridTemplateColumns: newCols, gap: "0.5rem" }}>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Colour</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Leather</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Sz11</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Sample</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Buy Qty</span>
+                                            <span />{/* detail btn col */}
+                                            <span />{/* cancel btn col */}
                                           </div>
                                           <div className="space-y-1">
                                             {newSkus.map((sku) => renderRow(sku, true))}
