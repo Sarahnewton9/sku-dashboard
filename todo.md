@@ -473,3 +473,10 @@
 
 - [x] Analysed reference XLSX: 6 cols (CATEGORY, LAST, SIZE 11, STYLE, COLOUR, AU QTY), merged title A1:F1, plain white rows, no alternating colours, no USA column
 - [x] Rewrote exportSession to match reference: combined colour+leather into single COLOUR column, exact column widths and row heights, plain Calibri 12pt, total row at bottom
+
+## Phase 44: Add Cell Colours to Buy Export
+
+- [x] Title row (row 1): solid dark fill (#1A1A1A), white bold font
+- [x] Header row (row 3): solid dark fill (#1A1A1A), white bold font
+- [x] Data rows: no fill (plain white)
+- [x] Total row: no fill, plain text

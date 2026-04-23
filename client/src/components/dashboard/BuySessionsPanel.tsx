@@ -232,6 +232,12 @@ export default function BuySessionsPanel() {
     // Merge title across A1:F1
     ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: COLS - 1 } }];
 
+    // Colours — matching reference theme colours exactly
+    // Title + header: dark fill ("1A1A1A" ≈ theme:1 black), white font ("FFFFFF" ≈ theme:0)
+    const darkFill = { patternType: "solid", fgColor: { rgb: "1A1A1A" } };
+    const whiteFont = { name: "Calibri", sz: 12, bold: true, color: { rgb: "FFFFFF" } };
+    const plainFont = { name: "Calibri", sz: 12, bold: false };
+
     // Apply styles
     for (let R = 0; R < sheetRows.length; R++) {
       const type = rowTypes[R];
@@ -241,25 +247,27 @@ export default function BuySessionsPanel() {
 
         if (type === "title") {
           ws[addr].s = {
-            font: { name: "Calibri", sz: 12, bold: true },
+            font: whiteFont,
+            fill: darkFill,
             alignment: { horizontal: "center", vertical: "center" },
           };
         } else if (type === "spacer") {
           ws[addr].s = {};
         } else if (type === "header") {
           ws[addr].s = {
-            font: { name: "Calibri", sz: 12, bold: true },
+            font: whiteFont,
+            fill: darkFill,
             alignment: { horizontal: "center", vertical: "center" },
           };
         } else if (type === "total") {
           ws[addr].s = {
-            font: { name: "Calibri", sz: 12, bold: false },
+            font: plainFont,
             alignment: { horizontal: C === 5 ? "right" : "left", vertical: "center" },
           };
         } else {
-          // plain data row
+          // plain data row — no fill
           ws[addr].s = {
-            font: { name: "Calibri", sz: 12, bold: false },
+            font: plainFont,
             alignment: { horizontal: C === 5 ? "right" : "left", vertical: "center" },
           };
         }
