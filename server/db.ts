@@ -506,9 +506,9 @@ export async function deleteDropdownOption(id: number) {
 
 export async function getStyleSpecMeta(style: string) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db.select().from(styleSpecMeta).where(eq(styleSpecMeta.style, style)).limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function getAllStyleSpecMeta() {

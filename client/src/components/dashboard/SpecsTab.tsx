@@ -490,7 +490,7 @@ function SpecForm({
             <tr className="bg-muted/50">
               <th className="text-left px-3 py-2 font-medium text-muted-foreground w-40 border-b">Colour</th>
               {entry.colours.map((colour, i) => (
-                <th key={colour} className="text-left px-3 py-2 font-medium border-b min-w-[160px]">
+                <th key={`${colour}-${i}`} className="text-left px-3 py-2 font-medium border-b min-w-[160px]">
                   {entry.colourLabels[i] ?? colour}
                 </th>
               ))}
@@ -521,7 +521,7 @@ function SpecForm({
                       const upper1EffectiveVal = isUpper1 && !val ? upper1AutoValue : val;
 
                       return (
-                        <td key={colour} className="px-2 py-1 align-middle">
+                        <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
                           {comp.type === "dropdown" ? (
                             <DropdownCell
                               component={comp}

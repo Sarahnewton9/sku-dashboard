@@ -551,3 +551,8 @@
 - [x] Build tRPC apply-changes procedure: cancel red SKUs, mark purple SKUs as specked
 - [x] Add "Sync from Range Review PPTX" button to ExportPanel
 - [x] TypeScript: 0 errors confirmed
+
+## Phase 55: Fix duplicate BLACK key and specs.getMeta undefined
+- [ ] Find all components using colour name as React key and add index to make unique (BLACK appears in multiple leathers e.g. BLACK NAPPA + BLACK SUEDE)
+- [ ] Fix specs.getMeta router procedure to return null instead of undefined when no DB record found
+- [ ] TypeScript: 0 errors confirmed
