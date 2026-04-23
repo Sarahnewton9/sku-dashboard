@@ -2,8 +2,9 @@
  * ColoursTab — all colours with usage counts, toggleable All/New Only
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { skuData } from "@/lib/skuData";
+import { trpc } from "@/lib/trpc";
 
 // Map colour names to approximate hex values for visual swatches
 const COLOUR_SWATCHES: Record<string, string> = {
@@ -97,10 +98,36 @@ function ColourSwatch({ colour }: { colour: string }) {
 export default function ColoursTab() {
   const [showNewOnly, setShowNewOnly] = useState(false);
 
-  const data = skuData.colours
-    .map((c) => ({ ...c, displayCount: showNewOnly ? c.newCount : c.allCount }))
-    .filter((c) => c.displayCount > 0)
-    .sort((a, b) => b.displayCount - a.displayCount);
+  // Fetch cancelled styles and SKUs
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+
+  const cancelledStyleSet = useMemo(
+    () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),
+    [cancelledStylesRaw]
+  );
+  const cancelledSkuSet = useMemo(
+    () => new Set((cancelledSkusRaw as any[]).map((r: any) => `${r.style}|${r.colour}|${r.leather}`)),
+    [cancelledSkusRaw]
+  );
+
+  // Rebuild colour counts dynamically from filtered rawSkus
+  const data = useMemo(() => {
+    const colourMap = new Map<string, { name: string; allCount: number; newCount: number }>();
+    for (const sku of (skuData.rawSkus as unknown as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)) {
+      if (cancelledStyleSet.has(sku.style)) continue;
+      if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) continue;
+      if (!sku.colour) continue;
+      if (!colourMap.has(sku.colour)) colourMap.set(sku.colour, { name: sku.colour, allCount: 0, newCount: 0 });
+      const entry = colourMap.get(sku.colour)!;
+      entry.allCount++;
+      if (sku.is_new) entry.newCount++;
+    }
+    return Array.from(colourMap.values())
+      .map((c) => ({ ...c, displayCount: showNewOnly ? c.newCount : c.allCount }))
+      .filter((c) => c.displayCount > 0)
+      .sort((a, b) => b.displayCount - a.displayCount);
+  }, [cancelledStyleSet, cancelledSkuSet, showNewOnly]);
 
   const maxCount = data[0]?.displayCount ?? 1;
 

@@ -7,6 +7,8 @@ import { skuData } from "@/lib/skuData";
 import { trpc } from "@/lib/trpc";
 import { Calculator } from "lucide-react";
 
+type RawSku = { style: string; colour: string; leather: string; is_new: boolean };
+
 // Footage rates per category (sq ft per pair) — confirmed by supplier
 const FOOTAGE_RATES: Record<string, number> = {
   "Dress Sandal": 2.15,
@@ -28,6 +30,28 @@ export default function LeathersTab() {
   // Fetch SKU meta for order quantities
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
 
+  // Fetch cancelled styles and SKUs
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+
+  const cancelledStyleSet = useMemo(
+    () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),
+    [cancelledStylesRaw]
+  );
+  const cancelledSkuSet = useMemo(
+    () => new Set((cancelledSkusRaw as any[]).map((r: any) => `${r.style}|${r.colour}|${r.leather}`)),
+    [cancelledSkusRaw]
+  );
+
+  // Filtered rawSkus — exclude cancelled styles and individually cancelled SKUs
+  const filteredRawSkus = useMemo(
+    () =>
+      (skuData.rawSkus as unknown as RawSku[]).filter(
+        (s) => !cancelledStyleSet.has(s.style) && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`)
+      ),
+    [cancelledStyleSet, cancelledSkuSet]
+  );
+
   const skuMetaMap = useMemo(() => {
     const map: Record<string, number> = {};
     for (const m of skuMetaList) {
@@ -37,10 +61,21 @@ export default function LeathersTab() {
     return map;
   }, [skuMetaList]);
 
-  const data = skuData.leathers
-    .map((l) => ({ ...l, displayCount: showNewOnly ? l.newCount : l.allCount }))
-    .filter((l) => l.displayCount > 0)
-    .sort((a, b) => b.displayCount - a.displayCount);
+  // Rebuild leather counts dynamically from filtered rawSkus
+  const data = useMemo(() => {
+    const leatherMap = new Map<string, { name: string; allCount: number; newCount: number }>();
+    for (const sku of filteredRawSkus) {
+      if (!sku.leather) continue;
+      if (!leatherMap.has(sku.leather)) leatherMap.set(sku.leather, { name: sku.leather, allCount: 0, newCount: 0 });
+      const entry = leatherMap.get(sku.leather)!;
+      entry.allCount++;
+      if (sku.is_new) entry.newCount++;
+    }
+    return Array.from(leatherMap.values())
+      .map((l) => ({ ...l, displayCount: showNewOnly ? l.newCount : l.allCount }))
+      .filter((l) => l.displayCount > 0)
+      .sort((a, b) => b.displayCount - a.displayCount);
+  }, [filteredRawSkus, showNewOnly]);
 
   const maxCount = data[0]?.displayCount ?? 1;
 
@@ -60,7 +95,7 @@ export default function LeathersTab() {
     // Group rawSkus by colour+leather combo — always new SKUs only for ordering purposes
     const comboMap: Record<string, { skuCount: number; footage: number; weightedFootage: number }> = {};
 
-    for (const sku of (skuData.rawSkus as unknown as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)) {
+    for (const sku of filteredRawSkus) {
       if (!sku.is_new) continue; // Always new SKUs only — carry-overs don't need fresh leather
       if (!sku.leather) continue;
 
@@ -81,7 +116,7 @@ export default function LeathersTab() {
     return Object.entries(comboMap)
       .map(([name, stats]) => ({ name, ...stats }))
       .sort((a, b) => b.footage - a.footage);
-  }, [showCalculator, useOrderQty, skuMetaMap, styleLookup]);
+  }, [showCalculator, useOrderQty, skuMetaMap, styleLookup, filteredRawSkus]);
 
   const totalFootage = useMemo(() => leatherUsage.reduce((sum, l) => sum + (useOrderQty ? l.weightedFootage : l.footage), 0), [leatherUsage, useOrderQty]);
 

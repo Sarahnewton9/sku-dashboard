@@ -525,3 +525,13 @@
 - [x] Builds cancelledStyleSet (Set of style names) and cancelledSkuSet (Set of style|colour|leather keys)
 - [x] Filters both from allRawSkus before building combos — CIRCA, MAMZELLE and any other cancelled styles/SKUs no longer appear
 - [x] TypeScript: 0 errors confirmed via npx tsc --noEmit
+
+## Phase 52: Ensure Cancelled Styles/SKUs Filtered Across ALL Tabs
+
+- [x] Audit CategoryTab — added cancelled style + SKU filters
+- [x] Audit LeathersTab — added cancelled style + SKU filters; rebuilt leather counts from filtered rawSkus
+- [x] Audit ColoursTab — added cancelled style + SKU filters; rebuilt colour counts from filtered rawSkus
+- [x] Audit ExpansionAnalysis — added cancelled style + SKU filters; buildExpansionData now takes filter sets as params
+- [x] Audit BuyAnalysis — safe (reads from buy session items DB, not rawSkus directly)
+- [x] Apply filters to any tab missing them
+- [x] TypeScript: 0 errors confirmed

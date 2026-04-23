@@ -7,6 +7,7 @@
 
 import { useState, useMemo } from "react";
 import { skuData } from "@/lib/skuData";
+import { trpc } from "@/lib/trpc";
 import { Search } from "lucide-react";
 
 type BucketType = "Well covered" | "Good coverage" | "Expand" | "Priority expand";
@@ -70,7 +71,10 @@ type ExpansionItem = {
   action: string;
 };
 
-function buildExpansionData(): ExpansionItem[] {
+function buildExpansionData(
+  cancelledStyleSet: Set<string>,
+  cancelledSkuSet: Set<string>
+): ExpansionItem[] {
   const raw = (skuData as any).rawSkus as Array<{
     style: string; colour: string; leather: string; is_new: boolean;
   }>;
@@ -84,6 +88,9 @@ function buildExpansionData(): ExpansionItem[] {
   const comboMeta = new Map<string, { colour: string; leather: string }>();
 
   for (const r of raw) {
+    // Skip cancelled styles and individually cancelled SKUs
+    if (cancelledStyleSet.has(r.style)) continue;
+    if (cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`)) continue;
     const key = (r.colour + (r.leather ? " " + r.leather : "")).trim();
     if (!key) continue;
     if (!comboMeta.has(key)) comboMeta.set(key, { colour: r.colour, leather: r.leather });
@@ -121,8 +128,6 @@ function buildExpansionData(): ExpansionItem[] {
   // Sort by newStyleCount desc, then alphabetically
   return items.sort((a, b) => b.newStyleCount - a.newStyleCount || a.key.localeCompare(b.key));
 }
-
-const ALL_EXPANSION = buildExpansionData();
 
 function BucketSection({ bucket, items }: { bucket: BucketType; items: ExpansionItem[] }) {
   const config = BUCKET_CONFIG[bucket];
@@ -180,11 +185,29 @@ function BucketSection({ bucket, items }: { bucket: BucketType; items: Expansion
 export default function ExpansionTab() {
   const [search, setSearch] = useState("");
 
+  // Fetch cancelled styles and SKUs
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+
+  const cancelledStyleSet = useMemo(
+    () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),
+    [cancelledStylesRaw]
+  );
+  const cancelledSkuSet = useMemo(
+    () => new Set((cancelledSkusRaw as any[]).map((r: any) => `${r.style}|${r.colour}|${r.leather}`)),
+    [cancelledSkusRaw]
+  );
+
+  const allExpansion = useMemo(
+    () => buildExpansionData(cancelledStyleSet, cancelledSkuSet),
+    [cancelledStyleSet, cancelledSkuSet]
+  );
+
   const filtered = useMemo(() => {
-    if (!search) return ALL_EXPANSION;
+    if (!search) return allExpansion;
     const q = search.toLowerCase();
-    return ALL_EXPANSION.filter((i) => i.key.toLowerCase().includes(q));
-  }, [search]);
+    return allExpansion.filter((i) => i.key.toLowerCase().includes(q));
+  }, [search, allExpansion]);
 
   const buckets: Record<BucketType, ExpansionItem[]> = {
     "Well covered": filtered.filter((i) => i.bucket === "Well covered"),

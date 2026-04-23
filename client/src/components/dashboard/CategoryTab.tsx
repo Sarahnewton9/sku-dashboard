@@ -6,6 +6,7 @@
 import { useMemo } from "react";
 import { skuData } from "@/lib/skuData";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
+import { trpc } from "@/lib/trpc";
 
 const CATEGORY_COLOURS: Record<string, string> = {
   "DRESS SHOE": "#f59e0b",
@@ -38,6 +39,19 @@ const CATEGORY_ICONS: Record<string, string> = {
 export default function CategoryTab() {
   const { getCategory, getTrendFlag } = useStyleCategories();
 
+  // Fetch cancelled styles and SKUs
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+
+  const cancelledStyleSet = useMemo(
+    () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),
+    [cancelledStylesRaw]
+  );
+  const cancelledSkuSet = useMemo(
+    () => new Set((cancelledSkusRaw as any[]).map((r: any) => `${r.style}|${r.colour}|${r.leather}`)),
+    [cancelledSkusRaw]
+  );
+
   // Build merged category stats using resolved categories
   const mergedCategories = useMemo(() => {
     type CatStats = {
@@ -53,6 +67,9 @@ export default function CategoryTab() {
     const map = new Map<string, CatStats>();
 
     for (const style of skuData.styles) {
+      // Skip cancelled styles
+      if (cancelledStyleSet.has(style.style)) continue;
+
       const resolvedCat = getCategory(style.style, style.category).toUpperCase();
       const trendFlag = getTrendFlag(style.style);
 
@@ -71,8 +88,10 @@ export default function CategoryTab() {
       const entry = map.get(resolvedCat)!;
       entry.totalStyles += 1;
 
-      // Count SKUs for this style
-      const styleSKUs = skuData.rawSkus.filter((s) => s.style === style.style);
+      // Count SKUs for this style (excluding individually cancelled SKUs)
+      const styleSKUs = skuData.rawSkus.filter(
+        (s) => s.style === style.style && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`)
+      );
       const newCount = styleSKUs.filter((s) => s.is_new).length;
       const existingCount = styleSKUs.filter((s) => !s.is_new).length;
       entry.totalSKUs += styleSKUs.length;
@@ -92,7 +111,7 @@ export default function CategoryTab() {
 
     // Sort by totalSKUs descending
     return Array.from(map.values()).sort((a, b) => b.totalSKUs - a.totalSKUs);
-  }, [getCategory, getTrendFlag]);
+  }, [getCategory, getTrendFlag, cancelledStyleSet, cancelledSkuSet]);
 
   return (
     <div className="space-y-6">
