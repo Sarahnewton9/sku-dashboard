@@ -1,54 +1,107 @@
 /**
- * CategoryTab — shows each category as a card with SKU breakdown
+ * CategoryTab — shows each category as a card with SKU breakdown.
+ * Ballet Flat and Loafer are merged under "Casual Flat" with trend tags.
  */
 
 import { useMemo } from "react";
 import { skuData } from "@/lib/skuData";
+import { useStyleCategories } from "@/hooks/useStyleCategories";
 
 const CATEGORY_COLOURS: Record<string, string> = {
-  "Dress Shoe": "#f59e0b",
-  "Dress Sandal": "#10b981",
-  "Ballet Flat": "#8b5cf6",
-  "Loafer": "#3b82f6",
-  "Wedge": "#f97316",
-  "Sandal": "#06b6d4",
-  "Ankle Boot": "#ec4899",
-  "Calf Boot": "#6b7280",
+  "DRESS SHOE": "#f59e0b",
+  "DRESS SANDAL": "#10b981",
+  "CASUAL FLAT": "#8b5cf6",
+  "CASUAL WEDGE": "#f97316",
+  "DRESS WEDGE": "#fb923c",
+  "WEDGE": "#f97316",
+  "SANDAL": "#06b6d4",
+  "DRESS ANKLE BOOT": "#ec4899",
+  "ANKLE BOOT": "#ec4899",
+  "DRESS CALF BOOT": "#6b7280",
+  "CALF BOOT": "#6b7280",
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
-  "Dress Shoe": "👠",
-  "Dress Sandal": "👡",
-  "Ballet Flat": "🩰",
-  "Loafer": "🥿",
-  "Wedge": "👢",
-  "Sandal": "🩴",
-  "Ankle Boot": "👢",
-  "Calf Boot": "👢",
+  "DRESS SHOE": "👠",
+  "DRESS SANDAL": "👡",
+  "CASUAL FLAT": "🩰",
+  "CASUAL WEDGE": "👢",
+  "DRESS WEDGE": "👢",
+  "WEDGE": "👢",
+  "SANDAL": "🩴",
+  "DRESS ANKLE BOOT": "👢",
+  "ANKLE BOOT": "👢",
+  "DRESS CALF BOOT": "👢",
+  "CALF BOOT": "👢",
 };
 
 export default function CategoryTab() {
-  // Build a map of category → style images (up to 6 per category)
-  const categoryImages = useMemo(() => {
-    const map: Record<string, string[]> = {};
+  const { getCategory, getTrendFlag } = useStyleCategories();
+
+  // Build merged category stats using resolved categories
+  const mergedCategories = useMemo(() => {
+    type CatStats = {
+      category: string;
+      totalStyles: number;
+      totalSKUs: number;
+      newSKUs: number;
+      existingSKUs: number;
+      images: string[];
+      trendBreakdown: Record<string, number>; // e.g. { "Ballet Flat": 12, "Loafer": 5 }
+    };
+
+    const map = new Map<string, CatStats>();
+
     for (const style of skuData.styles) {
-      const cat = style.category;
-      if (!map[cat]) map[cat] = [];
-      if (style.imageUrl && map[cat].length < 6) {
-        map[cat].push(style.imageUrl);
+      const resolvedCat = getCategory(style.style, style.category).toUpperCase();
+      const trendFlag = getTrendFlag(style.style);
+
+      if (!map.has(resolvedCat)) {
+        map.set(resolvedCat, {
+          category: resolvedCat,
+          totalStyles: 0,
+          totalSKUs: 0,
+          newSKUs: 0,
+          existingSKUs: 0,
+          images: [],
+          trendBreakdown: {},
+        });
+      }
+
+      const entry = map.get(resolvedCat)!;
+      entry.totalStyles += 1;
+
+      // Count SKUs for this style
+      const styleSKUs = skuData.rawSkus.filter((s) => s.style === style.style);
+      const newCount = styleSKUs.filter((s) => s.is_new).length;
+      const existingCount = styleSKUs.filter((s) => !s.is_new).length;
+      entry.totalSKUs += styleSKUs.length;
+      entry.newSKUs += newCount;
+      entry.existingSKUs += existingCount;
+
+      // Collect images (up to 6)
+      if (style.imageUrl && entry.images.length < 6) {
+        entry.images.push(style.imageUrl);
+      }
+
+      // Track trend breakdown
+      if (trendFlag) {
+        entry.trendBreakdown[trendFlag] = (entry.trendBreakdown[trendFlag] ?? 0) + 1;
       }
     }
-    return map;
-  }, []);
+
+    // Sort by totalSKUs descending
+    return Array.from(map.values()).sort((a, b) => b.totalSKUs - a.totalSKUs);
+  }, [getCategory, getTrendFlag]);
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
-        {skuData.categories.map((cat) => {
+        {mergedCategories.map((cat) => {
           const colour = CATEGORY_COLOURS[cat.category] ?? "#6b7280";
           const icon = CATEGORY_ICONS[cat.category] ?? "👟";
-          const pctNew = cat.pctNew;
-          const images = categoryImages[cat.category] ?? [];
+          const pctNew = cat.totalSKUs > 0 ? Math.round((cat.newSKUs / cat.totalSKUs) * 100) : 0;
+          const hasTrendBreakdown = Object.keys(cat.trendBreakdown).length > 0;
 
           return (
             <div
@@ -68,8 +121,27 @@ export default function CategoryTab() {
                       {cat.category}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {cat.totalStyles} {(cat.totalStyles as number) === 1 ? "style" : "styles"}
+                      {cat.totalStyles} {cat.totalStyles === 1 ? "style" : "styles"}
                     </p>
+                    {/* Trend breakdown tags (e.g. Ballet Flat / Loafer) */}
+                    {hasTrendBreakdown && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {Object.entries(cat.trendBreakdown).map(([flag, count]) => (
+                          <span
+                            key={flag}
+                            className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full border"
+                            style={{
+                              borderColor: colour,
+                              color: colour,
+                              background: `${colour}15`,
+                            }}
+                          >
+                            {flag}
+                            <span className="font-semibold">{count}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-display font-bold tabular-nums text-foreground">
@@ -102,9 +174,9 @@ export default function CategoryTab() {
                 </div>
 
                 {/* Style image strip */}
-                {images.length > 0 && (
+                {cat.images.length > 0 && (
                   <div className="flex gap-1.5 mb-4 flex-wrap">
-                    {images.slice(0, 6).map((url, i) => (
+                    {cat.images.slice(0, 6).map((url, i) => (
                       <div
                         key={i}
                         className="w-12 h-9 rounded overflow-hidden flex items-center justify-center flex-shrink-0"
@@ -161,45 +233,48 @@ export default function CategoryTab() {
               </tr>
             </thead>
             <tbody>
-              {skuData.categories
-                .slice()
-                .sort((a, b) => b.totalSKUs - a.totalSKUs)
-                .map((cat) => {
-                  const colour = CATEGORY_COLOURS[cat.category] ?? "#6b7280";
-                  const avg = cat.totalStyles > 0 ? (cat.totalSKUs / cat.totalStyles).toFixed(1) : "0";
-                  return (
-                    <tr
-                      key={cat.category}
-                      className="border-b transition-colors hover:bg-muted/40"
-                      style={{ borderColor: "var(--border)" }}
-                    >
-                      <td className="px-5 py-3">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: colour }} />
-                          <span className="font-medium text-foreground">{cat.category}</span>
-                        </div>
-                      </td>
-                      <td className="text-right px-4 py-3 tabular-nums text-muted-foreground">{cat.totalStyles}</td>
-                      <td className="text-right px-4 py-3 tabular-nums font-semibold text-foreground">{cat.totalSKUs}</td>
-                      <td className="text-right px-4 py-3 tabular-nums font-semibold" style={{ color: "oklch(0.55 0.14 55)" }}>{cat.newSKUs}</td>
-                      <td className="text-right px-4 py-3 tabular-nums text-muted-foreground">{cat.existingSKUs}</td>
-                      <td className="text-right px-4 py-3 tabular-nums text-muted-foreground">{avg}</td>
-                      <td className="px-5 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
-                            <div
-                              className="h-full rounded-full"
-                              style={{ width: `${cat.pctNew}%`, background: colour }}
-                            />
-                          </div>
-                          <span className="text-xs tabular-nums font-medium text-muted-foreground w-10 text-right">
-                            {cat.pctNew}%
+              {mergedCategories.map((cat) => {
+                const colour = CATEGORY_COLOURS[cat.category] ?? "#6b7280";
+                const avg = cat.totalStyles > 0 ? (cat.totalSKUs / cat.totalStyles).toFixed(1) : "0";
+                const pctNew = cat.totalSKUs > 0 ? Math.round((cat.newSKUs / cat.totalSKUs) * 100) : 0;
+                return (
+                  <tr
+                    key={cat.category}
+                    className="border-b transition-colors hover:bg-muted/40"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: colour }} />
+                        <span className="font-medium text-foreground">{cat.category}</span>
+                        {Object.keys(cat.trendBreakdown).length > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            ({Object.keys(cat.trendBreakdown).join(" / ")})
                           </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="text-right px-4 py-3 tabular-nums text-muted-foreground">{cat.totalStyles}</td>
+                    <td className="text-right px-4 py-3 tabular-nums font-semibold text-foreground">{cat.totalSKUs}</td>
+                    <td className="text-right px-4 py-3 tabular-nums font-semibold" style={{ color: "oklch(0.55 0.14 55)" }}>{cat.newSKUs}</td>
+                    <td className="text-right px-4 py-3 tabular-nums text-muted-foreground">{cat.existingSKUs}</td>
+                    <td className="text-right px-4 py-3 tabular-nums text-muted-foreground">{avg}</td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
+                          <div
+                            className="h-full rounded-full"
+                            style={{ width: `${pctNew}%`, background: colour }}
+                          />
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                        <span className="text-xs tabular-nums font-medium text-muted-foreground w-10 text-right">
+                          {pctNew}%
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

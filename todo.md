@@ -486,3 +486,9 @@
 - [x] Diagnosed: standard xlsx library ignores .s cell styles — switched to xlsx-js-style v1.2.0 (drop-in replacement)
 - [x] Cell colours now apply: dark fill (#1A1A1A) + white bold font on title and header rows
 - [x] USA QTY column added conditionally — only appears when any USA quantities exist in the session
+
+## Phase 46: By Category — Merge Ballet Flat and Loafer into Casual Flat
+
+- [x] By Category tab: Ballet Flat and Loafer now merged under single CASUAL FLAT card using useStyleCategories hook
+- [x] Trend breakdown tags (Ballet Flat / Loafer with style counts) shown on the CASUAL FLAT card and in the comparison table
+- [x] SKU counts (new/existing/total) roll up correctly under the merged Casual Flat group
