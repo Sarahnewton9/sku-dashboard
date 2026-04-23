@@ -92,6 +92,16 @@ export default function BuySessionsPanel() {
     return map;
   }, [skuMetaList]);
 
+  // Style-level size 11 map: true if ANY SKU for that style has isSize11=true in the DB
+  const styleSize11Map = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    for (const m of skuMetaList as any[]) {
+      if (m.isSize11) map[m.style] = true;
+      else if (!(m.style in map)) map[m.style] = false;
+    }
+    return map;
+  }, [skuMetaList]);
+
   const styleMetaMap = useMemo(() => {
     const map: Record<string, { rrp?: number | null }> = {};
     for (const m of styleMetaList as any[]) {
@@ -137,7 +147,7 @@ export default function BuySessionsPanel() {
         return {
           category: resolvedCategoryMap[item.style] ?? styleInfo?.category ?? "",
           last: styleInfo?.last ?? "",
-          size11: dbMeta?.isSize11 ? "Y" : "N",
+          size11: styleSize11Map[item.style] ? "Y" : "",
           style: item.style,
           colour: item.colour,
           leather: item.leather,

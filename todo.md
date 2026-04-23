@@ -463,3 +463,8 @@
 - [x] Hide Sample badge if not received (removed "—" placeholder)
 - [x] Size 11 badge only shows when true (already working)
 - [x] Column headers retained but empty cells are invisible when no value present
+
+## Phase 42: Fix SIZE 11 in Buy Export
+
+- [x] Buy export SIZE 11 column: now uses styleSize11Map (style-level, derived from skuMeta DB) — if any SKU for a style has isSize11=true, the style shows Y in the export
+- [x] Changed from per-SKU lookup (which missed SKUs with no DB row) to style-level lookup so all SKUs for a size-11 style show Y correctly
