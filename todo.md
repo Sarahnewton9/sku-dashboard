@@ -456,3 +456,10 @@
 - [x] When no session is selected, show buy qty as read-only text from the most recent session (so units are always visible)
 - [x] When a session is selected and unlocked, show editable inputs as before
 - [x] When a session is selected and locked, show read-only text as before
+
+## Phase 41: Show Only Non-Empty Fields in SKU Rows
+
+- [x] Hide USA qty if zero in read-only mode (only show if > 0)
+- [x] Hide Sample badge if not received (removed "—" placeholder)
+- [x] Size 11 badge only shows when true (already working)
+- [x] Column headers retained but empty cells are invisible when no value present

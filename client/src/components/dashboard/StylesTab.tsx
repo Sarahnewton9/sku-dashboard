@@ -791,12 +791,12 @@ export default function StylesTab() {
                                             <span className="px-1 py-0.5 rounded text-xs font-semibold" style={{ background: "oklch(0.94 0.06 240)", color: "oklch(0.45 0.14 240)" }}>11</span>
                                           ) : null}
                                         </span>
-                                        {/* Sample — new SKUs only */}
+                                        {/* Sample — new SKUs only, only show if received */}
                                         {isNew && (
                                           <span className="text-xs text-center">
                                             {dbMeta?.sampleStatus === "received" ? (
                                               <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={{ background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)" }}>✓ Rcvd</span>
-                                            ) : <span className="text-muted-foreground text-xs">—</span>}
+                                            ) : null}
                                           </span>
                                         )}
                                         {/* Buy Qty — new SKUs only */}
@@ -837,12 +837,19 @@ export default function StylesTab() {
                                               </>
                                             ) : (
                                               <div className="flex gap-2">
-                                                <span className="text-xs font-mono" style={{ color: sessionAuQty > 0 ? "oklch(0.50 0.14 55)" : "var(--muted-foreground)" }}>
-                                                  AU: {sessionAuQty > 0 ? sessionAuQty : "—"}
-                                                </span>
-                                                <span className="text-xs font-mono" style={{ color: sessionUsaQty > 0 ? "oklch(0.45 0.14 240)" : "var(--muted-foreground)" }}>
-                                                  USA: {sessionUsaQty > 0 ? sessionUsaQty : "—"}
-                                                </span>
+                                                {sessionAuQty > 0 && (
+                                                  <span className="text-xs font-mono" style={{ color: "oklch(0.50 0.14 55)" }}>
+                                                    AU: {sessionAuQty}
+                                                  </span>
+                                                )}
+                                                {sessionUsaQty > 0 && (
+                                                  <span className="text-xs font-mono" style={{ color: "oklch(0.45 0.14 240)" }}>
+                                                    USA: {sessionUsaQty}
+                                                  </span>
+                                                )}
+                                                {sessionAuQty === 0 && sessionUsaQty === 0 && (
+                                                  <span className="text-xs text-muted-foreground">—</span>
+                                                )}
                                               </div>
                                             )}
                                           </div>
