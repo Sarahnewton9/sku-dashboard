@@ -535,3 +535,11 @@
 - [x] Audit BuyAnalysis — safe (reads from buy session items DB, not rawSkus directly)
 - [x] Apply filters to any tab missing them
 - [x] TypeScript: 0 errors confirmed
+
+## Phase 53: AP21 CSV Export
+
+- [x] Add AP21 export button to ExportPanel (per-style selector + generate CSV)
+- [x] CSV rows: one per colour per size, ordered style→colour→size per AP21 spec
+- [x] Map all required AP21 fields from skuData + skuMeta + styleMeta
+- [x] Cancelled styles and cancelled SKUs excluded from AP21 export
+- [x] TypeScript: 0 errors confirmed
