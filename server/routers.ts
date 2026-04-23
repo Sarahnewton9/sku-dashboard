@@ -651,9 +651,17 @@ export const appRouter = router({
 
           // Run the Python parser
           const parserPath = path.join(process.cwd(), "server", "pptx_parser.py");
+          // Build a clean environment: strip PYTHONPATH/PYTHONHOME so the uv
+          // runtime cannot redirect /usr/bin/python3.11 to its own stdlib.
+          const cleanEnv = { ...process.env };
+          delete cleanEnv.PYTHONPATH;
+          delete cleanEnv.PYTHONHOME;
+          delete cleanEnv.VIRTUAL_ENV;
+
           const output = execSync(`/usr/bin/python3.11 "${parserPath}" "${tmpFile}"`, {
             timeout: 60000,
             maxBuffer: 10 * 1024 * 1024,
+            env: cleanEnv,
           }).toString();
 
           const parsed: Array<{
