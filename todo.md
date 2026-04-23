@@ -517,3 +517,11 @@
 
 - [x] Root cause: deduplication used colour-only Set, so BLACK KID was blocked by existing BLACK VINTAGE
 - [x] Fixed: deduplication now uses colour+leather combo key so BLACK KID appears as a separate column from BLACK VINTAGE
+
+## Phase 51: Fix Colour/Leather Tab — Hide Cancelled Styles and SKUs
+
+- [x] ColourLeatherTab: fetches cancelled styles via trpc.styles.listCancelled
+- [x] ColourLeatherTab: fetches cancelled SKUs via trpc.cancelledSku.list
+- [x] Builds cancelledStyleSet (Set of style names) and cancelledSkuSet (Set of style|colour|leather keys)
+- [x] Filters both from allRawSkus before building combos — CIRCA, MAMZELLE and any other cancelled styles/SKUs no longer appear
+- [x] TypeScript: 0 errors confirmed via npx tsc --noEmit

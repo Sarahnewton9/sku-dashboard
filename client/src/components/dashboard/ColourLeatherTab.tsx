@@ -123,6 +123,25 @@ export default function ColourLeatherTab() {
   // Fetch custom SKUs from DB so they appear like regular SKUs
   const { data: customSkusRaw = [] } = trpc.customSku.getAll.useQuery();
 
+  // Fetch cancelled styles and cancelled SKUs so they can be filtered out
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+
+  const cancelledStyleSet = useMemo(
+    () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),
+    [cancelledStylesRaw]
+  );
+
+  const cancelledSkuSet = useMemo(
+    () =>
+      new Set(
+        (cancelledSkusRaw as Array<{ style: string; colour: string; leather: string }>).map(
+          (s) => `${s.style}|${s.colour}|${s.leather}`
+        )
+      ),
+    [cancelledSkusRaw]
+  );
+
   // Build combos dynamically, merging custom SKUs into the static data
   const ALL_COMBOS = useMemo(() => {
     // Build image map from static styles
@@ -133,7 +152,7 @@ export default function ColourLeatherTab() {
     const styleInfoMap = new Map<string, { category: string; last: string }>();
     for (const s of skuData.styles) styleInfoMap.set(s.style, { category: s.category, last: s.last });
 
-    // Combine static rawSkus + custom SKUs
+    // Combine static rawSkus + custom SKUs, then filter cancelled styles and cancelled SKUs
     const existingKeys = new Set(skuData.rawSkus.map((s) => `${s.style}|${s.colour}|${s.leather}`));
     const customEntries = (customSkusRaw as Array<{ style: string; colour: string; leather: string }>)
       .filter((c) => !existingKeys.has(`${c.style}|${c.colour}|${c.leather}`))
@@ -141,7 +160,11 @@ export default function ColourLeatherTab() {
     const allRawSkus = [
       ...(skuData.rawSkus as unknown as Array<{ style: string; colour: string; leather: string; is_new: boolean }>),
       ...customEntries,
-    ];
+    ].filter(
+      (sku) =>
+        !cancelledStyleSet.has(sku.style) &&
+        !cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)
+    );
 
     const map = new Map<string, Combo>();
     for (const sku of allRawSkus) {
@@ -166,7 +189,7 @@ export default function ColourLeatherTab() {
       });
     }
     return Array.from(map.values()).sort((a, b) => b.totalCount - a.totalCount || a.key.localeCompare(b.key));
-  }, [customSkusRaw]);
+  }, [customSkusRaw, cancelledStyleSet, cancelledSkuSet]);
 
   const filtered = useMemo(() => {
     const results = ALL_COMBOS.filter((combo) => {
