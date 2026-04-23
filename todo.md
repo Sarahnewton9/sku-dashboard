@@ -468,3 +468,8 @@
 
 - [x] Buy export SIZE 11 column: now uses styleSize11Map (style-level, derived from skuMeta DB) — if any SKU for a style has isSize11=true, the style shows Y in the export
 - [x] Changed from per-SKU lookup (which missed SKUs with no DB row) to style-level lookup so all SKUs for a size-11 style show Y correctly
+
+## Phase 43: Match Buy Export to Reference Spreadsheet
+
+- [x] Analysed reference XLSX: 6 cols (CATEGORY, LAST, SIZE 11, STYLE, COLOUR, AU QTY), merged title A1:F1, plain white rows, no alternating colours, no USA column
+- [x] Rewrote exportSession to match reference: combined colour+leather into single COLOUR column, exact column widths and row heights, plain Calibri 12pt, total row at bottom

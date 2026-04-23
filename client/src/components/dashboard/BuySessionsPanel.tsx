@@ -124,7 +124,7 @@ export default function BuySessionsPanel() {
     // Find the session object to get its date
     const session = allSessions.find((s) => s.id === sessionId);
 
-    // Export only items for this session with AU or USA qty > 0
+    // Export only items for this session with AU qty > 0
     const items = sessionId === selectedSessionId ? sessionItems : [];
     if (items.length === 0) {
       toast.error("No items to export — select this session first to load its data, then export.");
@@ -134,157 +134,105 @@ export default function BuySessionsPanel() {
 
     type RowData = {
       category: string; last: string; size11: string;
-      style: string; colour: string; leather: string;
-      auQty: number; usaQty: number;
+      style: string; colourDesc: string; auQty: number;
     };
 
     const rows: RowData[] = (items as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number }>)
-      .filter((item) => ((item.auQty ?? 0) + (item.usaQty ?? 0)) > 0)
+      .filter((item) => (item.auQty ?? 0) > 0)
       .map((item) => {
-        const skuKey = `${item.style}|${item.colour}|${item.leather}`;
-        const dbMeta = skuMetaMap[skuKey];
         const styleInfo = styleInfoMap[item.style];
+        // Combine colour + leather into one description (e.g. "BLACK NAPPA" or "PETAL SUEDE")
+        const colourDesc = item.leather
+          ? `${item.colour} ${item.leather}`.trim()
+          : item.colour;
         return {
           category: resolvedCategoryMap[item.style] ?? styleInfo?.category ?? "",
           last: styleInfo?.last ?? "",
           size11: styleSize11Map[item.style] ? "Y" : "",
           style: item.style,
-          colour: item.colour,
-          leather: item.leather,
+          colourDesc,
           auQty: item.auQty ?? 0,
-          usaQty: item.usaQty ?? 0,
         };
       });
 
     if (rows.length === 0) {
-      toast.error("No SKUs with AU or USA quantities in this session.");
+      toast.error("No SKUs with AU quantities in this session.");
       return;
     }
 
-    // Sort rows: by category, then style, then colour
+    // Sort: category → style → colour
     rows.sort((a, b) => {
       const catCmp = a.category.localeCompare(b.category);
       if (catCmp !== 0) return catCmp;
       const styleCmp = a.style.localeCompare(b.style);
       if (styleCmp !== 0) return styleCmp;
-      return a.colour.localeCompare(b.colour);
+      return a.colourDesc.localeCompare(b.colourDesc);
     });
 
-    // Use the session's own date for the filename
+    // Filename uses session's own date
     const sessionDate = session ? new Date(session.createdAt) : new Date();
     const dd = String(sessionDate.getDate()).padStart(2, "0");
     const mm = String(sessionDate.getMonth() + 1).padStart(2, "0");
     const fileName = `SUMMER 26 BUY ${dd}.${mm}.xlsx`;
 
-    // ── Colour palette ──────────────────────────────────────────────
-    // Title row: deep charcoal bg, white text
-    const titleBg = { rgb: "1A1A2E" };
-    const titleFg = { rgb: "FFFFFF" };
-    // Header row: dark navy bg, white text
-    const headerBg = { rgb: "16213E" };
-    const headerFg = { rgb: "FFFFFF" };
-    // Category subtotal rows: soft amber bg, dark text
-    const subtotalBg = { rgb: "FFF3CD" };
-    const subtotalFg = { rgb: "7C4A00" };
-    // Alternating data rows
-    const rowBgEven = { rgb: "FFFFFF" };
-    const rowBgOdd  = { rgb: "F8F9FA" };
-    const rowFg     = { rgb: "212529" };
-    // Total row: charcoal bg, white text
-    const totalBg = { rgb: "1A1A2E" };
-    const totalFg = { rgb: "FFFFFF" };
-    // AU qty accent
-    const auColor  = { rgb: "B45309" }; // amber-700
-    const usaColor = { rgb: "1D4ED8" }; // blue-700
+    // ── Reference-matched layout ────────────────────────────────────
+    // 6 columns: A=CATEGORY, B=LAST, C=SIZE 11, D=STYLE, E=COLOUR, F=AU QTY
+    // Row 1: Title merged A1:F1
+    // Row 2: Empty spacer
+    // Row 3: Bold header row
+    // Rows 4+: Data rows (plain white)
+    // Last row: TOTAL
 
-    const thinBorder = {
-      top: { style: "thin", color: { rgb: "DEE2E6" } },
-      bottom: { style: "thin", color: { rgb: "DEE2E6" } },
-      left: { style: "thin", color: { rgb: "DEE2E6" } },
-      right: { style: "thin", color: { rgb: "DEE2E6" } },
-    };
-    const medBorder = {
-      top: { style: "medium", color: { rgb: "ADB5BD" } },
-      bottom: { style: "medium", color: { rgb: "ADB5BD" } },
-      left: { style: "medium", color: { rgb: "ADB5BD" } },
-      right: { style: "medium", color: { rgb: "ADB5BD" } },
-    };
-
-    // ── Build sheet rows ─────────────────────────────────────────────
-    // Row 0: Title
-    // Row 1: blank spacer
-    // Row 2: column headers
-    // Row 3+: data rows (with category subtotals inserted between groups)
-    // Last row: grand total
-
-    const COLS = 8; // A–H
+    const COLS = 6;
     const sheetRows: (string | number)[][] = [];
-    const styleMap: (string | number)[][] = []; // parallel array tracking row "type"
+    const rowTypes: string[] = [];
 
-    // Title row
-    sheetRows.push([`TONY BIANCO — SUMMER 26 BUY SHEET`, "", "", "", "", "", "", ""]);
+    // Title
+    sheetRows.push(["TONY BIANCO \u2014 SUMMER 26 BUY SHEET", "", "", "", "", ""]);
+    rowTypes.push("title");
     // Spacer
-    sheetRows.push(["", "", "", "", "", "", "", ""]);
-    // Headers
-    sheetRows.push(["CATEGORY", "LAST", "SIZE 11", "STYLE", "COLOUR", "LEATHER", "AU QTY", "US QTY"]);
+    sheetRows.push(["", "", "", "", "", ""]);
+    rowTypes.push("spacer");
+    // Header
+    sheetRows.push(["CATEGORY", "LAST", "SIZE 11", "STYLE", "COLOUR", "AU QTY"]);
+    rowTypes.push("header");
 
-    const TITLE_ROW = 0;
-    const SPACER_ROW = 1;
-    const HEADER_ROW = 2;
-    let dataStartRow = 3;
-
-    // Group rows by category
-    const categoryGroups: Record<string, RowData[]> = {};
-    for (const row of rows) {
-      if (!categoryGroups[row.category]) categoryGroups[row.category] = [];
-      categoryGroups[row.category].push(row);
+    // Data rows
+    for (const r of rows) {
+      sheetRows.push([r.category, r.last, r.size11, r.style, r.colourDesc, r.auQty]);
+      rowTypes.push("data");
     }
 
-    const rowTypes: string[] = ["title", "spacer", "header"];
-    let dataRowIndex = 0; // for alternating colours
-
-    const categoryOrder = Object.keys(categoryGroups).sort();
-    for (const cat of categoryOrder) {
-      const catRows = categoryGroups[cat];
-      for (const r of catRows) {
-        sheetRows.push([r.category, r.last, r.size11, r.style, r.colour, r.leather, r.auQty, r.usaQty]);
-        rowTypes.push(dataRowIndex % 2 === 0 ? "data-even" : "data-odd");
-        dataRowIndex++;
-      }
-    }
-
-    // Grand total row
+    // Total row
     const totalAu = rows.reduce((s, r) => s + r.auQty, 0);
-    const totalUsa = rows.reduce((s, r) => s + r.usaQty, 0);
-    sheetRows.push(["TOTAL", "", "", "", "", "", totalAu, totalUsa]);
+    sheetRows.push(["TOTAL", "", "", "", " ", totalAu]);
     rowTypes.push("total");
 
     const ws = XLSX.utils.aoa_to_sheet(sheetRows);
 
-    // Column widths
+    // Column widths — matching reference exactly
     ws["!cols"] = [
-      { wch: 20 }, // CATEGORY
-      { wch: 14 }, // LAST
-      { wch: 9  }, // SIZE 11
-      { wch: 12 }, // STYLE
-      { wch: 13 }, // COLOUR
-      { wch: 16 }, // LEATHER
-      { wch: 10 }, // AU QTY
-      { wch: 10 }, // US QTY
+      { wch: 20.875 }, // A: CATEGORY
+      { wch: 14.875 }, // B: LAST
+      { wch: 9.875  }, // C: SIZE 11
+      { wch: 12.875 }, // D: STYLE
+      { wch: 23.875 }, // E: COLOUR
+      { wch: 10.875 }, // F: AU QTY
     ];
 
-    // Row heights
+    // Row heights — matching reference exactly
     ws["!rows"] = sheetRows.map((_, i) => {
-      if (rowTypes[i] === "title") return { hpt: 28 };
-      if (rowTypes[i] === "header") return { hpt: 20 };
-      if (rowTypes[i] === "subtotal" || rowTypes[i] === "total") return { hpt: 18 };
-      return { hpt: 16 };
+      if (rowTypes[i] === "title")  return { hpt: 27.95 };
+      if (rowTypes[i] === "spacer") return { hpt: 15.95 };
+      if (rowTypes[i] === "header") return { hpt: 20.1 };
+      if (rowTypes[i] === "total")  return { hpt: 18 };
+      return { hpt: 15.95 };
     });
 
-    // Merge title across all columns
+    // Merge title across A1:F1
     ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: COLS - 1 } }];
 
-    // Apply cell styles
+    // Apply styles
     for (let R = 0; R < sheetRows.length; R++) {
       const type = rowTypes[R];
       for (let C = 0; C < COLS; C++) {
@@ -293,47 +241,26 @@ export default function BuySessionsPanel() {
 
         if (type === "title") {
           ws[addr].s = {
-            font: { name: "Calibri", sz: 16, bold: true, color: titleFg },
-            fill: { fgColor: titleBg },
+            font: { name: "Calibri", sz: 12, bold: true },
             alignment: { horizontal: "center", vertical: "center" },
           };
         } else if (type === "spacer") {
-          ws[addr].s = { fill: { fgColor: { rgb: "FFFFFF" } } };
+          ws[addr].s = {};
         } else if (type === "header") {
           ws[addr].s = {
-            font: { name: "Calibri", sz: 11, bold: true, color: headerFg },
-            fill: { fgColor: headerBg },
+            font: { name: "Calibri", sz: 12, bold: true },
             alignment: { horizontal: "center", vertical: "center" },
-            border: medBorder,
-          };
-        } else if (type === "subtotal") {
-          const isQtyCol = C === 6 || C === 7;
-          ws[addr].s = {
-            font: { name: "Calibri", sz: 11, bold: true,
-              color: isQtyCol ? (C === 6 ? auColor : usaColor) : subtotalFg },
-            fill: { fgColor: subtotalBg },
-            alignment: { horizontal: C >= 6 ? "center" : (C === 0 ? "left" : "center"), vertical: "center" },
-            border: thinBorder,
           };
         } else if (type === "total") {
-          const isQtyCol = C === 6 || C === 7;
           ws[addr].s = {
-            font: { name: "Calibri", sz: 12, bold: true,
-              color: isQtyCol ? (C === 6 ? { rgb: "FCD34D" } : { rgb: "93C5FD" }) : totalFg },
-            fill: { fgColor: totalBg },
-            alignment: { horizontal: "center", vertical: "center" },
-            border: medBorder,
+            font: { name: "Calibri", sz: 12, bold: false },
+            alignment: { horizontal: C === 5 ? "right" : "left", vertical: "center" },
           };
         } else {
-          // data-even / data-odd
-          const bg = type === "data-even" ? rowBgEven : rowBgOdd;
-          const isQtyCol = C === 6 || C === 7;
+          // plain data row
           ws[addr].s = {
-            font: { name: "Calibri", sz: 11, bold: false,
-              color: isQtyCol ? (C === 6 ? auColor : usaColor) : rowFg },
-            fill: { fgColor: bg },
-            alignment: { horizontal: C >= 6 ? "center" : (C <= 1 ? "left" : "center"), vertical: "center" },
-            border: thinBorder,
+            font: { name: "Calibri", sz: 12, bold: false },
+            alignment: { horizontal: C === 5 ? "right" : "left", vertical: "center" },
           };
         }
       }
