@@ -480,3 +480,9 @@
 - [x] Header row (row 3): solid dark fill (#1A1A1A), white bold font
 - [x] Data rows: no fill (plain white)
 - [x] Total row: no fill, plain text
+
+## Phase 45: Fix Export Cell Colours and USA Column
+
+- [x] Diagnosed: standard xlsx library ignores .s cell styles — switched to xlsx-js-style v1.2.0 (drop-in replacement)
+- [x] Cell colours now apply: dark fill (#1A1A1A) + white bold font on title and header rows
+- [x] USA QTY column added conditionally — only appears when any USA quantities exist in the session

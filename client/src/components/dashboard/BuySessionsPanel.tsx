@@ -8,7 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { Lock, Download, Plus, Clock, CheckCircle, Package, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 
 export default function BuySessionsPanel() {
   const [showCreate, setShowCreate] = useState(false);
@@ -134,14 +134,15 @@ export default function BuySessionsPanel() {
 
     type RowData = {
       category: string; last: string; size11: string;
-      style: string; colourDesc: string; auQty: number;
+      style: string; colourDesc: string; auQty: number; usaQty: number;
     };
 
-    const rows: RowData[] = (items as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number }>)
-      .filter((item) => (item.auQty ?? 0) > 0)
+    const allItems = items as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number }>;
+
+    const rows: RowData[] = allItems
+      .filter((item) => ((item.auQty ?? 0) + (item.usaQty ?? 0)) > 0)
       .map((item) => {
         const styleInfo = styleInfoMap[item.style];
-        // Combine colour + leather into one description (e.g. "BLACK NAPPA" or "PETAL SUEDE")
         const colourDesc = item.leather
           ? `${item.colour} ${item.leather}`.trim()
           : item.colour;
@@ -152,11 +153,12 @@ export default function BuySessionsPanel() {
           style: item.style,
           colourDesc,
           auQty: item.auQty ?? 0,
+          usaQty: item.usaQty ?? 0,
         };
       });
 
     if (rows.length === 0) {
-      toast.error("No SKUs with AU quantities in this session.");
+      toast.error("No SKUs with quantities in this session.");
       return;
     }
 
@@ -169,58 +171,72 @@ export default function BuySessionsPanel() {
       return a.colourDesc.localeCompare(b.colourDesc);
     });
 
+    // Determine if any USA quantities exist — add USA column only if needed
+    const hasUsa = rows.some((r) => r.usaQty > 0);
+
     // Filename uses session's own date
     const sessionDate = session ? new Date(session.createdAt) : new Date();
     const dd = String(sessionDate.getDate()).padStart(2, "0");
     const mm = String(sessionDate.getMonth() + 1).padStart(2, "0");
     const fileName = `SUMMER 26 BUY ${dd}.${mm}.xlsx`;
 
-    // ── Reference-matched layout ────────────────────────────────────
-    // 6 columns: A=CATEGORY, B=LAST, C=SIZE 11, D=STYLE, E=COLOUR, F=AU QTY
-    // Row 1: Title merged A1:F1
+    // ── Layout ────────────────────────────────────────────────────────────────────
+    // Columns: CATEGORY | LAST | SIZE 11 | STYLE | COLOUR | AU QTY [| USA QTY]
+    // Row 1: Title merged across all columns
     // Row 2: Empty spacer
     // Row 3: Bold header row
     // Rows 4+: Data rows (plain white)
     // Last row: TOTAL
 
-    const COLS = 6;
+    const COLS = hasUsa ? 7 : 6;
     const sheetRows: (string | number)[][] = [];
     const rowTypes: string[] = [];
 
+    const emptyRow = Array(COLS).fill("") as string[];
+    const titleText = "TONY BIANCO \u2014 SUMMER 26 BUY SHEET";
+
     // Title
-    sheetRows.push(["TONY BIANCO \u2014 SUMMER 26 BUY SHEET", "", "", "", "", ""]);
+    sheetRows.push([titleText, ...Array(COLS - 1).fill("") as string[]]);
     rowTypes.push("title");
     // Spacer
-    sheetRows.push(["", "", "", "", "", ""]);
+    sheetRows.push([...emptyRow]);
     rowTypes.push("spacer");
     // Header
-    sheetRows.push(["CATEGORY", "LAST", "SIZE 11", "STYLE", "COLOUR", "AU QTY"]);
+    const headerRow = ["CATEGORY", "LAST", "SIZE 11", "STYLE", "COLOUR", "AU QTY"];
+    if (hasUsa) headerRow.push("USA QTY");
+    sheetRows.push(headerRow);
     rowTypes.push("header");
 
     // Data rows
     for (const r of rows) {
-      sheetRows.push([r.category, r.last, r.size11, r.style, r.colourDesc, r.auQty]);
+      const dataRow: (string | number)[] = [r.category, r.last, r.size11, r.style, r.colourDesc, r.auQty];
+      if (hasUsa) dataRow.push(r.usaQty > 0 ? r.usaQty : "");
+      sheetRows.push(dataRow);
       rowTypes.push("data");
     }
 
     // Total row
     const totalAu = rows.reduce((s, r) => s + r.auQty, 0);
-    sheetRows.push(["TOTAL", "", "", "", " ", totalAu]);
+    const totalUsa = rows.reduce((s, r) => s + r.usaQty, 0);
+    const totalRow: (string | number)[] = ["TOTAL", "", "", "", " ", totalAu];
+    if (hasUsa) totalRow.push(totalUsa);
+    sheetRows.push(totalRow);
     rowTypes.push("total");
 
     const ws = XLSX.utils.aoa_to_sheet(sheetRows);
 
-    // Column widths — matching reference exactly
+    // Column widths
     ws["!cols"] = [
-      { wch: 20.875 }, // A: CATEGORY
-      { wch: 14.875 }, // B: LAST
-      { wch: 9.875  }, // C: SIZE 11
-      { wch: 12.875 }, // D: STYLE
-      { wch: 23.875 }, // E: COLOUR
-      { wch: 10.875 }, // F: AU QTY
+      { wch: 20.875 }, // CATEGORY
+      { wch: 14.875 }, // LAST
+      { wch: 9.875  }, // SIZE 11
+      { wch: 12.875 }, // STYLE
+      { wch: 23.875 }, // COLOUR
+      { wch: 10.875 }, // AU QTY
+      ...(hasUsa ? [{ wch: 10.875 }] : []), // USA QTY (conditional)
     ];
 
-    // Row heights — matching reference exactly
+    // Row heights
     ws["!rows"] = sheetRows.map((_, i) => {
       if (rowTypes[i] === "title")  return { hpt: 27.95 };
       if (rowTypes[i] === "spacer") return { hpt: 15.95 };
@@ -229,14 +245,14 @@ export default function BuySessionsPanel() {
       return { hpt: 15.95 };
     });
 
-    // Merge title across A1:F1
+    // Merge title across all columns
     ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: COLS - 1 } }];
 
-    // Colours — matching reference theme colours exactly
-    // Title + header: dark fill ("1A1A1A" ≈ theme:1 black), white font ("FFFFFF" ≈ theme:0)
+    // Styles
     const darkFill = { patternType: "solid", fgColor: { rgb: "1A1A1A" } };
     const whiteFont = { name: "Calibri", sz: 12, bold: true, color: { rgb: "FFFFFF" } };
     const plainFont = { name: "Calibri", sz: 12, bold: false };
+    const qtyColIndices = hasUsa ? [5, 6] : [5];
 
     // Apply styles
     for (let R = 0; R < sheetRows.length; R++) {
@@ -244,6 +260,8 @@ export default function BuySessionsPanel() {
       for (let C = 0; C < COLS; C++) {
         const addr = XLSX.utils.encode_cell({ r: R, c: C });
         if (!ws[addr]) ws[addr] = { v: "", t: "s" };
+
+        const isQtyCol = qtyColIndices.includes(C);
 
         if (type === "title") {
           ws[addr].s = {
@@ -262,13 +280,13 @@ export default function BuySessionsPanel() {
         } else if (type === "total") {
           ws[addr].s = {
             font: plainFont,
-            alignment: { horizontal: C === 5 ? "right" : "left", vertical: "center" },
+            alignment: { horizontal: isQtyCol ? "right" : "left", vertical: "center" },
           };
         } else {
           // plain data row — no fill
           ws[addr].s = {
             font: plainFont,
-            alignment: { horizontal: C === 5 ? "right" : "left", vertical: "center" },
+            alignment: { horizontal: isQtyCol ? "right" : "left", vertical: "center" },
           };
         }
       }
