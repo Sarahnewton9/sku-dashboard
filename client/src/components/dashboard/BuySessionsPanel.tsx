@@ -251,11 +251,6 @@ export default function BuySessionsPanel() {
         rowTypes.push(dataRowIndex % 2 === 0 ? "data-even" : "data-odd");
         dataRowIndex++;
       }
-      // Category subtotal row
-      const catAu = catRows.reduce((s, r) => s + r.auQty, 0);
-      const catUsa = catRows.reduce((s, r) => s + r.usaQty, 0);
-      sheetRows.push([`${cat} SUBTOTAL`, "", "", "", "", "", catAu, catUsa]);
-      rowTypes.push("subtotal");
     }
 
     // Grand total row
