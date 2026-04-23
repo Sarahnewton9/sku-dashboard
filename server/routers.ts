@@ -651,7 +651,7 @@ export const appRouter = router({
 
           // Run the Python parser
           const parserPath = path.join(process.cwd(), "server", "pptx_parser.py");
-          const output = execSync(`python3 "${parserPath}" "${tmpFile}"`, {
+          const output = execSync(`python3.11 "${parserPath}" "${tmpFile}"`, {
             timeout: 60000,
             maxBuffer: 10 * 1024 * 1024,
           }).toString();
