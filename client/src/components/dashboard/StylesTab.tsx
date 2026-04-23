@@ -775,8 +775,8 @@ export default function StylesTab() {
                                         className="grid items-center gap-2 px-3 py-2 rounded-lg"
                                         style={{
                                           gridTemplateColumns: isNew
-                                            ? "minmax(130px,2fr) minmax(110px,1.5fr) 36px 64px minmax(170px,auto) 32px 28px"
-                                            : "minmax(130px,2fr) minmax(110px,1.5fr) 36px 32px 28px",
+                                            ? "1.5fr 1.5fr 40px 70px 130px 32px 28px"
+                                            : "1.5fr 1.5fr 40px 32px 28px",
                                           border: "1px solid var(--border)",
                                           background: sessionTotalQty > 0 ? "oklch(0.97 0.06 65 / 0.5)" : "var(--card)",
                                         }}
@@ -891,8 +891,9 @@ export default function StylesTab() {
                                   };
 
                                   // Grid template columns must match renderRow exactly
-                                  const existingCols = "minmax(130px,2fr) minmax(110px,1.5fr) 36px 32px 28px";
-                                  const newCols = "minmax(130px,2fr) minmax(110px,1.5fr) 36px 64px minmax(170px,auto) 32px 28px";
+                                  // Colour 1.5fr, Leather 1.5fr, Sz11 40px, Sample 70px, BuyQty 130px, detail 32px, cancel 28px
+                                  const existingCols = "1.5fr 1.5fr 40px 32px 28px";
+                                  const newCols = "1.5fr 1.5fr 40px 70px 130px 32px 28px";
 
                                   return (
                                     <div className="space-y-3">
