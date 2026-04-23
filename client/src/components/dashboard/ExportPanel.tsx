@@ -5,9 +5,10 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
-import { FileDown, X, FileSpreadsheet, ClipboardList, RefreshCw, Upload } from "lucide-react";
+import { FileDown, X, FileSpreadsheet, ClipboardList, RefreshCw, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import PptxSyncModal from "./PptxSyncModal";
 
 interface Props {
   onClose: () => void;
@@ -22,6 +23,7 @@ const AP21_SIZES_WITH_11 = ["35", "36", "37", "38", "39", "40", "41", "42"];
 export default function ExportPanel({ onClose }: Props) {
   const [exporting, setExporting] = useState<string | null>(null);
   const [ap21Style, setAp21Style] = useState<string>("ALL");
+  const [showPptxSync, setShowPptxSync] = useState(false);
   const utils = trpc.useUtils();
 
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
@@ -440,6 +442,7 @@ export default function ExportPanel({ onClose }: Props) {
   }
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.4)" }}>
       <div className="w-[480px] max-w-full mx-4 rounded-2xl shadow-2xl bg-card overflow-hidden" style={{ border: "1px solid var(--border)" }}>
         {/* Header */}
@@ -552,6 +555,24 @@ export default function ExportPanel({ onClose }: Props) {
             </div>
           </div>
 
+          {/* PPTX Range Review Sync */}
+          <button
+            onClick={() => setShowPptxSync(true)}
+            disabled={exporting !== null}
+            className="w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all hover:bg-muted/30 disabled:opacity-50"
+            style={{ borderColor: "oklch(0.80 0.10 260)", background: "oklch(0.97 0.02 260)" }}
+          >
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "oklch(0.92 0.06 260)" }}>
+              <FileText className="w-5 h-5" style={{ color: "oklch(0.40 0.14 260)" }} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm text-foreground">Sync from Range Review PPTX</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Upload your range review PowerPoint to auto-cancel red SKUs and update sample status.
+              </p>
+            </div>
+          </button>
+
           {/* Full Data Export */}
           <button
             onClick={exportFullData}
@@ -583,5 +604,17 @@ export default function ExportPanel({ onClose }: Props) {
         </div>
       </div>
     </div>
+    {showPptxSync && (
+      <PptxSyncModal
+        onClose={() => setShowPptxSync(false)}
+        onApplied={() => {
+          setShowPptxSync(false);
+          utils.cancelledSku.list.invalidate();
+          utils.styles.listCancelled.invalidate();
+          utils.sku.getAll.invalidate();
+        }}
+      />
+    )}
+    </>
   );
 }

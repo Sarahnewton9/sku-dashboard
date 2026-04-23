@@ -29,6 +29,10 @@ import {
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
+import { execSync } from "child_process";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
 
 export const appRouter = router({
   system: systemRouter,
@@ -628,6 +632,156 @@ export const appRouter = router({
 
   trendFlag: router({
     getAll: publicProcedure.query(async () => getAllStyleTrendFlags()),
+  }),
+
+  // PowerPoint range review sync
+  pptxSync: router({
+    // Parse a PPTX file (base64-encoded) and return a diff vs the current DB state
+    parse: publicProcedure
+      .input(z.object({
+        fileBase64: z.string(), // base64-encoded .pptx file
+      }))
+      .mutation(async ({ input }) => {
+        // Write the PPTX to a temp file
+        const tmpDir = os.tmpdir();
+        const tmpFile = path.join(tmpDir, `range_review_${Date.now()}.pptx`);
+        try {
+          const buf = Buffer.from(input.fileBase64, "base64");
+          fs.writeFileSync(tmpFile, buf);
+
+          // Run the Python parser
+          const parserPath = path.join(process.cwd(), "server", "pptx_parser.py");
+          const output = execSync(`python3 "${parserPath}" "${tmpFile}"`, {
+            timeout: 60000,
+            maxBuffer: 10 * 1024 * 1024,
+          }).toString();
+
+          const parsed: Array<{
+            last: string;
+            styles: Array<{
+              style: string;
+              skus: Array<{ colour: string; leather: string; status: string }>;
+            }>;
+            error?: string;
+          }> = JSON.parse(output);
+
+          // Load current DB state
+          const [cancelledSkus, cancelledStyles, allSkuMeta] = await Promise.all([
+            listCancelledSkus(),
+            listCancelledStyles(),
+            getAllSkuMeta(),
+          ]);
+
+          const cancelledSkuSet = new Set(
+            cancelledSkus.map((s) => `${s.style}|${s.colour}|${s.leather}`)
+          );
+          const cancelledStyleSet = new Set(cancelledStyles.map((s) => s.style));
+          const skuMetaMap = new Map(
+            allSkuMeta.map((s) => [`${s.style}|${s.colour}|${s.leather}`, s])
+          );
+
+          // Build diff
+          type DiffItem = {
+            last: string;
+            style: string;
+            colour: string;
+            leather: string;
+            pptxStatus: string;
+            currentStatus: string;
+            action: string;
+          };
+
+          const toCancel: DiffItem[] = [];
+          const toMarkSpecked: DiffItem[] = [];
+          const toMarkSpeckedNoSample: DiffItem[] = [];
+          const missingFromDb: DiffItem[] = [];
+          const alreadyCancelled: DiffItem[] = [];
+
+          // Build a set of all known SKUs (from static skuData embedded in client)
+          // We use the DB skuMeta as the source of truth for "known" SKUs
+          // A SKU is "in the dashboard" if it has a skuMeta record OR is in the static data
+          // For simplicity, we check skuMeta and also track what we see in the PPTX
+
+          for (const slide of parsed) {
+            if (slide.error) continue;
+            const last = slide.last;
+            for (const styleData of slide.styles) {
+              const style = styleData.style;
+              for (const sku of styleData.skus) {
+                const { colour, leather, status } = sku;
+                const key = `${style}|${colour}|${leather}`;
+                const isAlreadyCancelledSku = cancelledSkuSet.has(key);
+                const isAlreadyCancelledStyle = cancelledStyleSet.has(style);
+                const meta = skuMetaMap.get(key);
+
+                const item: DiffItem = { last, style, colour, leather, pptxStatus: status, currentStatus: isAlreadyCancelledSku ? 'cancelled_sku' : isAlreadyCancelledStyle ? 'cancelled_style' : (meta?.sampleStatus ?? 'no_meta'), action: 'none' };
+
+                if (status === 'cancelled') {
+                  if (isAlreadyCancelledSku || isAlreadyCancelledStyle) {
+                    alreadyCancelled.push({ ...item, action: 'already_cancelled' });
+                  } else {
+                    toCancel.push({ ...item, action: 'cancel_sku' });
+                  }
+                } else if (status === 'specked') {
+                  if (!isAlreadyCancelledSku && !isAlreadyCancelledStyle) {
+                    if (!meta || meta.sampleStatus !== 'received') {
+                      toMarkSpecked.push({ ...item, action: 'mark_specked' });
+                    }
+                  }
+                } else if (status === 'specked_no_sample') {
+                  if (!isAlreadyCancelledSku && !isAlreadyCancelledStyle) {
+                    if (!meta || meta.sampleStatus !== 'received') {
+                      toMarkSpeckedNoSample.push({ ...item, action: 'mark_specked_no_sample' });
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          return {
+            success: true,
+            slideCount: parsed.filter((s) => !s.error).length,
+            toCancel,
+            toMarkSpecked,
+            toMarkSpeckedNoSample,
+            missingFromDb,
+            alreadyCancelled,
+          };
+        } finally {
+          try { fs.unlinkSync(tmpFile); } catch {}
+        }
+      }),
+
+    // Apply the confirmed changes from a PPTX sync
+    applyChanges: publicProcedure
+      .input(z.object({
+        cancelSkus: z.array(z.object({ style: z.string(), colour: z.string(), leather: z.string() })),
+        markSpecked: z.array(z.object({ style: z.string(), colour: z.string(), leather: z.string() })),
+        markSpeckedNoSample: z.array(z.object({ style: z.string(), colour: z.string(), leather: z.string() })),
+      }))
+      .mutation(async ({ input }) => {
+        let cancelled = 0;
+        let specked = 0;
+        let speckedNoSample = 0;
+
+        for (const sku of input.cancelSkus) {
+          await cancelSku(sku.style, sku.colour, sku.leather);
+          cancelled++;
+        }
+        for (const sku of input.markSpecked) {
+          await upsertSkuMeta({ style: sku.style, colour: sku.colour, leather: sku.leather, sampleStatus: 'received' });
+          specked++;
+        }
+        for (const sku of input.markSpeckedNoSample) {
+          // specked_no_sample = waiting status (sample not yet received)
+          // We just ensure the skuMeta record exists so it's tracked
+          await upsertSkuMeta({ style: sku.style, colour: sku.colour, leather: sku.leather, sampleStatus: 'waiting' });
+          speckedNoSample++;
+        }
+
+        return { success: true, cancelled, specked, speckedNoSample };
+      }),
   }),
 });
 

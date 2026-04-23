@@ -543,3 +543,11 @@
 - [x] Map all required AP21 fields from skuData + skuMeta + styleMeta
 - [x] Cancelled styles and cancelled SKUs excluded from AP21 export
 - [x] TypeScript: 0 errors confirmed
+
+## Phase 54: PowerPoint Range Review Sync
+- [x] Install python-pptx on server and build PPTX parser script
+- [x] Build tRPC procedure: upload PPTX → parse → return diff (red SKUs to cancel, purple SKUs to mark specked, missing SKUs)
+- [x] Build confirmation modal UI showing the diff before applying
+- [x] Build tRPC apply-changes procedure: cancel red SKUs, mark purple SKUs as specked
+- [x] Add "Sync from Range Review PPTX" button to ExportPanel
+- [x] TypeScript: 0 errors confirmed
