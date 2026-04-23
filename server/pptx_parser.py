@@ -100,35 +100,20 @@ def extract_style_name(line):
 def split_colour_leather(text):
     """
     Split 'BLACK NAPPA' → ('BLACK', 'NAPPA')
-    Split 'BLACK NAPPA / BLACK PATENT T/C' → ('BLACK NAPPA', 'BLACK PATENT TC')
+    Split 'BLACK NAPPA / BLACK PATENT T/C' → ('BLACK', 'NAPPA')
+    For two-tone SKUs (e.g. VINTAGE / CHOC UNIT, PATENT / BLACK PATENT TC),
+    we use ONLY the primary leather (before the /) so it matches the DB key.
+    The secondary material (toe cap, unit, etc.) is a construction detail, not
+    a separate leather in the dashboard.
     Returns (colour, leather) or (None, None) if unparseable.
     """
-    # Handle two-tone with slash: keep full description
     # First clean up asterisks and trailing notes
     text = re.sub(r'\s*\*.*$', '', text).strip()
 
-    # Split on slash for two-tone
+    # Split on slash for two-tone — use only the primary (first) part
     slash_parts = [p.strip() for p in text.split('/')]
-    if len(slash_parts) >= 2:
-        # e.g. BLACK NAPPA / BLACK PATENT T/C
-        # Rejoin removing T/C style sub-splits
-        # Colour = first part's colour, leather = combined description
-        c1, l1 = _split_single(slash_parts[0])
-        # Rest is the second material
-        rest = ' / '.join(slash_parts[1:]).strip()
-        # Clean up TC
-        rest = re.sub(r'\bT/C\b', 'TC', rest)
-        c2, l2 = _split_single(rest)
-        if c1 and l1:
-            leather = l1
-            if l2:
-                leather = l1 + ' / ' + (c2 + ' ' + l2 if c2 else l2)
-            elif rest:
-                leather = l1 + ' / ' + rest
-            return c1, leather.upper()
-        return None, None
-    else:
-        return _split_single(text)
+    primary = slash_parts[0].strip()
+    return _split_single(primary)
 
 LEATHER_TYPES = [
     'NAPPA PATENT', 'PATENT TC', 'HI SHINE', 'NAPPA METALLIC',
@@ -170,11 +155,19 @@ def is_note_line(text):
     # Known note keywords
     note_keywords = ['HEEL', 'HEIGHT', 'LINING', 'TOE PUFF', 'COUNTER',
                      'SIZE', 'CM', 'MM', 'NOTE', 'NB:', 'SEE', 'REFER',
-                     'CHECK', 'TBC', 'TBA', 'PENDING', 'CONFIRM']
+                     'CHECK', 'TBC', 'TBA', 'PENDING', 'CONFIRM',
+                     'MICRO STRETCH', 'MICRO STRECH']
     for kw in note_keywords:
         if kw in text.upper():
             return True
     return False
+
+# Words that look like colours but are actually notes/instructions
+NOT_COLOURS = {
+    'ADD', 'NO', 'TBC', 'TBA', 'SEE', 'NB', 'NOTE', 'CHECK',
+    'PENDING', 'CONFIRM', 'REFER', 'ALSO', 'PLUS', 'NEW', 'OLD',
+    'YES', 'OR', 'AND', 'THE', 'FOR', 'WITH', 'FROM',
+}
 
 def parse_sku_line(text, highlight):
     """Parse a SKU line and return {colour, leather, status} or None."""
@@ -188,6 +181,10 @@ def parse_sku_line(text, highlight):
 
     colour, leather = split_colour_leather(text)
     if not colour or not leather:
+        return None
+
+    # Reject if colour is a known non-colour instruction word
+    if colour.upper() in NOT_COLOURS:
         return None
 
     return {'colour': colour, 'leather': leather, 'status': status}
