@@ -512,3 +512,8 @@
 - [x] FittingTab now fetches all sessions in one bulk query and builds a sessionsByStyle map
 - [x] StyleFitRowWithSessions now receives preloadedSessions as a prop instead of firing its own per-style query
 - [x] Eliminated N+1 query pattern — sessions load in a single round-trip regardless of style count
+
+## Phase 50: Fix Custom SKUs Not Appearing in Specs Tab
+
+- [x] Root cause: deduplication used colour-only Set, so BLACK KID was blocked by existing BLACK VINTAGE
+- [x] Fixed: deduplication now uses colour+leather combo key so BLACK KID appears as a separate column from BLACK VINTAGE

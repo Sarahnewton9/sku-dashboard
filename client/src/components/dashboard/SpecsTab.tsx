@@ -615,10 +615,19 @@ export default function SpecsTab({}: SpecsTabProps) {
         }
 
         // Add custom SKU colours (also check they're not cancelled)
+        // Deduplicate by colour+leather combo (not just colour) so BLACK KID
+        // is treated as distinct from BLACK VINTAGE etc.
         const extras = customColourMap[s.style] ?? [];
-        const existingColours = new Set(filteredColours);
+        const existingCombos = new Set(
+          filteredColours.map((c, i) => {
+            const lbl = filteredLabels[i] ?? c;
+            const leather = lbl.replace(c, "").trim();
+            return `${c}|${leather}`;
+          })
+        );
         const newColours = extras.filter((e) => {
-          if (existingColours.has(e.colour)) return false;
+          const comboKey = `${e.colour}|${e.leather ?? ""}`;
+          if (existingCombos.has(comboKey)) return false;
           const key = `${s.style}|${e.colour}|${e.leather ?? ""}`;
           return !cancelledSkuSet.has(key);
         });
