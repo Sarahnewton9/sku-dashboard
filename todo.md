@@ -553,6 +553,18 @@
 - [x] TypeScript: 0 errors confirmed
 
 ## Phase 55: Fix duplicate BLACK key and specs.getMeta undefined
-- [ ] Find all components using colour name as React key and add index to make unique (BLACK appears in multiple leathers e.g. BLACK NAPPA + BLACK SUEDE)
-- [ ] Fix specs.getMeta router procedure to return null instead of undefined when no DB record found
-- [ ] TypeScript: 0 errors confirmed
+- [x] Find all components using colour name as React key and add index to make unique (BLACK appears in multiple leathers e.g. BLACK NAPPA + BLACK SUEDE)
+- [x] Fix specs.getMeta router procedure to return null instead of undefined when no DB record found
+- [x] TypeScript: 0 errors confirmed
+
+## Phase 56: Style Images from tonybianco.com.au
+- [x] Investigate tonybianco.com.au URL structure (Shopify products.json API with StyleCode~ tags)
+- [x] Add websiteImageUrl field to styleMeta table in drizzle/schema.ts
+- [x] Run pnpm db:push to migrate schema
+- [x] Add upsertStyleWebsiteImage / getAllStyleWebsiteImages DB helpers in server/db.ts
+- [x] Build tRPC procedure style.fetchImages — paginates Shopify products.json, matches StyleCode~ tags, saves first image per style to DB
+- [x] Build tRPC procedure style.getImages — returns all stored websiteImageUrls from styleMeta
+- [x] Add "Fetch Style Images from Tony Bianco AU" button to ExportPanel
+- [x] Display image thumbnail in By Style expanded row (80x80, links to TB search page)
+- [x] Handle missing images gracefully (hidden when no URL found, onError hides broken images)
+- [x] TypeScript: 0 errors confirmed

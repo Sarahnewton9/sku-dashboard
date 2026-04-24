@@ -26,6 +26,8 @@ import {
   cancelSku, restoreSku, listCancelledSkus,
   getAllStyleSubCategories, upsertStyleSubCategory,
   getAllStyleTrendFlags,
+  upsertStyleWebsiteImage,
+  getAllStyleWebsiteImages,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -245,6 +247,60 @@ export const appRouter = router({
 
         return { updated, results, totalProducts: Object.keys(allProducts).length };
       }),
+
+    // Fetch style images from tonybianco.com.au Shopify API and store in DB
+    fetchImages: publicProcedure
+      .input(z.object({
+        styleNames: z.array(z.string()), // style names to match against (uppercase)
+      }))
+      .mutation(async ({ input }) => {
+        const headers = {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        };
+
+        // Fetch all pages from Shopify products.json and build style code -> first image map
+        // Products have a StyleCode~ tag (e.g. "StyleCode~EDGY") that matches our style names
+        const styleImageMap: Record<string, string> = {};
+        let page = 1;
+        while (page <= 30) {
+          const url = `https://tonybianco.com.au/products.json?limit=250&page=${page}`;
+          const resp = await axios.get(url, { headers, timeout: 30000 });
+          const products = resp.data?.products ?? [];
+          if (!products.length) break;
+          for (const p of products) {
+            // Extract StyleCode from tags
+            const tags: string[] = p.tags ?? [];
+            const styleCodeTag = tags.find((t: string) => t.startsWith("StyleCode~"));
+            if (!styleCodeTag) continue;
+            const styleCode = styleCodeTag.split("~")[1]?.toUpperCase();
+            if (!styleCode || styleCode.startsWith("B-")) continue; // skip bags
+            // Only store the first image found for each style code
+            if (!styleImageMap[styleCode]) {
+              const images = p.images ?? [];
+              if (images.length > 0) {
+                styleImageMap[styleCode] = images[0].src as string;
+              }
+            }
+          }
+          page++;
+          await new Promise((r) => setTimeout(r, 300));
+        }
+
+        // Match our style names against the fetched style codes and save to DB
+        let updated = 0;
+        const results: { style: string; imageUrl: string | null; found: boolean }[] = [];
+        for (const styleName of input.styleNames) {
+          const imageUrl = styleImageMap[styleName.toUpperCase()] ?? null;
+          await upsertStyleWebsiteImage(styleName, imageUrl);
+          results.push({ style: styleName, imageUrl, found: !!imageUrl });
+          if (imageUrl) updated++;
+        }
+
+        return { updated, total: input.styleNames.length, results };
+      }),
+
+    // Get all stored website image URLs
+    getImages: publicProcedure.query(async () => getAllStyleWebsiteImages()),
   }),
 
   // Buy sessions

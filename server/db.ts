@@ -703,3 +703,20 @@ export async function getAllStyleTrendFlags() {
   if (!db) return [];
   return db.select().from(styleTrendFlags);
 }
+
+// ─── Style Website Images (scraped from tonybianco.com.au) ────────────────────
+
+export async function upsertStyleWebsiteImage(style: string, websiteImageUrl: string | null): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(styleMeta)
+    .values({ style, websiteImageUrl })
+    .onDuplicateKeyUpdate({ set: { websiteImageUrl } });
+}
+
+export async function getAllStyleWebsiteImages(): Promise<{ style: string; websiteImageUrl: string | null }[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select({ style: styleMeta.style, websiteImageUrl: styleMeta.websiteImageUrl }).from(styleMeta);
+  return rows;
+}

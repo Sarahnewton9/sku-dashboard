@@ -1,0 +1,1 @@
+ALTER TABLE `style_meta` ADD `websiteImageUrl` text;

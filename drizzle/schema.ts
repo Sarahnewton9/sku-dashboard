@@ -56,6 +56,8 @@ export const styleMeta = mysqlTable("style_meta", {
   fitRating: mysqlEnum("fitRating", ["tts", "runs_small", "runs_large"]),
   fittingNotes: text("fittingNotes"),
   fitApproved: boolean("fitApproved").default(false).notNull(),
+  /** Image URL scraped from tonybianco.com.au — one representative image per style */
+  websiteImageUrl: text("websiteImageUrl"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

@@ -197,7 +197,7 @@ export default function StylesTab() {
 
   // Build lookup maps
   type SkuMetaItem = { style: string; colour: string; leather: string; sampleStatus?: string | null; orderQty?: number | null; isSize11?: boolean | null; costPrice?: number | null; fitRating?: string | null; fittingNotes?: string | null; };
-  type StyleMetaItem = { style: string; rrp?: number | null; fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; };
+  type StyleMetaItem = { style: string; rrp?: number | null; fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; websiteImageUrl?: string | null; };
 
   const skuMetaMap = useMemo(() => {
     const map: Record<string, SkuMetaItem> = {};
@@ -667,6 +667,26 @@ export default function StylesTab() {
                           {expandedStyle === style.style && (
                             <tr key={`${style.style}-expanded`} className="border-b" style={{ borderColor: "var(--border)" }}>
                               <td colSpan={8} className="px-6 py-4" style={{ background: "oklch(0.98 0.02 65 / 0.5)" }}>
+                                {/* Website image + fit info row */}
+                                {(() => {
+                                  const sm = styleMetaMap[style.style];
+                                  const imgUrl = sm?.websiteImageUrl;
+                                  if (!imgUrl) return null;
+                                  return (
+                                    <div className="mb-3 flex items-start gap-3">
+                                      <a href={`https://tonybianco.com.au/search?q=${encodeURIComponent(style.style.toLowerCase())}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                                        <img
+                                          src={imgUrl}
+                                          alt={style.style}
+                                          className="w-20 h-20 object-contain rounded-lg border bg-white"
+                                          style={{ borderColor: "oklch(0.85 0.04 65)" }}
+                                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                        />
+                                      </a>
+                                    </div>
+                                  );
+                                })()}
+
                                 {/* Fit info — shown when style has been fit-approved */}
                                 {(() => {
                                   const sm = styleMetaMap[style.style];
