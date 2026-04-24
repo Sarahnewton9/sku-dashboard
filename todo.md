@@ -594,3 +594,9 @@
 - [x] Recursively traverse dropped folder entries to collect all .xls/.xlsx files
 - [x] Also keep existing "select files" button as fallback
 - [x] Show drop zone visually (dashed border, hover state)
+
+## Phase 61: Specs — New Colours Only
+- [x] Filter spec grid columns to only show colours from new SKUs (isNew=true)
+- [x] Carry-over colours (isNew=false) must not appear as spec columns
+- [x] buildStyleList colours array must only include new colours
+- [x] Verify EDGY and other mixed styles show only new colours

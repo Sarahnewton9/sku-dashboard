@@ -80,8 +80,32 @@ interface StyleEntry {
   newSKUs: number;
 }
 
+// ─── Build a set of new colours per style from rawSkus ───────────────────────
+function buildNewColoursPerStyle(): Record<string, string[]> {
+  const rawSkus = (skuData as any).rawSkus ?? [];
+  const map: Record<string, Set<string>> = {};
+  for (const sku of rawSkus) {
+    if (!sku.is_new) continue;
+    const style = sku.style as string;
+    const colour = sku.colour as string;
+    if (!map[style]) map[style] = new Set();
+    map[style].add(colour);
+  }
+  // Preserve original order from skuData.styles[].colours
+  const result: Record<string, string[]> = {};
+  for (const s of skuData.styles) {
+    const newSet = map[s.style];
+    if (!newSet) { result[s.style] = []; continue; }
+    const allColours: string[] = (s as any).colours ?? [];
+    result[s.style] = allColours.filter((c) => newSet.has(c));
+  }
+  return result;
+}
+const NEW_COLOURS_PER_STYLE = buildNewColoursPerStyle();
+
 // ─── Build style list: same filter as FittingTab ─────────────────────────────
 // Specs required for: new lasts OR all-new patterns (same logic as fitting)
+// Colours shown: ONLY new colours (is_new=true) — carry-over colours excluded
 
 function buildStyleList(): StyleEntry[] {
   return skuData.styles
@@ -91,20 +115,22 @@ function buildStyleList(): StyleEntry[] {
       return isOnNewLast || s.isAllNew;
     })
     .map((s) => {
-      const rawColours: string[] = (s as any).colours ?? [];
+      // Only include colours that belong to new SKUs
+      const newColours: string[] = NEW_COLOURS_PER_STYLE[s.style] ?? [];
       return {
         style: s.style,
         last: s.last,
         category: s.category,
         imageUrl: (s as any).imageUrl,
-        colours: rawColours,
-        colourLabels: rawColours.map((c) => COLOUR_LEATHER_MAP[s.style]?.[c] ?? c),
+        colours: newColours,
+        colourLabels: newColours.map((c) => COLOUR_LEATHER_MAP[s.style]?.[c] ?? c),
         isAllNew: s.isAllNew,
         hasNew: s.hasNew,
         totalSKUs: s.totalSKUs,
         newSKUs: s.newSKUs,
       };
     })
+    .filter((s) => s.colours.length > 0) // skip styles with no new colours
     .sort((a, b) => a.style.localeCompare(b.style));
 }
 
