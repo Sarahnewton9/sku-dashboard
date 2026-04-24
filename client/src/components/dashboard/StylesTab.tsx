@@ -22,18 +22,7 @@ import { toast } from "sonner";
 type SortKey = "style" | "category" | "last" | "totalSKUs" | "newSKUs" | "existingSKUs";
 type SortDir = "asc" | "desc";
 
-const CATEGORIES = [
-  "All",
-  "Ankle Boot",
-  "Ballet Flat",
-  "Calf Boot",
-  "Casual Flat",
-  "Dress Sandal",
-  "Dress Shoe",
-  "Loafer",
-  "Sandal",
-  "Wedge",
-];
+// CATEGORIES is now built dynamically from actual data in the component
 const STATUS_FILTERS = ["All", "Has New SKUs", "All New", "No New SKUs"];
 
 export default function StylesTab() {
@@ -338,7 +327,16 @@ export default function StylesTab() {
       }));
   }, [mergedStyles, cancelledSet, getCategory, getTrendFlag]);
 
-  // Filter styles (uses mergedStyles which includes custom SKUs)
+  // Build category list dynamically from resolved categories (case-insensitive, sorted)
+  const availableCategories = useMemo(() => {
+    const cats = new Set<string>();
+    for (const s of stylesWithCategories) {
+      if (s.category) cats.add(s.category.toUpperCase());
+    }
+    return ["All", ...Array.from(cats).sort()];
+  }, [stylesWithCategories]);
+
+  // Filter styles (uses stylesWithCategories which includes custom SKUs and category overrides)
   const filtered = useMemo(() => {
     let data = stylesWithCategories;
 
@@ -355,7 +353,8 @@ export default function StylesTab() {
     }
 
     if (categoryFilter !== "All") {
-      data = data.filter((s) => s.category === categoryFilter);
+      // Case-insensitive comparison since getCategory returns UPPERCASE
+      data = data.filter((s) => s.category.toUpperCase() === categoryFilter.toUpperCase());
     }
 
     if (statusFilter === "Has New SKUs") {
@@ -367,7 +366,7 @@ export default function StylesTab() {
     }
 
     return data;
-  }, [search, categoryFilter, statusFilter, mergedStyles, cancelledSet]);
+  }, [search, categoryFilter, statusFilter, stylesWithCategories]);
 
   // Group by last, sorted alphabetically by last, then by style within each last
   const groupedByLast = useMemo(() => {
@@ -456,7 +455,7 @@ export default function StylesTab() {
           className="px-3 py-2 text-sm rounded-lg border bg-card text-foreground focus:outline-none"
           style={{ borderColor: "var(--border)" }}
         >
-          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          {availableCategories.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
 
         <select

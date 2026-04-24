@@ -603,3 +603,10 @@
 
 ## Phase 62: By Style — Category Filter Bug
 - [x] Fix category filter showing 0 styles when a category is selected (CATEGORIES list had wrong values vs actual data)
+
+## Phase 63: Full Sense Check Bug Fixes
+- [x] Fix category filter: build availableCategories dynamically from stylesWithCategories (UPPERCASE match)
+- [x] Fix filtered useMemo stale deps: now uses stylesWithCategories in deps array
+- [x] Verified groupedByLast has no malformed code
+- [x] Fix sample count: was counting carry-over SKUs as waiting; now only counts new SKUs
+- [x] TypeScript: 0 real errors confirmed

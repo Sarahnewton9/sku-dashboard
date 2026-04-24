@@ -115,16 +115,27 @@ export default function SummaryCards() {
   const approvedLastsCount = lastApprovals.filter((a) => a.status === "approved").length;
 
   const sampleCounts = useMemo(() => {
-    let waiting = 0;
+    // Build a set of new SKU keys for fast lookup
+    const newSkuKeys = new Set(
+      skuData.rawSkus.filter((s) => s.is_new).map((s) => `${s.style}|${s.colour}|${s.leather}`)
+    );
+    const newSkuCount = newSkuKeys.size;
+
+    // Only count sample status for NEW SKUs
     let received = 0;
+    let explicitlyWaiting = 0;
+    const trackedNewKeys = new Set<string>();
     for (const m of skuMetaList) {
-      if (m.sampleStatus === "waiting") waiting++;
-      else if (m.sampleStatus === "received") received++;
+      const key = `${m.style}|${m.colour}|${m.leather}`;
+      if (!newSkuKeys.has(key)) continue; // skip carry-over SKUs
+      trackedNewKeys.add(key);
+      if (m.sampleStatus === "received") received++;
+      else explicitlyWaiting++;
     }
     // New SKUs not yet in DB are implicitly "waiting"
-    const newSkuCount = skuData.rawSkus.filter((s) => s.is_new).length;
-    const untrackedWaiting = Math.max(0, newSkuCount - skuMetaList.length);
-    return { waiting: waiting + untrackedWaiting, received, total: newSkuCount };
+    const untrackedWaiting = newSkuCount - trackedNewKeys.size;
+    const waiting = explicitlyWaiting + Math.max(0, untrackedWaiting);
+    return { waiting, received, total: newSkuCount };
   }, [skuMetaList]);
 
   // SKU lists for hover tooltips
