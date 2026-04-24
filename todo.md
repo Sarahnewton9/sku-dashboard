@@ -574,3 +574,17 @@
 - [x] "All Styles" default mode; toggle to "Select Styles" mode shows a searchable checkbox list
 - [x] Fetch button runs only on the selected subset (or all if in default mode)
 - [x] TypeScript: 0 errors confirmed
+
+## Phase 58: Style Image Fetch — SKU-level selector
+- [ ] Change selector from styles to SKUs (style + colour + leather combos)
+- [ ] "All SKUs" default; "Select SKUs" mode shows searchable grouped list (grouped by style)
+- [ ] Fetch runs on unique style names derived from selected SKUs
+- [ ] TypeScript: 0 errors confirmed
+
+## Phase 59: Bulk Spec Sheet Upload
+- [x] Add "Bulk Import" button to SpecsTab header (alongside existing single Import button)
+- [x] Multi-file input (multiple XLS/XLSX at once)
+- [x] Parse each file, auto-match to style by style name
+- [x] Show per-file status: matched style, colour count, success/error
+- [x] Save all matched specs in one go with progress indicator
+- [x] Unmatched files shown with warning (style not found in list)
