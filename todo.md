@@ -588,3 +588,9 @@
 - [x] Show per-file status: matched style, colour count, success/error
 - [x] Save all matched specs in one go with progress indicator
 - [x] Unmatched files shown with warning (style not found in list)
+
+## Phase 60: Bulk Spec — Folder Drag & Drop
+- [x] Add drag-and-drop zone to Bulk Import that accepts folders
+- [x] Recursively traverse dropped folder entries to collect all .xls/.xlsx files
+- [x] Also keep existing "select files" button as fallback
+- [x] Show drop zone visually (dashed border, hover state)

@@ -566,6 +566,53 @@ export default function SpecsTab({}: SpecsTabProps) {
   const importFileRef = React.useRef<HTMLInputElement>(null);
 
   // ── Bulk import state ────────────────────────────────────────────────────
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  // Recursively collect all .xls/.xlsx files from a DataTransferItem (folder or file)
+  async function collectFilesFromEntry(entry: FileSystemEntry): Promise<File[]> {
+    if (entry.isFile) {
+      const fe = entry as FileSystemFileEntry;
+      if (!fe.name.match(/\.xlsx?$/i)) return [];
+      return new Promise<File[]>((resolve) => fe.file((f) => resolve([f]), () => resolve([])));
+    }
+    if (entry.isDirectory) {
+      const de = entry as FileSystemDirectoryEntry;
+      const reader = de.createReader();
+      const allEntries: FileSystemEntry[] = [];
+      await new Promise<void>((resolve) => {
+        function readBatch() {
+          reader.readEntries((batch) => {
+            if (batch.length === 0) { resolve(); return; }
+            allEntries.push(...batch);
+            readBatch();
+          }, () => resolve());
+        }
+        readBatch();
+      });
+      const nested = await Promise.all(allEntries.map(collectFilesFromEntry));
+      return nested.flat();
+    }
+    return [];
+  }
+
+  async function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragOver(false);
+    const items = Array.from(e.dataTransfer.items);
+    const allFiles: File[] = [];
+    for (const item of items) {
+      const entry = item.webkitGetAsEntry?.();
+      if (entry) {
+        const files = await collectFilesFromEntry(entry);
+        allFiles.push(...files);
+      } else {
+        const f = item.getAsFile();
+        if (f && f.name.match(/\.xlsx?$/i)) allFiles.push(f);
+      }
+    }
+    if (allFiles.length > 0) handleBulkImportFiles(allFiles);
+  }
+
   interface BulkImportResult {
     fileName: string;
     styleName: string;
@@ -826,15 +873,16 @@ export default function SpecsTab({}: SpecsTabProps) {
   }
 
   // ── Bulk import handlers ─────────────────────────────────────────────────
-  async function handleBulkImport(files: FileList) {
+  async function handleBulkImportFiles(files: File[] | FileList) {
     setBulkLoading(true);
     setBulkResults([]);
     setBulkParsed([]);
     setShowBulkModal(true);
     const items: { result: BulkImportResult; parsed: ParsedSpecSheet }[] = [];
     const results: BulkImportResult[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    const fileArray = Array.from(files);
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
       try {
         const parsed = await parseSpecSheetFile(file);
         const matchedEntry = styleList.find(
@@ -930,31 +978,39 @@ export default function SpecsTab({}: SpecsTabProps) {
               className="pl-8 h-8 text-xs"
             />
           </div>
-          <div className="flex items-center justify-between mt-2">
-            <p className="text-xs text-muted-foreground">
-              {filtered.length} of {styleList.length} styles
+          <p className="text-xs text-muted-foreground mt-2">
+            {filtered.length} of {styleList.length} styles
+          </p>
+          {/* Drag-and-drop folder zone */}
+          <input
+            ref={bulkFileRef}
+            type="file"
+            accept=".xls,.xlsx"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) handleBulkImportFiles(e.target.files);
+              e.target.value = "";
+            }}
+          />
+          <div
+            className={`mt-2 rounded-lg border-2 border-dashed transition-colors cursor-pointer flex flex-col items-center justify-center gap-1 py-3 px-2 text-center ${
+              isDragOver
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:border-primary/50 hover:bg-muted/30"
+            }`}
+            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+            onDragLeave={() => setIsDragOver(false)}
+            onDrop={handleDrop}
+            onClick={() => bulkFileRef.current?.click()}
+          >
+            <Upload className="w-4 h-4" />
+            <p className="text-xs font-medium leading-tight">
+              {isDragOver ? "Drop to import" : "Bulk Import"}
             </p>
-            <input
-              ref={bulkFileRef}
-              type="file"
-              accept=".xls,.xlsx"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files && e.target.files.length > 0) handleBulkImport(e.target.files);
-                e.target.value = "";
-              }}
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-6 text-xs gap-1 px-2"
-              onClick={() => bulkFileRef.current?.click()}
-              disabled={bulkLoading}
-            >
-              <Upload className="w-3 h-3" />
-              Bulk Import
-            </Button>
+            <p className="text-[10px] leading-tight opacity-70">
+              Drop folder or click to select files
+            </p>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
