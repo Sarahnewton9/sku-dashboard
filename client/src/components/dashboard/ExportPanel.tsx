@@ -58,8 +58,30 @@ export default function ExportPanel({ onClose }: Props) {
     },
   });
 
+  // Style image selector state
+  const [imageSelectMode, setImageSelectMode] = useState<"all" | "select">("all");
+  const [imageStyleSearch, setImageStyleSearch] = useState("");
+  const [imageSelectedStyles, setImageSelectedStyles] = useState<Set<string>>(new Set());
+
+  const allStyleNames = useMemo(() => skuData.styles.map((s) => s.style).sort(), []);
+  const filteredStyleNames = useMemo(() =>
+    allStyleNames.filter((s) => s.toLowerCase().includes(imageStyleSearch.toLowerCase())),
+    [allStyleNames, imageStyleSearch]
+  );
+
+  function toggleImageStyle(style: string) {
+    setImageSelectedStyles((prev) => {
+      const next = new Set(prev);
+      if (next.has(style)) next.delete(style); else next.add(style);
+      return next;
+    });
+  }
+
   function handleFetchImages() {
-    const styleNames = skuData.styles.map((s) => s.style);
+    const styleNames = imageSelectMode === "all"
+      ? skuData.styles.map((s) => s.style)
+      : Array.from(imageSelectedStyles);
+    if (styleNames.length === 0) { toast.error("No styles selected."); return; }
     fetchImagesMutation.mutate({ styleNames });
   }
 
@@ -531,23 +553,111 @@ export default function ExportPanel({ onClose }: Props) {
           </button>
 
           {/* Fetch Style Images from Tony Bianco */}
-          <button
-            onClick={handleFetchImages}
-            disabled={exporting !== null || fetchImagesMutation.isPending}
-            className="w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all hover:bg-muted/30 disabled:opacity-50"
+          <div
+            className="w-full rounded-xl border overflow-hidden"
             style={{ borderColor: "oklch(0.80 0.10 150)", background: "oklch(0.97 0.02 150)" }}
           >
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "oklch(0.92 0.06 150)" }}>
-              <RefreshCw className={`w-5 h-5 ${fetchImagesMutation.isPending ? "animate-spin" : ""}`} style={{ color: "oklch(0.40 0.14 150)" }} />
+            {/* Header row */}
+            <div className="flex items-start gap-4 p-4">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "oklch(0.92 0.06 150)" }}>
+                <RefreshCw className={`w-5 h-5 ${fetchImagesMutation.isPending ? "animate-spin" : ""}`} style={{ color: "oklch(0.40 0.14 150)" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-foreground">Fetch Style Images from Tony Bianco AU</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Pulls one representative product image per style. Only carry-over styles will be found.
+                </p>
+                {/* All / Select toggle */}
+                <div className="flex items-center gap-2 mt-3">
+                  <button
+                    onClick={() => setImageSelectMode("all")}
+                    className={`text-xs px-3 py-1 rounded-full border font-medium transition-colors ${
+                      imageSelectMode === "all"
+                        ? "text-white border-transparent"
+                        : "bg-transparent text-muted-foreground hover:bg-muted/40"
+                    }`}
+                    style={imageSelectMode === "all" ? { background: "oklch(0.55 0.14 150)", borderColor: "oklch(0.55 0.14 150)" } : { borderColor: "oklch(0.80 0.10 150)" }}
+                  >
+                    All Styles ({allStyleNames.length})
+                  </button>
+                  <button
+                    onClick={() => setImageSelectMode("select")}
+                    className={`text-xs px-3 py-1 rounded-full border font-medium transition-colors ${
+                      imageSelectMode === "select"
+                        ? "text-white border-transparent"
+                        : "bg-transparent text-muted-foreground hover:bg-muted/40"
+                    }`}
+                    style={imageSelectMode === "select" ? { background: "oklch(0.55 0.14 150)", borderColor: "oklch(0.55 0.14 150)" } : { borderColor: "oklch(0.80 0.10 150)" }}
+                  >
+                    Select Styles{imageSelectMode === "select" && imageSelectedStyles.size > 0 ? ` (${imageSelectedStyles.size})` : ""}
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="font-semibold text-sm text-foreground">Fetch Style Images from Tony Bianco AU</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Pulls one representative product image per style from tonybianco.com.au. Only existing carry-over styles will be found. Takes ~30 seconds.
-              </p>
+
+            {/* Style selector — shown only in select mode */}
+            {imageSelectMode === "select" && (
+              <div className="px-4 pb-3 border-t" style={{ borderColor: "oklch(0.88 0.06 150)" }}>
+                <div className="flex items-center gap-2 mt-3 mb-2">
+                  <input
+                    type="text"
+                    placeholder="Search styles…"
+                    value={imageStyleSearch}
+                    onChange={(e) => setImageStyleSearch(e.target.value)}
+                    className="flex-1 text-xs rounded-md border bg-background px-2 py-1.5 focus:outline-none focus:ring-2 text-foreground"
+                    style={{ borderColor: "oklch(0.80 0.10 150)" }}
+                  />
+                  <button
+                    onClick={() => setImageSelectedStyles(new Set(filteredStyleNames))}
+                    className="text-xs px-2 py-1.5 rounded border font-medium hover:bg-muted/30 transition-colors"
+                    style={{ borderColor: "oklch(0.80 0.10 150)", color: "oklch(0.40 0.14 150)" }}
+                  >Select all</button>
+                  <button
+                    onClick={() => setImageSelectedStyles(new Set())}
+                    className="text-xs px-2 py-1.5 rounded border font-medium hover:bg-muted/30 transition-colors"
+                    style={{ borderColor: "oklch(0.80 0.10 150)", color: "oklch(0.40 0.14 150)" }}
+                  >Clear</button>
+                </div>
+                <div className="max-h-48 overflow-y-auto rounded-lg border" style={{ borderColor: "oklch(0.88 0.06 150)" }}>
+                  {filteredStyleNames.map((style) => (
+                    <label
+                      key={style}
+                      className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-muted/20 transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={imageSelectedStyles.has(style)}
+                        onChange={() => toggleImageStyle(style)}
+                        className="accent-green-600 w-3.5 h-3.5"
+                      />
+                      <span className="text-xs font-medium text-foreground">{style}</span>
+                    </label>
+                  ))}
+                  {filteredStyleNames.length === 0 && (
+                    <p className="text-xs text-muted-foreground px-3 py-3">No styles match.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Fetch button */}
+            <div className="px-4 pb-4 pt-2">
+              <button
+                onClick={handleFetchImages}
+                disabled={exporting !== null || fetchImagesMutation.isPending || (imageSelectMode === "select" && imageSelectedStyles.size === 0)}
+                className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-semibold text-white transition-colors disabled:opacity-50"
+                style={{ background: "oklch(0.55 0.14 150)" }}
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${fetchImagesMutation.isPending ? "animate-spin" : ""}`} />
+                {fetchImagesMutation.isPending
+                  ? "Fetching…"
+                  : imageSelectMode === "all"
+                    ? `Fetch All ${allStyleNames.length} Styles`
+                    : `Fetch ${imageSelectedStyles.size} Selected Style${imageSelectedStyles.size !== 1 ? "s" : ""}`
+                }
+              </button>
             </div>
-            {fetchImagesMutation.isPending && <span className="ml-auto text-xs text-muted-foreground flex-shrink-0">Fetching…</span>}
-          </button>
+          </div>
 
           {/* AP21 CSV Export */}
           <div

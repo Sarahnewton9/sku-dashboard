@@ -568,3 +568,9 @@
 - [x] Display image thumbnail in By Style expanded row (80x80, links to TB search page)
 - [x] Handle missing images gracefully (hidden when no URL found, onError hides broken images)
 - [x] TypeScript: 0 errors confirmed
+
+## Phase 57: Style Image Fetch — Selective Export
+- [x] Add style multi-select UI to the Fetch Style Images card in ExportPanel
+- [x] "All Styles" default mode; toggle to "Select Styles" mode shows a searchable checkbox list
+- [x] Fetch button runs only on the selected subset (or all if in default mode)
+- [x] TypeScript: 0 errors confirmed
