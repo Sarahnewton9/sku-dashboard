@@ -24,16 +24,15 @@ type SortDir = "asc" | "desc";
 
 const CATEGORIES = [
   "All",
-  "Dress Shoe",
-  "Dress Sandal",
+  "Ankle Boot",
+  "Ballet Flat",
+  "Calf Boot",
   "Casual Flat",
-  "Casual Wedge",
-  "Dress Wedge",
+  "Dress Sandal",
+  "Dress Shoe",
+  "Loafer",
   "Sandal",
-  "Dress Ankle Boot",
-  "Dress Calf Boot",
-  "Casual Ankle Boot",
-  "Casual Calf Boot",
+  "Wedge",
 ];
 const STATUS_FILTERS = ["All", "Has New SKUs", "All New", "No New SKUs"];
 

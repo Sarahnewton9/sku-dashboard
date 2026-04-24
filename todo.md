@@ -600,3 +600,6 @@
 - [x] Carry-over colours (isNew=false) must not appear as spec columns
 - [x] buildStyleList colours array must only include new colours
 - [x] Verify EDGY and other mixed styles show only new colours
+
+## Phase 62: By Style — Category Filter Bug
+- [x] Fix category filter showing 0 styles when a category is selected (CATEGORIES list had wrong values vs actual data)
