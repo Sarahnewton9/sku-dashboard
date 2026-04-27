@@ -623,3 +623,13 @@
 - [x] Edit group name and date inline
 - [x] Export per group: Excel with one sheet per style (fit rating, notes, sessions)
 - [x] TypeScript: 0 real errors confirmed
+
+## Phase 66: Fitting Groups — Expandable Style Rows + Export Template
+- [x] Fitting groups now show expandable style rows with fit rating, notes, and session list inline
+- [x] Export rewritten to match FITTINGSSPREADSHEET template (one sheet per fit model)
+
+## Phase 67: Fitting Group Session Delete Button
+- [x] Add × delete button to each session card in the Fitting Group expanded style view
+- [x] Confirmation dialog before deleting ("Delete the [model] session from [date]?")
+- [x] After deletion, session list refreshes automatically via cache invalidation
+- [x] deleteSessionMutation added to FittingGroupManager component scope

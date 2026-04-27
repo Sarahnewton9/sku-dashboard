@@ -661,12 +661,16 @@ function ExportDialog({
 // ─── Fitting Group Manager ────────────────────────────────────────────────────
 
 function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
+  const utils = trpc.useUtils();
   const { data: groups = [], refetch } = trpc.fittingGroup.getAll.useQuery();
   const createGroup = trpc.fittingGroup.create.useMutation({ onSuccess: () => refetch() });
   const updateGroup = trpc.fittingGroup.update.useMutation({ onSuccess: () => refetch() });
   const deleteGroup = trpc.fittingGroup.delete.useMutation({ onSuccess: () => refetch() });
   const addStyle = trpc.fittingGroup.addStyle.useMutation({ onSuccess: () => refetch() });
   const removeStyle = trpc.fittingGroup.removeStyle.useMutation({ onSuccess: () => refetch() });
+  const deleteSessionMutation = trpc.fittingSession.delete.useMutation({
+    onSuccess: () => utils.fittingSession.getAll.invalidate(),
+  });
 
   const [expanded, setExpanded] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -935,6 +939,17 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
                                               {new Date(sess.sessionDate + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}
                                             </span>
                                           )}
+                                          <button
+                                            className="ml-auto text-muted-foreground hover:text-destructive p-0.5 rounded"
+                                            title="Delete this session"
+                                            onClick={() => {
+                                              if (confirm(`Delete the ${sess.fitModel || "this"} session from ${sess.sessionDate || "unknown date"}?`)) {
+                                                deleteSessionMutation.mutate({ id: sess.id });
+                                              }
+                                            }}
+                                          >
+                                            <X className="w-3.5 h-3.5" />
+                                          </button>
                                         </div>
                                         {sess.notes && <p className="text-sm text-foreground/90 pl-5">{sess.notes}</p>}
                                         {(!sess.notes && !sess.fitModel) && <p className="text-xs text-muted-foreground pl-5">No notes</p>}
