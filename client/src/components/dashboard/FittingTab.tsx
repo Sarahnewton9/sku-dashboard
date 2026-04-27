@@ -729,6 +729,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
   const [openGroupId, setOpenGroupId] = useState<number | null>(null);
   const [exportingGroupId, setExportingGroupId] = useState<number | null>(null);
   const [openStyleKey, setOpenStyleKey] = useState<string | null>(null); // "groupId:style"
+  const [groupLightboxSrc, setGroupLightboxSrc] = useState<string | null>(null);
 
   const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
   const { data: imageOverrideList = [] } = trpc.styleImage.getAll.useQuery();
@@ -839,6 +840,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
 
   return (
     <div className="border border-border rounded-lg overflow-hidden">
+      {groupLightboxSrc && <Lightbox src={groupLightboxSrc} onClose={() => setGroupLightboxSrc(null)} />}
       <button
         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left bg-card"
         onClick={() => setExpanded((v) => !v)}
@@ -999,6 +1001,22 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
                                         </div>
                                         {sess.notes && <p className="text-sm text-foreground/90 pl-5">{sess.notes}</p>}
                                         {(!sess.notes && !sess.fitModel) && <p className="text-xs text-muted-foreground pl-5">No notes</p>}
+                                        {sess.images && sess.images.length > 0 && (
+                                          <div className="flex flex-wrap gap-2 pt-1 pl-5">
+                                            {sess.images.map((img) => (
+                                              <button
+                                                key={img.id}
+                                                onClick={() => setGroupLightboxSrc(img.imageUrl)}
+                                                className="relative w-20 h-20 rounded border border-border overflow-hidden hover:ring-2 hover:ring-primary transition-all group"
+                                              >
+                                                <img src={img.imageUrl} alt="Fitting" className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                                  <ZoomIn className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                </div>
+                                              </button>
+                                            ))}
+                                          </div>
+                                        )}
                                       </div>
                                     ))}
                                   </div>

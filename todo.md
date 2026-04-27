@@ -639,3 +639,7 @@
 - [x] Fix full-screen image lightbox to close when clicking outside the image (backdrop click via portal)
 - [x] Lightbox also closes on Escape key
 - [x] Multiple images can be selected at once via click-to-browse
+
+## Phase 69: Fitting Group — Inline Session Images
+- [x] Show session images inline in the Fitting Group expanded style row (below notes, as thumbnails)
+- [x] Clicking a thumbnail opens the lightbox for full-screen view (with click-outside and Escape to close)
