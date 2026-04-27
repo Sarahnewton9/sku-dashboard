@@ -705,32 +705,77 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
     setExportingGroupId(group.id);
     try {
       const wb = XLSX.utils.book_new();
+
+      // Group sessions by fit model name
+      // Each sheet = one fit model, with all styles they fitted
+      const modelMap: Record<string, { style: string; sessionDate: string | null; notes: string | null }[]> = {};
+
       for (const style of group.styles) {
-        const entry = styleList.find((s) => s.style === style);
-        const meta = styleMeta[style];
         const sessions = sessionsByStyle[style] ?? [];
-        const fitLabel = meta?.fitRating ? FIT_LABELS[meta.fitRating] ?? meta.fitRating : "—";
-        const effectiveImageUrl = imageOverrides[style] ?? entry?.imageUrl ?? "";
-        const rows: any[][] = [
-          ["Style", style],
-          ["Last", entry?.last ?? ""],
-          ["Category", entry?.category ?? ""],
-          ["Fit Rating", fitLabel],
-          ["Fit Notes", meta?.fittingNotes ?? ""],
-          ["Fit Approved", meta?.fitApproved ? "Yes" : "No"],
-          [],
-          ["Session", "Fit Model", "Date", "Notes", "Photos"],
-        ];
-        sessions.forEach((sess, i) => {
-          const dateStr = sess.sessionDate ? new Date(sess.sessionDate + "T00:00:00").toLocaleDateString("en-AU") : "";
-          rows.push([`Session ${i + 1}`, sess.fitModel ?? "", dateStr, sess.notes ?? "", sess.images?.length ?? 0]);
-        });
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-        XLSX.utils.book_append_sheet(wb, ws, style.substring(0, 31));
+        if (sessions.length === 0) {
+          // Include styles with no sessions under a "No Model" sheet
+          const key = "No Model";
+          if (!modelMap[key]) modelMap[key] = [];
+          modelMap[key].push({ style, sessionDate: null, notes: null });
+        } else {
+          for (const sess of sessions) {
+            const key = sess.fitModel?.trim() || "Unknown";
+            if (!modelMap[key]) modelMap[key] = [];
+            modelMap[key].push({
+              style,
+              sessionDate: sess.sessionDate ?? null,
+              notes: sess.notes ?? null,
+            });
+          }
+        }
       }
+
+      // Build one sheet per fit model
+      for (const [modelName, entries] of Object.entries(modelMap)) {
+        // Format date: use the most common session date for this model, or group date
+        const dateStr = group.sessionDate
+          ? new Date(group.sessionDate + "T00:00:00").toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit" }).replace(/\//g, ".")
+          : "";
+
+        const rows: any[][] = [
+          ["FITTING COMMENTS", "", "", "", "", "", "", "", ""],
+          ["", "", "", "", "", "", "", "", ""],
+          [`FOOT MODEL: ${modelName}`, "", `DATE : ${dateStr}`, "", "", "", "", "", ""],
+          ["", "", "", "", "", "", "", "", ""],
+          ["STYLE", "SAMPLE DATE", "COMMENTS", "", "", "", "", "", ""],
+        ];
+
+        for (const entry of entries) {
+          const sampleDateStr = entry.sessionDate
+            ? new Date(entry.sessionDate + "T00:00:00").toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit" }).replace(/\//g, ".")
+            : "";
+          rows.push([entry.style, sampleDateStr, entry.notes ?? "", "", "", "", "", "", ""]);
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+
+        // Column widths: Style=25, Sample Date=15, Comments=60
+        ws["!cols"] = [
+          { wch: 25 }, { wch: 15 }, { wch: 60 },
+          { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+        ];
+
+        // Bold the header row (row 1) and column headers (row 5)
+        const boldCells = ["A1", "A3", "C3", "A5", "B5", "C5"];
+        for (const addr of boldCells) {
+          if (ws[addr]) {
+            ws[addr].s = { font: { bold: true, sz: addr === "A1" ? 14 : 11 } };
+          }
+        }
+
+        const sheetName = modelName.substring(0, 31);
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      }
+
       XLSX.writeFile(wb, `${group.name.replace(/[^a-z0-9]/gi, "_")}_fitting.xlsx`);
       toast.success(`Exported ${group.styles.length} styles`);
     } catch (e) {
+      console.error(e);
       toast.error("Export failed");
     } finally {
       setExportingGroupId(null);
