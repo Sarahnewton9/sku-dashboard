@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -719,4 +719,50 @@ export async function getAllStyleWebsiteImages(): Promise<{ style: string; websi
   if (!db) return [];
   const rows = await db.select({ style: styleMeta.style, websiteImageUrl: styleMeta.websiteImageUrl }).from(styleMeta);
   return rows;
+}
+
+
+// ─── Fitting Groups ────────────────────────────────────────────────────────────
+
+export async function createFittingGroup(name: string, sessionDate: string, notes: string | null): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(fittingGroups).values({ name, sessionDate, notes });
+  return (result[0] as any).insertId as number;
+}
+
+export async function getAllFittingGroups(): Promise<(FittingGroup & { styles: string[] })[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const groups = await db.select().from(fittingGroups).orderBy(fittingGroups.createdAt);
+  const styleRows = await db.select().from(fittingGroupStyles);
+  return groups.map((g) => ({
+    ...g,
+    styles: styleRows.filter((s) => s.groupId === g.id).map((s) => s.style),
+  }));
+}
+
+export async function updateFittingGroup(id: number, name: string, sessionDate: string, notes: string | null): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(fittingGroups).set({ name, sessionDate, notes }).where(eq(fittingGroups.id, id));
+}
+
+export async function deleteFittingGroup(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(fittingGroupStyles).where(eq(fittingGroupStyles.groupId, id));
+  await db.delete(fittingGroups).where(eq(fittingGroups.id, id));
+}
+
+export async function addStyleToFittingGroup(groupId: number, style: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(fittingGroupStyles).values({ groupId, style }).onDuplicateKeyUpdate({ set: { style } });
+}
+
+export async function removeStyleFromFittingGroup(groupId: number, style: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(fittingGroupStyles).where(and(eq(fittingGroupStyles.groupId, groupId), eq(fittingGroupStyles.style, style)));
 }

@@ -344,3 +344,34 @@ export const styleTrendFlags = mysqlTable("style_trend_flags", {
 
 export type StyleTrendFlag = typeof styleTrendFlags.$inferSelect;
 export type InsertStyleTrendFlag = typeof styleTrendFlags.$inferInsert;
+
+/**
+ * Fitting groups — named collections of styles for a fitting session
+ * e.g. "Week 1 Fitting", "Factory Visit March"
+ */
+export const fittingGroups = mysqlTable("fitting_groups", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  sessionDate: varchar("sessionDate", { length: 32 }).notNull().default(""),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FittingGroup = typeof fittingGroups.$inferSelect;
+export type InsertFittingGroup = typeof fittingGroups.$inferInsert;
+
+/**
+ * Fitting group styles — styles belonging to a fitting group
+ */
+export const fittingGroupStyles = mysqlTable("fitting_group_styles", {
+  id: int("id").autoincrement().primaryKey(),
+  groupId: int("groupId").notNull(),
+  style: varchar("style", { length: 64 }).notNull(),
+  addedAt: timestamp("addedAt").defaultNow().notNull(),
+}, (t) => ({
+  uniq: uniqueIndex("fitting_group_styles_uniq").on(t.groupId, t.style),
+}));
+
+export type FittingGroupStyle = typeof fittingGroupStyles.$inferSelect;
+export type InsertFittingGroupStyle = typeof fittingGroupStyles.$inferInsert;

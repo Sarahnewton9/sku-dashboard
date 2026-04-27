@@ -28,6 +28,7 @@ import {
   getAllStyleTrendFlags,
   upsertStyleWebsiteImage,
   getAllStyleWebsiteImages,
+  createFittingGroup, getAllFittingGroups, updateFittingGroup, deleteFittingGroup, addStyleToFittingGroup, removeStyleFromFittingGroup,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -847,8 +848,49 @@ export const appRouter = router({
         return { success: true, cancelled, specked, speckedNoSample };
       }),
   }),
+
+  // ─── Fitting Groups ──────────────────────────────────────────────────────────
+  fittingGroup: router({
+    getAll: publicProcedure.query(async () => getAllFittingGroups()),
+
+    create: publicProcedure
+      .input(z.object({ name: z.string(), sessionDate: z.string().default(""), notes: z.string().nullable().optional() }))
+      .mutation(async ({ input }) => {
+        const id = await createFittingGroup(input.name, input.sessionDate, input.notes ?? null);
+        return { id };
+      }),
+
+    update: publicProcedure
+      .input(z.object({ id: z.number(), name: z.string(), sessionDate: z.string().default(""), notes: z.string().nullable().optional() }))
+      .mutation(async ({ input }) => {
+        await updateFittingGroup(input.id, input.name, input.sessionDate, input.notes ?? null);
+        return { success: true };
+      }),
+
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteFittingGroup(input.id);
+        return { success: true };
+      }),
+
+    addStyle: publicProcedure
+      .input(z.object({ groupId: z.number(), style: z.string() }))
+      .mutation(async ({ input }) => {
+        await addStyleToFittingGroup(input.groupId, input.style);
+        return { success: true };
+      }),
+
+    removeStyle: publicProcedure
+      .input(z.object({ groupId: z.number(), style: z.string() }))
+      .mutation(async ({ input }) => {
+        await removeStyleFromFittingGroup(input.groupId, input.style);
+        return { success: true };
+      }),
+  }),
 });
 
 // Patch buy.unlock into the existing buy router by re-exporting
 // (We add it inline here since the buy router is defined earlier in this file)
 export type AppRouter = typeof appRouter;
+

@@ -610,3 +610,15 @@
 - [x] Verified groupedByLast has no malformed code
 - [x] Fix sample count: was counting carry-over SKUs as waiting; now only counts new SKUs
 - [x] TypeScript: 0 real errors confirmed
+
+## Phase 65: Fitting Groups (Style-Level Fitting Sessions)
+- [x] Add fittingGroups table (id, name, date, notes) to drizzle/schema.ts
+- [x] Add fittingGroupStyles join table (groupId, style) to drizzle/schema.ts
+- [x] Run pnpm db:push to migrate schema
+- [x] Add DB helpers: createFittingGroup, getAllFittingGroups, updateFittingGroup, deleteFittingGroup, addStyleToFittingGroup, removeStyleFromFittingGroup
+- [x] Add tRPC procedures: fittingGroup.getAll, create, update, delete, addStyle, removeStyle
+- [x] Add FittingGroupManager component in FittingTab — collapsible section with create/manage groups
+- [x] Style picker: searchable list, add/remove styles per group with X badges
+- [x] Edit group name and date inline
+- [x] Export per group: Excel with one sheet per style (fit rating, notes, sessions)
+- [x] TypeScript: 0 real errors confirmed

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   ChevronDown, ChevronRight, Upload, X, ImageIcon, Download,
   CheckCircle, RotateCcw, Search, Plus, Calendar, User, ZoomIn,
+  Layers, Trash2, Edit2, Check,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -656,6 +657,252 @@ function ExportDialog({
   );
 }
 
+// ─── Fitting Group Manager ────────────────────────────────────────────────────
+
+function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
+  const { data: groups = [], refetch } = trpc.fittingGroup.getAll.useQuery();
+  const createGroup = trpc.fittingGroup.create.useMutation({ onSuccess: () => refetch() });
+  const updateGroup = trpc.fittingGroup.update.useMutation({ onSuccess: () => refetch() });
+  const deleteGroup = trpc.fittingGroup.delete.useMutation({ onSuccess: () => refetch() });
+  const addStyle = trpc.fittingGroup.addStyle.useMutation({ onSuccess: () => refetch() });
+  const removeStyle = trpc.fittingGroup.removeStyle.useMutation({ onSuccess: () => refetch() });
+
+  const [expanded, setExpanded] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDate, setNewDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [styleSearch, setStyleSearch] = useState("");
+  const [openGroupId, setOpenGroupId] = useState<number | null>(null);
+  const [exportingGroupId, setExportingGroupId] = useState<number | null>(null);
+
+  const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
+  const { data: imageOverrideList = [] } = trpc.styleImage.getAll.useQuery();
+  const { data: allSessionsRaw = [] } = trpc.fittingSession.getAll.useQuery();
+
+  const styleMeta = useMemo(() => styleMetaList.reduce<Record<string, any>>((acc, m) => { acc[m.style] = m; return acc; }, {}), [styleMetaList]);
+  const imageOverrides = useMemo(() => imageOverrideList.reduce<Record<string, string>>((acc, o) => { acc[o.style] = o.imageUrl; return acc; }, {}), [imageOverrideList]);
+  const sessionsByStyle = useMemo(() => {
+    const map: Record<string, typeof allSessionsRaw> = {};
+    for (const s of allSessionsRaw) { if (!map[s.style]) map[s.style] = []; map[s.style].push(s); }
+    return map;
+  }, [allSessionsRaw]);
+
+  const allStyleNames = useMemo(() => styleList.map((s) => s.style).sort(), [styleList]);
+
+  const handleCreate = () => {
+    if (!newName.trim()) return;
+    createGroup.mutate({ name: newName.trim(), sessionDate: newDate });
+    setNewName("");
+    setCreating(false);
+  };
+
+  const handleExportGroup = async (group: typeof groups[0]) => {
+    setExportingGroupId(group.id);
+    try {
+      const { default: XLSX } = await import("xlsx");
+      const wb = XLSX.utils.book_new();
+      for (const style of group.styles) {
+        const entry = styleList.find((s) => s.style === style);
+        const meta = styleMeta[style];
+        const sessions = sessionsByStyle[style] ?? [];
+        const fitLabel = meta?.fitRating ? FIT_LABELS[meta.fitRating] ?? meta.fitRating : "—";
+        const effectiveImageUrl = imageOverrides[style] ?? entry?.imageUrl ?? "";
+        const rows: any[][] = [
+          ["Style", style],
+          ["Last", entry?.last ?? ""],
+          ["Category", entry?.category ?? ""],
+          ["Fit Rating", fitLabel],
+          ["Fit Notes", meta?.fittingNotes ?? ""],
+          ["Fit Approved", meta?.fitApproved ? "Yes" : "No"],
+          [],
+          ["Session", "Fit Model", "Date", "Notes", "Photos"],
+        ];
+        sessions.forEach((sess, i) => {
+          const dateStr = sess.sessionDate ? new Date(sess.sessionDate + "T00:00:00").toLocaleDateString("en-AU") : "";
+          rows.push([`Session ${i + 1}`, sess.fitModel ?? "", dateStr, sess.notes ?? "", sess.images?.length ?? 0]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, style.substring(0, 31));
+      }
+      XLSX.writeFile(wb, `${group.name.replace(/[^a-z0-9]/gi, "_")}_fitting.xlsx`);
+      toast.success(`Exported ${group.styles.length} styles`);
+    } catch (e) {
+      toast.error("Export failed");
+    } finally {
+      setExportingGroupId(null);
+    }
+  };
+
+  const filteredStyles = useMemo(() => {
+    const q = styleSearch.toLowerCase();
+    return q ? allStyleNames.filter((s) => s.toLowerCase().includes(q)) : allStyleNames;
+  }, [allStyleNames, styleSearch]);
+
+  return (
+    <div className="border border-border rounded-lg overflow-hidden">
+      <button
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left bg-card"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <Layers className="w-4 h-4 text-muted-foreground" />
+        <span className="font-semibold text-sm">Fitting Groups</span>
+        <span className="text-xs text-muted-foreground">{groups.length} group{groups.length !== 1 ? "s" : ""}</span>
+        <div className="flex-1" />
+        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${expanded ? "" : "-rotate-90"}`} />
+      </button>
+
+      {expanded && (
+        <div className="border-t border-border bg-muted/10 p-4 space-y-4">
+          {/* Existing groups */}
+          {groups.length === 0 && !creating && (
+            <p className="text-sm text-muted-foreground text-center py-4">No fitting groups yet. Create one to group styles for a fitting session.</p>
+          )}
+
+          {groups.map((group) => {
+            const isOpen = openGroupId === group.id;
+            const isEditing = editingId === group.id;
+            return (
+              <div key={group.id} className="border border-border rounded-lg bg-card overflow-hidden">
+                {/* Group header */}
+                <div className="flex items-center gap-2 px-3 py-2.5">
+                  <button className="flex-1 flex items-center gap-2 text-left" onClick={() => setOpenGroupId(isOpen ? null : group.id)}>
+                    <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isOpen ? "" : "-rotate-90"}`} />
+                    {isEditing ? (
+                      <input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="text-sm font-medium border border-border rounded px-2 py-0.5 bg-background"
+                        onClick={(e) => e.stopPropagation()}
+                        autoFocus
+                      />
+                    ) : (
+                      <span className="text-sm font-semibold">{group.name}</span>
+                    )}
+                    {isEditing ? (
+                      <input
+                        type="date"
+                        value={editDate}
+                        onChange={(e) => setEditDate(e.target.value)}
+                        className="text-xs border border-border rounded px-2 py-0.5 bg-background"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ) : (
+                      group.sessionDate && <span className="text-xs text-muted-foreground">{new Date(group.sessionDate + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</span>
+                    )}
+                    <span className="text-xs text-muted-foreground">{group.styles.length} style{group.styles.length !== 1 ? "s" : ""}</span>
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {isEditing ? (
+                      <>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => { updateGroup.mutate({ id: group.id, name: editName, sessionDate: editDate }); setEditingId(null); }}>
+                          <Check className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingId(null)}>
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => handleExportGroup(group)} disabled={exportingGroupId === group.id || group.styles.length === 0}>
+                          <Download className="w-3.5 h-3.5" />{exportingGroupId === group.id ? "..." : "Export"}
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => { setEditingId(group.id); setEditName(group.name); setEditDate(group.sessionDate ?? ""); }}>
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive hover:text-destructive" onClick={() => { if (confirm(`Delete group "${group.name}"?`)) deleteGroup.mutate({ id: group.id }); }}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Expanded: style list + add styles */}
+                {isOpen && (
+                  <div className="border-t border-border p-3 space-y-3">
+                    {/* Current styles */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {group.styles.length === 0 && <span className="text-xs text-muted-foreground">No styles yet — add some below.</span>}
+                      {group.styles.map((s) => (
+                        <span key={s} className="inline-flex items-center gap-1 text-xs bg-muted border border-border rounded px-2 py-0.5">
+                          {s}
+                          <button onClick={() => removeStyle.mutate({ groupId: group.id, style: s })} className="text-muted-foreground hover:text-destructive">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    {/* Add styles */}
+                    <div className="space-y-1.5">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                        <input
+                          type="text"
+                          value={styleSearch}
+                          onChange={(e) => setStyleSearch(e.target.value)}
+                          placeholder="Search styles to add..."
+                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </div>
+                      <div className="max-h-40 overflow-y-auto border border-border rounded-md bg-background">
+                        {filteredStyles.filter((s) => !group.styles.includes(s)).map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => addStyle.mutate({ groupId: group.id, style: s })}
+                            className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50 transition-colors"
+                          >
+                            {s}
+                          </button>
+                        ))}
+                        {filteredStyles.filter((s) => !group.styles.includes(s)).length === 0 && (
+                          <p className="text-xs text-muted-foreground text-center py-3">All styles added</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Create new group */}
+          {creating ? (
+            <div className="border border-dashed border-border rounded-lg p-3 space-y-2">
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Group name (e.g. Week 1 Fitting)"
+                className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); if (e.key === "Escape") setCreating(false); }}
+              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={newDate}
+                  onChange={(e) => setNewDate(e.target.value)}
+                  className="border border-border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <div className="flex-1" />
+                <Button variant="outline" size="sm" onClick={() => setCreating(false)}>Cancel</Button>
+                <Button size="sm" onClick={handleCreate} disabled={!newName.trim()}>Create</Button>
+              </div>
+            </div>
+          ) : (
+            <Button variant="outline" size="sm" className="gap-2 w-full" onClick={() => setCreating(true)}>
+              <Plus className="w-4 h-4" /> New Fitting Group
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function FittingTab() {
@@ -830,6 +1077,9 @@ export function FittingTab() {
           </Button>
         </div>
       </div>
+
+      {/* Fitting Groups */}
+      <FittingGroupManager styleList={styleList} />
 
       {/* All approved */}
       {activeStyles.length === 0 && approvedStyles.length > 0 && (
