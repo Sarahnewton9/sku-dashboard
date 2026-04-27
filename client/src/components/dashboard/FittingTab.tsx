@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useMemo } from "react";
+import * as XLSX from "xlsx";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { Badge } from "@/components/ui/badge";
@@ -702,7 +703,6 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
   const handleExportGroup = async (group: typeof groups[0]) => {
     setExportingGroupId(group.id);
     try {
-      const { default: XLSX } = await import("xlsx");
       const wb = XLSX.utils.book_new();
       for (const style of group.styles) {
         const entry = styleList.find((s) => s.style === style);

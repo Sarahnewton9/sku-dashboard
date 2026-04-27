@@ -575,11 +575,12 @@
 - [x] Fetch button runs only on the selected subset (or all if in default mode)
 - [x] TypeScript: 0 errors confirmed
 
-## Phase 58: Style Image Fetch — SKU-level selector
-- [ ] Change selector from styles to SKUs (style + colour + leather combos)
-- [ ] "All SKUs" default; "Select SKUs" mode shows searchable grouped list (grouped by style)
-- [ ] Fetch runs on unique style names derived from selected SKUs
-- [ ] TypeScript: 0 errors confirmed
+## Phase 58: Style Image Fetch — SKU-level selector (SUPERSEDED)
+- [x] Superseded — user clarified this was about Excel export, not image fetch. Handled via PDF extraction in Phase 58b.
+- [x] Change selector from styles to SKUs (style + colour + leather combos)
+- [x] "All SKUs" default; "Select SKUs" mode shows searchable grouped list (grouped by style)
+- [x] Fetch runs on unique style names derived from selected SKUs
+- [x] TypeScript: 0 errors confirmed
 
 ## Phase 59: Bulk Spec Sheet Upload
 - [x] Add "Bulk Import" button to SpecsTab header (alongside existing single Import button)
