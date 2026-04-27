@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useRef, useMemo } from "react";
+import React, { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import * as XLSX from "xlsx";
+import { createPortal } from "react-dom";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { Badge } from "@/components/ui/badge";
@@ -80,13 +81,19 @@ function buildStyleList(): StyleEntry[] {
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
 
 function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
-  return (
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return createPortal(
     <div
-      className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4"
       onClick={onClose}
     >
       <button
-        className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 hover:bg-black/70"
+        className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 hover:bg-black/70 z-10"
         onClick={onClose}
       >
         <X className="w-5 h-5" />
@@ -97,7 +104,8 @@ function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
         className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       />
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -121,6 +129,7 @@ function SessionCard({
   const [localDate, setLocalDate] = useState(session.sessionDate);
   const [localNotes, setLocalNotes] = useState(session.notes ?? "");
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
@@ -128,10 +137,23 @@ function SessionCard({
     setEditing(false);
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) onUploadImage(session.id, session.style, file);
-    e.target.value = "";
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+    files.forEach((file) => onUploadImage(session.id, session.style, file));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
   };
 
   return (
@@ -201,8 +223,21 @@ function SessionCard({
         <div className="px-4 pt-3 text-sm text-muted-foreground italic">{session.notes}</div>
       ) : null}
 
-      {/* Images */}
-      <div className="px-4 py-3">
+      {/* Images — drag-and-drop zone */}
+      <div
+        className={`px-4 py-3 transition-colors rounded-b-lg ${
+          isDragging ? "bg-primary/5 ring-2 ring-inset ring-primary" : ""
+        }`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
+        {isDragging && (
+          <div className="flex items-center justify-center py-2 mb-2 text-xs text-primary font-medium gap-1.5">
+            <Upload className="w-3.5 h-3.5" />
+            Drop images here
+          </div>
+        )}
         <div className="flex items-center gap-2 flex-wrap">
           {session.images.map((img) => (
             <div key={img.id} className="relative group">
@@ -226,11 +261,22 @@ function SessionCard({
           <button
             onClick={() => fileInputRef.current?.click()}
             className="w-20 h-20 border-2 border-dashed border-border rounded flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+            title="Click to browse or drag & drop images here"
           >
             <Upload className="w-4 h-4" />
             <span className="text-[9px] mt-0.5">Add Photo</span>
           </button>
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              Array.from(e.target.files ?? []).forEach((file) => onUploadImage(session.id, session.style, file));
+              e.target.value = "";
+            }}
+          />
         </div>
       </div>
     </div>

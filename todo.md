@@ -633,3 +633,9 @@
 - [x] Confirmation dialog before deleting ("Delete the [model] session from [date]?")
 - [x] After deletion, session list refreshes automatically via cache invalidation
 - [x] deleteSessionMutation added to FittingGroupManager component scope
+
+## Phase 68: Fitting — Drag-and-Drop Images + Lightbox Fix
+- [x] Add drag-and-drop zone to fitting session image upload area (in addition to click-to-browse)
+- [x] Fix full-screen image lightbox to close when clicking outside the image (backdrop click via portal)
+- [x] Lightbox also closes on Escape key
+- [x] Multiple images can be selected at once via click-to-browse
