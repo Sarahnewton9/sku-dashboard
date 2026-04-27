@@ -678,6 +678,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
   const [styleSearch, setStyleSearch] = useState("");
   const [openGroupId, setOpenGroupId] = useState<number | null>(null);
   const [exportingGroupId, setExportingGroupId] = useState<number | null>(null);
+  const [openStyleKey, setOpenStyleKey] = useState<string | null>(null); // "groupId:style"
 
   const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
   const { data: imageOverrideList = [] } = trpc.styleImage.getAll.useQuery();
@@ -820,23 +821,93 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
                   </div>
                 </div>
 
-                {/* Expanded: style list + add styles */}
+                {/* Expanded: style rows + add styles */}
                 {isOpen && (
-                  <div className="border-t border-border p-3 space-y-3">
-                    {/* Current styles */}
-                    <div className="flex flex-wrap gap-1.5">
-                      {group.styles.length === 0 && <span className="text-xs text-muted-foreground">No styles yet — add some below.</span>}
-                      {group.styles.map((s) => (
-                        <span key={s} className="inline-flex items-center gap-1 text-xs bg-muted border border-border rounded px-2 py-0.5">
-                          {s}
-                          <button onClick={() => removeStyle.mutate({ groupId: group.id, style: s })} className="text-muted-foreground hover:text-destructive">
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
+                  <div className="border-t border-border divide-y divide-border">
+                    {group.styles.length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-4 px-3">No styles yet — add some below.</p>
+                    )}
+                    {group.styles.map((s) => {
+                      const styleKey = `${group.id}:${s}`;
+                      const isStyleOpen = openStyleKey === styleKey;
+                      const meta = styleMeta[s];
+                      const sessions = sessionsByStyle[s] ?? [];
+                      const fitRating = meta?.fitRating;
+                      const fitLabel = fitRating ? FIT_LABELS[fitRating] ?? fitRating : null;
+                      const fitColour = fitRating ? FIT_COLOURS[fitRating] ?? "" : "";
+                      const entry = styleList.find((e) => e.style === s);
+                      return (
+                        <div key={s}>
+                          {/* Style row header */}
+                          <div className="flex items-center gap-2 px-3 py-2 hover:bg-muted/30 transition-colors">
+                            <button
+                              className="flex-1 flex items-center gap-2 text-left"
+                              onClick={() => setOpenStyleKey(isStyleOpen ? null : styleKey)}
+                            >
+                              <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${isStyleOpen ? "" : "-rotate-90"}`} />
+                              <span className="text-sm font-medium">{s}</span>
+                              {entry && <span className="text-xs text-muted-foreground">{entry.last}</span>}
+                              {fitLabel && (
+                                <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${fitColour}`}>{fitLabel}</span>
+                              )}
+                              {meta?.fitApproved && (
+                                <span className="text-xs px-1.5 py-0.5 rounded border bg-green-50 text-green-700 border-green-200 font-medium">Approved</span>
+                              )}
+                              {sessions.length > 0 && (
+                                <span className="text-xs text-muted-foreground">{sessions.length} session{sessions.length !== 1 ? "s" : ""}</span>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => removeStyle.mutate({ groupId: group.id, style: s })}
+                              className="text-muted-foreground hover:text-destructive p-1 rounded"
+                              title="Remove from group"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          {/* Expanded style detail */}
+                          {isStyleOpen && (
+                            <div className="bg-muted/20 border-t border-border px-4 py-3 space-y-3">
+                              {/* Fit notes */}
+                              {meta?.fittingNotes && (
+                                <div>
+                                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Fit Notes</p>
+                                  <p className="text-sm">{meta.fittingNotes}</p>
+                                </div>
+                              )}
+                              {/* Sessions */}
+                              {sessions.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Sessions</p>
+                                  <div className="space-y-2">
+                                    {sessions.map((sess, i) => (
+                                      <div key={sess.id} className="bg-card border border-border rounded-md px-3 py-2 space-y-1">
+                                        <div className="flex items-center gap-2">
+                                          <User className="w-3 h-3 text-muted-foreground" />
+                                          <span className="text-xs font-medium">{sess.fitModel || "—"}</span>
+                                          {sess.sessionDate && (
+                                            <span className="text-xs text-muted-foreground">
+                                              {new Date(sess.sessionDate + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {sess.notes && <p className="text-sm text-foreground/90 pl-5">{sess.notes}</p>}
+                                        {(!sess.notes && !sess.fitModel) && <p className="text-xs text-muted-foreground pl-5">No notes</p>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {!meta?.fittingNotes && sessions.length === 0 && (
+                                <p className="text-xs text-muted-foreground">No fitting data recorded yet for {s}.</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                     {/* Add styles */}
-                    <div className="space-y-1.5">
+                    <div className="p-3 space-y-1.5">
                       <div className="relative">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
                         <input
