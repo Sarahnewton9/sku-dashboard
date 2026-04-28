@@ -1218,6 +1218,7 @@ export function FittingTab() {
   const [exportOpen, setExportOpen] = useState(false);
   const [newSessionStyle, setNewSessionStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [approvalFilter, setApprovalFilter] = useState<"all" | "not_approved" | "approved">("not_approved");
 
   const baseStyleList = buildStyleList();
 
@@ -1258,17 +1259,24 @@ export function FittingTab() {
     return map;
   }, [allSessionsRaw]);
 
-  // Split into active (not approved) and approved
+  // Split counts for tab badges
   const activeStyles = styleList.filter((s) => !styleMeta[s.style]?.fitApproved);
   const approvedStyles = styleList.filter((s) => styleMeta[s.style]?.fitApproved);
 
-  // Apply search filter to active styles
+  // Apply approval filter
+  const filteredByApproval = approvalFilter === "not_approved"
+    ? activeStyles
+    : approvalFilter === "approved"
+    ? approvedStyles
+    : styleList;
+
+  // Apply search filter
   const q = search.trim().toLowerCase();
   const filteredActive = q
-    ? activeStyles.filter((s) => s.style.toLowerCase().includes(q) || s.last.toLowerCase().includes(q) || s.category.toLowerCase().includes(q))
-    : activeStyles;
+    ? filteredByApproval.filter((s) => s.style.toLowerCase().includes(q) || s.last.toLowerCase().includes(q) || s.category.toLowerCase().includes(q))
+    : filteredByApproval;
 
-  // Group active by last
+  // Group by last
   const byLast = filteredActive.reduce<Record<string, StyleEntry[]>>((acc, s) => {
     if (!acc[s.last]) acc[s.last] = [];
     acc[s.last].push(s);
@@ -1353,7 +1361,6 @@ export function FittingTab() {
           <h2 className="text-lg font-semibold">Fitting</h2>
           <p className="text-sm text-muted-foreground">
             {activeStyles.length} of {styleList.length} styles remaining to fit.
-            {approvedStyles.length > 0 && ` ${approvedStyles.length} approved — see By Style tab.`}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -1387,19 +1394,34 @@ export function FittingTab() {
         </div>
       </div>
 
+      {/* Approval filter tabs */}
+      <div className="flex items-center gap-1 border-b border-border pb-0">
+        {([
+          { key: "not_approved", label: "Not Approved", count: activeStyles.length },
+          { key: "approved", label: "Approved", count: approvedStyles.length },
+          { key: "all", label: "All", count: styleList.length },
+        ] as const).map(({ key, label, count }) => (
+          <button
+            key={key}
+            onClick={() => setApprovalFilter(key)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              approvalFilter === key
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+            }`}
+          >
+            {label}
+            <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
+              approvalFilter === key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            }`}>{count}</span>
+          </button>
+        ))}
+      </div>
+
       {/* Fitting Groups */}
       <FittingGroupManager styleList={styleList} />
 
-      {/* All approved */}
-      {activeStyles.length === 0 && approvedStyles.length > 0 && (
-        <div className="text-center py-8 text-muted-foreground">
-          <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
-          <p className="text-sm font-medium text-green-700">All styles have been approved!</p>
-          <p className="text-xs mt-1">Approved styles are saved in the <strong>By Style</strong> tab under the Fit Approved section.</p>
-        </div>
-      )}
-
-      {/* Active styles grouped by last */}
+      {/* Styles grouped by last */}
       {sortedLasts.map((last) => (
         <div key={last} className="space-y-2">
           <div className="flex items-center gap-2">
@@ -1434,9 +1456,21 @@ export function FittingTab() {
         </div>
       )}
 
-      {activeStyles.length === 0 && approvedStyles.length === 0 && !q && (
+      {filteredActive.length === 0 && !q && (
         <div className="text-center py-16 text-muted-foreground">
-          <p className="text-sm">No styles requiring fitting found.</p>
+          {approvalFilter === "not_approved" && (
+            <>
+              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
+              <p className="text-sm font-medium text-green-700">All styles have been approved!</p>
+              <button onClick={() => setApprovalFilter("approved")} className="text-xs underline mt-1 hover:text-foreground">View approved styles</button>
+            </>
+          )}
+          {approvalFilter === "approved" && (
+            <p className="text-sm">No approved styles yet. Approve a style using the Approve Fit button.</p>
+          )}
+          {approvalFilter === "all" && (
+            <p className="text-sm">No styles requiring fitting found.</p>
+          )}
         </div>
       )}
     </div>

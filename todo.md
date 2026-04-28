@@ -671,3 +671,9 @@
 
 ## Phase 73: Bug Fix — Sample Date/Type Not Persisting
 - [x] Fix: sampleDate and sampleType not saved to DB after clicking Save on a session card (root cause: server was running stale code; fixed by restarting dev server)
+
+## Phase 75: Fitting Tab — Filter Tabs (Not Approved / Approved / All)
+- [x] Replace separate "Fit Approved" section with three filter tabs: Not Approved, Approved, All
+- [x] Fit-approved styles (Edgy, Kassy, Lamore) appear in the main list under "Approved" filter
+- [x] No data deleted — fitApproved flag preserved in DB
+- [x] "All" tab shows every style regardless of approval status
