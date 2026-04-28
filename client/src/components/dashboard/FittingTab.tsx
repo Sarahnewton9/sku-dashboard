@@ -1426,7 +1426,7 @@ function StyleFitRowWithSessions({
   entry: StyleEntry;
   styleMeta: Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null }>;
   imageOverrides: Record<string, string>;
-  preloadedSessions: Array<{ id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; createdAt: Date; images: Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string; createdAt: Date }> }>;
+  preloadedSessions: Array<{ id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; sampleDate?: string | null; sampleType?: string | null; createdAt: Date; images: Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string; createdAt: Date }> }>;
   onFitUpdate: (style: string, fitRating: string | null, notes: string | null) => void;
   onCreateSession: (style: string) => void;
   onApprove: (style: string) => void;
@@ -1439,6 +1439,8 @@ function StyleFitRowWithSessions({
     fitModel: s.fitModel,
     sessionDate: s.sessionDate,
     notes: s.notes,
+    sampleDate: s.sampleDate ?? null,
+    sampleType: s.sampleType ?? null,
     images: ((s.images ?? []) as unknown) as Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string }>,
   }));
 
