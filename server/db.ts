@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -765,4 +765,50 @@ export async function removeStyleFromFittingGroup(groupId: number, style: string
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(fittingGroupStyles).where(and(eq(fittingGroupStyles.groupId, groupId), eq(fittingGroupStyles.style, style)));
+}
+
+// ─── Spec Custom Rows ─────────────────────────────────────────────────────────
+
+export async function getSpecCustomRowsForStyle(style: string): Promise<SpecCustomRow[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(specCustomRows).where(eq(specCustomRows.style, style));
+}
+
+export async function upsertSpecCustomRow(data: {
+  id?: number;
+  style: string;
+  colour: string;
+  section: string;
+  title: string;
+  value: string;
+  sortOrder?: number;
+}): Promise<SpecCustomRow> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  if (data.id) {
+    await db.update(specCustomRows)
+      .set({ title: data.title, value: data.value, sortOrder: data.sortOrder ?? 0 })
+      .where(eq(specCustomRows.id, data.id));
+    const [row] = await db.select().from(specCustomRows).where(eq(specCustomRows.id, data.id));
+    return row;
+  } else {
+    const [result] = await db.insert(specCustomRows).values({
+      style: data.style,
+      colour: data.colour,
+      section: data.section,
+      title: data.title,
+      value: data.value,
+      sortOrder: data.sortOrder ?? 0,
+    });
+    const insertId = (result as any).insertId;
+    const [row] = await db.select().from(specCustomRows).where(eq(specCustomRows.id, insertId));
+    return row;
+  }
+}
+
+export async function deleteSpecCustomRow(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(specCustomRows).where(eq(specCustomRows.id, id));
 }

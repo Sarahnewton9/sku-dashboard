@@ -29,6 +29,7 @@ import {
   upsertStyleWebsiteImage,
   getAllStyleWebsiteImages,
   createFittingGroup, getAllFittingGroups, updateFittingGroup, deleteFittingGroup, addStyleToFittingGroup, removeStyleFromFittingGroup,
+  getSpecCustomRowsForStyle, upsertSpecCustomRow, deleteSpecCustomRow,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -888,9 +889,34 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
-});
 
+  // ─── Spec Custom Rows ───────────────────────────────────────────────────────
+  specCustomRow: router({
+    getByStyle: publicProcedure
+      .input(z.object({ style: z.string() }))
+      .query(async ({ input }) => getSpecCustomRowsForStyle(input.style)),
+
+    upsert: publicProcedure
+      .input(z.object({
+        id: z.number().optional(),
+        style: z.string(),
+        colour: z.string().default("__all__"),
+        section: z.string(),
+        title: z.string(),
+        value: z.string().default(""),
+        sortOrder: z.number().default(0),
+      }))
+      .mutation(async ({ input }) => upsertSpecCustomRow(input)),
+
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteSpecCustomRow(input.id);
+        return { success: true };
+      }),
+  }),
+});
 // Patch buy.unlock into the existing buy router by re-exporting
 // (We add it inline here since the buy router is defined earlier in this file)
-export type AppRouter = typeof appRouter;
+export type AppRouter = typeof appRouter;;
 

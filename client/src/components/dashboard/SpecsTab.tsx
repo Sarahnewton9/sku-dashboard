@@ -15,7 +15,7 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import {
-  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown,
+  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -363,19 +363,34 @@ function ColourCopyPanel({ colours, colourLabels, onCopy }: ColourCopyPanelProps
 
 // ─── Spec Form for a single style ─────────────────────────────────────────────
 
+interface CustomRowData {
+  id: number;
+  style: string;
+  colour: string;
+  section: string;
+  title: string;
+  value: string | null;
+  sortOrder: number;
+}
+
 interface SpecFormProps {
   entry: StyleEntry;
   specMeta: { hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null } | null;
   specs: Record<string, Record<string, string>>; // colour → component → value
   allDropdownOptions: Record<string, string[]>;
   imageOverride?: string;
+  customRows: CustomRowData[];
   onUpsert: (colour: string, component: string, value: string) => void;
   onAddDropdownOption: (component: string, value: string) => void;
   onMetaChange: (meta: Partial<{ hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null }>) => void;
+  onAddCustomRow: (section: string) => void;
+  onUpdateCustomRow: (id: number, title: string, value: string) => void;
+  onDeleteCustomRow: (id: number) => void;
 }
 
 function SpecForm({
-  entry, specMeta, specs, allDropdownOptions, imageOverride, onUpsert, onAddDropdownOption, onMetaChange,
+  entry, specMeta, specs, allDropdownOptions, imageOverride, customRows,
+  onUpsert, onAddDropdownOption, onMetaChange, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow,
 }: SpecFormProps) {
   const hasBuckle = specMeta?.hasBuckle ?? false;
   const dressShoeSubType = specMeta?.dressShoeSubType ?? null;
@@ -568,8 +583,100 @@ function SpecForm({
                     })}
                   </tr>
                 ))}
+
+                {/* Custom rows for this section */}
+                {customRows
+                  .filter((r) => r.section === sectionKey)
+                  .sort((a, b) => a.sortOrder - b.sortOrder)
+                  .map((row) => (
+                    <tr key={`custom-${row.id}`} className="border-b hover:bg-amber-50/30 dark:hover:bg-amber-900/10 group">
+                      <td className="px-3 py-1.5 align-middle">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            className="text-xs font-medium text-amber-700 dark:text-amber-400 bg-transparent border-0 border-b border-dashed border-amber-300 dark:border-amber-700 focus:outline-none focus:border-amber-500 w-full min-w-0 placeholder:text-amber-400/60"
+                            value={row.title}
+                            placeholder="Field name…"
+                            onChange={(e) => onUpdateCustomRow(row.id, e.target.value, row.value ?? "")}
+                          />
+                          <button
+                            onClick={() => onDeleteCustomRow(row.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 flex-shrink-0"
+                            title="Delete this row"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </td>
+                      {entry.colours.map((colour, colIdx) => (
+                        <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
+                          <TextCell
+                            value={row.colour === "__all__" || row.colour === colour ? (row.value ?? "") : ""}
+                            onSave={(v) => onUpdateCustomRow(row.id, row.title, v)}
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+
+                {/* Add custom row button for this section */}
+                <tr className="border-b">
+                  <td colSpan={entry.colours.length + 1} className="px-3 py-1">
+                    <button
+                      onClick={() => onAddCustomRow(sectionKey)}
+                      className="flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-amber-600 transition-colors"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Add custom row
+                    </button>
+                  </td>
+                </tr>
               </React.Fragment>
             ))}
+
+            {/* Fallback: custom rows for sections not in the template */}
+            {(() => {
+              const templateSections = new Set(Object.keys(sections));
+              const orphanRows = customRows.filter((r) => !templateSections.has(r.section));
+              if (orphanRows.length === 0) return null;
+              return (
+                <React.Fragment key="__orphan__">
+                  <tr className="bg-muted/20">
+                    <td colSpan={entry.colours.length + 1} className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b">
+                      Other
+                    </td>
+                  </tr>
+                  {orphanRows.map((row) => (
+                    <tr key={`custom-orphan-${row.id}`} className="border-b hover:bg-amber-50/30 dark:hover:bg-amber-900/10 group">
+                      <td className="px-3 py-1.5 align-middle">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            className="text-xs font-medium text-amber-700 dark:text-amber-400 bg-transparent border-0 border-b border-dashed border-amber-300 dark:border-amber-700 focus:outline-none focus:border-amber-500 w-full min-w-0 placeholder:text-amber-400/60"
+                            value={row.title}
+                            placeholder="Field name…"
+                            onChange={(e) => onUpdateCustomRow(row.id, e.target.value, row.value ?? "")}
+                          />
+                          <button
+                            onClick={() => onDeleteCustomRow(row.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 flex-shrink-0"
+                            title="Delete this row"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </td>
+                      {entry.colours.map((colour, colIdx) => (
+                        <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
+                          <TextCell
+                            value={row.value ?? ""}
+                            onSave={(v) => onUpdateCustomRow(row.id, row.title, v)}
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </React.Fragment>
+              );
+            })()}
           </tbody>
         </table>
       </div>
@@ -800,6 +907,62 @@ export default function SpecsTab({}: SpecsTabProps) {
       uploadImageMutation.mutate({ style: selectedStyle, imageBase64: base64, mimeType: file.type });
     };
     reader.readAsDataURL(file);
+  }
+
+  // ── Custom rows ──────────────────────────────────────────────────────────
+  const { data: rawCustomRows = [], refetch: refetchCustomRows } = trpc.specCustomRow.getByStyle.useQuery(
+    { style: selectedStyle! },
+    { enabled: !!selectedStyle }
+  );
+
+  const upsertCustomRowMutation = trpc.specCustomRow.upsert.useMutation({
+    onSuccess: () => refetchCustomRows(),
+    onError: () => toast.error("Failed to save custom row"),
+  });
+
+  const deleteCustomRowMutation = trpc.specCustomRow.delete.useMutation({
+    onSuccess: () => refetchCustomRows(),
+    onError: () => toast.error("Failed to delete custom row"),
+  });
+
+  // Debounced custom row title/value save
+  const customRowTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+
+  function handleAddCustomRow(section: string) {
+    if (!selectedStyle) return;
+    const sectionRows = rawCustomRows.filter((r: any) => r.section === section);
+    const nextOrder = sectionRows.length;
+    upsertCustomRowMutation.mutate({
+      style: selectedStyle,
+      colour: "__all__",
+      section,
+      title: "",
+      value: "",
+      sortOrder: nextOrder,
+    });
+  }
+
+  function handleUpdateCustomRow(id: number, title: string, value: string) {
+    if (!selectedStyle) return;
+    // Optimistic update in the cache via refetch after debounce
+    if (customRowTimers.current[id]) clearTimeout(customRowTimers.current[id]);
+    customRowTimers.current[id] = setTimeout(() => {
+      const row = rawCustomRows.find((r: any) => r.id === id);
+      if (!row) return;
+      upsertCustomRowMutation.mutate({
+        id,
+        style: (row as any).style,
+        colour: (row as any).colour,
+        section: (row as any).section,
+        title,
+        value,
+        sortOrder: (row as any).sortOrder,
+      });
+    }, 600);
+  }
+
+  function handleDeleteCustomRow(id: number) {
+    deleteCustomRowMutation.mutate({ id });
   }
 
   // ── Mutations ─────────────────────────────────────────────────────────────
@@ -1267,9 +1430,13 @@ export default function SpecsTab({}: SpecsTabProps) {
               specs={specs}
               allDropdownOptions={allDropdownOptions}
               imageOverride={imageOverrides[selectedEntry.style]}
+              customRows={rawCustomRows as any[]}
               onUpsert={handleUpsert}
               onAddDropdownOption={handleAddDropdownOption}
               onMetaChange={handleMetaChange}
+              onAddCustomRow={handleAddCustomRow}
+              onUpdateCustomRow={handleUpdateCustomRow}
+              onDeleteCustomRow={handleDeleteCustomRow}
             />
           </div>
         )}

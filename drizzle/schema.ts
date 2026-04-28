@@ -375,3 +375,23 @@ export const fittingGroupStyles = mysqlTable("fitting_group_styles", {
 
 export type FittingGroupStyle = typeof fittingGroupStyles.$inferSelect;
 export type InsertFittingGroupStyle = typeof fittingGroupStyles.$inferInsert;
+
+/**
+ * Spec custom rows — free-form rows added by the user inside a spec section
+ * e.g. section=upper, title="Flower", value="Yes" for JAYDE
+ * One row per (style, colour, section, sortOrder) — sortOrder is used for ordering within a section
+ */
+export const specCustomRows = mysqlTable("spec_custom_rows", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull(),
+  colour: varchar("colour", { length: 64 }).notNull().default("__all__"),
+  section: varchar("section", { length: 64 }).notNull(),
+  title: varchar("title", { length: 256 }).notNull().default(""),
+  value: text("value").default(""),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SpecCustomRow = typeof specCustomRows.$inferSelect;
+export type InsertSpecCustomRow = typeof specCustomRows.$inferInsert;

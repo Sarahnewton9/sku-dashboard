@@ -643,3 +643,11 @@
 ## Phase 69: Fitting Group — Inline Session Images
 - [x] Show session images inline in the Fitting Group expanded style row (below notes, as thumbnails)
 - [x] Clicking a thumbnail opens the lightbox for full-screen view (with click-outside and Escape to close)
+
+## Phase 70: Specs — Custom Rows per Section
+- [x] Add specCustomRow table to DB schema (id, style, section, title, value, sortOrder)
+- [x] Add tRPC procedures: specCustomRow.getByStyle, specCustomRow.upsert, specCustomRow.delete
+- [x] Run pnpm db:push to migrate schema (applied directly via SQL)
+- [x] In Specs UI, add "Add custom row" button at the bottom of each section
+- [x] Each custom row shows an editable title field and value field inline
+- [x] Custom rows can be deleted with a trash icon (hover to reveal)
