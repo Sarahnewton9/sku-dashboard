@@ -18,9 +18,10 @@ import { toast } from "sonner";
 
 const NEW_LASTS = [
   "DAZIE", "SIA", "SALLY", "TIANA", "BILLIE", "MATISSE",
-  "EDGY", "EMBER", "TILDA", "LUCY", "ENVY", "FINCH",
+  "EMBER", "TILDA", "LUCY", "ENVY", "FINCH",
   "HARLEY", "JAYDE", "ROXIE", "VIVA", "PIXIE",
 ];
+// Note: EDGY is an existing pattern and does not require fitting
 
 export const FIT_LABELS: Record<string, string> = {
   tts: "True to Size",

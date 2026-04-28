@@ -677,3 +677,7 @@
 - [x] Fit-approved styles (Edgy, Kassy, Lamore) appear in the main list under "Approved" filter
 - [x] No data deleted — fitApproved flag preserved in DB
 - [x] "All" tab shows every style regardless of approval status
+
+## Phase 76: Fitting — Remove Edgy (Existing Pattern)
+- [x] Exclude Edgy from the Fitting tab style list (removed EDGY from NEW_LASTS constant)
+- [x] Preserve Edgy's fitApproved data in the DB — no deletion
