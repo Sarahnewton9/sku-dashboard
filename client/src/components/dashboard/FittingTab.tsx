@@ -308,6 +308,23 @@ function SessionCard({
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                   <ZoomIn className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
+                {/* Sample date / type overlay — bottom-left */}
+                {(session.sampleDate || session.sampleType) && (
+                  <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-black/60 flex flex-col gap-0 pointer-events-none">
+                    {session.sampleType && (
+                      <span className={`text-[7px] font-bold leading-tight ${
+                        session.sampleType === "Proto" ? "text-orange-300" :
+                        session.sampleType === "Revised" ? "text-blue-300" :
+                        "text-green-300"
+                      }`}>{session.sampleType}</span>
+                    )}
+                    {session.sampleDate && (
+                      <span className="text-[7px] text-white/90 leading-tight">
+                        {new Date(session.sampleDate + "T00:00:00").toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
+                )}
               </button>
               <button
                 onClick={() => onDeleteImage(img.id)}
