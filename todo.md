@@ -645,9 +645,23 @@
 - [x] Clicking a thumbnail opens the lightbox for full-screen view (with click-outside and Escape to close)
 
 ## Phase 70: Specs — Custom Rows per Section
+- [x] Resize shoe product image in spec sheet Excel export to exactly 5x5 cm
+
+## Phase 71 (placeholder)
 - [x] Add specCustomRow table to DB schema (id, style, section, title, value, sortOrder)
 - [x] Add tRPC procedures: specCustomRow.getByStyle, specCustomRow.upsert, specCustomRow.delete
 - [x] Run pnpm db:push to migrate schema (applied directly via SQL)
 - [x] In Specs UI, add "Add custom row" button at the bottom of each section
 - [x] Each custom row shows an editable title field and value field inline
 - [x] Custom rows can be deleted with a trash icon (hover to reveal)
+
+## Phase 71: Fitting Sessions — Sample Date, Sample Type + Export Updates
+- [ ] Add sampleDate (text, nullable) and sampleType (enum: proto/revised/salesman, nullable) to fittingSession table
+- [ ] Run DB migration for new columns
+- [ ] Update fittingSession.upsert tRPC procedure to accept sampleDate and sampleType
+- [ ] Update fittingSession.getByStyle to return sampleDate and sampleType
+- [ ] Add sample date input (date picker / text field) to each session card in FittingTab
+- [ ] Add sample type dropdown (Proto / Revised / Salesman Sample) to each session card
+- [ ] Show sample date and type in the Fitting Group expanded session cards
+- [ ] Include sample date and type in the fitting group HTML/Excel export
+- [ ] Embed fitting images at 5×5 cm in the Excel spec sheet export (top of sheet)

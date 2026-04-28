@@ -237,6 +237,8 @@ export const fittingSessions = mysqlTable("fitting_sessions", {
   fitModel: varchar("fitModel", { length: 128 }).notNull().default(""),
   sessionDate: varchar("sessionDate", { length: 32 }).notNull().default(""),
   notes: text("notes"),
+  sampleDate: varchar("sampleDate", { length: 32 }),
+  sampleType: varchar("sampleType", { length: 32 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

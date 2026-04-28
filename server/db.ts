@@ -555,7 +555,7 @@ export async function getSpecCountsForAllStyles(): Promise<{ style: string; fill
 }
 
 // ─── Fitting Sessions ─────────────────────────────────────────────────────────
-export async function createFittingSession(data: { style: string; fitModel: string; sessionDate: string; notes?: string }): Promise<number> {
+export async function createFittingSession(data: { style: string; fitModel: string; sessionDate: string; notes?: string; sampleDate?: string | null; sampleType?: string | null }): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(fittingSessions).values({
@@ -563,17 +563,21 @@ export async function createFittingSession(data: { style: string; fitModel: stri
     fitModel: data.fitModel,
     sessionDate: data.sessionDate,
     notes: data.notes ?? null,
+    sampleDate: data.sampleDate ?? null,
+    sampleType: data.sampleType ?? null,
   });
   return (result[0] as { insertId: number }).insertId;
 }
 
-export async function updateFittingSession(data: { id: number; fitModel?: string; sessionDate?: string; notes?: string | null }): Promise<void> {
+export async function updateFittingSession(data: { id: number; fitModel?: string; sessionDate?: string; notes?: string | null; sampleDate?: string | null; sampleType?: string | null }): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const updateSet: Record<string, unknown> = {};
   if (data.fitModel !== undefined) updateSet.fitModel = data.fitModel;
   if (data.sessionDate !== undefined) updateSet.sessionDate = data.sessionDate;
   if (data.notes !== undefined) updateSet.notes = data.notes;
+  if (data.sampleDate !== undefined) updateSet.sampleDate = data.sampleDate;
+  if (data.sampleType !== undefined) updateSet.sampleType = data.sampleType;
   if (Object.keys(updateSet).length === 0) return;
   await db.update(fittingSessions).set(updateSet).where(eq(fittingSessions.id, data.id));
 }
@@ -587,7 +591,7 @@ export async function deleteFittingSession(id: number): Promise<void> {
 }
 
 export async function getFittingSessionsForStyle(style: string): Promise<Array<{
-  id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; createdAt: Date;
+  id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; sampleDate: string | null; sampleType: string | null; createdAt: Date;
   images: Array<{ id: number; imageUrl: string; fileKey: string; createdAt: Date }>;
 }>> {
   const db = await getDb();
@@ -601,7 +605,7 @@ export async function getFittingSessionsForStyle(style: string): Promise<Array<{
 }
 
 export async function getAllFittingSessions(): Promise<Array<{
-  id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; createdAt: Date;
+  id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; sampleDate: string | null; sampleType: string | null; createdAt: Date;
   images: Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string; createdAt: Date }>;
 }>> {
   const db = await getDb();

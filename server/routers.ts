@@ -565,13 +565,13 @@ export const appRouter = router({
       .input(z.object({ style: z.string() }))
       .query(async ({ input }) => getFittingSessionsForStyle(input.style)),
     create: publicProcedure
-      .input(z.object({ style: z.string(), fitModel: z.string(), sessionDate: z.string(), notes: z.string().optional() }))
+      .input(z.object({ style: z.string(), fitModel: z.string(), sessionDate: z.string(), notes: z.string().optional(), sampleDate: z.string().nullable().optional(), sampleType: z.string().nullable().optional() }))
       .mutation(async ({ input }) => {
         const id = await createFittingSession(input);
         return { id };
       }),
     update: publicProcedure
-      .input(z.object({ id: z.number(), fitModel: z.string().optional(), sessionDate: z.string().optional(), notes: z.string().nullable().optional() }))
+      .input(z.object({ id: z.number(), fitModel: z.string().optional(), sessionDate: z.string().optional(), notes: z.string().nullable().optional(), sampleDate: z.string().nullable().optional(), sampleType: z.string().nullable().optional() }))
       .mutation(async ({ input }) => {
         await updateFittingSession(input);
         return { success: true };

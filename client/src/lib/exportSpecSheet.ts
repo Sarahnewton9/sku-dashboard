@@ -168,13 +168,17 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
   // ── Row 8: blank spacer ────────────────────────────────────────────────────
   ws.getRow(8).height = 6;
 
-  // ── Embed image (rows 1-8, right columns) ─────────────────────────────────
+  // ── Embed image at exactly 5 cm × 5 cm in top-right of header ───────────────
+  // ExcelJS uses EMU (English Metric Units): 1 cm = 360000 EMU
+  // We anchor at the top-right corner of the sheet (col A row 1 = tl {col:0, row:0})
+  // and use ext to fix the size to exactly 5 cm × 5 cm.
   if (imageId !== null) {
-    // Place image in the rightmost 2 columns of the header block
-    const imgStartCol = Math.max(2, lastDataCol - 1); // start 2 cols from right
+    const fiveCmEmu = 5 * 360000; // 1800000 EMU = 5 cm
+    // Anchor top-left of image at the start of the last colour column pair
+    const imgAnchorCol = Math.max(1, lastDataCol - 1); // 0-based col index
     ws.addImage(imageId, {
-      tl: { col: imgStartCol - 1, row: 0, nativeCol: 0, nativeRow: 0, nativeColOff: 0, nativeRowOff: 0 },
-      br: { col: lastDataCol, row: 7.9, nativeCol: 0, nativeRow: 0, nativeColOff: 0, nativeRowOff: 0 },
+      tl: { col: imgAnchorCol, row: 0 },
+      ext: { width: fiveCmEmu, height: fiveCmEmu },
       editAs: "oneCell",
     } as unknown as ExcelJS.ImageRange);
   }

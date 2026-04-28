@@ -53,6 +53,8 @@ interface FittingSession {
   fitModel: string;
   sessionDate: string;
   notes?: string | null;
+  sampleDate?: string | null;
+  sampleType?: string | null;
   images: Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string }>;
 }
 
@@ -121,19 +123,21 @@ function SessionCard({
   session: FittingSession;
   onUploadImage: (sessionId: number, style: string, file: File) => void;
   onDeleteImage: (id: number) => void;
-  onUpdateSession: (id: number, fitModel: string, sessionDate: string, notes: string | null) => void;
+  onUpdateSession: (id: number, fitModel: string, sessionDate: string, notes: string | null, sampleDate: string | null, sampleType: string | null) => void;
   onDeleteSession: (id: number) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [localModel, setLocalModel] = useState(session.fitModel);
   const [localDate, setLocalDate] = useState(session.sessionDate);
   const [localNotes, setLocalNotes] = useState(session.notes ?? "");
+  const [localSampleDate, setLocalSampleDate] = useState(session.sampleDate ?? "");
+  const [localSampleType, setLocalSampleType] = useState(session.sampleType ?? "");
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
-    onUpdateSession(session.id, localModel, localDate, localNotes || null);
+    onUpdateSession(session.id, localModel, localDate, localNotes || null, localSampleDate || null, localSampleType || null);
     setEditing(false);
   };
 
@@ -209,9 +213,53 @@ function SessionCard({
         </div>
       </div>
 
+      {/* Sample date + type row */}
+      <div className="px-4 pt-2 pb-1 flex items-center gap-3 text-sm flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-muted-foreground font-medium">Sample date:</span>
+          {editing ? (
+            <input
+              type="date"
+              value={localSampleDate}
+              onChange={(e) => setLocalSampleDate(e.target.value)}
+              className="border border-border rounded px-2 py-0.5 text-xs bg-background"
+            />
+          ) : (
+            <span className="text-xs text-foreground">
+              {session.sampleDate ? new Date(session.sampleDate + "T00:00:00").toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit" }) : <span className="text-muted-foreground/50">—</span>}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-muted-foreground font-medium">Sample type:</span>
+          {editing ? (
+            <select
+              value={localSampleType}
+              onChange={(e) => setLocalSampleType(e.target.value)}
+              className="border border-border rounded px-2 py-0.5 text-xs bg-background"
+            >
+              <option value="">— select —</option>
+              <option value="Proto">Proto</option>
+              <option value="Revised">Revised</option>
+              <option value="Salesman Sample">Salesman Sample</option>
+            </select>
+          ) : (
+            <span className="text-xs">
+              {session.sampleType ? (
+                <span className={`px-1.5 py-0.5 rounded-full font-medium ${
+                  session.sampleType === "Proto" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
+                  session.sampleType === "Revised" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                  "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                }`}>{session.sampleType}</span>
+              ) : <span className="text-muted-foreground/50">—</span>}
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* Session notes */}
       {editing ? (
-        <div className="px-4 pt-3">
+        <div className="px-4 pt-2">
           <Textarea
             value={localNotes}
             onChange={(e) => setLocalNotes(e.target.value)}
@@ -220,7 +268,7 @@ function SessionCard({
           />
         </div>
       ) : session.notes ? (
-        <div className="px-4 pt-3 text-sm text-muted-foreground italic">{session.notes}</div>
+        <div className="px-4 pt-2 text-sm text-muted-foreground italic">{session.notes}</div>
       ) : null}
 
       {/* Images — drag-and-drop zone */}
@@ -306,7 +354,7 @@ function StyleFitRow({
   onCreateSession: (style: string) => void;
   onUploadImage: (sessionId: number, style: string, file: File) => void;
   onDeleteImage: (id: number) => void;
-  onUpdateSession: (id: number, fitModel: string, sessionDate: string, notes: string | null) => void;
+  onUpdateSession: (id: number, fitModel: string, sessionDate: string, notes: string | null, sampleDate: string | null, sampleType: string | null) => void;
   onDeleteSession: (id: number) => void;
   onApprove: (style: string) => void;
   onUndoApproval: (style: string) => void;
@@ -759,7 +807,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
 
       // Group sessions by fit model name
       // Each sheet = one fit model, with all styles they fitted
-      const modelMap: Record<string, { style: string; sessionDate: string | null; notes: string | null }[]> = {};
+      const modelMap: Record<string, { style: string; sessionDate: string | null; notes: string | null; sampleDate: string | null; sampleType: string | null }[]> = {};
 
       for (const style of group.styles) {
         const sessions = sessionsByStyle[style] ?? [];
@@ -767,7 +815,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
           // Include styles with no sessions under a "No Model" sheet
           const key = "No Model";
           if (!modelMap[key]) modelMap[key] = [];
-          modelMap[key].push({ style, sessionDate: null, notes: null });
+          modelMap[key].push({ style, sessionDate: null, notes: null, sampleDate: null, sampleType: null });
         } else {
           for (const sess of sessions) {
             const key = sess.fitModel?.trim() || "Unknown";
@@ -776,6 +824,8 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
               style,
               sessionDate: sess.sessionDate ?? null,
               notes: sess.notes ?? null,
+              sampleDate: (sess as any).sampleDate ?? null,
+              sampleType: (sess as any).sampleType ?? null,
             });
           }
         }
@@ -793,26 +843,29 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
           ["", "", "", "", "", "", "", "", ""],
           [`FOOT MODEL: ${modelName}`, "", `DATE : ${dateStr}`, "", "", "", "", "", ""],
           ["", "", "", "", "", "", "", "", ""],
-          ["STYLE", "SAMPLE DATE", "COMMENTS", "", "", "", "", "", ""],
+          ["STYLE", "FITTING DATE", "SAMPLE DATE", "SAMPLE TYPE", "COMMENTS", "", "", "", ""],
         ];
 
         for (const entry of entries) {
-          const sampleDateStr = entry.sessionDate
+          const fittingDateStr = entry.sessionDate
             ? new Date(entry.sessionDate + "T00:00:00").toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit" }).replace(/\//g, ".")
             : "";
-          rows.push([entry.style, sampleDateStr, entry.notes ?? "", "", "", "", "", "", ""]);
+          const sampleDateStr = entry.sampleDate
+            ? new Date(entry.sampleDate + "T00:00:00").toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit" }).replace(/\//g, ".")
+            : "";
+          rows.push([entry.style, fittingDateStr, sampleDateStr, entry.sampleType ?? "", entry.notes ?? "", "", "", "", ""]);
         }
 
         const ws = XLSX.utils.aoa_to_sheet(rows);
 
-        // Column widths: Style=25, Sample Date=15, Comments=60
+        // Column widths: Style=25, Fitting Date=15, Sample Date=15, Sample Type=18, Comments=60
         ws["!cols"] = [
-          { wch: 25 }, { wch: 15 }, { wch: 60 },
-          { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+          { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 18 }, { wch: 60 },
+          { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
         ];
 
         // Bold the header row (row 1) and column headers (row 5)
-        const boldCells = ["A1", "A3", "C3", "A5", "B5", "C5"];
+        const boldCells = ["A1", "A3", "C3", "A5", "B5", "C5", "D5", "E5"];
         for (const addr of boldCells) {
           if (ws[addr]) {
             ws[addr].s = { font: { bold: true, sz: addr === "A1" ? 14 : 11 } };
@@ -1383,8 +1436,8 @@ function StyleFitRowWithSessions({
     deleteImage.mutate({ id });
   }, [deleteImage]);
 
-  const handleUpdateSession = useCallback((id: number, fitModel: string, sessionDate: string, notes: string | null) => {
-    updateSession.mutate({ id, fitModel, sessionDate, notes });
+  const handleUpdateSession = useCallback((id: number, fitModel: string, sessionDate: string, notes: string | null, sampleDate: string | null, sampleType: string | null) => {
+    updateSession.mutate({ id, fitModel, sessionDate, notes, sampleDate, sampleType });
   }, [updateSession]);
 
   const handleDeleteSession = useCallback((id: number) => {
