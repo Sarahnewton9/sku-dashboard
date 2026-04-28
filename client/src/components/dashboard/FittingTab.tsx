@@ -1060,9 +1060,26 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
                                               <button
                                                 key={img.id}
                                                 onClick={() => setGroupLightboxSrc(img.imageUrl)}
-                                                className="relative w-20 h-20 rounded border border-border overflow-hidden hover:ring-2 hover:ring-primary transition-all group"
+                                                className="relative w-24 h-24 rounded border border-border overflow-hidden hover:ring-2 hover:ring-primary transition-all group flex-shrink-0"
                                               >
                                                 <img src={img.imageUrl} alt="Fitting" className="w-full h-full object-cover" />
+                                                {/* Sample date + type overlay */}
+                                                {((sess as any).sampleDate || (sess as any).sampleType) && (
+                                                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-1 py-0.5 flex flex-col items-start gap-0.5">
+                                                    {(sess as any).sampleType && (
+                                                      <span className={`text-[9px] font-semibold leading-tight px-1 rounded ${
+                                                        (sess as any).sampleType === "Proto" ? "bg-orange-500 text-white" :
+                                                        (sess as any).sampleType === "Revised" ? "bg-blue-500 text-white" :
+                                                        "bg-green-500 text-white"
+                                                      }`}>{(sess as any).sampleType}</span>
+                                                    )}
+                                                    {(sess as any).sampleDate && (
+                                                      <span className="text-[9px] text-white/90 leading-tight">
+                                                        {new Date((sess as any).sampleDate + "T00:00:00").toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                )}
                                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                                                   <ZoomIn className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 </div>

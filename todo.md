@@ -656,12 +656,15 @@
 - [x] Custom rows can be deleted with a trash icon (hover to reveal)
 
 ## Phase 71: Fitting Sessions — Sample Date, Sample Type + Export Updates
-- [ ] Add sampleDate (text, nullable) and sampleType (enum: proto/revised/salesman, nullable) to fittingSession table
-- [ ] Run DB migration for new columns
-- [ ] Update fittingSession.upsert tRPC procedure to accept sampleDate and sampleType
-- [ ] Update fittingSession.getByStyle to return sampleDate and sampleType
-- [ ] Add sample date input (date picker / text field) to each session card in FittingTab
-- [ ] Add sample type dropdown (Proto / Revised / Salesman Sample) to each session card
-- [ ] Show sample date and type in the Fitting Group expanded session cards
-- [ ] Include sample date and type in the fitting group HTML/Excel export
-- [ ] Embed fitting images at 5×5 cm in the Excel spec sheet export (top of sheet)
+- [x] Add sampleDate (text, nullable) and sampleType (enum: proto/revised/salesman, nullable) to fittingSession table
+- [x] Run DB migration for new columns (applied directly via SQL)
+- [x] Update fittingSession.create and .update tRPC procedures to accept sampleDate and sampleType
+- [x] Update fittingSession.getByStyle and .getAll to return sampleDate and sampleType
+- [x] Add sample date input (date picker) to each session card in FittingTab
+- [x] Add sample type dropdown (Proto / Revised / Salesman Sample) with colour-coded badge display
+- [x] Show sample date and type in the Fitting Group expanded session cards (via allSessions data)
+- [x] Include Fitting Date, Sample Date, Sample Type columns in the fitting group Excel export
+- [x] Resize shoe product image to exactly 5×5 cm in the Excel spec sheet export (using EMU offsets)
+
+## Phase 72: Fitting Group — Sample Date/Type Overlay on Images
+- [x] Show sample date and sample type as a text overlay on session images in the Fitting Group expanded view
