@@ -689,3 +689,7 @@
 
 ## Phase 78: Sample Rcvd — Match Size 11 Toggle Interaction
 - [x] Change Sample Rcvd column to use the same click-to-toggle interaction as Size 11
+
+## Phase 79: Sample Rcvd — Style-Level Toggle in Collapsed Row
+- [ ] Add sample received toggle to the style-level collapsed row (no need to expand)
+- [ ] Toggle marks ALL new SKUs in the style as received/waiting in one click

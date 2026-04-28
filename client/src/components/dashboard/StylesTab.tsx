@@ -432,6 +432,38 @@ export default function StylesTab() {
     });
   }
 
+  // Check sample status for all NEW SKUs in a style
+  // Returns: 'all' | 'some' | 'none'
+  function getStyleSampleStatus(styleName: string): 'all' | 'some' | 'none' {
+    const newSkus = getSkusForStyle(styleName).filter((s) => s.isNew);
+    if (newSkus.length === 0) return 'none';
+    const receivedCount = newSkus.filter((sku) => {
+      const key = `${sku.style}|${sku.colour}|${sku.leather}`;
+      return skuMetaMap[key]?.sampleStatus === 'received';
+    }).length;
+    if (receivedCount === 0) return 'none';
+    if (receivedCount === newSkus.length) return 'all';
+    return 'some';
+  }
+
+  // Toggle sample received for ALL new SKUs in a style at once
+  const updateStyleSampleMutation = trpc.sku.update.useMutation({
+    onSuccess: () => refetchSkuMeta(),
+    onError: (err) => toast.error(`Failed to update sample status: ${err.message}`),
+  });
+
+  function handleStyleSampleToggle(styleName: string) {
+    const newSkus = getSkusForStyle(styleName).filter((s) => s.isNew);
+    if (newSkus.length === 0) return;
+    const currentStatus = getStyleSampleStatus(styleName);
+    const newStatus = currentStatus === 'all' ? 'waiting' : 'received';
+    // Fire mutations sequentially using Promise chain to avoid race conditions
+    newSkus.reduce((p, sku) =>
+      p.then(() => updateStyleSampleMutation.mutateAsync({ style: sku.style, colour: sku.colour, leather: sku.leather ?? '', sampleStatus: newStatus })),
+      Promise.resolve()
+    );
+  }
+
   const totalFilteredStyles = filtered.length;
 
   return (
@@ -570,6 +602,8 @@ export default function StylesTab() {
                     {lastStyles.map((style) => {
                       const sessionTotal = getStyleSessionTotal(style.style);
                       const styleSize11 = getStyleSize11(style.style);
+                      const styleSampleStatus = getStyleSampleStatus(style.style);
+                      const hasNewSkus = getSkusForStyle(style.style).some((s) => s.isNew);
                       return (
                         <React.Fragment key={style.style}>
                           <tr
@@ -627,25 +661,58 @@ export default function StylesTab() {
                             </td>
                             {/* Style-level Size 11 — badge only when true, click to toggle */}
                             <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                              {styleSize11 ? (
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleStyleSize11Toggle(style.style); }}
-                                  title="Size 11 — click to remove"
-                                  className="px-2 py-0.5 rounded text-xs font-semibold transition-colors"
-                                  style={{ background: "oklch(0.94 0.06 240)", color: "oklch(0.45 0.14 240)", border: "1px solid oklch(0.80 0.10 240)" }}
-                                >
-                                  11
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleStyleSize11Toggle(style.style); }}
-                                  title="Mark as Size 11"
-                                  className="px-2 py-0.5 rounded text-xs text-transparent hover:text-muted-foreground transition-colors"
-                                  style={{ border: "1px solid transparent" }}
-                                >
-                                  11
-                                </button>
-                              )}
+                              <div className="flex items-center justify-center gap-2">
+                                {styleSize11 ? (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleStyleSize11Toggle(style.style); }}
+                                    title="Size 11 — click to remove"
+                                    className="px-2 py-0.5 rounded text-xs font-semibold transition-colors"
+                                    style={{ background: "oklch(0.94 0.06 240)", color: "oklch(0.45 0.14 240)", border: "1px solid oklch(0.80 0.10 240)" }}
+                                  >
+                                    11
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleStyleSize11Toggle(style.style); }}
+                                    title="Mark as Size 11"
+                                    className="px-2 py-0.5 rounded text-xs text-transparent hover:text-muted-foreground transition-colors"
+                                    style={{ border: "1px solid transparent" }}
+                                  >
+                                    11
+                                  </button>
+                                )}
+                                {/* Style-level Sample Rcvd toggle — only for styles with new SKUs */}
+                                {hasNewSkus && (
+                                  styleSampleStatus === 'all' ? (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleStyleSampleToggle(style.style); }}
+                                      title="All samples received — click to mark as waiting"
+                                      className="px-1.5 py-0.5 rounded text-xs font-medium transition-colors"
+                                      style={{ background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)", border: "1px solid oklch(0.80 0.12 155)" }}
+                                    >
+                                      ✓ Rcvd
+                                    </button>
+                                  ) : styleSampleStatus === 'some' ? (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleStyleSampleToggle(style.style); }}
+                                      title="Some samples received — click to mark all received"
+                                      className="px-1.5 py-0.5 rounded text-xs font-medium transition-colors"
+                                      style={{ background: "oklch(0.96 0.05 80)", color: "oklch(0.50 0.12 80)", border: "1px solid oklch(0.85 0.08 80)" }}
+                                    >
+                                      ~ Rcvd
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleStyleSampleToggle(style.style); }}
+                                      title="Mark all samples as received"
+                                      className="px-1.5 py-0.5 rounded text-xs text-transparent hover:text-muted-foreground transition-colors"
+                                      style={{ border: "1px solid transparent" }}
+                                    >
+                                      ✓ Rcvd
+                                    </button>
+                                  )
+                                )}
+                              </div>
                             </td>
                             <td className="px-4 py-3 text-right">
                               {sessionTotal > 0 ? (
