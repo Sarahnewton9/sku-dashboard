@@ -102,11 +102,12 @@ function Lightbox({ src, onClose, sampleDate, sampleType }: { src: string; onClo
       >
         <X className="w-5 h-5" />
       </button>
-      <div className="relative" onClick={(e) => e.stopPropagation()}>
+      <div className="relative" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "min(600px, 90vw)", maxHeight: "min(600px, 80vh)" }}>
         <img
           src={src}
           alt="Fitting"
-          className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+          className="block rounded-lg shadow-2xl object-contain"
+          style={{ maxWidth: "min(600px, 90vw)", maxHeight: "min(560px, 75vh)", width: "auto", height: "auto" }}
         />
         {(sampleDate || sampleType) && (
           <div className="absolute bottom-0 left-0 right-0 rounded-b-lg px-3 py-2 bg-black/60 flex items-center gap-3">
