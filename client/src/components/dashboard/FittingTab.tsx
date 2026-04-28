@@ -613,82 +613,111 @@ function ExportDialog({
   styleMeta,
   sessionsMap,
   imageOverrides,
+  waitingToFitStyles,
+  waitingRevisedStyles,
+  approvedStyles,
   onClose,
 }: {
   styleList: StyleEntry[];
   styleMeta: Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null }>;
   sessionsMap: Record<string, FittingSession[]>;
   imageOverrides: Record<string, string>;
+  waitingToFitStyles: StyleEntry[];
+  waitingRevisedStyles: StyleEntry[];
+  approvedStyles: StyleEntry[];
   onClose: () => void;
 }) {
   const [exporting, setExporting] = useState(false);
-  // For each style, which session IDs to include (default: all)
-  const [selectedSessions, setSelectedSessions] = useState<Record<string, Set<number>>>(() => {
-    const init: Record<string, Set<number>> = {};
-    styleList.forEach((s) => {
-      const sessions = sessionsMap[s.style] ?? [];
-      init[s.style] = new Set(sessions.map((sess) => sess.id));
-    });
-    return init;
-  });
+  const [selectedStyles, setSelectedStyles] = useState<Set<string>>(() => new Set(styleList.map((s) => s.style)));
+  const [search, setSearch] = useState("");
 
-  const stylesWithData = styleList.filter((s) => {
-    const meta = styleMeta[s.style];
-    const sessions = sessionsMap[s.style] ?? [];
-    return meta?.fitRating || sessions.some((sess) => sess.images.length > 0 || sess.notes);
-  });
+  // Quick-select groups
+  const selectGroup = (styles: StyleEntry[]) => {
+    setSelectedStyles(new Set(styles.map((s) => s.style)));
+  };
 
-  const toggleSession = (style: string, sessionId: number) => {
-    setSelectedSessions((prev) => {
-      const next = { ...prev };
-      const set = new Set(next[style] ?? []);
-      if (set.has(sessionId)) set.delete(sessionId);
-      else set.add(sessionId);
-      next[style] = set;
+  const toggleStyle = (style: string) => {
+    setSelectedStyles((prev) => {
+      const next = new Set(prev);
+      if (next.has(style)) next.delete(style); else next.add(style);
       return next;
     });
   };
 
+  const filteredList = search.trim()
+    ? styleList.filter((s) => s.style.toLowerCase().includes(search.trim().toLowerCase()) || s.last.toLowerCase().includes(search.trim().toLowerCase()))
+    : styleList;
+
+  const selectedCount = selectedStyles.size;
+
+  const sampleTypeColour = (t: string | null | undefined) =>
+    t === "Proto" ? "#c2410c" : t === "Revised" ? "#1d4ed8" : t === "Salesman Sample" ? "#15803d" : "#555";
+
   const handleExport = async () => {
     setExporting(true);
     try {
-      const rows = stylesWithData.map((s) => {
+      const toExport = styleList.filter((s) => selectedStyles.has(s.style));
+
+      const sections = toExport.map((s) => {
         const meta = styleMeta[s.style];
-        const sessions = (sessionsMap[s.style] ?? []).filter((sess) => selectedSessions[s.style]?.has(sess.id));
-        const fitLabel = meta?.fitRating ? FIT_LABELS[meta.fitRating] : "—";
+        const sessions = sessionsMap[s.style] ?? [];
+        const fitLabel = meta?.fitRating ? FIT_LABELS[meta.fitRating] : null;
         const fitColour = meta?.fitRating === "tts" ? "#166534" : meta?.fitRating === "runs_small" ? "#92400e" : "#1e40af";
         const effectiveImageUrl = imageOverrides[s.style] ?? s.imageUrl;
+        const approvedBadge = meta?.fitApproved ? `<span style="display:inline-block;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600;margin-left:8px;">Fit Approved</span>` : "";
 
-        const sessionHtml = sessions.map((sess) => {
-          const imgHtml = sess.images.length > 0
-            ? sess.images.map((img) => `<img src="${img.imageUrl}" style="width:90px;height:90px;object-fit:cover;border-radius:4px;margin:2px;" />`).join("")
-            : "<span style='color:#999;font-size:11px;'>No photos</span>";
-          const dateStr = sess.sessionDate ? new Date(sess.sessionDate + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }) : "";
-          return `
-            <div style="margin-top:8px;padding:8px;background:#f9f9f9;border-radius:6px;border:1px solid #eee;">
-              <div style="font-size:11px;color:#555;margin-bottom:6px;">
-                <strong>${sess.fitModel || "—"}</strong> &nbsp;·&nbsp; ${dateStr}
-              </div>
-              ${sess.notes ? `<div style="font-size:11px;color:#333;margin-bottom:6px;font-style:italic;">${sess.notes}</div>` : ""}
-              <div style="display:flex;flex-wrap:wrap;gap:4px;">${imgHtml}</div>
-            </div>
-          `;
-        }).join("");
+        const sessionsHtml = sessions.length === 0
+          ? `<p style="font-size:12px;color:#999;font-style:italic;margin:8px 0 0;">No fitting sessions recorded.</p>`
+          : sessions.map((sess) => {
+              const fittingDateStr = sess.sessionDate
+                ? new Date(sess.sessionDate + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })
+                : "—";
+              const sampleDateStr = (sess as any).sampleDate
+                ? new Date((sess as any).sampleDate + "T00:00:00").toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit" })
+                : null;
+              const sampleType = (sess as any).sampleType as string | null;
+              const sampleTypeBadge = sampleType
+                ? `<span style="display:inline-block;background:${sampleType === "Proto" ? "#fff7ed" : sampleType === "Revised" ? "#eff6ff" : "#f0fdf4"};color:${sampleTypeColour(sampleType)};border:1px solid ${sampleType === "Proto" ? "#fed7aa" : sampleType === "Revised" ? "#bfdbfe" : "#bbf7d0"};border-radius:4px;padding:1px 7px;font-size:11px;font-weight:600;">${sampleType}</span>`
+                : "";
+              const imgHtml = sess.images.length > 0
+                ? sess.images.map((img) => `<img src="${img.imageUrl}" style="width:110px;height:110px;object-fit:cover;border-radius:6px;margin:3px;" />`).join("")
+                : "<span style='color:#aaa;font-size:11px;'>No photos</span>";
+
+              return `
+                <div style="margin-top:10px;padding:10px 12px;background:#f8f8f8;border-radius:8px;border:1px solid #e5e5e5;">
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+                    <span style="font-size:12px;font-weight:700;color:#222;">${sess.fitModel || "—"}</span>
+                    <span style="font-size:11px;color:#666;">Fitting: ${fittingDateStr}</span>
+                    ${sampleDateStr ? `<span style="font-size:11px;color:#666;">Sample: ${sampleDateStr}</span>` : ""}
+                    ${sampleTypeBadge}
+                  </div>
+                  ${sess.notes ? `<p style="font-size:12px;color:#333;font-style:italic;margin:0 0 8px;">${sess.notes}</p>` : ""}
+                  <div style="display:flex;flex-wrap:wrap;gap:4px;">${imgHtml}</div>
+                </div>
+              `;
+            }).join("");
 
         return `
-          <tr style="border-bottom:2px solid #ddd;page-break-inside:avoid;">
-            <td style="padding:12px 8px;vertical-align:top;width:90px;">
-              ${effectiveImageUrl ? `<img src="${effectiveImageUrl}" style="width:80px;height:80px;object-fit:cover;border-radius:4px;" />` : "<span style='color:#999;font-size:11px;'>No image</span>"}
-            </td>
-            <td style="padding:12px 8px;vertical-align:top;width:140px;">
-              <strong style="font-size:13px;">${s.style}</strong><br/>
-              <span style="font-size:11px;color:#666;">${s.last} · ${s.category}</span>
-            </td>
-            <td style="padding:12px 8px;vertical-align:top;width:110px;">
-              <span style="font-size:12px;font-weight:600;color:${fitColour};">${fitLabel}</span>
-            </td>
-            <td style="padding:12px 8px;vertical-align:top;">${sessionHtml || "<span style='color:#999;font-size:11px;'>No sessions selected</span>"}</td>
-          </tr>
+          <div style="page-break-inside:avoid;margin-bottom:32px;border-bottom:2px solid #e5e5e5;padding-bottom:24px;">
+            <div style="display:flex;gap:16px;align-items:flex-start;">
+              <div style="flex-shrink:0;">
+                ${effectiveImageUrl
+                  ? `<img src="${effectiveImageUrl}" style="width:110px;height:110px;object-fit:cover;border-radius:8px;border:1px solid #e5e5e5;" />`
+                  : `<div style="width:110px;height:110px;background:#f5f5f5;border-radius:8px;display:flex;align-items:center;justify-content:center;"><span style="color:#bbb;font-size:11px;">No image</span></div>`
+                }
+              </div>
+              <div style="flex:1;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+                  <span style="font-size:16px;font-weight:700;color:#111;">${s.style}</span>
+                  ${approvedBadge}
+                </div>
+                <div style="font-size:12px;color:#888;margin-bottom:4px;">${s.last} &middot; ${s.category}</div>
+                ${fitLabel ? `<span style="display:inline-block;font-size:12px;font-weight:600;color:${fitColour};background:${meta?.fitRating === "tts" ? "#dcfce7" : meta?.fitRating === "runs_small" ? "#fef3c7" : "#dbeafe"};border-radius:4px;padding:2px 8px;margin-bottom:4px;">${fitLabel}</span>` : ""}
+                ${meta?.fittingNotes ? `<p style="font-size:12px;color:#444;font-style:italic;margin:4px 0 0;">${meta.fittingNotes}</p>` : ""}
+              </div>
+            </div>
+            <div style="margin-top:4px;">${sessionsHtml}</div>
+          </div>
         `;
       }).join("");
 
@@ -698,28 +727,16 @@ function ExportDialog({
   <meta charset="UTF-8" />
   <title>Fitting Report</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 32px; color: #222; }
-    h1 { font-size: 20px; margin-bottom: 4px; }
-    .meta { font-size: 13px; color: #555; margin-bottom: 24px; }
-    table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #888; padding: 8px; border-bottom: 2px solid #ddd; }
+    body { font-family: Arial, sans-serif; margin: 32px; color: #222; font-size: 13px; }
+    h1 { font-size: 22px; margin-bottom: 4px; }
+    .meta { font-size: 13px; color: #666; margin-bottom: 32px; }
     @media print { body { margin: 16px; } }
   </style>
 </head>
 <body>
   <h1>Fitting Report</h1>
-  <div class="meta">Tony Bianco &nbsp;&nbsp; ${new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}</div>
-  <table>
-    <thead>
-      <tr>
-        <th>Image</th>
-        <th>Style</th>
-        <th>Fit Rating</th>
-        <th>Sessions &amp; Photos</th>
-      </tr>
-    </thead>
-    <tbody>${rows}</tbody>
-  </table>
+  <div class="meta">Tony Bianco &nbsp;&nbsp; ${new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })} &nbsp;&nbsp; ${toExport.length} style${toExport.length !== 1 ? "s" : ""}</div>
+  ${sections}
 </body>
 </html>`;
 
@@ -730,7 +747,7 @@ function ExportDialog({
       a.download = `Fitting_Report_${new Date().toISOString().split("T")[0]}.html`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success(`Exported ${stylesWithData.length} styles`, { description: "Open in browser and use Print → Save as PDF." });
+      toast.success(`Exported ${toExport.length} styles`, { description: "Open in browser and use Print → Save as PDF." });
       onClose();
     } finally {
       setExporting(false);
@@ -739,58 +756,96 @@ function ExportDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4 max-h-[80vh] flex flex-col">
-        <h3 className="font-semibold text-base shrink-0">Export Fitting Report</h3>
-        <p className="text-sm text-muted-foreground shrink-0">
-          Select which fitting sessions to include for each style. Only styles with fit data are shown.
-        </p>
+      <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-xl p-6 space-y-4 max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between shrink-0">
+          <h3 className="font-semibold text-base">Export Fitting Report</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+        </div>
 
-        {stylesWithData.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic py-4 text-center">No fitting data to export yet.</p>
-        ) : (
-          <div className="overflow-y-auto flex-1 space-y-3 pr-1">
-            {stylesWithData.map((s) => {
-              const sessions = sessionsMap[s.style] ?? [];
-              return (
-                <div key={s.style} className="border border-border rounded-lg p-3 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{s.style}</span>
-                    <span className="text-xs text-muted-foreground">{s.last}</span>
-                  </div>
-                  {sessions.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic">No sessions — fit rating only</p>
-                  ) : (
-                    <div className="space-y-1">
-                      {sessions.map((sess) => {
-                        const checked = selectedSessions[s.style]?.has(sess.id) ?? true;
-                        const dateStr = sess.sessionDate ? new Date(sess.sessionDate + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }) : "";
-                        return (
-                          <label key={sess.id} className="flex items-center gap-2 text-xs cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleSession(s.style, sess.id)}
-                              className="rounded"
-                            />
-                            <span className="font-medium">{sess.fitModel || "—"}</span>
-                            <span className="text-muted-foreground">{dateStr}</span>
-                            <span className="text-muted-foreground">({sess.images.length} photos)</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+        {/* Quick-select group buttons */}
+        <div className="shrink-0 space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Quick select</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: "All", styles: styleList },
+              { label: `Waiting to be Fit (${waitingToFitStyles.length})`, styles: waitingToFitStyles },
+              { label: `Waiting on Revised (${waitingRevisedStyles.length})`, styles: waitingRevisedStyles },
+              { label: `Approved (${approvedStyles.length})`, styles: approvedStyles },
+            ].map(({ label, styles }) => (
+              <button
+                key={label}
+                onClick={() => selectGroup(styles)}
+                className="px-3 py-1.5 rounded-md text-xs font-medium border border-border hover:bg-muted transition-colors"
+              >
+                {label}
+              </button>
+            ))}
+            <button
+              onClick={() => setSelectedStyles(new Set())}
+              className="px-3 py-1.5 rounded-md text-xs font-medium border border-border hover:bg-muted transition-colors text-muted-foreground"
+            >
+              Clear
+            </button>
           </div>
-        )}
+        </div>
 
-        <div className="flex gap-2 justify-end pt-2 shrink-0 border-t border-border">
-          <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
-          <Button size="sm" onClick={handleExport} disabled={exporting || stylesWithData.length === 0}>
-            {exporting ? "Exporting..." : `Export ${stylesWithData.length} Styles`}
-          </Button>
+        {/* Search + style list */}
+        <div className="shrink-0">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search styles..."
+              className="w-full pl-8 pr-3 py-1.5 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+        </div>
+
+        <div className="overflow-y-auto flex-1 border border-border rounded-lg divide-y divide-border">
+          {filteredList.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic p-4 text-center">No styles match your search.</p>
+          ) : (
+            filteredList.map((s) => {
+              const checked = selectedStyles.has(s.style);
+              const sessions = sessionsMap[s.style] ?? [];
+              const meta = styleMeta[s.style];
+              const hasData = meta?.fitRating || meta?.fittingNotes || sessions.some((sess) => sess.notes || sess.images.length > 0);
+              const approved = meta?.fitApproved;
+              return (
+                <label key={s.style} className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/40 transition-colors ${checked ? "bg-primary/5" : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleStyle(s.style)}
+                    className="rounded shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium">{s.style}</span>
+                      <span className="text-xs text-muted-foreground">{s.last}</span>
+                      {approved && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)" }}>✓ Approved</span>}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {sessions.length > 0 ? `${sessions.length} session${sessions.length !== 1 ? "s" : ""} · ${sessions.reduce((n, sess) => n + sess.images.length, 0)} photos` : "No sessions"}
+                      {hasData && !sessions.length ? " · has notes" : ""}
+                    </div>
+                  </div>
+                </label>
+              );
+            })
+          )}
+        </div>
+
+        <div className="flex items-center justify-between pt-2 shrink-0 border-t border-border">
+          <span className="text-xs text-muted-foreground">{selectedCount} style{selectedCount !== 1 ? "s" : ""} selected</span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+            <Button size="sm" onClick={handleExport} disabled={exporting || selectedCount === 0}>
+              {exporting ? "Exporting..." : `Export ${selectedCount} Style${selectedCount !== 1 ? "s" : ""}`}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -1364,8 +1419,11 @@ export function FittingTab() {
         <ExportDialog
           styleList={styleList}
           styleMeta={styleMeta}
-          sessionsMap={{}}
+          sessionsMap={sessionsByStyle as Record<string, FittingSession[]>}
           imageOverrides={imageOverrides}
+          waitingToFitStyles={waitingToFitStyles}
+          waitingRevisedStyles={waitingRevisedStyles}
+          approvedStyles={approvedStyles}
           onClose={() => setExportOpen(false)}
         />
       )}

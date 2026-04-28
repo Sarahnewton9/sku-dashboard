@@ -694,6 +694,14 @@
 - [x] Add sample received toggle to the style-level collapsed row (no need to expand)
 - [x] Toggle marks ALL new SKUs in the style as received/waiting in one click
 
+## Phase 81: Fitting Export Report — Filter Group Selector + Full Session Details
+- [x] Replace session-level checkboxes with style-level multi-select (individual style checkboxes)
+- [x] Add filter group quick-select buttons: Waiting to be Fit, Waiting on Revised, Approved, All
+- [x] Export includes all sessions for each selected style (not a per-session toggle)
+- [x] Each session in the export shows: fit model, fitting date, sample date, sample type (colour-coded), notes, and all photos
+- [x] Style image shown prominently in the export (larger, top of each style section)
+- [x] Pass sessionsByStyle from main component into ExportDialog instead of empty map
+
 ## Phase 80: Fitting Tab — Split Not Approved into Two Filter Tabs
 - [x] Replace "Not Approved" filter tab with two tabs: "Waiting to be Fit" and "Waiting on Revised"
 - [x] "Waiting to be Fit": unapproved styles with no fitting comments, notes, or session images
