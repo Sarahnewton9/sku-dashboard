@@ -681,3 +681,8 @@
 ## Phase 76: Fitting — Remove Edgy (Existing Pattern)
 - [x] Exclude Edgy from the Fitting tab style list (removed EDGY from NEW_LASTS constant)
 - [x] Preserve Edgy's fitApproved data in the DB — no deletion
+
+## Phase 77: Specs Excel Export — Custom Rows
+- [x] Fetch specCustomRows for the style being exported
+- [x] Append custom rows to each section in the Excel export after the standard rows
+- [x] Custom row title and value appear in the correct columns (same format as standard rows)

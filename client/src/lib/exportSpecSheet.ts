@@ -18,6 +18,16 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { getTemplateForCategory } from "@shared/specTemplates";
 
+interface CustomRow {
+  id: number;
+  style: string;
+  colour: string;
+  section: string;
+  title: string;
+  value: string | null;
+  sortOrder: number;
+}
+
 interface ExportSpecSheetParams {
   style: string;
   last: string;
@@ -29,6 +39,7 @@ interface ExportSpecSheetParams {
   hasBuckle?: boolean;
   dressShoeSubType?: "court" | "sling" | null;
   imageUrl?: string;
+  customRows?: CustomRow[];    // user-defined extra rows per section
 }
 
 async function fetchImageAsBase64(
@@ -83,7 +94,25 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     hasBuckle = false,
     dressShoeSubType = null,
     imageUrl,
+    customRows = [],
   } = params;
+
+  // Build a lookup: section -> sorted custom rows (colour-agnostic — use first colour's value or any)
+  // Custom rows are per-section, and value is stored per colour. We'll show all unique titles
+  // and for each colour column look up the value for that colour (or the "" default).
+  const customRowsBySection: Record<string, Array<{ title: string; valuesByColour: Record<string, string> }>> = {};
+  for (const cr of customRows) {
+    if (!customRowsBySection[cr.section]) customRowsBySection[cr.section] = [];
+    const existing = customRowsBySection[cr.section].find((r) => r.title === cr.title);
+    if (existing) {
+      existing.valuesByColour[cr.colour] = cr.value ?? "";
+    } else {
+      customRowsBySection[cr.section].push({
+        title: cr.title,
+        valuesByColour: { [cr.colour]: cr.value ?? "" },
+      });
+    }
+  }
 
   const template = getTemplateForCategory(category, { hasBuckle, dressShoeSubType });
   const today = new Date().toLocaleDateString("en-AU", {
@@ -235,6 +264,30 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
         ws.mergeCells(currentExcelRow, colStart, currentExcelRow, colEnd);
         const valueCell = ws.getCell(currentExcelRow, colStart);
         valueCell.value = values[ci] || "";
+        valueCell.font = arialRegular8();
+        valueCell.alignment = { vertical: "middle", wrapText: true };
+      }
+
+      currentExcelRow++;
+    }
+
+    // Append custom rows for this section (after standard rows, before spacer)
+    const sectionName = sectionEntries[si][0];
+    const sectionCustomRows = customRowsBySection[sectionName] ?? [];
+    for (const cr of sectionCustomRows) {
+      ws.getRow(currentExcelRow).height = 14;
+
+      const labelCell = ws.getCell(currentExcelRow, 1);
+      labelCell.value = cr.title.toUpperCase();
+      labelCell.font = arialRegular8();
+      labelCell.alignment = { vertical: "middle" };
+
+      for (let ci = 0; ci < colours.length; ci++) {
+        const colStart = 2 + ci * 2;
+        const colEnd = colStart + 1;
+        ws.mergeCells(currentExcelRow, colStart, currentExcelRow, colEnd);
+        const valueCell = ws.getCell(currentExcelRow, colStart);
+        valueCell.value = cr.valuesByColour[colours[ci]] ?? "";
         valueCell.font = arialRegular8();
         valueCell.alignment = { vertical: "middle", wrapText: true };
       }
