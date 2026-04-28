@@ -146,6 +146,17 @@ export default function StylesTab() {
     onError: (err) => toast.error(`Failed to save qty: ${err.message}`),
   });
 
+  // SKU-level sample status toggle mutation
+  const updateSampleStatusMutation = trpc.sku.update.useMutation({
+    onSuccess: () => refetchSkuMeta(),
+    onError: (err) => toast.error(`Failed to update sample status: ${err.message}`),
+  });
+
+  function handleSampleToggle(style: string, colour: string, leather: string, currentStatus: string | null | undefined) {
+    const newStatus = currentStatus === "received" ? "waiting" : "received";
+    updateSampleStatusMutation.mutate({ style, colour, leather: leather ?? "", sampleStatus: newStatus });
+  }
+
   // Style-level Size 11 mutation — updates ALL SKUs in the style
   const updateStyleSize11Mutation = trpc.sku.updateStyleSize11.useMutation({
     onSuccess: () => refetchSkuMeta(),
@@ -809,12 +820,28 @@ export default function StylesTab() {
                                             <span className="px-1 py-0.5 rounded text-xs font-semibold" style={{ background: "oklch(0.94 0.06 240)", color: "oklch(0.45 0.14 240)" }}>11</span>
                                           ) : null}
                                         </span>
-                                        {/* Sample — new SKUs only, only show if received */}
+                                        {/* Sample — new SKUs only, click to toggle received/waiting */}
                                         {isNew && (
-                                          <span className="text-xs text-center">
+                                          <span className="text-xs text-center" onClick={(e) => e.stopPropagation()}>
                                             {dbMeta?.sampleStatus === "received" ? (
-                                              <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={{ background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)" }}>✓ Rcvd</span>
-                                            ) : null}
+                                              <button
+                                                onClick={(e) => { e.stopPropagation(); handleSampleToggle(sku.style, sku.colour, sku.leather, dbMeta?.sampleStatus); }}
+                                                title="Sample received — click to mark as waiting"
+                                                className="px-1.5 py-0.5 rounded text-xs font-medium transition-colors"
+                                                style={{ background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)", border: "1px solid oklch(0.80 0.12 155)" }}
+                                              >
+                                                ✓ Rcvd
+                                              </button>
+                                            ) : (
+                                              <button
+                                                onClick={(e) => { e.stopPropagation(); handleSampleToggle(sku.style, sku.colour, sku.leather, dbMeta?.sampleStatus); }}
+                                                title="Mark sample as received"
+                                                className="px-1.5 py-0.5 rounded text-xs text-transparent hover:text-muted-foreground transition-colors"
+                                                style={{ border: "1px solid transparent" }}
+                                              >
+                                                ✓ Rcvd
+                                              </button>
+                                            )}
                                           </span>
                                         )}
                                         {/* Buy Qty — new SKUs only */}

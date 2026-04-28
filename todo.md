@@ -686,3 +686,6 @@
 - [x] Fetch specCustomRows for the style being exported
 - [x] Append custom rows to each section in the Excel export after the standard rows
 - [x] Custom row title and value appear in the correct columns (same format as standard rows)
+
+## Phase 78: Sample Rcvd — Match Size 11 Toggle Interaction
+- [x] Change Sample Rcvd column to use the same click-to-toggle interaction as Size 11
