@@ -82,12 +82,14 @@ function buildStyleList(): StyleEntry[] {
 
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
 
-function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
+function Lightbox({ src, onClose, sampleDate, sampleType }: { src: string; onClose: () => void; sampleDate?: string | null; sampleType?: string | null }) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
+
+  const sampleTypeColor = sampleType === "Proto" ? "text-orange-300" : sampleType === "Revised" ? "text-blue-300" : "text-green-300";
 
   return createPortal(
     <div
@@ -100,12 +102,25 @@ function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
       >
         <X className="w-5 h-5" />
       </button>
-      <img
-        src={src}
-        alt="Fitting"
-        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      />
+      <div className="relative" onClick={(e) => e.stopPropagation()}>
+        <img
+          src={src}
+          alt="Fitting"
+          className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+        />
+        {(sampleDate || sampleType) && (
+          <div className="absolute bottom-0 left-0 right-0 rounded-b-lg px-3 py-2 bg-black/60 flex items-center gap-3">
+            {sampleType && (
+              <span className={`text-sm font-bold ${sampleTypeColor}`}>{sampleType}</span>
+            )}
+            {sampleDate && (
+              <span className="text-sm text-white/90">
+                {new Date(sampleDate + "T00:00:00").toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
     </div>,
     document.body
   );
@@ -173,7 +188,7 @@ function SessionCard({
 
   return (
     <div className="border border-border rounded-lg bg-card overflow-hidden">
-      {lightboxSrc && <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+      {lightboxSrc && <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} sampleDate={session.sampleDate} sampleType={session.sampleType} />}
 
       {/* Session header */}
       <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b border-border">
@@ -805,7 +820,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
   const [openGroupId, setOpenGroupId] = useState<number | null>(null);
   const [exportingGroupId, setExportingGroupId] = useState<number | null>(null);
   const [openStyleKey, setOpenStyleKey] = useState<string | null>(null); // "groupId:style"
-  const [groupLightboxSrc, setGroupLightboxSrc] = useState<string | null>(null);
+  const [groupLightbox, setGroupLightbox] = useState<{ src: string; sampleDate?: string | null; sampleType?: string | null } | null>(null);
 
   const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
   const { data: imageOverrideList = [] } = trpc.styleImage.getAll.useQuery();
@@ -921,7 +936,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
 
   return (
     <div className="border border-border rounded-lg overflow-hidden">
-      {groupLightboxSrc && <Lightbox src={groupLightboxSrc} onClose={() => setGroupLightboxSrc(null)} />}
+      {groupLightbox && <Lightbox src={groupLightbox.src} onClose={() => setGroupLightbox(null)} sampleDate={groupLightbox.sampleDate} sampleType={groupLightbox.sampleType} />}
       <button
         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left bg-card"
         onClick={() => setExpanded((v) => !v)}
@@ -1087,7 +1102,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
                                             {sess.images.map((img) => (
                                               <button
                                                 key={img.id}
-                                                onClick={() => setGroupLightboxSrc(img.imageUrl)}
+                                                onClick={() => setGroupLightbox({ src: img.imageUrl, sampleDate: (sess as any).sampleDate, sampleType: (sess as any).sampleType })}
                                                 className="relative w-24 h-24 rounded border border-border overflow-hidden hover:ring-2 hover:ring-primary transition-all group flex-shrink-0"
                                               >
                                                 <img src={img.imageUrl} alt="Fitting" className="w-full h-full object-cover" />
