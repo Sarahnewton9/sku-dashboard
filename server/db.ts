@@ -158,6 +158,12 @@ export async function upsertStyleRrp(style: string, rrp: number | null) {
   await db.insert(styleMeta).values({ style, rrp }).onDuplicateKeyUpdate({ set: { rrp } });
 }
 
+export async function upsertStyleCategory(style: string, category: string | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(styleMeta).values({ style, category }).onDuplicateKeyUpdate({ set: { category } });
+}
+
 // ─── Style Fit (style-level fit rating + notes) ──────────────────────────────
 
 export async function upsertStyleFit(

@@ -386,11 +386,28 @@ interface SpecFormProps {
   onAddCustomRow: (section: string) => void;
   onUpdateCustomRow: (id: number, title: string, value: string) => void;
   onDeleteCustomRow: (id: number) => void;
+  dbCategory: string | null;
+  onSetCategory: (category: string | null) => void;
 }
+
+const STYLE_CATEGORIES = [
+  "Dress Sandal",
+  "Dress Shoe",
+  "Casual Flat",
+  "Dress Wedge",
+  "Casual Wedge",
+  "Casual Ankle Boot",
+  "Dress Ankle Boot",
+  "Dress Calf Boot",
+  "Casual Calf Boot",
+  "Casual Sandal",
+  "Flat Sandal",
+];
 
 function SpecForm({
   entry, specMeta, specs, allDropdownOptions, imageOverride, customRows,
   onUpsert, onAddDropdownOption, onMetaChange, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow,
+  dbCategory, onSetCategory,
 }: SpecFormProps) {
   const hasBuckle = specMeta?.hasBuckle ?? false;
   const dressShoeSubType = specMeta?.dressShoeSubType ?? null;
@@ -455,7 +472,11 @@ function SpecForm({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-semibold">{entry.style}</h2>
-            <Badge variant="outline" className="text-xs">{entry.category}</Badge>
+            {dbCategory ? (
+              <Badge className="text-xs bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-900 dark:text-violet-200">{dbCategory}</Badge>
+            ) : (
+              <Badge variant="outline" className="text-xs text-muted-foreground">{entry.category}</Badge>
+            )}
             <Badge variant="outline" className="text-xs">{entry.last}</Badge>
             {entry.isAllNew && <Badge className="text-xs bg-blue-100 text-blue-800 border-blue-200">New Pattern</Badge>}
           </div>
@@ -473,6 +494,25 @@ function SpecForm({
 
       {/* Style-level settings */}
       <div className="flex flex-wrap gap-6 items-start p-3 bg-muted/30 rounded-lg border">
+        {/* Category selector */}
+        <div className="flex items-center gap-2">
+          <Label className="text-sm font-medium whitespace-nowrap">Category:</Label>
+          <Select
+            value={dbCategory ?? "__none__"}
+            onValueChange={(v) => onSetCategory(v === "__none__" ? null : v)}
+          >
+            <SelectTrigger className="h-8 w-44 text-xs">
+              <SelectValue placeholder="— not set —" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__" className="text-xs text-muted-foreground">— not set —</SelectItem>
+              {STYLE_CATEGORIES.map((cat) => (
+                <SelectItem key={cat} value={cat} className="text-xs">{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Buckle toggle */}
         <div className="flex items-center gap-2">
           <Switch
@@ -965,6 +1005,24 @@ export default function SpecsTab({}: SpecsTabProps) {
     deleteCustomRowMutation.mutate({ id });
   }
 
+  // ── Style category (DB-stored, overrides static skuData category) ──────────
+  const { data: allStyleMeta = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery();
+  const styleMetaMap = useMemo(
+    () => Object.fromEntries(allStyleMeta.map((m: any) => [m.style, m])),
+    [allStyleMeta]
+  );
+  const dbCategory: string | null = selectedStyle ? (styleMetaMap[selectedStyle]?.category ?? null) : null;
+
+  const setCategoryMutation = trpc.style.setCategory.useMutation({
+    onSuccess: () => { refetchStyleMeta(); },
+    onError: () => toast.error("Failed to save category"),
+  });
+
+  function handleSetCategory(category: string | null) {
+    if (!selectedStyle) return;
+    setCategoryMutation.mutate({ style: selectedStyle, category });
+  }
+
   // ── Mutations ─────────────────────────────────────────────────────────────
   const upsertMutation = trpc.specs.upsert.useMutation({
     onError: () => toast.error("Failed to save spec value"),
@@ -1437,6 +1495,8 @@ export default function SpecsTab({}: SpecsTabProps) {
               onAddCustomRow={handleAddCustomRow}
               onUpdateCustomRow={handleUpdateCustomRow}
               onDeleteCustomRow={handleDeleteCustomRow}
+              dbCategory={dbCategory}
+              onSetCategory={handleSetCategory}
             />
           </div>
         )}

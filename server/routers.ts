@@ -6,7 +6,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import axios from "axios";
 import {
   getAllSkuMeta, upsertSkuMeta,
-  getAllStyleMeta, upsertStyleRrp, upsertStyleFit,
+  getAllStyleMeta, upsertStyleRrp, upsertStyleFit, upsertStyleCategory,
   getStyleFittingImages, getAllStyleFittingImages, addStyleFittingImage, deleteStyleFittingImage,
   getFittingImages, addFittingImage, deleteFittingImage, getAllFittingImages,
   getAllBuySessions, getActiveBuySession, createBuySession, lockBuySession, deleteBuySession,
@@ -183,6 +183,13 @@ export const appRouter = router({
   // Style metadata: RRP
   style: router({
     getAll: publicProcedure.query(async () => getAllStyleMeta()),
+
+    setCategory: publicProcedure
+      .input(z.object({ style: z.string(), category: z.string().nullable() }))
+      .mutation(async ({ input }) => {
+        await upsertStyleCategory(input.style, input.category);
+        return { ok: true };
+      }),
 
     importRrp: publicProcedure
       .input(z.array(z.object({ style: z.string(), rrp: z.number() })))

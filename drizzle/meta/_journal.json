@@ -127,6 +127,13 @@
       "when": 1777346829616,
       "tag": "0017_rainy_morlocks",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1777350042842,
+      "tag": "0018_public_pyro",
+      "breakpoints": true
     }
   ]
 }

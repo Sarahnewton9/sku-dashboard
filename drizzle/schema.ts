@@ -58,6 +58,8 @@ export const styleMeta = mysqlTable("style_meta", {
   fitApproved: boolean("fitApproved").default(false).notNull(),
   /** Image URL scraped from tonybianco.com.au — one representative image per style */
   websiteImageUrl: text("websiteImageUrl"),
+  /** Shoe category — drives spec template and filtering across the app */
+  category: varchar("category", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
