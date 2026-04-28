@@ -1219,7 +1219,7 @@ export function FittingTab() {
   const [exportOpen, setExportOpen] = useState(false);
   const [newSessionStyle, setNewSessionStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [approvalFilter, setApprovalFilter] = useState<"all" | "not_approved" | "approved">("not_approved");
+  const [approvalFilter, setApprovalFilter] = useState<"all" | "waiting_revised" | "waiting_to_fit" | "approved">("waiting_to_fit");
 
   const baseStyleList = buildStyleList();
 
@@ -1264,9 +1264,23 @@ export function FittingTab() {
   const activeStyles = styleList.filter((s) => !styleMeta[s.style]?.fitApproved);
   const approvedStyles = styleList.filter((s) => styleMeta[s.style]?.fitApproved);
 
+  // A style has fitting activity if it has any session with notes or images,
+  // OR if it has style-level fitting notes / fit rating set
+  function hasActivity(style: string): boolean {
+    const meta = styleMeta[style];
+    if (meta?.fittingNotes?.trim() || meta?.fitRating) return true;
+    const sessions = sessionsByStyle[style] ?? [];
+    return sessions.some((sess) => (sess.notes?.trim()) || sess.images.length > 0);
+  }
+
+  const waitingRevisedStyles = activeStyles.filter((s) => hasActivity(s.style));
+  const waitingToFitStyles = activeStyles.filter((s) => !hasActivity(s.style));
+
   // Apply approval filter
-  const filteredByApproval = approvalFilter === "not_approved"
-    ? activeStyles
+  const filteredByApproval = approvalFilter === "waiting_revised"
+    ? waitingRevisedStyles
+    : approvalFilter === "waiting_to_fit"
+    ? waitingToFitStyles
     : approvalFilter === "approved"
     ? approvedStyles
     : styleList;
@@ -1361,7 +1375,7 @@ export function FittingTab() {
         <div>
           <h2 className="text-lg font-semibold">Fitting</h2>
           <p className="text-sm text-muted-foreground">
-            {activeStyles.length} of {styleList.length} styles remaining to fit.
+            {waitingToFitStyles.length} waiting to be fit &middot; {waitingRevisedStyles.length} waiting on revised &middot; {approvedStyles.length} approved
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -1398,7 +1412,8 @@ export function FittingTab() {
       {/* Approval filter tabs */}
       <div className="flex items-center gap-1 border-b border-border pb-0">
         {([
-          { key: "not_approved", label: "Not Approved", count: activeStyles.length },
+          { key: "waiting_to_fit", label: "Waiting to be Fit", count: waitingToFitStyles.length },
+          { key: "waiting_revised", label: "Waiting on Revised", count: waitingRevisedStyles.length },
           { key: "approved", label: "Approved", count: approvedStyles.length },
           { key: "all", label: "All", count: styleList.length },
         ] as const).map(({ key, label, count }) => (

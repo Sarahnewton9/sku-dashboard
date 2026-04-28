@@ -691,5 +691,12 @@
 - [x] Change Sample Rcvd column to use the same click-to-toggle interaction as Size 11
 
 ## Phase 79: Sample Rcvd — Style-Level Toggle in Collapsed Row
-- [ ] Add sample received toggle to the style-level collapsed row (no need to expand)
-- [ ] Toggle marks ALL new SKUs in the style as received/waiting in one click
+- [x] Add sample received toggle to the style-level collapsed row (no need to expand)
+- [x] Toggle marks ALL new SKUs in the style as received/waiting in one click
+
+## Phase 80: Fitting Tab — Split Not Approved into Two Filter Tabs
+- [x] Replace "Not Approved" filter tab with two tabs: "Waiting to be Fit" and "Waiting on Revised"
+- [x] "Waiting to be Fit": unapproved styles with no fitting comments, notes, or session images
+- [x] "Waiting on Revised": unapproved styles that have at least one session with notes/images, or style-level notes/fit rating
+- [x] Default tab changed from "Not Approved" to "Waiting to be Fit"
+- [x] Header subtitle updated to show count breakdown across all three states
