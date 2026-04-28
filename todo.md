@@ -668,3 +668,6 @@
 
 ## Phase 72: Fitting Group — Sample Date/Type Overlay on Images
 - [x] Show sample date and sample type as a text overlay on session images in the Fitting Group expanded view
+
+## Phase 73: Bug Fix — Sample Date/Type Not Persisting
+- [x] Fix: sampleDate and sampleType not saved to DB after clicking Save on a session card (root cause: server was running stale code; fixed by restarting dev server)
