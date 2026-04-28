@@ -136,6 +136,17 @@ function SessionCard({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync local state when session prop updates (e.g. after save + server refresh)
+  useEffect(() => {
+    if (!editing) {
+      setLocalModel(session.fitModel);
+      setLocalDate(session.sessionDate);
+      setLocalNotes(session.notes ?? "");
+      setLocalSampleDate(session.sampleDate ?? "");
+      setLocalSampleType(session.sampleType ?? "");
+    }
+  }, [session.fitModel, session.sessionDate, session.notes, session.sampleDate, session.sampleType, editing]);
+
   const handleSave = () => {
     onUpdateSession(session.id, localModel, localDate, localNotes || null, localSampleDate || null, localSampleType || null);
     setEditing(false);
