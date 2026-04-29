@@ -1298,7 +1298,7 @@ export default function StylesTab() {
       {/* Invoice Import Dialog */}
       {showInvoiceImport && (
         <InvoiceImportDialog
-          allSkus={skuData.skus.map((s) => ({ style: s.style, colour: s.colour, leather: s.leather ?? "" }))}
+          allSkus={skuData.rawSkus.map((s) => ({ style: s.style, colour: s.colour, leather: s.leather ?? "" }))}
           onClose={() => setShowInvoiceImport(false)}
           onDone={() => { refetchSkuMeta(); setShowInvoiceImport(false); }}
         />
