@@ -727,3 +727,10 @@
 - [x] Update sidebar active/hover states with new accent colours
 - [x] Update button variants (primary = striped towel green, destructive = tomato perfume red)
 - [x] Ensure text contrast ratios remain accessible across all new background colours
+
+## Phase 85: Persist Last Deletions to Database
+- [x] Add deletedLasts table to drizzle schema (id, lastName, deletedAt)
+- [x] Add deleteLast tRPC procedure
+- [x] Add getDeletedLasts tRPC procedure to fetch deleted last names
+- [x] Update LastApprovalTab to filter out deleted lasts on load and call deleteLast mutation on delete
+- [x] Run db migration to create deleted_lasts table

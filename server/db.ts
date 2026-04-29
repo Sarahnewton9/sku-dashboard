@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -402,6 +402,29 @@ export async function upsertLastApproval(lastName: string, status: "approved" | 
   await db.insert(lastApprovals)
     .values({ lastName, status, notes: notes ?? null })
     .onDuplicateKeyUpdate({ set: { status, notes: notes ?? null } });
+}
+
+// ─── Deleted Lasts ───────────────────────────────────────────────────────────
+
+export async function getDeletedLasts(): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(deletedLasts);
+  return rows.map(r => r.lastName);
+}
+
+export async function deleteLast(lastName: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(deletedLasts)
+    .values({ lastName })
+    .onDuplicateKeyUpdate({ set: { lastName } });
+}
+
+export async function restoreDeletedLast(lastName: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(deletedLasts).where(eq(deletedLasts.lastName, lastName));
 }
 
 // ─── Season Imports ──────────────────────────────────────────────────────────

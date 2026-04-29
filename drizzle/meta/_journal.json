@@ -134,6 +134,13 @@
       "when": 1777350042842,
       "tag": "0018_public_pyro",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1777424848413,
+      "tag": "0019_loose_felicia_hardy",
+      "breakpoints": true
     }
   ]
 }

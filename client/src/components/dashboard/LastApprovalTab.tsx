@@ -46,6 +46,7 @@ interface ImportRow {
 
 export default function LastApprovalTab() {
   const { data: approvals, refetch } = trpc.lastApproval.getAll.useQuery();
+  const { data: deletedLastsFromDb = [], refetch: refetchDeleted } = trpc.lastApproval.getDeleted.useQuery();
   const { data: imageOverrideList = [] } = trpc.styleImage.getAll.useQuery();
   const imageOverrides = useMemo(
     () => imageOverrideList.reduce<Record<string, string>>((acc, o) => { acc[o.style] = o.imageUrl; return acc; }, {}),
@@ -54,6 +55,10 @@ export default function LastApprovalTab() {
   const upsert = trpc.lastApproval.upsert.useMutation({
     onSuccess: () => refetch(),
     onError: (err) => console.error("[LastApproval] upsert error:", err),
+  });
+  const deleteLastMutation = trpc.lastApproval.delete.useMutation({
+    onSuccess: () => { refetchDeleted(); },
+    onError: (err) => console.error("[LastApproval] delete error:", err),
   });
 
   // Optimistic local state so the UI responds instantly without waiting for refetch
@@ -94,12 +99,19 @@ export default function LastApprovalTab() {
     return [...ALL_LASTS, ...customLasts].filter((l) => !deleted.has(l + "__deleted"));
   }, [approvalMap, customLasts]);
 
-  // Track which lasts have been locally deleted
-  const [deletedLasts, setDeletedLasts] = useState<Set<string>>(new Set());
+  // Track which lasts have been locally deleted (optimistic, synced with DB)
+  const [localDeletedLasts, setLocalDeletedLasts] = useState<Set<string>>(new Set());
+
+  // Merge DB-deleted lasts with local optimistic deletes
+  const deletedLastsSet = useMemo(() => {
+    const set = new Set(deletedLastsFromDb);
+    localDeletedLasts.forEach(l => set.add(l));
+    return set;
+  }, [deletedLastsFromDb, localDeletedLasts]);
 
   const visibleLasts = useMemo(() => {
-    return [...ALL_LASTS, ...customLasts].filter((l) => !deletedLasts.has(l));
-  }, [customLasts, deletedLasts]);
+    return [...ALL_LASTS, ...customLasts].filter((l) => !deletedLastsSet.has(l));
+  }, [customLasts, deletedLastsSet]);
 
   const filteredLasts = useMemo(() => {
     return visibleLasts.filter((last) => {
@@ -126,10 +138,11 @@ export default function LastApprovalTab() {
   };
 
   const handleDeleteLast = (lastName: string) => {
-    setDeletedLasts((prev) => new Set([...prev, lastName]));
+    // Optimistic local update
+    setLocalDeletedLasts((prev) => new Set([...prev, lastName]));
     setDeletingLast(null);
-    // Also upsert a tombstone so it stays deleted across sessions (reuse notes field)
-    // We don't have a delete endpoint so we just remove it from local state
+    // Persist to DB
+    deleteLastMutation.mutate({ lastName });
   };
 
   const handleSaveNotes = (lastName: string) => {

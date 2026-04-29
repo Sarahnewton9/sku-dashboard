@@ -11,7 +11,7 @@ import {
   getFittingImages, addFittingImage, deleteFittingImage, getAllFittingImages,
   getAllBuySessions, getActiveBuySession, createBuySession, lockBuySession, deleteBuySession,
   getBuySessionItems, upsertBuySessionItem, getSessionTotals,
-  getAllLastApprovals, upsertLastApproval,
+  getAllLastApprovals, upsertLastApproval, getDeletedLasts, deleteLast, restoreDeletedLast,
   getAllSeasonImports, createSeasonImport, getSeasonSkuData, deleteSeasonImport,
   getSpecsForStyle, upsertStyleSpec, deleteStyleSpecs,
   getAllDropdownOptions, getDropdownOptions, addDropdownOption, deleteDropdownOption,
@@ -371,6 +371,8 @@ export const appRouter = router({
   lastApproval: router({
     getAll: publicProcedure.query(async () => getAllLastApprovals()),
 
+    getDeleted: publicProcedure.query(async () => getDeletedLasts()),
+
     upsert: publicProcedure
       .input(z.object({
         lastName: z.string(),
@@ -379,6 +381,20 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         await upsertLastApproval(input.lastName, input.status, input.notes ?? null);
+        return { success: true };
+      }),
+
+    delete: publicProcedure
+      .input(z.object({ lastName: z.string() }))
+      .mutation(async ({ input }) => {
+        await deleteLast(input.lastName);
+        return { success: true };
+      }),
+
+    restore: publicProcedure
+      .input(z.object({ lastName: z.string() }))
+      .mutation(async ({ input }) => {
+        await restoreDeletedLast(input.lastName);
         return { success: true };
       }),
   }),

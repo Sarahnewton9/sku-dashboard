@@ -290,6 +290,19 @@ export const cancelledStyles = mysqlTable("cancelled_styles", {
 
 export type CancelledStyle = typeof cancelledStyles.$inferSelect;
 export type InsertCancelledStyle = typeof cancelledStyles.$inferInsert;
+
+/**
+ * Deleted lasts — lasts that have been removed from the Last Approval page.
+ * Persists across page refreshes.
+ */
+export const deletedLasts = mysqlTable("deleted_lasts", {
+  id: int("id").autoincrement().primaryKey(),
+  lastName: varchar("lastName", { length: 128 }).notNull().unique(),
+  deletedAt: timestamp("deletedAt").defaultNow().notNull(),
+});
+
+export type DeletedLast = typeof deletedLasts.$inferSelect;
+export type InsertDeletedLast = typeof deletedLasts.$inferInsert;
 /**
  * Custom SKUs — colours/leathers added manually during the buying process.
  * These are treated as new SKUs and appear across all dashboard sections.
