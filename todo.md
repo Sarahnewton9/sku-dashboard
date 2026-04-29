@@ -777,3 +777,10 @@
 - [x] Replace hardcoded /usr/bin/python3.11 with python3 in pptx-upload endpoint and routers.ts parser
 - [x] Add requirements.txt with python-pptx so production container installs it
 - [x] Add postinstall script in package.json to run pip install -r requirements.txt
+
+## Phase 93: Rewrite PPTX Parser in Node.js (No Python Dependency)
+
+- [x] Install jszip package for reading PPTX XML in Node.js
+- [x] Write server/pptx_parser.ts that replicates pptx_parser.py logic using JSZip + XML parsing
+- [x] Update pptx-upload endpoint in index.ts to call the Node.js parser directly (no execSync)
+- [x] Test end-to-end against real PPTX file

@@ -8,10 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import multer from "multer";
-import { execSync } from "child_process";
-import path from "path";
-import fs from "fs";
-import os from "os";
+import { parsePptxBuffer } from "../pptx_parser";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -65,39 +62,18 @@ async function startServer() {
   });
 
   // PPTX upload endpoint — accepts multipart/form-data to handle large files (>10MB)
+  // Uses the Node.js parser (pptx_parser.ts) — no Python dependency required
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
-  app.post("/api/pptx-upload", upload.single("file"), (req, res) => {
+  app.post("/api/pptx-upload", upload.single("file"), async (req, res) => {
     if (!req.file) {
       res.status(400).json({ error: "No file provided" });
       return;
     }
-    const tmpDir = os.tmpdir();
-    const tmpFile = path.join(tmpDir, `range_review_${Date.now()}.pptx`);
     try {
-      fs.writeFileSync(tmpFile, req.file.buffer);
-      const parserPath = path.join(process.cwd(), "server", "pptx_parser.py");
-      const cleanEnv = { ...process.env };
-      delete cleanEnv.PYTHONPATH;
-      delete cleanEnv.PYTHONHOME;
-      delete cleanEnv.VIRTUAL_ENV;
-      // Find python binary: try python3 first (works in most containers), then fallback
-      const pythonBin = (() => {
-        for (const bin of ["python3", "python", "/usr/bin/python3.11", "/usr/bin/python3"]) {
-          try { execSync(`${bin} --version`, { stdio: "ignore", env: cleanEnv }); return bin; } catch {}
-        }
-        return "python3";
-      })();
-      const output = execSync(`${pythonBin} "${parserPath}" "${tmpFile}"`, {
-        timeout: 120000,
-        maxBuffer: 20 * 1024 * 1024,
-        env: cleanEnv,
-      }).toString();
-      const parsed = JSON.parse(output);
+      const parsed = await parsePptxBuffer(req.file.buffer);
       res.json({ success: true, parsed });
     } catch (e: any) {
       res.status(500).json({ error: e.message || "Parse failed" });
-    } finally {
-      try { fs.unlinkSync(tmpFile); } catch {}
     }
   });
 
