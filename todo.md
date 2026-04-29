@@ -708,3 +708,9 @@
 - [x] "Waiting on Revised": unapproved styles that have at least one session with notes/images, or style-level notes/fit rating
 - [x] Default tab changed from "Not Approved" to "Waiting to be Fit"
 - [x] Header subtitle updated to show count breakdown across all three states
+
+## Phase 82: Add "Original" Sample Type
+- [x] Add "Original" to sample type dropdown in fitting session edit form
+- [x] Add slate/grey colour for "Original" in session header badge display
+- [x] Add "Original" colour-coded badge in Export Report HTML output
+- [x] Add "Original" to sampleTypeColour helper in ExportDialog

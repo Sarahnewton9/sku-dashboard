@@ -90,7 +90,7 @@ function Lightbox({ src, onClose, sampleDate, sampleType }: { src: string; onClo
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  const sampleTypeColor = sampleType === "Proto" ? "text-orange-300" : sampleType === "Revised" ? "text-blue-300" : "text-green-300";
+  const sampleTypeColor = sampleType === "Proto" ? "text-orange-300" : sampleType === "Revised" ? "text-blue-300" : sampleType === "Salesman Sample" ? "text-green-300" : "text-slate-300";
 
   return createPortal(
     <div
@@ -267,6 +267,7 @@ function SessionCard({
               className="border border-border rounded px-2 py-0.5 text-xs bg-background"
             >
               <option value="">— select —</option>
+              <option value="Original">Original</option>
               <option value="Proto">Proto</option>
               <option value="Revised">Revised</option>
               <option value="Salesman Sample">Salesman Sample</option>
@@ -275,6 +276,7 @@ function SessionCard({
             <span className="text-xs">
               {session.sampleType ? (
                 <span className={`px-1.5 py-0.5 rounded-full font-medium ${
+                  session.sampleType === "Original" ? "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400" :
                   session.sampleType === "Proto" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
                   session.sampleType === "Revised" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
                   "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
@@ -330,6 +332,7 @@ function SessionCard({
                   <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-black/60 flex flex-col gap-0 pointer-events-none">
                     {session.sampleType && (
                       <span className={`text-[7px] font-bold leading-tight ${
+                        session.sampleType === "Original" ? "text-slate-300" :
                         session.sampleType === "Proto" ? "text-orange-300" :
                         session.sampleType === "Revised" ? "text-blue-300" :
                         "text-green-300"
@@ -651,7 +654,7 @@ function ExportDialog({
   const selectedCount = selectedStyles.size;
 
   const sampleTypeColour = (t: string | null | undefined) =>
-    t === "Proto" ? "#c2410c" : t === "Revised" ? "#1d4ed8" : t === "Salesman Sample" ? "#15803d" : "#555";
+    t === "Original" ? "#475569" : t === "Proto" ? "#c2410c" : t === "Revised" ? "#1d4ed8" : t === "Salesman Sample" ? "#15803d" : "#555";
 
   const handleExport = async () => {
     setExporting(true);
@@ -677,7 +680,7 @@ function ExportDialog({
                 : null;
               const sampleType = (sess as any).sampleType as string | null;
               const sampleTypeBadge = sampleType
-                ? `<span style="display:inline-block;background:${sampleType === "Proto" ? "#fff7ed" : sampleType === "Revised" ? "#eff6ff" : "#f0fdf4"};color:${sampleTypeColour(sampleType)};border:1px solid ${sampleType === "Proto" ? "#fed7aa" : sampleType === "Revised" ? "#bfdbfe" : "#bbf7d0"};border-radius:4px;padding:1px 7px;font-size:11px;font-weight:600;">${sampleType}</span>`
+                ? `<span style="display:inline-block;background:${sampleType === "Original" ? "#f1f5f9" : sampleType === "Proto" ? "#fff7ed" : sampleType === "Revised" ? "#eff6ff" : "#f0fdf4"};color:${sampleTypeColour(sampleType)};border:1px solid ${sampleType === "Original" ? "#cbd5e1" : sampleType === "Proto" ? "#fed7aa" : sampleType === "Revised" ? "#bfdbfe" : "#bbf7d0"};border-radius:4px;padding:1px 7px;font-size:11px;font-weight:600;">${sampleType}</span>`
                 : "";
               const imgHtml = sess.images.length > 0
                 ? sess.images.map((img) => `<img src="${img.imageUrl}" style="width:110px;height:110px;object-fit:cover;border-radius:6px;margin:3px;" />`).join("")
@@ -1168,9 +1171,10 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
                                                   <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-1 py-0.5 flex flex-col items-start gap-0.5">
                                                     {(sess as any).sampleType && (
                                                       <span className={`text-[9px] font-semibold leading-tight px-1 rounded ${
-                                                        (sess as any).sampleType === "Proto" ? "bg-orange-500 text-white" :
-                                                        (sess as any).sampleType === "Revised" ? "bg-blue-500 text-white" :
-                                                        "bg-green-500 text-white"
+                                        (sess as any).sampleType === "Original" ? "bg-slate-500 text-white" :
+                                        (sess as any).sampleType === "Proto" ? "bg-orange-500 text-white" :
+                                        (sess as any).sampleType === "Revised" ? "bg-blue-500 text-white" :
+                                        "bg-green-500 text-white"
                                                       }`}>{(sess as any).sampleType}</span>
                                                     )}
                                                     {(sess as any).sampleDate && (
