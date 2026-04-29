@@ -489,12 +489,12 @@ export default function LastApprovalTab() {
                             <img
                               src={imageOverrides[s] ?? STYLE_IMAGE_MAP[s]}
                               alt={s}
-                              className="w-16 h-16 object-cover rounded-lg border"
+                              className="w-24 h-24 object-contain rounded-lg border bg-white"
                               style={{ borderColor: "var(--border)" }}
                             />
                           ) : (
                             <div
-                              className="w-16 h-16 rounded-lg border flex items-center justify-center text-muted-foreground/40"
+                              className="w-24 h-24 rounded-lg border flex items-center justify-center text-muted-foreground/40"
                               style={{ borderColor: "var(--border)", background: "var(--muted)" }}
                             >
                               <span className="text-[9px]">No img</span>
