@@ -1364,11 +1364,18 @@ function InvoiceImportDialog({
       for (const idx of approved) {
         const r = results[idx];
         if (!r.matchedStyle || !r.matchedColour) continue;
+        // Map invoice sample type string to dashboard sampleType value
+        const rawType = (r.sampleType ?? "").toLowerCase();
+        const mappedType = rawType.includes("salesman") ? "Salesman Sample"
+          : rawType.includes("proto") ? "Proto"
+          : rawType.includes("revised") ? "Revised"
+          : r.sampleType || null;
         await updateSku.mutateAsync({
           style: r.matchedStyle,
           colour: r.matchedColour,
           leather: r.matchedLeather ?? "",
           sampleStatus: "received",
+          sampleType: mappedType,
         });
         count++;
       }

@@ -65,6 +65,7 @@ export const appRouter = router({
         costPrice: z.number().nullable().optional(),
         fitRating: z.enum(["tts", "runs_small", "runs_large"]).nullable().optional(),
         fittingNotes: z.string().nullable().optional(),
+        sampleType: z.string().nullable().optional(),
       }))
       .mutation(async ({ input }) => {
         await upsertSkuMeta(input);

@@ -114,6 +114,7 @@ export async function upsertSkuMeta(data: {
   costPrice?: number | null;
   fitRating?: "tts" | "runs_small" | "runs_large" | null;
   fittingNotes?: string | null;
+  sampleType?: string | null;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -126,6 +127,7 @@ export async function upsertSkuMeta(data: {
     if (data.costPrice !== undefined) updateSet.costPrice = data.costPrice;
     if (data.fitRating !== undefined) updateSet.fitRating = data.fitRating;
     if (data.fittingNotes !== undefined) updateSet.fittingNotes = data.fittingNotes;
+    if (data.sampleType !== undefined) updateSet.sampleType = data.sampleType;
     await db.update(skuMeta)
       .set(updateSet)
       .where(and(eq(skuMeta.style, data.style), eq(skuMeta.colour, data.colour), eq(skuMeta.leather, data.leather)));
@@ -140,6 +142,7 @@ export async function upsertSkuMeta(data: {
       costPrice: data.costPrice ?? null,
       fitRating: data.fitRating ?? null,
       fittingNotes: data.fittingNotes ?? null,
+      sampleType: data.sampleType ?? null,
     });
   }
 }

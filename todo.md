@@ -748,3 +748,10 @@
 - [x] "Accept All" / "Reject All" buttons in review panel
 - [x] On confirm: fire sku.update mutations for all approved rows to set sampleStatus = 'received'
 - [x] Show summary toast after import (e.g. "8 SKUs marked as received")
+
+## Phase 88: Save Sample Type from Invoice on Approve
+- [x] Add sampleType column to skuMeta table in schema and run migration
+- [x] Add sampleType to upsertSkuMeta helper in db.ts
+- [x] Add sampleType to sku.update procedure input schema in routers.ts
+- [x] Pass sampleType from parsed invoice row through the InvoiceImportDialog approve mutation
+- [x] Map invoice strings to dashboard values (PROTO SAMPLE → Proto, SALESMAN SAMPLE → Salesman Sample, REVISED SAMPLE → Revised)
