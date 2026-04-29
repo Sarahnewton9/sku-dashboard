@@ -485,9 +485,9 @@ export default function LastApprovalTab() {
                           key={s}
                           className="flex flex-col items-center gap-1"
                         >
-                          {imageOverrides[s] ? (
+                          {(imageOverrides[s] ?? STYLE_IMAGE_MAP[s]) ? (
                             <img
-                              src={imageOverrides[s]}
+                              src={imageOverrides[s] ?? STYLE_IMAGE_MAP[s]}
                               alt={s}
                               className="w-16 h-16 object-cover rounded-lg border"
                               style={{ borderColor: "var(--border)" }}
