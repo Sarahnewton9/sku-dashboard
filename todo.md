@@ -771,3 +771,9 @@
 - [x] applyChanges: insert new SKUs into skuMeta with isNew=true and correct sampleStatus
 - [x] PptxSyncModal: show "New SKUs to add" as a separate action type in the review panel
 - [x] New SKUs editable (last, style, colour, leather, sampleStatus) before applying
+
+## Phase 92: Fix PPTX Parser on Deployed Site
+
+- [x] Replace hardcoded /usr/bin/python3.11 with python3 in pptx-upload endpoint and routers.ts parser
+- [x] Add requirements.txt with python-pptx so production container installs it
+- [x] Add postinstall script in package.json to run pip install -r requirements.txt

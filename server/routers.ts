@@ -839,13 +839,21 @@ export const appRouter = router({
           // Run the Python parser
           const parserPath = path.join(process.cwd(), "server", "pptx_parser.py");
           // Build a clean environment: strip PYTHONPATH/PYTHONHOME so the uv
-          // runtime cannot redirect /usr/bin/python3.11 to its own stdlib.
+          // runtime cannot redirect python to its own stdlib.
           const cleanEnv = { ...process.env };
           delete cleanEnv.PYTHONPATH;
           delete cleanEnv.PYTHONHOME;
           delete cleanEnv.VIRTUAL_ENV;
 
-          const output = execSync(`/usr/bin/python3.11 "${parserPath}" "${tmpFile}"`, {
+          // Find python binary: try python3 first (works in most containers), then fallback
+          const pythonBin = (() => {
+            for (const bin of ["python3", "python", "/usr/bin/python3.11", "/usr/bin/python3"]) {
+              try { execSync(`${bin} --version`, { stdio: "ignore", env: cleanEnv }); return bin; } catch {}
+            }
+            return "python3";
+          })();
+
+          const output = execSync(`${pythonBin} "${parserPath}" "${tmpFile}"`, {
             timeout: 60000,
             maxBuffer: 10 * 1024 * 1024,
             env: cleanEnv,

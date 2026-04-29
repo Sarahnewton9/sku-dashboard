@@ -80,7 +80,14 @@ async function startServer() {
       delete cleanEnv.PYTHONPATH;
       delete cleanEnv.PYTHONHOME;
       delete cleanEnv.VIRTUAL_ENV;
-      const output = execSync(`/usr/bin/python3.11 "${parserPath}" "${tmpFile}"`, {
+      // Find python binary: try python3 first (works in most containers), then fallback
+      const pythonBin = (() => {
+        for (const bin of ["python3", "python", "/usr/bin/python3.11", "/usr/bin/python3"]) {
+          try { execSync(`${bin} --version`, { stdio: "ignore", env: cleanEnv }); return bin; } catch {}
+        }
+        return "python3";
+      })();
+      const output = execSync(`${pythonBin} "${parserPath}" "${tmpFile}"`, {
         timeout: 120000,
         maxBuffer: 20 * 1024 * 1024,
         env: cleanEnv,
