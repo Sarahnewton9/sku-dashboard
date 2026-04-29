@@ -102,9 +102,10 @@ export const appRouter = router({
 
         let parsedRows: { style: string; colour: string; material: string; sampleType: string }[] = [];
         try {
-          // Use xlsx package to read the file
+          // Use xlsx package to read the file from buffer
           const XLSX = await import("xlsx");
-          const wb = XLSX.readFile(tmpPath);
+          const fileBuffer = Buffer.from(input.fileBase64, "base64");
+          const wb = XLSX.read(fileBuffer, { type: "buffer" });
           const ws = wb.Sheets[wb.SheetNames[0]];
           const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
 
