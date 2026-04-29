@@ -186,6 +186,15 @@ def parse_sku_line(text, highlight):
     # Reject if colour is a known non-colour instruction word
     if colour.upper() in NOT_COLOURS:
         return None
+    # Reject if colour contains question/instruction words (e.g. "SHOULD WE ADD BLACK")
+    colour_words = colour.upper().split()
+    question_words = {'SHOULD', 'COULD', 'WOULD', 'POSSIBLE', 'MAYBE', 'CONSIDER',
+                      'WHAT', 'WHY', 'HOW', 'WHEN', 'WHERE', 'WHICH', 'IF', 'POSSIBLE'}
+    if question_words & set(colour_words):
+        return None
+    # Reject if colour is more than 4 words (likely a note or instruction)
+    if len(colour_words) > 4:
+        return None
 
     return {'colour': colour, 'leather': leather, 'status': status}
 
@@ -222,6 +231,8 @@ def parse_slide(slide):
 
     if not last_name:
         return None
+    # Clean last name: take only the first word (heading box may contain extra notes/colours below)
+    last_name = last_name.split()[0] if last_name.split() else last_name
 
     # Parse each remaining box as a potential style column
     styles = []

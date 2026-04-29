@@ -959,22 +959,34 @@ export const appRouter = router({
           })),
           error: z.string().optional(),
         })),
+        // Full list of known SKUs from the static skuData + custom SKUs (passed by client)
+        knownSkus: z.array(z.object({ style: z.string(), colour: z.string(), leather: z.string() })).optional(),
       }))
       .mutation(async ({ input }) => {
-        const [cancelledSkus, cancelledStyles, allSkuMeta] = await Promise.all([
+        const [cancelledSkus, cancelledStyles, allSkuMeta, customSkus] = await Promise.all([
           listCancelledSkus(),
           listCancelledStyles(),
           getAllSkuMeta(),
+          getAllCustomSkus(),
         ]);
         const cancelledSkuSet = new Set(cancelledSkus.map((s) => `${s.style}|${s.colour}|${s.leather}`));
         const cancelledStyleSet = new Set(cancelledStyles.map((s) => s.style));
         const skuMetaMap = new Map(allSkuMeta.map((s) => [`${s.style}|${s.colour}|${s.leather}`, s]));
 
-        type DiffItem = { last: string; style: string; colour: string; leather: string; pptxStatus: string; currentStatus: string; action: string; };
+        // Build the set of all known SKUs (static + custom from DB)
+        // If client passed knownSkus, use that; otherwise fall back to DB custom SKUs only
+        const knownSkuSet = new Set<string>();
+        if (input.knownSkus && input.knownSkus.length > 0) {
+          for (const s of input.knownSkus) knownSkuSet.add(`${s.style}|${s.colour}|${s.leather}`);
+        }
+        // Always include custom SKUs from DB as known
+        for (const s of customSkus) knownSkuSet.add(`${s.style}|${s.colour}|${s.leather}`);
+
+        type DiffItem = { last: string; style: string; colour: string; leather: string; pptxStatus: string; currentStatus: string; action: string; sampleStatus?: string; };
         const toCancel: DiffItem[] = [];
         const toMarkSpecked: DiffItem[] = [];
         const toMarkSpeckedNoSample: DiffItem[] = [];
-        const missingFromDb: DiffItem[] = [];
+        const toAddNew: DiffItem[] = [];
         const alreadyCancelled: DiffItem[] = [];
 
         for (const slide of input.parsed) {
@@ -988,10 +1000,18 @@ export const appRouter = router({
               const isAlreadyCancelledSku = cancelledSkuSet.has(key);
               const isAlreadyCancelledStyle = cancelledStyleSet.has(style);
               const meta = skuMetaMap.get(key);
+              const isKnown = knownSkuSet.size > 0 ? knownSkuSet.has(key) : true; // if no knownSkus passed, treat all as known
               const item: DiffItem = { last, style, colour, leather, pptxStatus: status, currentStatus: isAlreadyCancelledSku ? 'cancelled_sku' : isAlreadyCancelledStyle ? 'cancelled_style' : (meta?.sampleStatus ?? 'no_meta'), action: 'none' };
+
               if (status === 'cancelled') {
+                // Skip cancelled new SKUs — no point adding then cancelling
                 if (isAlreadyCancelledSku || isAlreadyCancelledStyle) alreadyCancelled.push({ ...item, action: 'already_cancelled' });
-                else toCancel.push({ ...item, action: 'cancel_sku' });
+                else if (isKnown) toCancel.push({ ...item, action: 'cancel_sku' });
+                // If not known and cancelled, just ignore
+              } else if (!isKnown) {
+                // New SKU — determine sample status from highlight
+                const sampleStatus = status === 'specked' ? 'received' : 'waiting';
+                toAddNew.push({ ...item, action: 'add_new', sampleStatus });
               } else if (status === 'specked') {
                 if (!isAlreadyCancelledSku && !isAlreadyCancelledStyle && (!meta || meta.sampleStatus !== 'received'))
                   toMarkSpecked.push({ ...item, action: 'mark_specked' });
@@ -1002,7 +1022,7 @@ export const appRouter = router({
             }
           }
         }
-        return { success: true, slideCount: input.parsed.filter((s) => !s.error).length, toCancel, toMarkSpecked, toMarkSpeckedNoSample, missingFromDb, alreadyCancelled };
+        return { success: true, slideCount: input.parsed.filter((s) => !s.error).length, toCancel, toMarkSpecked, toMarkSpeckedNoSample, toAddNew, alreadyCancelled };
       }),
 
     // Apply the confirmed changes from a PPTX sync
@@ -1011,11 +1031,18 @@ export const appRouter = router({
         cancelSkus: z.array(z.object({ style: z.string(), colour: z.string(), leather: z.string() })),
         markSpecked: z.array(z.object({ style: z.string(), colour: z.string(), leather: z.string() })),
         markSpeckedNoSample: z.array(z.object({ style: z.string(), colour: z.string(), leather: z.string() })),
+        addNewSkus: z.array(z.object({
+          style: z.string(),
+          colour: z.string(),
+          leather: z.string(),
+          sampleStatus: z.enum(['received', 'waiting']).default('waiting'),
+        })).optional(),
       }))
       .mutation(async ({ input }) => {
         let cancelled = 0;
         let specked = 0;
         let speckedNoSample = 0;
+        let added = 0;
 
         for (const sku of input.cancelSkus) {
           await cancelSku(sku.style, sku.colour, sku.leather);
@@ -1026,13 +1053,17 @@ export const appRouter = router({
           specked++;
         }
         for (const sku of input.markSpeckedNoSample) {
-          // specked_no_sample = waiting status (sample not yet received)
-          // We just ensure the skuMeta record exists so it's tracked
           await upsertSkuMeta({ style: sku.style, colour: sku.colour, leather: sku.leather, sampleStatus: 'waiting' });
           speckedNoSample++;
         }
+        for (const sku of (input.addNewSkus ?? [])) {
+          // Add as custom SKU (isNew = true) then set sample status
+          await addCustomSku(sku.style, sku.colour, sku.leather);
+          await upsertSkuMeta({ style: sku.style, colour: sku.colour, leather: sku.leather, sampleStatus: sku.sampleStatus });
+          added++;
+        }
 
-        return { success: true, cancelled, specked, speckedNoSample };
+        return { success: true, cancelled, specked, speckedNoSample, added };
       }),
   }),
 

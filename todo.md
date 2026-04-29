@@ -763,3 +763,11 @@
 - [x] Convert buildDiff from .query to .mutation to support POST requests (avoids URL length limit for 74KB+ payloads)
 - [x] Update PptxSyncModal.tsx to use fetch('/api/pptx-upload', formData) for upload, then trpc.pptxSync.buildDiff.useMutation() for diff
 - [x] End-to-end tested: 104 slides parsed from 33MB PPTX, buildDiff returns correct diff (3 cancel, 9 specked, 172 specked-no-sample)
+
+## Phase 91: PPTX Sync — New SKU Detection & Insertion
+
+- [x] buildDiff: detect SKUs in PPTX that don't exist in DB → add to toAddNew list
+- [x] buildDiff: new SKUs get sampleStatus from highlight (magenta=received, cyan/yellow/none=waiting)
+- [x] applyChanges: insert new SKUs into skuMeta with isNew=true and correct sampleStatus
+- [x] PptxSyncModal: show "New SKUs to add" as a separate action type in the review panel
+- [x] New SKUs editable (last, style, colour, leather, sampleStatus) before applying
