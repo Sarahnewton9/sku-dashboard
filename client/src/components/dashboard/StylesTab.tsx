@@ -12,7 +12,7 @@ import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
-import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock } from "lucide-react";
+import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock, FileSpreadsheet, X } from "lucide-react";
 import * as XLSX from "xlsx";
 import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
 import ImportPanel from "./ImportPanel";
@@ -33,6 +33,7 @@ export default function StylesTab() {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [selectedSku, setSelectedSku] = useState<SkuPanelData | null>(null);
   const [showImport, setShowImport] = useState(false);
+  const [showInvoiceImport, setShowInvoiceImport] = useState(false);
   const [expandedStyle, setExpandedStyle] = useState<string | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
   const [fitApprovedSectionOpen, setFitApprovedSectionOpen] = useState(false);
@@ -519,6 +520,15 @@ export default function StylesTab() {
         >
           <Upload className="w-4 h-4" />
           Import
+        </button>
+
+        <button
+          onClick={() => setShowInvoiceImport(true)}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-green-50 hover:border-green-400 hover:text-green-700"
+          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+        >
+          <FileSpreadsheet className="w-4 h-4" />
+          Import Invoice
         </button>
 
         <button
@@ -1284,6 +1294,260 @@ export default function StylesTab() {
           onImportDone={() => { refetchSkuMeta(); refetchStyleMeta(); }}
         />
       )}
+
+      {/* Invoice Import Dialog */}
+      {showInvoiceImport && (
+        <InvoiceImportDialog
+          allSkus={skuData.skus.map((s) => ({ style: s.style, colour: s.colour, leather: s.leather ?? "" }))}
+          onClose={() => setShowInvoiceImport(false)}
+          onDone={() => { refetchSkuMeta(); setShowInvoiceImport(false); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Invoice Import Dialog ────────────────────────────────────────────────────
+type InvoiceMatch = {
+  invoiceStyle: string;
+  invoiceColour: string;
+  invoiceMaterial: string;
+  sampleType: string;
+  matchedStyle: string | null;
+  matchedColour: string | null;
+  matchedLeather: string | null;
+  confidence: number;
+  status: "matched" | "no_match";
+};
+
+function InvoiceImportDialog({
+  allSkus,
+  onClose,
+  onDone,
+}: {
+  allSkus: { style: string; colour: string; leather: string }[];
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [step, setStep] = useState<"upload" | "review" | "done">("upload");
+  const [results, setResults] = useState<InvoiceMatch[]>([]);
+  const [approved, setApproved] = useState<Set<number>>(new Set());
+  const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const parseInvoice = trpc.sku.parseInvoice.useMutation();
+  const updateSku = trpc.sku.update.useMutation();
+
+  async function handleFile(file: File) {
+    setIsLoading(true);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      const res = await parseInvoice.mutateAsync({ fileBase64: base64, allSkus });
+      setResults(res.results as InvoiceMatch[]);
+      // Pre-approve all matched rows
+      const matched = new Set<number>();
+      res.results.forEach((r, i) => { if (r.status === "matched") matched.add(i); });
+      setApproved(matched);
+      setStep("review");
+    } catch (e: any) {
+      toast.error(`Failed to parse invoice: ${e.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleConfirm() {
+    setIsLoading(true);
+    let count = 0;
+    try {
+      for (const idx of approved) {
+        const r = results[idx];
+        if (!r.matchedStyle || !r.matchedColour) continue;
+        await updateSku.mutateAsync({
+          style: r.matchedStyle,
+          colour: r.matchedColour,
+          leather: r.matchedLeather ?? "",
+          sampleStatus: "received",
+        });
+        count++;
+      }
+      toast.success(`${count} SKU${count !== 1 ? "s" : ""} marked as Sample Received`);
+      onDone();
+    } catch (e: any) {
+      toast.error(`Import failed: ${e.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const sampleTypeBadge = (t: string) => {
+    const lower = t.toLowerCase();
+    if (lower.includes("salesman")) return { label: "Salesman", bg: "#f0fdf4", color: "#15803d", border: "#bbf7d0" };
+    if (lower.includes("proto")) return { label: "Proto", bg: "#fff7ed", color: "#c2410c", border: "#fed7aa" };
+    if (lower.includes("revised")) return { label: "Revised", bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" };
+    return { label: t, bg: "#f8fafc", color: "#475569", border: "#cbd5e1" };
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+      <div
+        className="bg-card rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col"
+        style={{ border: "1px solid var(--border)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+          <div>
+            <h2 className="text-base font-semibold">Import Invoice</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {step === "upload" ? "Upload a supplier XLSX invoice to mark samples as received" :
+               step === "review" ? `Review ${results.length} items found — approve or reject each match` :
+               "Import complete"}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded hover:bg-muted transition-colors">
+            <X className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-5">
+          {step === "upload" && (
+            <div
+              className="border-2 border-dashed rounded-xl p-12 text-center cursor-pointer hover:border-primary transition-colors"
+              style={{ borderColor: "var(--border)" }}
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
+            >
+              {isLoading ? (
+                <div className="flex flex-col items-center gap-3">
+                  <RefreshCw className="w-8 h-8 text-primary animate-spin" />
+                  <p className="text-sm text-muted-foreground">Parsing invoice and matching SKUs…</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-3">
+                  <FileSpreadsheet className="w-10 h-10 text-muted-foreground" />
+                  <p className="text-sm font-medium">Click to upload or drag & drop</p>
+                  <p className="text-xs text-muted-foreground">Accepts .xlsx invoice files (DHL / supplier format)</p>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+              />
+            </div>
+          )}
+
+          {step === "review" && (
+            <div className="space-y-2">
+              {/* Accept/Reject all */}
+              <div className="flex items-center gap-2 mb-3">
+                <button
+                  onClick={() => setApproved(new Set(results.map((_, i) => i).filter(i => results[i].status === "matched")))}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors hover:bg-green-50 hover:border-green-400 hover:text-green-700"
+                  style={{ borderColor: "var(--border)" }}
+                >Accept All Matched</button>
+                <button
+                  onClick={() => setApproved(new Set())}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors hover:bg-red-50 hover:border-red-400 hover:text-red-700"
+                  style={{ borderColor: "var(--border)" }}
+                >Reject All</button>
+                <span className="text-xs text-muted-foreground ml-auto">{approved.size} selected</span>
+              </div>
+
+              {results.map((r, i) => {
+                const badge = sampleTypeBadge(r.sampleType);
+                const isApproved = approved.has(i);
+                return (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 p-3 rounded-lg border transition-colors cursor-pointer"
+                    style={{
+                      borderColor: isApproved ? "oklch(0.80 0.12 155)" : "var(--border)",
+                      background: isApproved ? "oklch(0.97 0.03 155 / 0.5)" : r.status === "no_match" ? "oklch(0.98 0.02 20 / 0.4)" : "var(--card)",
+                    }}
+                    onClick={() => {
+                      if (r.status === "no_match") return;
+                      setApproved(prev => {
+                        const next = new Set(prev);
+                        if (next.has(i)) next.delete(i); else next.add(i);
+                        return next;
+                      });
+                    }}
+                  >
+                    {/* Checkbox */}
+                    <div className="mt-0.5 flex-shrink-0">
+                      {r.status === "matched" ? (
+                        <div
+                          className="w-4 h-4 rounded border-2 flex items-center justify-center"
+                          style={{ borderColor: isApproved ? "oklch(0.55 0.14 155)" : "var(--border)", background: isApproved ? "oklch(0.55 0.14 155)" : "transparent" }}
+                        >
+                          {isApproved && <CheckCircle className="w-3 h-3 text-white" />}
+                        </div>
+                      ) : (
+                        <div className="w-4 h-4 rounded border-2" style={{ borderColor: "var(--border)", opacity: 0.4 }} />
+                      )}
+                    </div>
+
+                    {/* Invoice item */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold">{r.invoiceStyle}</span>
+                        <span className="text-sm text-muted-foreground">{r.invoiceColour}</span>
+                        <span
+                          className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+                          style={{ background: badge.bg, color: badge.color, border: `1px solid ${badge.border}` }}
+                        >{badge.label}</span>
+                      </div>
+                      {r.status === "matched" ? (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="text-[10px] text-muted-foreground">→</span>
+                          <span className="text-xs font-medium text-foreground">{r.matchedStyle}</span>
+                          <span className="text-xs text-muted-foreground">{r.matchedColour}</span>
+                          {r.matchedLeather && <span className="text-xs text-muted-foreground">{r.matchedLeather}</span>}
+                          <span
+                            className="text-[10px] px-1.5 py-0.5 rounded ml-1"
+                            style={{
+                              background: r.confidence >= 80 ? "oklch(0.94 0.08 155)" : r.confidence >= 60 ? "oklch(0.97 0.08 80)" : "oklch(0.97 0.04 20)",
+                              color: r.confidence >= 80 ? "oklch(0.40 0.14 155)" : r.confidence >= 60 ? "oklch(0.50 0.14 80)" : "oklch(0.50 0.14 20)",
+                            }}
+                          >{r.confidence}% match</span>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground mt-1 italic">No matching SKU found in dashboard</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        {step === "review" && (
+          <div className="px-5 py-4 border-t flex items-center justify-between gap-3" style={{ borderColor: "var(--border)" }}>
+            <button
+              onClick={() => setStep("upload")}
+              className="px-4 py-2 text-sm rounded-lg border hover:bg-muted transition-colors"
+              style={{ borderColor: "var(--border)" }}
+            >← Back</button>
+            <button
+              onClick={handleConfirm}
+              disabled={approved.size === 0 || isLoading}
+              className="px-5 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+              style={{ background: "oklch(0.55 0.14 155)", color: "white" }}
+            >
+              {isLoading ? "Saving…" : `Mark ${approved.size} SKU${approved.size !== 1 ? "s" : ""} as Received`}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

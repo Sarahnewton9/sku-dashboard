@@ -739,3 +739,12 @@
 - [x] Make sample toggle always visible for new SKUs in the By Style expanded view
 - [x] Shows "Rcvd?" (grey) when not received, "✓ Rcvd" (green) when received
 - [x] Clicking either state toggles the sample status via sku.update mutation
+
+## Phase 87: Invoice Import — Mark Samples Received from XLSX
+- [x] Add "Import Invoice" button to By Style tab header
+- [x] Backend tRPC procedure: accept base64 XLSX, parse rows (style col 3, colour col 4, material col 5, sample type col 2), return parsed items
+- [x] Fuzzy match parsed items to dashboard SKUs (style name + colour, handle minor naming differences)
+- [x] Review panel dialog: show each matched SKU with confidence score, sample type badge, approve/reject toggle per row
+- [x] "Accept All" / "Reject All" buttons in review panel
+- [x] On confirm: fire sku.update mutations for all approved rows to set sampleStatus = 'received'
+- [x] Show summary toast after import (e.g. "8 SKUs marked as received")

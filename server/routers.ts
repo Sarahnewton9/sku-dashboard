@@ -85,6 +85,110 @@ export const appRouter = router({
         return { updated: input.skus.length };
       }),
 
+    // Parse a DHL/supplier invoice XLSX and fuzzy-match to dashboard SKUs
+    parseInvoice: publicProcedure
+      .input(z.object({
+        fileBase64: z.string(), // base64-encoded XLSX file
+        allSkus: z.array(z.object({
+          style: z.string(),
+          colour: z.string(),
+          leather: z.string(),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        // Write temp file
+        const tmpPath = path.join(os.tmpdir(), `invoice_${Date.now()}.xlsx`);
+        fs.writeFileSync(tmpPath, Buffer.from(input.fileBase64, "base64"));
+
+        let parsedRows: { style: string; colour: string; material: string; sampleType: string }[] = [];
+        try {
+          // Use xlsx package to read the file
+          const XLSX = await import("xlsx");
+          const wb = XLSX.readFile(tmpPath);
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+
+          const ITEM_TYPES = new Set(["LEATHER SHOE SAMPLE", "TEXTILE SHOE SAMPLE", "RUBBER SHOE SAMPLE", "SHOE SAMPLE"]);
+          for (const row of rows) {
+            const col0 = String(row[0] ?? "").trim().toUpperCase();
+            if (!ITEM_TYPES.has(col0)) continue;
+            const sampleType = String(row[1] ?? "").trim();
+            const style = String(row[2] ?? "").trim().toUpperCase();
+            const colour = String(row[3] ?? "").trim().toUpperCase();
+            const material = String(row[4] ?? "").trim();
+            if (!style || !colour) continue;
+            parsedRows.push({ style, colour, material, sampleType });
+          }
+        } finally {
+          try { fs.unlinkSync(tmpPath); } catch {}
+        }
+
+        // Fuzzy match: normalise strings for comparison
+        function norm(s: string) {
+          return s.toUpperCase()
+            .replace(/[^A-Z0-9 ]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+        function similarity(a: string, b: string): number {
+          const na = norm(a), nb = norm(b);
+          if (na === nb) return 1.0;
+          // Token overlap score
+          const ta = new Set(na.split(" "));
+          const tb = new Set(nb.split(" "));
+          let common = 0;
+          for (const t of ta) if (tb.has(t)) common++;
+          const union = new Set([...ta, ...tb]).size;
+          return union === 0 ? 0 : common / union;
+        }
+
+        const results: {
+          invoiceStyle: string;
+          invoiceColour: string;
+          invoiceMaterial: string;
+          sampleType: string;
+          matchedStyle: string | null;
+          matchedColour: string | null;
+          matchedLeather: string | null;
+          confidence: number;
+          status: "matched" | "no_match";
+        }[] = [];
+
+        for (const row of parsedRows) {
+          let bestScore = 0;
+          let bestSku: typeof input.allSkus[0] | null = null;
+
+          for (const sku of input.allSkus) {
+            const styleScore = similarity(row.style, sku.style);
+            if (styleScore < 0.5) continue; // style must be a reasonable match
+            // Colour match: invoice colour may be "RED SUEDE", sku colour is "RED" and leather is "SUEDE"
+            const combined = norm(`${sku.colour} ${sku.leather}`);
+            const invoiceColour = norm(row.colour);
+            const colourScore = similarity(invoiceColour, combined);
+            const total = styleScore * 0.5 + colourScore * 0.5;
+            if (total > bestScore) {
+              bestScore = total;
+              bestSku = sku;
+            }
+          }
+
+          const THRESHOLD = 0.45;
+          results.push({
+            invoiceStyle: row.style,
+            invoiceColour: row.colour,
+            invoiceMaterial: row.material,
+            sampleType: row.sampleType,
+            matchedStyle: bestScore >= THRESHOLD ? bestSku!.style : null,
+            matchedColour: bestScore >= THRESHOLD ? bestSku!.colour : null,
+            matchedLeather: bestScore >= THRESHOLD ? bestSku!.leather : null,
+            confidence: Math.round(bestScore * 100),
+            status: bestScore >= THRESHOLD ? "matched" : "no_match",
+          });
+        }
+
+        return { results, totalParsed: parsedRows.length };
+      }),
+
     importCosts: publicProcedure
       .input(z.array(z.object({
         style: z.string(),
