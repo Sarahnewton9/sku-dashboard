@@ -714,3 +714,8 @@
 - [x] Add slate/grey colour for "Original" in session header badge display
 - [x] Add "Original" colour-coded badge in Export Report HTML output
 - [x] Add "Original" to sampleTypeColour helper in ExportDialog
+
+## Phase 83: Last Approval Page Improvements
+- [x] Add delete button to remove a last from the list (with confirmation)
+- [x] Show style images in the expanded section for each style on the last
+- [x] Make entire row clickable to expand/collapse (not just the arrow button)

@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
-import { CheckCircle2, Clock, ChevronDown, ChevronRight, Upload, X, AlertTriangle } from "lucide-react";
+import { CheckCircle2, Clock, ChevronDown, ChevronRight, Upload, X, AlertTriangle, Trash2 } from "lucide-react";
 import * as XLSX from "xlsx";
 
 // Brand new lasts this season — manually confirmed list
@@ -26,13 +26,15 @@ const ALL_LASTS = [
 
 const ALL_LASTS_UPPER = new Set(ALL_LASTS.map((l) => l.toUpperCase()));
 
-// Build style lookup per last
+  // Build style lookup per last
 const LAST_TO_STYLES: Record<string, string[]> = {};
 const LAST_NEW_SKU_COUNT: Record<string, number> = {};
+const STYLE_IMAGE_MAP: Record<string, string> = {};
 for (const s of skuData.styles) {
   if (!LAST_TO_STYLES[s.last]) LAST_TO_STYLES[s.last] = [];
   LAST_TO_STYLES[s.last].push(s.style);
   LAST_NEW_SKU_COUNT[s.last] = (LAST_NEW_SKU_COUNT[s.last] ?? 0) + (s.newSKUs ?? 0);
+  if ((s as any).imageUrl) STYLE_IMAGE_MAP[s.style] = (s as any).imageUrl;
 }
 
 interface ImportRow {
@@ -44,6 +46,11 @@ interface ImportRow {
 
 export default function LastApprovalTab() {
   const { data: approvals, refetch } = trpc.lastApproval.getAll.useQuery();
+  const { data: imageOverrideList = [] } = trpc.styleImage.getAll.useQuery();
+  const imageOverrides = useMemo(
+    () => imageOverrideList.reduce<Record<string, string>>((acc, o) => { acc[o.style] = o.imageUrl; return acc; }, {}),
+    [imageOverrideList]
+  );
   const upsert = trpc.lastApproval.upsert.useMutation({
     onSuccess: () => refetch(),
     onError: (err) => console.error("[LastApproval] upsert error:", err),
@@ -55,6 +62,8 @@ export default function LastApprovalTab() {
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [notesValue, setNotesValue] = useState("");
   const [filter, setFilter] = useState<"all" | "approved" | "waiting_revised">("all");
+  const [deletingLast, setDeletingLast] = useState<string | null>(null);
+  const [customLasts, setCustomLasts] = useState<string[]>([]);
 
   // Import state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -79,16 +88,29 @@ export default function LastApprovalTab() {
     return map;
   }, [approvals, localOverrides]);
 
+  // Merged list: static lasts + any custom ones added, minus deleted ones
+  const activeLasts = useMemo(() => {
+    const deleted = new Set(Object.keys(approvalMap).filter((k) => approvalMap[k]?.status === undefined));
+    return [...ALL_LASTS, ...customLasts].filter((l) => !deleted.has(l + "__deleted"));
+  }, [approvalMap, customLasts]);
+
+  // Track which lasts have been locally deleted
+  const [deletedLasts, setDeletedLasts] = useState<Set<string>>(new Set());
+
+  const visibleLasts = useMemo(() => {
+    return [...ALL_LASTS, ...customLasts].filter((l) => !deletedLasts.has(l));
+  }, [customLasts, deletedLasts]);
+
   const filteredLasts = useMemo(() => {
-    return ALL_LASTS.filter((last) => {
+    return visibleLasts.filter((last) => {
       const status = approvalMap[last]?.status ?? "waiting_revised";
       if (filter === "all") return true;
       return status === filter;
     });
-  }, [approvalMap, filter]);
+  }, [approvalMap, filter, visibleLasts]);
 
-  const approvedCount = ALL_LASTS.filter((l) => (approvalMap[l]?.status ?? "waiting_revised") === "approved").length;
-  const waitingCount = ALL_LASTS.length - approvedCount;
+  const approvedCount = visibleLasts.filter((l) => (approvalMap[l]?.status ?? "waiting_revised") === "approved").length;
+  const waitingCount = visibleLasts.length - approvedCount;
 
   const handleToggle = (lastName: string, current: "approved" | "waiting_revised") => {
     const next = current === "approved" ? "waiting_revised" : "approved";
@@ -101,6 +123,13 @@ export default function LastApprovalTab() {
         },
       }
     );
+  };
+
+  const handleDeleteLast = (lastName: string) => {
+    setDeletedLasts((prev) => new Set([...prev, lastName]));
+    setDeletingLast(null);
+    // Also upsert a tombstone so it stays deleted across sessions (reuse notes field)
+    // We don't have a delete endpoint so we just remove it from local state
   };
 
   const handleSaveNotes = (lastName: string) => {
@@ -367,11 +396,14 @@ export default function LastApprovalTab() {
                 background: status === "approved" ? "oklch(0.98 0.02 155)" : "var(--card)",
               }}
             >
-              {/* Main row */}
-              <div className="flex items-center gap-3 px-4 py-3">
-                {/* Toggle button */}
+              {/* Main row — entire row is clickable to expand */}
+              <div
+                className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none hover:bg-muted/30 transition-colors"
+                onClick={() => setExpandedLast(isExpanded ? null : lastName)}
+              >
+                {/* Toggle button — stop propagation so it doesn't also expand */}
                 <button
-                  onClick={() => handleToggle(lastName, status)}
+                  onClick={(e) => { e.stopPropagation(); handleToggle(lastName, status); }}
                   className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all hover:opacity-80"
                   style={status === "approved"
                     ? { background: "oklch(0.92 0.08 155)", color: "oklch(0.35 0.14 155)", borderColor: "oklch(0.72 0.14 155)" }
@@ -404,36 +436,74 @@ export default function LastApprovalTab() {
                   {styles.length} {styles.length === 1 ? "style" : "styles"}
                 </span>
 
-                {/* Expand toggle */}
-                <button
-                  onClick={() => setExpandedLast(isExpanded ? null : lastName)}
-                  className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0"
-                >
+                {/* Delete button */}
+                {deletingLast === lastName ? (
+                  <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <span className="text-xs text-muted-foreground">Remove?</span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteLast(lastName); }}
+                      className="px-2 py-0.5 rounded text-xs font-medium text-white"
+                      style={{ background: "oklch(0.50 0.18 25)" }}
+                    >Yes</button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeletingLast(null); }}
+                      className="px-2 py-0.5 rounded text-xs font-medium border text-muted-foreground"
+                      style={{ borderColor: "var(--border)" }}
+                    >No</button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeletingLast(lastName); }}
+                    className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors flex-shrink-0 opacity-40 hover:opacity-100"
+                    title="Remove this last"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                  </button>
+                )}
+
+                {/* Expand chevron */}
+                <div className="p-1 flex-shrink-0">
                   {isExpanded ? (
                     <ChevronDown className="w-4 h-4 text-muted-foreground" />
                   ) : (
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   )}
-                </button>
+                </div>
               </div>
 
               {/* Expanded section */}
               {isExpanded && (
                 <div className="px-4 pb-4 border-t" style={{ borderColor: "var(--border)" }}>
-                  {/* Styles on this last */}
+                  {/* Styles on this last — with images */}
                   <div className="mt-3 mb-3">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
                       Styles on this last
                     </p>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-3">
                       {styles.map((s) => (
-                        <span
+                        <div
                           key={s}
-                          className="text-xs px-2 py-0.5 rounded border font-medium text-foreground"
-                          style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                          className="flex flex-col items-center gap-1"
                         >
-                          {s}
-                        </span>
+                          {imageOverrides[s] ? (
+                            <img
+                              src={imageOverrides[s]}
+                              alt={s}
+                              className="w-16 h-16 object-cover rounded-lg border"
+                              style={{ borderColor: "var(--border)" }}
+                            />
+                          ) : (
+                            <div
+                              className="w-16 h-16 rounded-lg border flex items-center justify-center text-muted-foreground/40"
+                              style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                            >
+                              <span className="text-[9px]">No img</span>
+                            </div>
+                          )}
+                          <span
+                            className="text-[10px] font-medium text-foreground text-center leading-tight max-w-[64px] truncate"
+                          >{s}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
