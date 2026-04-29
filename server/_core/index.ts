@@ -7,6 +7,11 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import multer from "multer";
+import { execSync } from "child_process";
+import path from "path";
+import fs from "fs";
+import os from "os";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -56,6 +61,36 @@ async function startServer() {
       res.send(buffer);
     } catch (e) {
       res.status(500).send("Proxy error");
+    }
+  });
+
+  // PPTX upload endpoint — accepts multipart/form-data to handle large files (>10MB)
+  const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
+  app.post("/api/pptx-upload", upload.single("file"), (req, res) => {
+    if (!req.file) {
+      res.status(400).json({ error: "No file provided" });
+      return;
+    }
+    const tmpDir = os.tmpdir();
+    const tmpFile = path.join(tmpDir, `range_review_${Date.now()}.pptx`);
+    try {
+      fs.writeFileSync(tmpFile, req.file.buffer);
+      const parserPath = path.join(process.cwd(), "server", "pptx_parser.py");
+      const cleanEnv = { ...process.env };
+      delete cleanEnv.PYTHONPATH;
+      delete cleanEnv.PYTHONHOME;
+      delete cleanEnv.VIRTUAL_ENV;
+      const output = execSync(`/usr/bin/python3.11 "${parserPath}" "${tmpFile}"`, {
+        timeout: 120000,
+        maxBuffer: 20 * 1024 * 1024,
+        env: cleanEnv,
+      }).toString();
+      const parsed = JSON.parse(output);
+      res.json({ success: true, parsed });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message || "Parse failed" });
+    } finally {
+      try { fs.unlinkSync(tmpFile); } catch {}
     }
   });
 

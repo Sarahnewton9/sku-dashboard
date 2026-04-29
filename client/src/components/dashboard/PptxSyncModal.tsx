@@ -98,16 +98,7 @@ export default function PptxSyncModal({ onClose, onApplied }: Props) {
   const [fileName, setFileName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const parseMutation = trpc.pptxSync.parse.useMutation({
-    onSuccess: (data) => {
-      setResult(data);
-      setStep("review");
-    },
-    onError: (err) => {
-      toast.error(`Parse failed: ${err.message}`);
-      setStep("upload");
-    },
-  });
+  const buildDiffMutation = trpc.pptxSync.buildDiff.useMutation();
 
   const applyMutation = trpc.pptxSync.applyChanges.useMutation({
     onSuccess: (data) => {
@@ -123,7 +114,7 @@ export default function PptxSyncModal({ onClose, onApplied }: Props) {
     },
   });
 
-  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.name.endsWith(".pptx")) {
@@ -133,12 +124,30 @@ export default function PptxSyncModal({ onClose, onApplied }: Props) {
     setFileName(file.name);
     setStep("parsing");
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = (ev.target?.result as string).split(",")[1];
-      parseMutation.mutate({ fileBase64: base64 });
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Use multipart upload to handle large PPTX files (>10MB)
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/pptx-upload", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error || "Upload failed");
+      }
+      const { parsed } = await res.json();
+
+      // Build diff via tRPC mutation (POST) to handle large parsed payloads
+      const data = await buildDiffMutation.mutateAsync({ parsed });
+      if (!data) throw new Error("Failed to build diff");
+      setResult(data);
+      setStep("review");
+    } catch (err: any) {
+      toast.error(`Parse failed: ${err.message}`);
+      setStep("upload");
+    }
   }
 
   function handleApply() {

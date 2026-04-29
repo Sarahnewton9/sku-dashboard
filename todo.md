@@ -755,3 +755,11 @@
 - [x] Add sampleType to sku.update procedure input schema in routers.ts
 - [x] Pass sampleType from parsed invoice row through the InvoiceImportDialog approve mutation
 - [x] Map invoice strings to dashboard values (PROTO SAMPLE → Proto, SALESMAN SAMPLE → Salesman Sample, REVISED SAMPLE → Revised)
+
+## Phase 89: Fix PPTX Sync for Large Files
+- [x] Add multer package for multipart file uploads
+- [x] Add /api/pptx-upload Express endpoint in server/_core/index.ts — accepts multipart, writes to tmp file, runs Python parser, returns JSON
+- [x] Add pptxSync.buildDiff tRPC mutation that accepts already-parsed PPTX data and returns diff vs DB
+- [x] Convert buildDiff from .query to .mutation to support POST requests (avoids URL length limit for 74KB+ payloads)
+- [x] Update PptxSyncModal.tsx to use fetch('/api/pptx-upload', formData) for upload, then trpc.pptxSync.buildDiff.useMutation() for diff
+- [x] End-to-end tested: 104 slides parsed from 33MB PPTX, buildDiff returns correct diff (3 cancel, 9 specked, 172 specked-no-sample)

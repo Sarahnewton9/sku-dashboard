@@ -948,6 +948,63 @@ export const appRouter = router({
         }
       }),
 
+    // Build diff from already-parsed PPTX data (used after multipart upload)
+    buildDiff: publicProcedure
+      .input(z.object({
+        parsed: z.array(z.object({
+          last: z.string(),
+          styles: z.array(z.object({
+            style: z.string(),
+            skus: z.array(z.object({ colour: z.string(), leather: z.string(), status: z.string() })),
+          })),
+          error: z.string().optional(),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        const [cancelledSkus, cancelledStyles, allSkuMeta] = await Promise.all([
+          listCancelledSkus(),
+          listCancelledStyles(),
+          getAllSkuMeta(),
+        ]);
+        const cancelledSkuSet = new Set(cancelledSkus.map((s) => `${s.style}|${s.colour}|${s.leather}`));
+        const cancelledStyleSet = new Set(cancelledStyles.map((s) => s.style));
+        const skuMetaMap = new Map(allSkuMeta.map((s) => [`${s.style}|${s.colour}|${s.leather}`, s]));
+
+        type DiffItem = { last: string; style: string; colour: string; leather: string; pptxStatus: string; currentStatus: string; action: string; };
+        const toCancel: DiffItem[] = [];
+        const toMarkSpecked: DiffItem[] = [];
+        const toMarkSpeckedNoSample: DiffItem[] = [];
+        const missingFromDb: DiffItem[] = [];
+        const alreadyCancelled: DiffItem[] = [];
+
+        for (const slide of input.parsed) {
+          if (slide.error) continue;
+          const last = slide.last;
+          for (const styleData of slide.styles) {
+            const style = styleData.style;
+            for (const sku of styleData.skus) {
+              const { colour, leather, status } = sku;
+              const key = `${style}|${colour}|${leather}`;
+              const isAlreadyCancelledSku = cancelledSkuSet.has(key);
+              const isAlreadyCancelledStyle = cancelledStyleSet.has(style);
+              const meta = skuMetaMap.get(key);
+              const item: DiffItem = { last, style, colour, leather, pptxStatus: status, currentStatus: isAlreadyCancelledSku ? 'cancelled_sku' : isAlreadyCancelledStyle ? 'cancelled_style' : (meta?.sampleStatus ?? 'no_meta'), action: 'none' };
+              if (status === 'cancelled') {
+                if (isAlreadyCancelledSku || isAlreadyCancelledStyle) alreadyCancelled.push({ ...item, action: 'already_cancelled' });
+                else toCancel.push({ ...item, action: 'cancel_sku' });
+              } else if (status === 'specked') {
+                if (!isAlreadyCancelledSku && !isAlreadyCancelledStyle && (!meta || meta.sampleStatus !== 'received'))
+                  toMarkSpecked.push({ ...item, action: 'mark_specked' });
+              } else if (status === 'specked_no_sample') {
+                if (!isAlreadyCancelledSku && !isAlreadyCancelledStyle && (!meta || meta.sampleStatus !== 'received'))
+                  toMarkSpeckedNoSample.push({ ...item, action: 'mark_specked_no_sample' });
+              }
+            }
+          }
+        }
+        return { success: true, slideCount: input.parsed.filter((s) => !s.error).length, toCancel, toMarkSpecked, toMarkSpeckedNoSample, missingFromDb, alreadyCancelled };
+      }),
+
     // Apply the confirmed changes from a PPTX sync
     applyChanges: publicProcedure
       .input(z.object({
