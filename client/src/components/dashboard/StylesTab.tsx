@@ -890,25 +890,17 @@ export default function StylesTab() {
                                         {/* Sample — new SKUs only, click to toggle received/waiting */}
                                         {isNew && (
                                           <span className="text-xs text-center" onClick={(e) => e.stopPropagation()}>
-                                            {dbMeta?.sampleStatus === "received" ? (
-                                              <button
-                                                onClick={(e) => { e.stopPropagation(); handleSampleToggle(sku.style, sku.colour, sku.leather, dbMeta?.sampleStatus); }}
-                                                title="Sample received — click to mark as waiting"
-                                                className="px-1.5 py-0.5 rounded text-xs font-medium transition-colors"
-                                                style={{ background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)", border: "1px solid oklch(0.80 0.12 155)" }}
-                                              >
-                                                ✓ Rcvd
-                                              </button>
-                                            ) : (
-                                              <button
-                                                onClick={(e) => { e.stopPropagation(); handleSampleToggle(sku.style, sku.colour, sku.leather, dbMeta?.sampleStatus); }}
-                                                title="Mark sample as received"
-                                                className="px-1.5 py-0.5 rounded text-xs text-transparent hover:text-muted-foreground transition-colors"
-                                                style={{ border: "1px solid transparent" }}
-                                              >
-                                                ✓ Rcvd
-                                              </button>
-                                            )}
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); handleSampleToggle(sku.style, sku.colour, sku.leather, dbMeta?.sampleStatus); }}
+                                              title={dbMeta?.sampleStatus === "received" ? "Sample received — click to mark as waiting" : "Mark sample as received"}
+                                              className="px-1.5 py-0.5 rounded text-xs font-medium transition-colors"
+                                              style={dbMeta?.sampleStatus === "received"
+                                                ? { background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)", border: "1px solid oklch(0.80 0.12 155)" }
+                                                : { background: "var(--muted)", color: "var(--muted-foreground)", border: "1px solid var(--border)" }
+                                              }
+                                            >
+                                              {dbMeta?.sampleStatus === "received" ? "✓ Rcvd" : "Rcvd?"}
+                                            </button>
                                           </span>
                                         )}
                                         {/* Buy Qty — new SKUs only */}

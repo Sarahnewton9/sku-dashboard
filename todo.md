@@ -734,3 +734,8 @@
 - [x] Add getDeletedLasts tRPC procedure to fetch deleted last names
 - [x] Update LastApprovalTab to filter out deleted lasts on load and call deleteLast mutation on delete
 - [x] Run db migration to create deleted_lasts table
+
+## Phase 86: Sample Here Toggle in SKU Dropdown (By Style Tab)
+- [x] Make sample toggle always visible for new SKUs in the By Style expanded view
+- [x] Shows "Rcvd?" (grey) when not received, "✓ Rcvd" (green) when received
+- [x] Clicking either state toggles the sample status via sku.update mutation
