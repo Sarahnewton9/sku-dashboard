@@ -40,48 +40,79 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-display: 'Sora', system-ui, sans-serif;
+  /* DM Sans for body, DM Serif Display for headings */
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-display: 'DM Serif Display', Georgia, serif;
 }
 
 :root {
   --radius: 0.5rem;
-  /* Warm neutral palette */
-  --background: oklch(0.98 0.006 80);
-  --foreground: oklch(0.22 0.012 60);
+
+  /*
+   * Palette reference:
+   *   linen sheets    #9db8c1  oklch(0.765 0.0322 220.0)  — dusty blue
+   *   bathrobe fuzz   #d38d78  oklch(0.709 0.0912  37.4)  — warm terracotta
+   *   mud mask        #a4823b  oklch(0.625 0.0983  83.5)  — golden brown
+   *   bubble bath     #b4c3ad  oklch(0.799 0.0345 135.7)  — sage green (light)
+   *   striped towel   #65a068  oklch(0.650 0.1028 145.5)  — mid green
+   *   tomato perfume  #a2302c  oklch(0.482 0.1506  26.5)  — deep red
+   *   lazy pyjamas    #c5a0b2  oklch(0.745 0.0498 347.5)  — dusty rose
+   *   lobby fireplace #4a4036  oklch(0.379 0.0215  67.1)  — dark espresso brown
+   */
+
+  /* Page background: very light warm cream (lighter than linen sheets) */
+  --background: oklch(0.975 0.008 90);
+  --foreground: oklch(0.25 0.018 67.1);
+
+  /* Cards: clean white with warm tint */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.012 60);
+  --card-foreground: oklch(0.25 0.018 67.1);
+
+  /* Popover */
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.012 60);
-  /* Amber primary for new SKUs */
-  --primary: oklch(0.72 0.16 65);
-  --primary-foreground: oklch(0.15 0.02 60);
-  --secondary: oklch(0.95 0.008 80);
-  --secondary-foreground: oklch(0.35 0.012 60);
-  --muted: oklch(0.94 0.008 80);
-  --muted-foreground: oklch(0.52 0.012 60);
-  --accent: oklch(0.94 0.008 80);
-  --accent-foreground: oklch(0.22 0.012 60);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.88 0.01 80);
-  --input: oklch(0.88 0.01 80);
-  --ring: oklch(0.72 0.16 65);
-  /* Chart colours */
-  --chart-1: oklch(0.72 0.16 65);
-  --chart-2: oklch(0.55 0.12 200);
-  --chart-3: oklch(0.65 0.14 150);
-  --chart-4: oklch(0.60 0.14 280);
-  --chart-5: oklch(0.50 0.10 30);
-  /* Sidebar */
-  --sidebar: oklch(0.20 0.012 60);
-  --sidebar-foreground: oklch(0.90 0.006 80);
-  --sidebar-primary: oklch(0.72 0.16 65);
-  --sidebar-primary-foreground: oklch(0.15 0.02 60);
-  --sidebar-accent: oklch(0.28 0.012 60);
-  --sidebar-accent-foreground: oklch(0.90 0.006 80);
-  --sidebar-border: oklch(0.30 0.012 60);
-  --sidebar-ring: oklch(0.72 0.16 65);
+  --popover-foreground: oklch(0.25 0.018 67.1);
+
+  /* Primary: striped towel green — main action colour */
+  --primary: oklch(0.650 0.1028 145.5);
+  --primary-foreground: oklch(0.98 0.005 145.5);
+
+  /* Secondary: bubble bath sage — softer secondary actions */
+  --secondary: oklch(0.920 0.022 135.7);
+  --secondary-foreground: oklch(0.35 0.040 135.7);
+
+  /* Muted: very light warm grey */
+  --muted: oklch(0.945 0.010 90);
+  --muted-foreground: oklch(0.52 0.018 67.1);
+
+  /* Accent: linen sheets blue — hover highlights */
+  --accent: oklch(0.920 0.018 220.0);
+  --accent-foreground: oklch(0.30 0.040 220.0);
+
+  /* Destructive: tomato perfume red */
+  --destructive: oklch(0.482 0.1506 26.5);
+  --destructive-foreground: oklch(0.98 0.005 26.5);
+
+  /* Borders & inputs */
+  --border: oklch(0.880 0.015 90);
+  --input: oklch(0.880 0.015 90);
+  --ring: oklch(0.650 0.1028 145.5);
+
+  /* Charts — use the full palette */
+  --chart-1: oklch(0.650 0.1028 145.5);  /* striped towel green */
+  --chart-2: oklch(0.765 0.0322 220.0);  /* linen sheets blue */
+  --chart-3: oklch(0.625 0.0983  83.5);  /* mud mask gold */
+  --chart-4: oklch(0.709 0.0912  37.4);  /* bathrobe fuzz terracotta */
+  --chart-5: oklch(0.745 0.0498 347.5);  /* lazy pyjamas rose */
+
+  /* Sidebar: lobby fireplace dark espresso */
+  --sidebar: oklch(0.290 0.018 67.1);
+  --sidebar-foreground: oklch(0.920 0.010 90);
+  --sidebar-primary: oklch(0.799 0.0345 135.7);   /* bubble bath — active item bg */
+  --sidebar-primary-foreground: oklch(0.25 0.040 135.7);
+  --sidebar-accent: oklch(0.360 0.018 67.1);       /* hover row */
+  --sidebar-accent-foreground: oklch(0.940 0.010 90);
+  --sidebar-border: oklch(0.380 0.018 67.1);
+  --sidebar-ring: oklch(0.799 0.0345 135.7);
 }
 
 @layer base {
@@ -90,10 +121,12 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'DM Sans', system-ui, sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Sora', system-ui, sans-serif;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -147,11 +180,12 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.80 0.01 80);
+  background: oklch(0.799 0.0345 135.7);
   border-radius: 3px;
+  opacity: 0.5;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.65 0.01 80);
+  background: oklch(0.650 0.1028 145.5);
 }
 
 /* Count-up animation helper */

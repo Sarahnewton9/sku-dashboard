@@ -719,3 +719,11 @@
 - [x] Add delete button to remove a last from the list (with confirmation)
 - [x] Show style images in the expanded section for each style on the last
 - [x] Make entire row clickable to expand/collapse (not just the arrow button)
+
+## Phase 84: Dashboard Retheme — New Colour Palette + Font
+- [x] Update CSS variables in index.css with new palette (linen sheets, bathrobe fuzz, mud mask, bubble bath, striped towel, tomato perfume, lazy pyjamas, lobby fireplace)
+- [x] Add DM Sans (body) + DM Serif Display (headings) via Google Fonts
+- [x] Map colours to semantic roles: background, sidebar, primary accent, destructive, muted, card, border
+- [x] Update sidebar active/hover states with new accent colours
+- [x] Update button variants (primary = striped towel green, destructive = tomato perfume red)
+- [x] Ensure text contrast ratios remain accessible across all new background colours
