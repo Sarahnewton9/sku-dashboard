@@ -949,7 +949,7 @@ export default function StylesTab() {
                                                   <input
                                                     type="number" min={0}
                                                     defaultValue={sessionAuQty || ""}
-                                                    key={`au-${selectedSessionId}-${skuKey2}`}
+                                                    key={`au-${selectedSessionId}-${skuKey2}-${sessionAuQty}`}
                                                     onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, 'au', e.target.value)}
                                                     onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, 'au')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
@@ -964,7 +964,7 @@ export default function StylesTab() {
                                                   <input
                                                     type="number" min={0}
                                                     defaultValue={sessionUsaQty || ""}
-                                                    key={`usa-${selectedSessionId}-${skuKey2}`}
+                                                    key={`usa-${selectedSessionId}-${skuKey2}-${sessionUsaQty}`}
                                                     onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, 'usa', e.target.value)}
                                                     onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, 'usa')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}

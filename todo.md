@@ -803,3 +803,8 @@
 
 - [x] Fix qty input blur handler — treat empty/blank input as 0 and save correctly to DB
 - [x] Verify upsertBuySessionItem handles qty=0 (deletes or zeroes the record)
+
+## Phase 97: Fix Stale Qty Display After Clear
+
+- [x] Fix qty input showing old value after clearing — input key now includes saved qty so React remounts after refetch
+- [x] Ensure input reflects DB state correctly after blur/save by including sessionAuQty/sessionUsaQty in key prop
