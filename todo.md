@@ -784,3 +784,8 @@
 - [x] Write server/pptx_parser.ts that replicates pptx_parser.py logic using JSZip + XML parsing
 - [x] Update pptx-upload endpoint in index.ts to call the Node.js parser directly (no execSync)
 - [x] Test end-to-end against real PPTX file
+
+## Phase 94: Re-add Order Qty to SKU Row
+
+- [x] Find where order qty input was removed from the By Style SKU row
+- [x] Re-add inline order qty input to SKU row so quantities can be typed directly (now shows for all SKUs, not just new ones)

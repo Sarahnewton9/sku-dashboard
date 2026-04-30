@@ -882,7 +882,7 @@ export default function StylesTab() {
                                         style={{
                                           gridTemplateColumns: isNew
                                             ? "1.5fr 1.5fr 40px 70px 130px 32px 28px"
-                                            : "1.5fr 1.5fr 40px 32px 28px",
+                                            : "1.5fr 1.5fr 40px 130px 32px 28px",
                                           border: "1px solid var(--border)",
                                           background: sessionTotalQty > 0 ? "oklch(0.97 0.06 65 / 0.5)" : "var(--card)",
                                         }}
@@ -913,9 +913,8 @@ export default function StylesTab() {
                                             </button>
                                           </span>
                                         )}
-                                        {/* Buy Qty — new SKUs only */}
-                                        {isNew && (
-                                          <div className="flex items-center gap-1.5">
+                                        {/* Buy Qty — all SKUs */}
+                                        <div className="flex items-center gap-1.5">
                                             {!isSessionLocked && selectedSession ? (
                                               <>
                                                 <div className="flex flex-col items-center gap-0.5">
@@ -966,8 +965,7 @@ export default function StylesTab() {
                                                 )}
                                               </div>
                                             )}
-                                          </div>
-                                        )}
+                                        </div>
                                         {/* Detail button */}
                                         <button
                                           onClick={(e) => {
@@ -1006,7 +1004,7 @@ export default function StylesTab() {
 
                                   // Grid template columns must match renderRow exactly
                                   // Colour 1.5fr, Leather 1.5fr, Sz11 40px, Sample 70px, BuyQty 130px, detail 32px, cancel 28px
-                                  const existingCols = "1.5fr 1.5fr 40px 32px 28px";
+                                  const existingCols = "1.5fr 1.5fr 40px 130px 32px 28px";
                                   const newCols = "1.5fr 1.5fr 40px 70px 130px 32px 28px";
 
                                   return (
@@ -1024,6 +1022,7 @@ export default function StylesTab() {
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Colour</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Leather</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Sz11</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Buy Qty</span>
                                             <span />{/* detail btn col */}
                                             <span />{/* cancel btn col */}
                                           </div>
