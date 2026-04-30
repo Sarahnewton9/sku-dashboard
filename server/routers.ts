@@ -10,7 +10,7 @@ import {
   getStyleFittingImages, getAllStyleFittingImages, addStyleFittingImage, deleteStyleFittingImage,
   getFittingImages, addFittingImage, deleteFittingImage, getAllFittingImages,
   getAllBuySessions, getActiveBuySession, createBuySession, lockBuySession, deleteBuySession,
-  getBuySessionItems, upsertBuySessionItem, getSessionTotals,
+  getBuySessionItems, upsertBuySessionItem, getSessionTotals, getAllSessionQtys,
   getAllLastApprovals, upsertLastApproval, getDeletedLasts, deleteLast, restoreDeletedLast,
   getAllSeasonImports, createSeasonImport, getSeasonSkuData, deleteSeasonImport,
   getSpecsForStyle, upsertStyleSpec, deleteStyleSpecs,
@@ -423,6 +423,8 @@ export const appRouter = router({
     getSessions: publicProcedure.query(async () => getAllBuySessions()),
 
     getSessionTotals: publicProcedure.query(async () => getSessionTotals()),
+
+    getAllSessionQtys: publicProcedure.query(async () => getAllSessionQtys()),
 
     getActive: publicProcedure.query(async () => getActiveBuySession()),
 

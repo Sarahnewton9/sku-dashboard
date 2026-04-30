@@ -312,6 +312,40 @@ export async function getSessionTotals(): Promise<Record<number, { au: number; u
   return totals;
 }
 
+/**
+ * Returns per-SKU totals across ALL sessions, plus a per-session breakdown.
+ * Key: "style|colour|leather"
+ * Only includes SKUs with at least 1 unit bought.
+ */
+export async function getAllSessionQtys(): Promise<Record<string, {
+  totalAu: number;
+  totalUsa: number;
+  total: number;
+  sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number }>;
+}>> {
+  const db = await getDb();
+  if (!db) return {};
+  const [items, sessions] = await Promise.all([
+    db.select().from(buySessionItems),
+    db.select().from(buySessions),
+  ]);
+  const sessionMap: Record<number, string> = {};
+  for (const s of sessions) sessionMap[s.id] = s.name;
+  const result: Record<string, { totalAu: number; totalUsa: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number }> }> = {};
+  for (const row of items) {
+    const au = row.auQty ?? 0;
+    const usa = row.usaQty ?? 0;
+    if (au === 0 && usa === 0) continue;
+    const key = `${row.style}|${row.colour}|${row.leather}`;
+    if (!result[key]) result[key] = { totalAu: 0, totalUsa: 0, total: 0, sessions: [] };
+    result[key].totalAu += au;
+    result[key].totalUsa += usa;
+    result[key].total += au + usa;
+    result[key].sessions.push({ sessionId: row.sessionId, sessionName: sessionMap[row.sessionId] ?? `Session ${row.sessionId}`, au, usa });
+  }
+  return result;
+}
+
 export async function upsertBuySessionItem(
   sessionId: number, style: string, colour: string, leather: string,
   auQty: number, usaQty: number

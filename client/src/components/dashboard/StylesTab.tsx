@@ -120,6 +120,9 @@ export default function StylesTab() {
     onError: (err) => toast.error(`Failed to unlock: ${err.message}`),
   });
 
+  // All-session combined buy quantities (persistent, always visible)
+  const { data: allSessionQtys = {} } = trpc.buy.getAllSessionQtys.useQuery();
+
   // Buy sessions
   const { data: allSessions = [], refetch: refetchSessions } = trpc.buy.getSessions.useQuery();
   const { data: activeSession, refetch: refetchActive } = trpc.buy.getActive.useQuery();
@@ -875,14 +878,19 @@ export default function StylesTab() {
                                     const sessionAuQty = sessionQtyObj.auQty;
                                     const sessionUsaQty = sessionQtyObj.usaQty;
                                     const sessionTotalQty = sessionAuQty + sessionUsaQty;
+                                    // All-session combined totals
+                                    const allQtyData = (allSessionQtys as Record<string, { totalAu: number; totalUsa: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number }> }>)[skuKey2];
+                                    const allTotalAu = allQtyData?.totalAu ?? 0;
+                                    const allTotalUsa = allQtyData?.totalUsa ?? 0;
+                                    const allTotal = allQtyData?.total ?? 0;
                                     return (
                                       <div
                                         key={`${sku.colour}-${sku.leather}`}
                                         className="grid items-center gap-2 px-3 py-2 rounded-lg"
                                         style={{
                                           gridTemplateColumns: isNew
-                                            ? "1.5fr 1.5fr 40px 70px 130px 32px 28px"
-                                            : "1.5fr 1.5fr 40px 130px 32px 28px",
+                                            ? "1.5fr 1.5fr 40px 70px 50px 130px 32px 28px"
+                                            : "1.5fr 1.5fr 40px 50px 130px 32px 28px",
                                           border: "1px solid var(--border)",
                                           background: sessionTotalQty > 0 ? "oklch(0.97 0.06 65 / 0.5)" : "var(--card)",
                                         }}
@@ -913,7 +921,21 @@ export default function StylesTab() {
                                             </button>
                                           </span>
                                         )}
-                                        {/* Buy Qty — all SKUs */}
+                                        {/* All-session total bought badge */}
+                                        <div className="flex items-center gap-1.5">
+                                          {allTotal > 0 ? (
+                                            <div className="flex flex-col items-center gap-0.5" title={allQtyData?.sessions.map((s) => `${s.sessionName}: AU ${s.au} / USA ${s.usa}`).join('\n')}>
+                                              <span className="text-[9px] font-semibold uppercase tracking-wide leading-none" style={{ color: "oklch(0.55 0.14 55)" }}>Total</span>
+                                              <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded" style={{ background: "oklch(0.94 0.08 65)", color: "oklch(0.45 0.14 55)" }}>{allTotal}</span>
+                                            </div>
+                                          ) : (
+                                            <div className="flex flex-col items-center gap-0.5">
+                                              <span className="text-[9px] font-semibold uppercase tracking-wide leading-none text-muted-foreground">Total</span>
+                                              <span className="text-xs font-mono text-muted-foreground px-1.5 py-0.5 rounded" style={{ background: "var(--muted)" }}>0</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                        {/* Buy Qty — session input */}
                                         <div className="flex items-center gap-1.5">
                                             {!isSessionLocked && selectedSession ? (
                                               <>
@@ -1003,9 +1025,9 @@ export default function StylesTab() {
                                   };
 
                                   // Grid template columns must match renderRow exactly
-                                  // Colour 1.5fr, Leather 1.5fr, Sz11 40px, Sample 70px, BuyQty 130px, detail 32px, cancel 28px
-                                  const existingCols = "1.5fr 1.5fr 40px 130px 32px 28px";
-                                  const newCols = "1.5fr 1.5fr 40px 70px 130px 32px 28px";
+                                  // Colour 1.5fr, Leather 1.5fr, Sz11 40px, Total 50px, Sample 70px (new only), BuyQty 130px, detail 32px, cancel 28px
+                                  const existingCols = "1.5fr 1.5fr 40px 50px 130px 32px 28px";
+                                  const newCols = "1.5fr 1.5fr 40px 70px 50px 130px 32px 28px";
 
                                   return (
                                     <div className="space-y-3">
@@ -1022,6 +1044,7 @@ export default function StylesTab() {
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Colour</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Leather</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Sz11</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-center" style={{ color: "oklch(0.55 0.14 55)" }}>Total</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Buy Qty</span>
                                             <span />{/* detail btn col */}
                                             <span />{/* cancel btn col */}
@@ -1045,6 +1068,7 @@ export default function StylesTab() {
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Leather</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Sz11</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Sample</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-center" style={{ color: "oklch(0.55 0.14 55)" }}>Total</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Buy Qty</span>
                                             <span />{/* detail btn col */}
                                             <span />{/* cancel btn col */}

@@ -789,3 +789,12 @@
 
 - [x] Find where order qty input was removed from the By Style SKU row
 - [x] Re-add inline order qty input to SKU row so quantities can be typed directly (now shows for all SKUs, not just new ones)
+
+## Phase 95: Buying Workflow Improvements
+
+- [x] Add tRPC query getAllSessionQtys: returns combined total AU+USA per SKU across all sessions, plus per-session breakdown
+- [x] Add persistent "Total Bought" badge to every SKU row in By Style tab (always visible, sum of all sessions)
+- [x] Expand Buy Analysis page: per-SKU sortable table with session breakdown columns
+- [x] Buy Analysis: add "Not Yet Bought" filter tab showing SKUs with zero units across all sessions
+- [x] Buy Analysis: add breakdown by category and last
+- [x] Buy Analysis: show which sessions have bought each SKU vs which haven't
