@@ -92,10 +92,11 @@ export default function BuyAnalysisTab() {
   const totalUSA = useMemo(() => boughtItems.reduce((s, i) => s + i.usaQty, 0), [boughtItems]);
   const totalPairs = totalAU + totalUSA;
 
-  // Not yet bought — SKUs with zero total across ALL sessions
+  // Not yet bought — NEW SKUs only with zero total across ALL sessions
   const notBoughtSkus = useMemo(() => {
     const allQtys = allSessionQtys as Record<string, { total: number }>;
     return allRangeSkus.filter((sku) => {
+      if (!sku.is_new) return false; // only show new SKUs
       const key = `${sku.style}|${sku.colour}|${sku.leather}`;
       return !allQtys[key] || allQtys[key].total === 0;
     });
@@ -597,15 +598,15 @@ export default function BuyAnalysisTab() {
             <div className="rounded-xl border px-4 py-3 flex items-center gap-3" style={{ borderColor: "oklch(0.85 0.08 30)", background: "oklch(0.97 0.04 30)" }}>
               <span className="text-2xl font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 30)" }}>{notBoughtRows.length}</span>
               <div>
-                <p className="text-sm font-medium text-foreground">SKUs not yet bought</p>
-                <p className="text-xs text-muted-foreground">Zero units across all sessions</p>
+              <p className="text-sm font-medium text-foreground">New SKUs not yet bought</p>
+              <p className="text-xs text-muted-foreground">Zero units across all sessions</p>
               </div>
             </div>
             <div className="rounded-xl border px-4 py-3 flex items-center gap-3" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-              <span className="text-2xl font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{allRangeSkus.length - notBoughtRows.length}</span>
+              <span className="text-2xl font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{allRangeSkus.filter(s => s.is_new).length - notBoughtRows.length}</span>
               <div>
-                <p className="text-sm font-medium text-foreground">SKUs with at least 1 unit</p>
-                <p className="text-xs text-muted-foreground">Bought in any session</p>
+              <p className="text-sm font-medium text-foreground">New SKUs with at least 1 unit</p>
+              <p className="text-xs text-muted-foreground">Bought in any session</p>
               </div>
             </div>
           </div>
@@ -613,8 +614,8 @@ export default function BuyAnalysisTab() {
           {notBoughtRows.length === 0 ? (
             <div className="rounded-xl border p-12 text-center" style={{ borderColor: "var(--border)", borderStyle: "dashed" }}>
               <Check className="w-10 h-10 text-green-500 mx-auto mb-3" />
-              <p className="text-sm font-medium text-foreground">All SKUs have been bought!</p>
-              <p className="text-xs text-muted-foreground mt-1">Every SKU in the range has at least 1 unit across all sessions.</p>
+              <p className="text-sm font-medium text-foreground">All new SKUs have been bought!</p>
+              <p className="text-xs text-muted-foreground mt-1">Every new SKU in the range has at least 1 unit across all sessions.</p>
             </div>
           ) : (
             <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--border)" }}>
