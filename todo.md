@@ -813,3 +813,7 @@
 
 - [x] Add renameSession mutation in db.ts and routers.ts
 - [x] Add inline rename UI to Buy Sessions tab (click pencil icon or double-click name to edit)
+
+## Phase 99: Buy Sheet Export Filename
+
+- [x] Update buy sheet export filename to use session name + " BUY.xlsx" (e.g. "Lafayette 30.04 BUY.xlsx")

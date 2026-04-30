@@ -199,11 +199,8 @@ export default function BuySessionsPanel() {
     // Determine if any USA quantities exist — add USA column only if needed
     const hasUsa = rows.some((r) => r.usaQty > 0);
 
-    // Filename uses session's own date
-    const sessionDate = session ? new Date(session.createdAt) : new Date();
-    const dd = String(sessionDate.getDate()).padStart(2, "0");
-    const mm = String(sessionDate.getMonth() + 1).padStart(2, "0");
-    const fileName = `SUMMER 26 BUY ${dd}.${mm}.xlsx`;
+    // Filename uses session name
+    const fileName = `${sessionName} BUY.xlsx`;
 
     // ── Layout ────────────────────────────────────────────────────────────────────
     // Columns: CATEGORY | LAST | SIZE 11 | STYLE | COLOUR | AU QTY [| USA QTY]
