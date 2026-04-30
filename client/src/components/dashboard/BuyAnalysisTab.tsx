@@ -116,19 +116,18 @@ export default function BuyAnalysisTab() {
       .sort((a, b) => b.total - a.total);
   }, [boughtItems, styleInfoMap]);
 
-  // By last
-  const byLast = useMemo(() => {
+  // By style
+  const byStyle = useMemo(() => {
     const map: Record<string, { au: number; usa: number }> = {};
     for (const item of boughtItems) {
-      const last = styleInfoMap[item.style]?.last ?? "Unknown";
-      if (!map[last]) map[last] = { au: 0, usa: 0 };
-      map[last].au += item.auQty;
-      map[last].usa += item.usaQty;
+      if (!map[item.style]) map[item.style] = { au: 0, usa: 0 };
+      map[item.style].au += item.auQty;
+      map[item.style].usa += item.usaQty;
     }
     return Object.entries(map)
-      .map(([last, v]) => ({ last, au: v.au, usa: v.usa, total: v.au + v.usa }))
+      .map(([style, v]) => ({ style, au: v.au, usa: v.usa, total: v.au + v.usa }))
       .sort((a, b) => b.total - a.total);
-  }, [boughtItems, styleInfoMap]);
+  }, [boughtItems]);
 
   // By leather
   const byLeather = useMemo(() => {
@@ -411,13 +410,13 @@ export default function BuyAnalysisTab() {
                   </div>
                 </div>
 
-                {/* By Last */}
+                {/* By Style */}
                 <div className="rounded-xl border p-5" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-                  <h3 className="text-sm font-bold text-foreground mb-1">Pairs by Last</h3>
+                  <h3 className="text-sm font-bold text-foreground mb-1">Pairs by Style</h3>
                   <p className="text-xs text-muted-foreground mb-4">Amber = AU · Blue = USA</p>
                   <div className="space-y-2.5">
-                    {byLast.map(({ last, au, usa }) => (
-                      <BarRow key={last} label={last} au={au} usa={usa} max={totalPairs} />
+                    {byStyle.map(({ style, au, usa }) => (
+                      <BarRow key={style} label={style} au={au} usa={usa} max={totalPairs} />
                     ))}
                   </div>
                 </div>

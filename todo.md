@@ -817,3 +817,7 @@
 ## Phase 99: Buy Sheet Export Filename
 
 - [x] Update buy sheet export filename to use session name + " BUY.xlsx" (e.g. "Lafayette 30.04 BUY.xlsx")
+
+## Phase 100: Buy Analysis — By Style
+
+- [x] Replace Pairs by Last bar chart with Pairs by Style in Buy Analysis Summary tab
