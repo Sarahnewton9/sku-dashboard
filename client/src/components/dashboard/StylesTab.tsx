@@ -257,9 +257,14 @@ export default function StylesTab() {
 
   function handleQtyChange(style: string, colour: string, leather: string, field: 'au' | 'usa', val: string) {
     const key = `${style}|${colour}|${leather}|${field}`;
-    const qty = parseInt(val, 10);
-    if (!isNaN(qty) && qty >= 0) {
-      pendingQty.current[key] = qty;
+    if (val === '' || val === null) {
+      // Empty field — store 0 so blur handler saves it as 0
+      pendingQty.current[key] = 0;
+    } else {
+      const qty = parseInt(val, 10);
+      if (!isNaN(qty) && qty >= 0) {
+        pendingQty.current[key] = qty;
+      }
     }
   }
 

@@ -798,3 +798,8 @@
 - [x] Buy Analysis: add "Not Yet Bought" filter tab showing SKUs with zero units across all sessions
 - [x] Buy Analysis: add breakdown by category and last
 - [x] Buy Analysis: show which sessions have bought each SKU vs which haven't
+
+## Phase 96: Fix Buy Qty Deletion
+
+- [x] Fix qty input blur handler — treat empty/blank input as 0 and save correctly to DB
+- [x] Verify upsertBuySessionItem handles qty=0 (deletes or zeroes the record)
