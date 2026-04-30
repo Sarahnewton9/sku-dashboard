@@ -767,6 +767,12 @@ export async function unlockBuySession(id: number): Promise<void> {
   await db.update(buySessions).set({ isLocked: false }).where(eq(buySessions.id, id));
 }
 
+export async function renameBuySession(id: number, name: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(buySessions).set({ name }).where(eq(buySessions.id, id));
+}
+
 // ─── Style Trend Flags ────────────────────────────────────────────────────────
 export async function getAllStyleTrendFlags() {
   const db = await getDb();

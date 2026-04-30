@@ -23,6 +23,7 @@ import {
   cancelStyle, restoreStyle, listCancelledStyles,
   addCustomSku, getAllCustomSkus, deleteCustomSku,
   unlockBuySession,
+  renameBuySession,
   cancelSku, restoreSku, listCancelledSkus,
   getAllStyleSubCategories, upsertStyleSubCategory,
   getAllStyleTrendFlags,
@@ -460,13 +461,18 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    rename: publicProcedure
+      .input(z.object({ sessionId: z.number(), name: z.string().min(1).max(128) }))
+      .mutation(async ({ input }) => {
+        await renameBuySession(input.sessionId, input.name);
+        return { success: true };
+      }),
     delete: publicProcedure
       .input(z.object({ sessionId: z.number() }))
       .mutation(async ({ input }) => {
         await deleteBuySession(input.sessionId);
         return { success: true };
       }),
-
     unlock: publicProcedure
       .input(z.object({ sessionId: z.number() }))
       .mutation(async ({ input }) => {

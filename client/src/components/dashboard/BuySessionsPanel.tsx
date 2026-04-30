@@ -3,10 +3,10 @@
  * Shows all sessions, allows creating, locking, and exporting each session independently
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
-import { Lock, Download, Plus, Clock, CheckCircle, Package, Trash2 } from "lucide-react";
+import { Lock, Download, Plus, Clock, CheckCircle, Package, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 
@@ -14,6 +14,9 @@ export default function BuySessionsPanel() {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
+  const [editingSessionId, setEditingSessionId] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   const { data: allSessions = [], refetch: refetchSessions } = trpc.buy.getSessions.useQuery();
   const { data: activeSession, refetch: refetchActive } = trpc.buy.getActive.useQuery();
@@ -57,6 +60,28 @@ export default function BuySessionsPanel() {
     },
     onError: (err) => toast.error(`Failed to delete: ${err.message}`),
   });
+
+  const renameMutation = trpc.buy.rename.useMutation({
+    onSuccess: () => {
+      toast.success("Session renamed");
+      setEditingSessionId(null);
+      refetchSessions();
+    },
+    onError: (err) => toast.error(`Failed to rename: ${err.message}`),
+  });
+
+  function handleRenameStart(sessionId: number, currentName: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    setEditingSessionId(sessionId);
+    setEditingName(currentName);
+    setTimeout(() => editInputRef.current?.select(), 50);
+  }
+
+  function handleRenameSave(sessionId: number) {
+    const name = editingName.trim();
+    if (!name) { setEditingSessionId(null); return; }
+    renameMutation.mutate({ sessionId, name });
+  }
 
   function handleDelete(sessionId: number, sessionName: string) {
     if (!confirm(`Delete "${sessionName}"? This will permanently remove the session and all its buy quantities. This cannot be undone.`)) return;
@@ -389,7 +414,30 @@ export default function BuySessionsPanel() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-foreground truncate">{session.name}</span>
+                        {editingSessionId === session.id ? (
+                          <input
+                            ref={editInputRef}
+                            value={editingName}
+                            onChange={(e) => setEditingName(e.target.value)}
+                            onBlur={() => handleRenameSave(session.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") { e.preventDefault(); handleRenameSave(session.id); }
+                              if (e.key === "Escape") { e.stopPropagation(); setEditingSessionId(null); }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            autoFocus
+                            className="font-semibold text-foreground bg-transparent border-b border-foreground outline-none min-w-0 w-48"
+                          />
+                        ) : (
+                          <span className="font-semibold text-foreground truncate">{session.name}</span>
+                        )}
+                        <button
+                          onClick={(e) => handleRenameStart(session.id, session.name, e)}
+                          className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                          title="Rename session"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
                         {isActive && (
                           <span className="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0"
                             style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}>

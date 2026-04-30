@@ -808,3 +808,8 @@
 
 - [x] Fix qty input showing old value after clearing — input key now includes saved qty so React remounts after refetch
 - [x] Ensure input reflects DB state correctly after blur/save by including sessionAuQty/sessionUsaQty in key prop
+
+## Phase 98: Rename Buy Sessions
+
+- [x] Add renameSession mutation in db.ts and routers.ts
+- [x] Add inline rename UI to Buy Sessions tab (click pencil icon or double-click name to edit)
