@@ -981,8 +981,24 @@ export default function SpecsTab({}: SpecsTabProps) {
     },
   });
   const deleteCustomRowMutation = trpc.specCustomRow.delete.useMutation({
-    onSuccess: () => refetchCustomRows(),
-    onError: () => toast.error("Failed to delete custom row"),
+    onMutate: async ({ id }) => {
+      if (!selectedStyle) return;
+      await utils.specCustomRow.getByStyle.cancel({ style: selectedStyle });
+      const prev = utils.specCustomRow.getByStyle.getData({ style: selectedStyle });
+      utils.specCustomRow.getByStyle.setData({ style: selectedStyle }, (old) =>
+        old ? old.filter((r) => r.id !== id) : old
+      );
+      return { prev };
+    },
+    onError: (_err, _input, ctx) => {
+      if (ctx?.prev !== undefined && selectedStyle) {
+        utils.specCustomRow.getByStyle.setData({ style: selectedStyle }, ctx.prev);
+      }
+      toast.error("Failed to delete custom row");
+    },
+    onSettled: () => {
+      if (selectedStyle) utils.specCustomRow.getByStyle.invalidate({ style: selectedStyle });
+    },
   });
 
   // Debounced custom row title/value save
@@ -1045,7 +1061,35 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   // ── Mutations ─────────────────────────────────────────────────────────────
   const upsertMutation = trpc.specs.upsert.useMutation({
-    onError: () => toast.error("Failed to save spec value"),
+    onMutate: async (input) => {
+      // Optimistic update: immediately update the local cache so the UI doesn't wait for the server
+      await utils.specs.getForStyle.cancel({ style: input.style });
+      const prev = utils.specs.getForStyle.getData({ style: input.style });
+      utils.specs.getForStyle.setData({ style: input.style }, (old) => {
+        if (!old) return old;
+        const existing = old.find((r) => r.colour === input.colour && r.component === input.component);
+        if (existing) {
+          return old.map((r) =>
+            r.colour === input.colour && r.component === input.component
+              ? { ...r, value: input.value }
+              : r
+          );
+        }
+        return [
+          ...old,
+          { id: -Date.now(), style: input.style, colour: input.colour, component: input.component, value: input.value, updatedAt: new Date() },
+        ];
+      });
+      return { prev };
+    },
+    onError: (_err, input, ctx) => {
+      if (ctx?.prev !== undefined) utils.specs.getForStyle.setData({ style: input.style }, ctx.prev);
+      toast.error("Failed to save spec value");
+    },
+    onSettled: (_data, _err, input) => {
+      // Quietly sync in background — no blocking refetch
+      utils.specs.getForStyle.invalidate({ style: input.style });
+    },
   });
 
   const addDropdownMutation = trpc.specs.addDropdownOption.useMutation({
@@ -1063,10 +1107,8 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   function handleUpsert(colour: string, component: string, value: string) {
     if (!selectedStyle) return;
-    upsertMutation.mutate(
-      { style: selectedStyle, colour, component, value },
-      { onSuccess: () => refetchSpecs() }
-    );
+    // No onSuccess refetch needed — optimistic update handles the UI immediately
+    upsertMutation.mutate({ style: selectedStyle, colour, component, value });
   }
 
   function handleAddDropdownOption(component: string, value: string) {
@@ -1129,7 +1171,7 @@ export default function SpecsTab({}: SpecsTabProps) {
           count++;
         }
       }
-      await refetchSpecs();
+      // Background invalidation is handled by upsertMutation.onSettled — no blocking refetch needed
       toast.success(`Imported ${count} spec values for ${selectedStyle}`);
       setImportParsed(null);
     } catch {
@@ -1210,7 +1252,7 @@ export default function SpecsTab({}: SpecsTabProps) {
         setBulkResults([...updatedResults]);
       }
     }
-    await refetchSpecs();
+    // Background invalidation is handled by upsertMutation.onSettled — no blocking refetch needed
     setBulkSaving(false);
     const doneCount = updatedResults.filter((r) => r.status === "done").length;
     const errCount = updatedResults.filter((r) => r.status === "error").length;

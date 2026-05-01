@@ -828,3 +828,9 @@
 - [x] Replace "CHOC VENICE" with "CHOCOLATE VENICE" everywhere via displayColour helper
 - [x] Applied displayColour/displayLeather/displayColourLeather to: BuyAnalysisTab, SkuDetailPanel, BuySessionsPanel, ColourLeatherTab, LeathersTab, SpecsTab, StylesTab
 - [x] Fix slow Add Custom Row in specs — optimistic update (onMutate) so row appears instantly without waiting for server refetch
+
+## Phase 102: Spec Grid Full Optimistic Updates
+- [x] specs.upsert mutation: replaced refetchSpecs with onMutate optimistic cache update + background invalidate
+- [x] specCustomRow.delete mutation: replaced refetchCustomRows with onMutate optimistic cache update
+- [x] handleSaveImport and bulk save: removed blocking refetchSpecs calls
+- [x] All spec grid interactions (cell save, add row, delete row) now update UI instantly without waiting for server
