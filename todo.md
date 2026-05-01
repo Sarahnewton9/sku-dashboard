@@ -851,3 +851,10 @@
 - [x] Added pptxSync.listImports procedure for future use
 - [x] Added "Re-scan last uploaded PPTX" button in PptxSyncModal upload step (amber card with ScanSearch icon)
 - [x] Re-scan results shown in the same review table as a normal import, all rows pre-set to add_new for one-click confirmation
+
+## Phase 106: Fix SKU counts to include custom SKUs
+- [x] SummaryCards: now uses useCustomSkus().mergedRawSkus + cancelled filtering for total/new/existing SKU counts
+- [x] Dashboard sidebar stat rows: now use liveSummary (live total + new count)
+- [x] Category chart and table in SummaryCards: now use liveCategoryData (custom SKUs mapped to their style's category)
+- [x] Sample tracking counts also updated to use mergedRawSkus + cancelled filtering
+- [x] Header subtitle "X new SKUs across Y styles" also uses live count

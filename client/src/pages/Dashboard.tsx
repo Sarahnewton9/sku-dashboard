@@ -6,8 +6,11 @@
  * - Fixed left sidebar, tabbed main content
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { skuData } from "@/lib/skuData";
+import { useCustomSkus } from "@/hooks/useCustomSkus";
+import { useCancelledStyles } from "@/hooks/useCancelledStyles";
+import { trpc } from "@/lib/trpc";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import CategoryTab from "@/components/dashboard/CategoryTab";
 import StylesTab from "@/components/dashboard/StylesTab";
@@ -65,6 +68,27 @@ export default function Dashboard() {
 
   const tabLabel = NAV_ITEMS.find((n) => n.id === activeTab)?.label ?? "";
 
+  // Live SKU counts (includes custom SKUs from DB, excludes cancelled)
+  const { mergedRawSkus } = useCustomSkus();
+  const { cancelledSet: cancelledStyleSet } = useCancelledStyles();
+  const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery();
+  const cancelledSkuSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const item of cancelledSkuList as Array<{ style: string; colour: string; leather: string }>) {
+      s.add(`${item.style}|${item.colour}|${item.leather}`);
+    }
+    return s;
+  }, [cancelledSkuList]);
+  const liveSummary = useMemo(() => {
+    const active = mergedRawSkus.filter((sku) =>
+      !cancelledStyleSet.has(sku.style) &&
+      !cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)
+    );
+    const total = active.length;
+    const newCount = active.filter((s) => s.is_new).length;
+    return { total, newCount };
+  }, [mergedRawSkus, cancelledStyleSet, cancelledSkuSet]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* ── Sidebar ── */}
@@ -83,10 +107,10 @@ export default function Dashboard() {
         {/* Quick stats */}
         <div className="px-5 py-4 border-b" style={{ borderColor: "var(--sidebar-border)" }}>
           <div className="space-y-2">
-            <StatRow label="Total SKUs" value={skuData.summary.totalSKUs.toLocaleString()} />
+            <StatRow label="Total SKUs" value={liveSummary.total.toLocaleString()} />
             <StatRow
               label="New SKUs"
-              value={skuData.summary.newSKUs.toLocaleString()}
+              value={liveSummary.newCount.toLocaleString()}
               highlight
             />
             <StatRow label="Total Styles" value={skuData.summary.totalStyles.toLocaleString()} />
@@ -227,7 +251,7 @@ export default function Dashboard() {
           <div>
             <h2 className="font-display font-semibold text-xl text-foreground">{tabLabel}</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {activeTab === "overview" && `${skuData.summary.newSKUs} new SKUs across ${skuData.summary.stylesWithNew} styles`}
+              {activeTab === "overview" && `${liveSummary.newCount} new SKUs across ${skuData.summary.stylesWithNew} styles`}
               {activeTab === "categories" && `${skuData.categories.length} categories`}
               {activeTab === "styles" && `${skuData.styles.length} styles — click a style to expand SKUs`}
               {activeTab === "leathers" && `${skuData.leathers.length} unique leather types`}

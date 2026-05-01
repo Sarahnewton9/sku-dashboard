@@ -1,11 +1,14 @@
 /**
  * SummaryCards — Overview tab
  * Simplified: SKU counts, Style counts, combined Samples tile, category chart
+ * Counts are live: includes custom SKUs from DB, excludes cancelled styles/SKUs.
  */
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import { skuData } from "@/lib/skuData";
 import { trpc } from "@/lib/trpc";
+import { useCustomSkus } from "@/hooks/useCustomSkus";
+import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Package, Sparkles, Archive, Layers, Star, RefreshCw, FlaskConical, CheckCircle2 } from "lucide-react";
 
@@ -105,7 +108,62 @@ function MetricCard({ label, value, icon: Icon, accent, accentColor = "amber", s
 }
 
 export default function SummaryCards() {
-  const s = skuData.summary;
+  // Live data: custom SKUs from DB merged with static data
+  const { mergedRawSkus } = useCustomSkus();
+  const { cancelledSet: cancelledStyleSet } = useCancelledStyles();
+  const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery();
+
+  // Build cancelled SKU set
+  const cancelledSkuSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const item of cancelledSkuList as Array<{ style: string; colour: string; leather: string }>) {
+      s.add(`${item.style}|${item.colour}|${item.leather}`);
+    }
+    return s;
+  }, [cancelledSkuList]);
+
+  // Compute live SKU counts (includes custom SKUs, excludes cancelled)
+  const liveCounts = useMemo(() => {
+    const activeSkus = mergedRawSkus.filter((sku) => {
+      if (cancelledStyleSet.has(sku.style)) return false;
+      if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) return false;
+      return true;
+    });
+    const total = activeSkus.length;
+    const newCount = activeSkus.filter((s) => s.is_new).length;
+    const existing = total - newCount;
+    return { total, newCount, existing };
+  }, [mergedRawSkus, cancelledStyleSet, cancelledSkuSet]);
+
+  // Compute live category counts (custom SKUs mapped to their style's category)
+  const liveCategoryData = useMemo(() => {
+    const styleToCategory: Record<string, string> = {};
+    for (const s of skuData.styles) styleToCategory[s.style] = s.category;
+    const catMap: Record<string, { totalSKUs: number; newSKUs: number; existingSKUs: number; totalStyles: Set<string> }> = {};
+    for (const sku of mergedRawSkus) {
+      if (cancelledStyleSet.has(sku.style)) continue;
+      if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) continue;
+      const cat = styleToCategory[sku.style] ?? "Other";
+      if (!catMap[cat]) catMap[cat] = { totalSKUs: 0, newSKUs: 0, existingSKUs: 0, totalStyles: new Set() };
+      catMap[cat].totalSKUs++;
+      if (sku.is_new) catMap[cat].newSKUs++; else catMap[cat].existingSKUs++;
+      catMap[cat].totalStyles.add(sku.style);
+    }
+    return skuData.categories.map((c) => {
+      const live = catMap[c.category];
+      if (!live) return c;
+      const pctNew = live.totalSKUs > 0 ? Math.round((live.newSKUs / live.totalSKUs) * 100) : 0;
+      return { ...c, totalSKUs: live.totalSKUs, newSKUs: live.newSKUs, existingSKUs: live.existingSKUs, totalStyles: live.totalStyles.size, pctNew };
+    });
+  }, [mergedRawSkus, cancelledStyleSet, cancelledSkuSet]);
+
+  // Build live summary (keep static values for totalStyles/brandNewStyles/existingStyles)
+  const s = {
+    ...skuData.summary,
+    totalSKUs: liveCounts.total,
+    newSKUs: liveCounts.newCount,
+    existingSKUs: liveCounts.existing,
+  };
 
   // Fetch live sample status counts
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
@@ -115,9 +173,11 @@ export default function SummaryCards() {
   const approvedLastsCount = lastApprovals.filter((a) => a.status === "approved").length;
 
   const sampleCounts = useMemo(() => {
-    // Build a set of new SKU keys for fast lookup
+    // Build a set of new SKU keys for fast lookup (use merged+filtered list)
     const newSkuKeys = new Set(
-      skuData.rawSkus.filter((s) => s.is_new).map((s) => `${s.style}|${s.colour}|${s.leather}`)
+      mergedRawSkus
+        .filter((s) => s.is_new && !cancelledStyleSet.has(s.style) && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`))
+        .map((s) => `${s.style}|${s.colour}|${s.leather}`)
     );
     const newSkuCount = newSkuKeys.size;
 
@@ -136,7 +196,7 @@ export default function SummaryCards() {
     const untrackedWaiting = newSkuCount - trackedNewKeys.size;
     const waiting = explicitlyWaiting + Math.max(0, untrackedWaiting);
     return { waiting, received, total: newSkuCount };
-  }, [skuMetaList]);
+  }, [skuMetaList, mergedRawSkus, cancelledStyleSet, cancelledSkuSet]);
 
   // SKU lists for hover tooltips
   const sampleSkuLists = useMemo(() => {
@@ -150,8 +210,10 @@ export default function SummaryCards() {
       skuStatusMap[key] = m.sampleStatus as "waiting" | "received";
     }
 
-    for (const sku of skuData.rawSkus) {
+    for (const sku of mergedRawSkus) {
       if (!sku.is_new) continue;
+      if (cancelledStyleSet.has(sku.style)) continue;
+      if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) continue;
       const key = `${sku.style}|${sku.colour}|${sku.leather}`;
       const label = `${sku.style} — ${sku.colour} ${sku.leather}`;
       if (skuStatusMap[key] === "received") {
@@ -162,13 +224,13 @@ export default function SummaryCards() {
     }
 
     return { receivedSkus, waitingSkus };
-  }, [skuMetaList]);
+  }, [skuMetaList, mergedRawSkus, cancelledStyleSet, cancelledSkuSet]);
 
   const pctReceived = sampleCounts.total > 0
     ? Math.round((sampleCounts.received / sampleCounts.total) * 100)
     : 0;
 
-  const chartData = skuData.categories.map((c) => ({
+  const chartData = liveCategoryData.map((c) => ({
     name: c.category.replace("Dress ", "D.").replace("Ballet Flat", "Ballet").replace("Ankle Boot", "A.Boot").replace("Calf Boot", "C.Boot"),
     fullName: c.category,
     new: c.newSKUs,
@@ -422,7 +484,7 @@ export default function SummaryCards() {
               </tr>
             </thead>
             <tbody>
-              {skuData.categories.map((cat) => (
+              {liveCategoryData.map((cat) => (
                 <tr
                   key={cat.category}
                   className="border-b transition-colors hover:bg-muted/40"
