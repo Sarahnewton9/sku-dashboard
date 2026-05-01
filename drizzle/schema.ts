@@ -413,3 +413,16 @@ export const specCustomRows = mysqlTable("spec_custom_rows", {
 
 export type SpecCustomRow = typeof specCustomRows.$inferSelect;
 export type InsertSpecCustomRow = typeof specCustomRows.$inferInsert;
+
+/**
+ * PPTX import log — stores the S3 key of each uploaded range review PPTX
+ * so the fixed parser can re-scan past imports for missed SKUs.
+ */
+export const pptxImports = mysqlTable("pptx_imports", {
+  id: int("id").autoincrement().primaryKey(),
+  fileKey: varchar("file_key", { length: 512 }).notNull(),
+  fileName: varchar("file_name", { length: 256 }).notNull().default(""),
+  uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+});
+export type PptxImport = typeof pptxImports.$inferSelect;
+export type InsertPptxImport = typeof pptxImports.$inferInsert;

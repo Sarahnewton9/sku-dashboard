@@ -9,6 +9,8 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import multer from "multer";
 import { parsePptxBuffer } from "../pptx_parser";
+import { storagePut } from "../storage";
+import { recordPptxImport } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -71,6 +73,16 @@ async function startServer() {
     }
     try {
       const parsed = await parsePptxBuffer(req.file.buffer);
+      // Store the PPTX in S3 and record the import so we can re-scan later
+      try {
+        const fileName = req.file.originalname || "range_review.pptx";
+        const fileKey = `pptx-imports/${Date.now()}-${fileName.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const { key } = await storagePut(fileKey, req.file.buffer, "application/vnd.openxmlformats-officedocument.presentationml.presentation");
+        await recordPptxImport(key, fileName);
+      } catch (storeErr) {
+        // Non-fatal: log but don't fail the parse response
+        console.warn("[pptx-upload] Failed to store PPTX in S3:", storeErr);
+      }
       res.json({ success: true, parsed });
     } catch (e: any) {
       res.status(500).json({ error: e.message || "Parse failed" });

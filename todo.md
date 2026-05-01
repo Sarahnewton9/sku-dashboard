@@ -843,3 +843,11 @@
 ## Phase 104: Fix DAZIE satins missing from PPT import
 - [x] Diagnosed: heading detection used cyan highlight to find heading box, but style columns with cyan-highlighted SKUs were being misidentified as the heading and then skipped
 - [x] Fixed both pptx_parser.py and pptx_parser.ts: heading detection now uses dash/em-dash separator (e.g. "DAZIE – YSL HEEL") instead of cyan highlight
+
+## Phase 105: Re-scan for missed SKUs
+- [x] Added pptx_imports table to schema + DB migration run directly
+- [x] pptx-upload endpoint now stores PPTX in S3 and records import in DB (non-fatal if storage fails)
+- [x] Added pptxSync.rescan procedure: fetches last PPTX from S3, re-parses with fixed parser, diffs against static+customSkus, returns missed SKUs
+- [x] Added pptxSync.listImports procedure for future use
+- [x] Added "Re-scan last uploaded PPTX" button in PptxSyncModal upload step (amber card with ScanSearch icon)
+- [x] Re-scan results shown in the same review table as a normal import, all rows pre-set to add_new for one-click confirmation

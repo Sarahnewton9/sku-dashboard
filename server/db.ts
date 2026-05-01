@@ -1,6 +1,6 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -887,4 +887,26 @@ export async function deleteSpecCustomRow(id: number): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(specCustomRows).where(eq(specCustomRows.id, id));
+}
+
+// ─── PPTX Import Log ────────────────────────────────────────────────────────────────────────────
+
+export async function recordPptxImport(fileKey: string, fileName: string): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(pptxImports).values({ fileKey, fileName });
+  return (result as any).insertId;
+}
+
+export async function getLatestPptxImport(): Promise<{ id: number; fileKey: string; fileName: string; uploadedAt: Date } | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(pptxImports).orderBy(desc(pptxImports.uploadedAt)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function listPptxImports(): Promise<Array<{ id: number; fileKey: string; fileName: string; uploadedAt: Date }>> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(pptxImports).orderBy(desc(pptxImports.uploadedAt)).limit(20);
 }

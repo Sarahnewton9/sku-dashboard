@@ -8,7 +8,7 @@ import { skuData } from "@/lib/skuData";
 import { toast } from "sonner";
 import {
   Upload, X, CheckCircle, FileText,
-  Loader2, RefreshCw, Pencil, Trash2, Filter, PlusCircle
+  Loader2, RefreshCw, Pencil, Trash2, Filter, PlusCircle, ScanSearch
 } from "lucide-react";
 
 type ActionType = "cancel_sku" | "mark_specked" | "mark_specked_no_sample" | "add_new" | "skip";
@@ -85,7 +85,9 @@ export default function PptxSyncModal({ onClose, onApplied }: Props) {
   const [filterAction, setFilterAction] = useState<ActionType | "all">("all");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [rescanInfo, setRescanInfo] = useState<{ fileName: string; uploadedAt: Date } | null>(null);
   const buildDiffMutation = trpc.pptxSync.buildDiff.useMutation();
+  const rescanMutation = trpc.pptxSync.rescan.useMutation();
 
   const applyMutation = trpc.pptxSync.applyChanges.useMutation({
     onSuccess: (data) => {
@@ -103,6 +105,48 @@ export default function PptxSyncModal({ onClose, onApplied }: Props) {
       setStep("review");
     },
   });
+
+  async function handleRescan() {
+    setStep("parsing");
+    setFileName("Re-scanning last uploaded PPTX…");
+    try {
+      const knownSkus = (skuData.rawSkus as readonly { style: string; colour: string; leather: string }[]).map((s) => ({
+        style: s.style,
+        colour: s.colour,
+        leather: s.leather ?? "",
+      }));
+      const data = await rescanMutation.mutateAsync({ knownSkus });
+      if (!data.success) throw new Error((data as any).error || "Rescan failed");
+      setRescanInfo({ fileName: (data as any).fileName, uploadedAt: (data as any).uploadedAt });
+      setFileName((data as any).fileName ?? "Last uploaded PPTX");
+      setSlideCount(0);
+      // Build rows from missed items only
+      const missed = (data as any).missed ?? [];
+      const rows: EditableRow[] = missed.map((item: any, idx: number) => ({
+        id: String(idx),
+        last: item.last ?? "",
+        style: item.style ?? "",
+        colour: item.colour ?? "",
+        leather: item.leather ?? "",
+        pptxStatus: item.pptxStatus ?? "",
+        currentStatus: "no_meta",
+        action: "add_new" as ActionType,
+        sampleStatus: item.sampleStatus,
+        removed: false,
+        editing: false,
+      }));
+      setRows(rows);
+      setStep("review");
+      if (rows.length === 0) {
+        toast.success("No missed SKUs found — the dashboard is up to date.");
+      } else {
+        toast.info(`Found ${rows.length} SKU${rows.length !== 1 ? "s" : ""} that were missed in the previous import.`);
+      }
+    } catch (err: any) {
+      toast.error(`Re-scan failed: ${err.message}`);
+      setStep("upload");
+    }
+  }
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -233,6 +277,24 @@ export default function PptxSyncModal({ onClose, onApplied }: Props) {
                   <p className="text-sm text-muted-foreground mt-1">New SKUs will be detected and added automatically</p>
                 </div>
               </button>
+              {/* Re-scan button */}
+              <div className="mt-3 flex items-center gap-3 p-3 rounded-xl border" style={{ borderColor: "oklch(0.88 0.06 30)", background: "oklch(0.97 0.02 30)" }}>
+                <ScanSearch className="w-5 h-5 flex-shrink-0" style={{ color: "oklch(0.50 0.14 30)" }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-foreground">Re-scan last uploaded PPTX</p>
+                  <p className="text-xs text-muted-foreground">Find SKUs that were missed due to the heading detection bug (now fixed)</p>
+                </div>
+                <button
+                  onClick={handleRescan}
+                  disabled={rescanMutation.isPending}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex-shrink-0"
+                  style={{ background: "oklch(0.50 0.14 30)", color: "white" }}
+                >
+                  {rescanMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ScanSearch className="w-3.5 h-3.5" />}
+                  Re-scan
+                </button>
+              </div>
+
               <div className="mt-4 rounded-xl p-4 text-xs space-y-1.5" style={{ background: "oklch(0.97 0.02 260)", border: "1px solid oklch(0.88 0.04 260)" }}>
                 <p className="font-semibold text-foreground mb-2">Highlight colour key</p>
                 <div className="grid grid-cols-2 gap-1.5">

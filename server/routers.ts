@@ -31,6 +31,7 @@ import {
   getAllStyleWebsiteImages,
   createFittingGroup, getAllFittingGroups, updateFittingGroup, deleteFittingGroup, addStyleToFittingGroup, removeStyleFromFittingGroup,
   getSpecCustomRowsForStyle, upsertSpecCustomRow, deleteSpecCustomRow,
+  getLatestPptxImport, listPptxImports,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -1081,6 +1082,77 @@ export const appRouter = router({
 
         return { success: true, cancelled, specked, speckedNoSample, added };
       }),
+
+    // Re-scan the last stored PPTX with the current (fixed) parser and return only
+    // SKUs that are missing from the known set (static + custom DB).
+    rescan: publicProcedure
+      .input(z.object({
+        knownSkus: z.array(z.object({ style: z.string(), colour: z.string(), leather: z.string() })).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const latest = await getLatestPptxImport();
+        if (!latest) return { success: false, error: 'No stored PPTX found. Upload a PPT first.' };
+
+        // Fetch the PPTX from S3
+        const { storageGet } = await import('./storage');
+        const { url } = await storageGet(latest.fileKey);
+        const resp = await fetch(url);
+        if (!resp.ok) return { success: false, error: `Failed to fetch stored PPTX (${resp.status})` };
+        const buf = Buffer.from(await resp.arrayBuffer());
+
+        // Re-parse with the current (fixed) parser
+        const { parsePptxBuffer } = await import('./pptx_parser');
+        const parsed = await parsePptxBuffer(buf);
+
+        // Build known set
+        const [cancelledSkus, cancelledStyles, allSkuMeta, customSkus] = await Promise.all([
+          listCancelledSkus(),
+          listCancelledStyles(),
+          getAllSkuMeta(),
+          getAllCustomSkus(),
+        ]);
+        const cancelledSkuSet = new Set(cancelledSkus.map((s) => `${s.style}|${s.colour}|${s.leather}`));
+        const cancelledStyleSet = new Set(cancelledStyles.map((s) => s.style));
+        const knownSkuSet = new Set<string>();
+        if (input.knownSkus && input.knownSkus.length > 0) {
+          for (const s of input.knownSkus) knownSkuSet.add(`${s.style}|${s.colour}|${s.leather}`);
+        }
+        for (const s of customSkus) knownSkuSet.add(`${s.style}|${s.colour}|${s.leather}`);
+
+        type MissedItem = { last: string; style: string; colour: string; leather: string; pptxStatus: string; sampleStatus: string; action: string };
+        const missed: MissedItem[] = [];
+        for (const slide of parsed) {
+          if ((slide as any).error) continue;
+          const last = (slide as any).last ?? '';
+          for (const styleData of (slide as any).styles ?? []) {
+            const style = styleData.style;
+            for (const sku of styleData.skus ?? []) {
+              const { colour, leather, status } = sku;
+              if (status === 'cancelled') continue;
+              const key = `${style}|${colour}|${leather}`;
+              const isAlreadyCancelledSku = cancelledSkuSet.has(key);
+              const isAlreadyCancelledStyle = cancelledStyleSet.has(style);
+              if (isAlreadyCancelledSku || isAlreadyCancelledStyle) continue;
+              const isKnown = knownSkuSet.size > 0 ? knownSkuSet.has(key) : true;
+              if (!isKnown) {
+                const sampleStatus = status === 'specked' ? 'received' : 'waiting';
+                missed.push({ last, style, colour, leather, pptxStatus: status, sampleStatus, action: 'add_new' });
+              }
+            }
+          }
+        }
+
+        return {
+          success: true,
+          fileName: latest.fileName,
+          uploadedAt: latest.uploadedAt,
+          missed,
+          totalMissed: missed.length,
+        };
+      }),
+
+    // List stored PPTX imports
+    listImports: publicProcedure.query(async () => listPptxImports()),
   }),
 
   // ─── Fitting Groups ──────────────────────────────────────────────────────────
