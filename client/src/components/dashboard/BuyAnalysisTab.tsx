@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
 import { BarChart3, ChevronDown, Package, Check, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { displayColour, displayLeather } from "@/lib/utils";
 
 type SortField = "style" | "colour" | "leather" | "category" | "last" | "au" | "usa" | "total";
 type SortDir = "asc" | "desc";
@@ -149,7 +150,7 @@ export default function BuyAnalysisTab() {
     for (const item of boughtItems) {
       const isNew = rawSkuMap[`${item.style}|${item.colour}|${item.leather}`] ?? false;
       if (!isNew) continue;
-      const combo = `${item.colour} / ${item.leather || "—"}`;
+      const combo = `${displayColour(item.colour, item.leather)} / ${displayLeather(item.leather || "", item.style) || "—"}`;
       if (!map[combo]) map[combo] = { au: 0, usa: 0 };
       map[combo].au += item.auQty;
       map[combo].usa += item.usaQty;
@@ -546,8 +547,8 @@ export default function BuyAnalysisTab() {
                               <span className="ml-1.5 text-[10px] px-1 py-0.5 rounded font-bold" style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}>NEW</span>
                             )}
                           </td>
-                          <td className="px-3 py-2 text-foreground">{row.colour}</td>
-                          <td className="px-3 py-2 text-muted-foreground">{row.leather || "—"}</td>
+                          <td className="px-3 py-2 text-foreground">{displayColour(row.colour, row.leather)}</td>
+                          <td className="px-3 py-2 text-muted-foreground">{displayLeather(row.leather || "", row.style) || "—"}</td>
                           <td className="px-3 py-2 text-muted-foreground">{row.category}</td>
                           <td className="px-3 py-2 text-muted-foreground">{row.last}</td>
                           <td className="px-3 py-2 font-mono font-bold text-right" style={{ color: "#f59e0b" }}>{row.auQty}</td>
@@ -638,8 +639,8 @@ export default function BuyAnalysisTab() {
                         className="hover:bg-muted/50 transition-colors"
                       >
                         <td className="px-3 py-2 font-medium text-foreground">{row.style}</td>
-                        <td className="px-3 py-2 text-foreground">{row.colour}</td>
-                        <td className="px-3 py-2 text-muted-foreground">{row.leather || "—"}</td>
+                        <td className="px-3 py-2 text-foreground">{displayColour(row.colour, row.leather)}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{displayLeather(row.leather || "", row.style) || "—"}</td>
                         <td className="px-3 py-2 text-muted-foreground">{row.category}</td>
                         <td className="px-3 py-2 text-muted-foreground">{row.last}</td>
                         <td className="px-3 py-2">

@@ -9,6 +9,7 @@ import { useState, useMemo } from "react";
 import { ChevronDown, ChevronRight, Search, Star } from "lucide-react";
 import { skuData } from "@/lib/skuData";
 import { trpc } from "@/lib/trpc";
+import { displayColourLeather } from "@/lib/utils";
 
 interface ComboSku {
   style: string;
@@ -35,7 +36,7 @@ function buildCombos(): Combo[] {
     for (const sku of (style as any).rawSkus ?? []) {
       const col: string = sku.colour ?? "";
       const lth: string = sku.leather ?? "";
-      const key = `${col} ${lth}`.trim();
+      const key = displayColourLeather(col, lth);
       if (!key) continue;
 
       if (!map.has(key)) {
@@ -83,7 +84,7 @@ function buildCombosFromRaw(): Combo[] {
   for (const sku of rawSkus) {
     const col = sku.colour ?? "";
     const lth = sku.leather ?? "";
-    const key = `${col} ${lth}`.trim();
+    const key = displayColourLeather(col, lth);
     if (!key) continue;
 
     if (!map.has(key)) {
@@ -170,7 +171,7 @@ export default function ColourLeatherTab() {
     for (const sku of allRawSkus) {
       const col = sku.colour ?? "";
       const lth = sku.leather ?? "";
-      const key = `${col} ${lth}`.trim();
+      const key = displayColourLeather(col, lth);
       if (!key) continue;
       if (!map.has(key)) {
         map.set(key, { key, colour: col, leather: lth, totalCount: 0, newCount: 0, existingCount: 0, skus: [] });

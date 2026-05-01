@@ -6,6 +6,7 @@ import { useState, useMemo } from "react";
 import { skuData } from "@/lib/skuData";
 import { trpc } from "@/lib/trpc";
 import { Calculator } from "lucide-react";
+import { displayLeather, displayColour, displayColourLeather } from "@/lib/utils";
 
 type RawSku = { style: string; colour: string; leather: string; is_new: boolean };
 
@@ -66,8 +67,9 @@ export default function LeathersTab() {
     const leatherMap = new Map<string, { name: string; allCount: number; newCount: number }>();
     for (const sku of filteredRawSkus) {
       if (!sku.leather) continue;
-      if (!leatherMap.has(sku.leather)) leatherMap.set(sku.leather, { name: sku.leather, allCount: 0, newCount: 0 });
-      const entry = leatherMap.get(sku.leather)!;
+      const leatherDisplayName = displayLeather(sku.leather);
+      if (!leatherMap.has(leatherDisplayName)) leatherMap.set(leatherDisplayName, { name: leatherDisplayName, allCount: 0, newCount: 0 });
+      const entry = leatherMap.get(leatherDisplayName)!
       entry.allCount++;
       if (sku.is_new) entry.newCount++;
     }
@@ -104,7 +106,7 @@ export default function LeathersTab() {
       const skuKey = `${sku.style}|${sku.colour}|${sku.leather}` as string;
       const orderQty = useOrderQty ? (skuMetaMap[skuKey] ?? 0) : 1;
 
-      const comboKey = `${sku.colour} / ${sku.leather}`;
+      const comboKey = `${displayColour(sku.colour, sku.leather)} / ${displayLeather(sku.leather, sku.style)}`;
       if (!comboMap[comboKey]) {
         comboMap[comboKey] = { skuCount: 0, footage: 0, weightedFootage: 0 };
       }

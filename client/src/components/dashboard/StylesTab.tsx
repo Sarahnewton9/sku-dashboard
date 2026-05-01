@@ -8,6 +8,7 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { skuData } from "@/lib/skuData";
+import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
@@ -901,9 +902,9 @@ export default function StylesTab() {
                                         }}
                                       >
                                         {/* Colour */}
-                                        <span className="text-sm font-medium text-foreground truncate">{sku.colour}</span>
+                                        <span className="text-sm font-medium text-foreground truncate">{displayColour(sku.colour, sku.leather)}</span>
                                         {/* Leather */}
-                                        <span className="text-xs text-muted-foreground truncate">{sku.leather || "—"}</span>
+                                        <span className="text-xs text-muted-foreground truncate">{displayLeather(sku.leather || "", sku.style) || "—"}</span>
                                         {/* Size 11 — only show badge if YES */}
                                         <span className="text-xs text-center">
                                           {styleSize11 ? (
@@ -1282,13 +1283,13 @@ export default function StylesTab() {
               {(cancelledSkuList as Array<{ style: string; colour: string; leather: string }>).map((row) => (
                 <div key={`${row.style}|${row.colour}|${row.leather}`} className="flex items-center gap-3 px-4 py-3">
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-semibold text-muted-foreground line-through">{row.colour} {row.leather}</span>
+                    <span className="text-sm font-semibold text-muted-foreground line-through">{displayColourLeather(row.colour, row.leather, row.style)}</span>
                     <span className="ml-2 text-xs text-muted-foreground">{row.style}</span>
                   </div>
                   <button
                     onClick={() => {
                       restoreSkuMutation.mutate({ style: row.style, colour: row.colour, leather: row.leather });
-                      toast.success(`${row.colour} ${row.leather} restored to ${row.style}`);
+                      toast.success(`${displayColourLeather(row.colour, row.leather, row.style)} restored to ${row.style}`);
                     }}
                     className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-muted transition-colors text-muted-foreground"
                     title="Restore this SKU"

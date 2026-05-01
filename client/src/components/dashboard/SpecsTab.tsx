@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
+import { displayColourLeather } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,7 +45,7 @@ function buildColourLeatherMap(): Record<string, Record<string, string>> {
     const leather = sku.leather as string;
     if (!map[style]) map[style] = {};
     if (!map[style][colour]) {
-      map[style][colour] = leather ? `${colour} ${leather}` : colour;
+      map[style][colour] = leather ? displayColourLeather(colour, leather, style) : colour;
     }
   }
   return map;
@@ -58,7 +59,7 @@ function buildAllColourLeatherOptions(): string[] {
   for (const sku of rawSkus) {
     const colour = sku.colour as string;
     const leather = sku.leather as string;
-    if (colour && leather) seen.add(`${colour} ${leather}`);
+    if (colour && leather) seen.add(displayColourLeather(colour, leather));
     else if (colour) seen.add(colour);
   }
   return Array.from(seen).sort((a, b) => a.localeCompare(b));
@@ -730,6 +731,7 @@ interface SpecsTabProps {}
 
 export default function SpecsTab({}: SpecsTabProps) {
   const baseStyleList = buildStyleList();
+  const utils = trpc.useUtils();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [completedCollapsed, setCompletedCollapsed] = useState(true);
@@ -955,11 +957,29 @@ export default function SpecsTab({}: SpecsTabProps) {
     { enabled: !!selectedStyle }
   );
 
-  const upsertCustomRowMutation = trpc.specCustomRow.upsert.useMutation({
+   const upsertCustomRowMutation = trpc.specCustomRow.upsert.useMutation({
     onSuccess: () => refetchCustomRows(),
     onError: () => toast.error("Failed to save custom row"),
   });
-
+  const addCustomRowMutation = trpc.specCustomRow.upsert.useMutation({
+    onMutate: async (newRow) => {
+      // Optimistic update: immediately add a placeholder row to the cache
+      await utils.specCustomRow.getByStyle.cancel({ style: newRow.style });
+      const prev = utils.specCustomRow.getByStyle.getData({ style: newRow.style });
+      utils.specCustomRow.getByStyle.setData({ style: newRow.style }, (old) => [
+        ...(old ?? []),
+        { id: -Date.now(), style: newRow.style, colour: newRow.colour ?? "__all__", section: newRow.section, title: newRow.title, value: newRow.value ?? "", sortOrder: newRow.sortOrder ?? 0, createdAt: new Date(), updatedAt: new Date() },
+      ]);
+      return { prev };
+    },
+    onError: (_err, newRow, ctx) => {
+      if (ctx?.prev !== undefined) utils.specCustomRow.getByStyle.setData({ style: newRow.style }, ctx.prev);
+      toast.error("Failed to add custom row");
+    },
+    onSettled: (_data, _err, newRow) => {
+      utils.specCustomRow.getByStyle.invalidate({ style: newRow.style });
+    },
+  });
   const deleteCustomRowMutation = trpc.specCustomRow.delete.useMutation({
     onSuccess: () => refetchCustomRows(),
     onError: () => toast.error("Failed to delete custom row"),
@@ -972,7 +992,7 @@ export default function SpecsTab({}: SpecsTabProps) {
     if (!selectedStyle) return;
     const sectionRows = rawCustomRows.filter((r: any) => r.section === section);
     const nextOrder = sectionRows.length;
-    upsertCustomRowMutation.mutate({
+    addCustomRowMutation.mutate({
       style: selectedStyle,
       colour: "__all__",
       section,

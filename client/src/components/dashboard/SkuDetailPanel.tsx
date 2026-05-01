@@ -8,6 +8,7 @@ import { useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { X, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { displayColour, displayLeather } from "@/lib/utils";
 
 export interface SkuPanelData {
   style: string;
@@ -108,7 +109,7 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
               )}
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {sku.colour}{sku.leather ? ` · ${sku.leather}` : ""}
+              {displayColour(sku.colour, sku.leather)}{sku.leather ? ` · ${displayLeather(sku.leather, sku.style)}` : ""}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {sku.category} · Last: {sku.last}

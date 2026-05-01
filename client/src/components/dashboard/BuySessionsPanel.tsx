@@ -9,6 +9,7 @@ import { skuData } from "@/lib/skuData";
 import { Lock, Download, Plus, Clock, CheckCircle, Package, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
+import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 
 export default function BuySessionsPanel() {
   const [showCreate, setShowCreate] = useState(false);
@@ -168,9 +169,7 @@ export default function BuySessionsPanel() {
       .filter((item) => ((item.auQty ?? 0) + (item.usaQty ?? 0)) > 0)
       .map((item) => {
         const styleInfo = styleInfoMap[item.style];
-        const colourDesc = item.leather
-          ? `${item.colour} ${item.leather}`.trim()
-          : item.colour;
+        const colourDesc = displayColourLeather(item.colour, item.leather, item.style);
         return {
           category: resolvedCategoryMap[item.style] ?? styleInfo?.category ?? "",
           last: styleInfo?.last ?? "",
@@ -535,8 +534,8 @@ export default function BuySessionsPanel() {
                                 <tr key={`${item.style}-${item.colour}-${item.leather}`}
                                   className="border-t" style={{ borderColor: "var(--border)" }}>
                                   <td className="px-3 py-2 font-medium text-foreground">{item.style}</td>
-                                  <td className="px-3 py-2 text-muted-foreground">{item.colour}</td>
-                                  <td className="px-3 py-2 text-muted-foreground">{item.leather || "—"}</td>
+                                  <td className="px-3 py-2 text-muted-foreground">{displayColour(item.colour, item.leather)}</td>
+                                  <td className="px-3 py-2 text-muted-foreground">{displayLeather(item.leather || "", item.style) || "—"}</td>
                                   <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{item.auQty ?? 0}</td>
                                   <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.15 240)" }}>{item.usaQty ?? 0}</td>
                                 </tr>

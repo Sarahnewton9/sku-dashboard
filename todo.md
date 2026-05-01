@@ -821,3 +821,10 @@
 ## Phase 100: Buy Analysis — By Style
 
 - [x] Replace Pairs by Last bar chart with Pairs by Style in Buy Analysis Summary tab
+
+## Phase 101: Leather Name Fixes + Spec Custom Row Speed
+
+- [x] Replace "BLACK KID" with "BLACK CAPRI" everywhere via displayLeather helper (CAPRICE style keeps "KID")
+- [x] Replace "CHOC VENICE" with "CHOCOLATE VENICE" everywhere via displayColour helper
+- [x] Applied displayColour/displayLeather/displayColourLeather to: BuyAnalysisTab, SkuDetailPanel, BuySessionsPanel, ColourLeatherTab, LeathersTab, SpecsTab, StylesTab
+- [x] Fix slow Add Custom Row in specs — optimistic update (onMutate) so row appears instantly without waiting for server refetch
