@@ -287,7 +287,8 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
         const colEnd = colStart + 1;
         ws.mergeCells(currentExcelRow, colStart, currentExcelRow, colEnd);
         const valueCell = ws.getCell(currentExcelRow, colStart);
-        valueCell.value = cr.valuesByColour[colours[ci]] ?? "";
+        // Fall back to the "__all__" value if no colour-specific value is stored
+        valueCell.value = cr.valuesByColour[colours[ci]] ?? cr.valuesByColour["__all__"] ?? "";
         valueCell.font = arialRegular8();
         valueCell.alignment = { vertical: "middle", wrapText: true };
       }

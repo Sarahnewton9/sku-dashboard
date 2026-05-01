@@ -834,3 +834,8 @@
 - [x] specCustomRow.delete mutation: replaced refetchCustomRows with onMutate optimistic cache update
 - [x] handleSaveImport and bulk save: removed blocking refetchSpecs calls
 - [x] All spec grid interactions (cell save, add row, delete row) now update UI instantly without waiting for server
+
+## Phase 103: Custom Rows in Spec Export
+- [x] Audited exportSpecSheet.ts — custom rows were already passed and rendered after standard rows per section
+- [x] Fixed bug: __all__ colour value not falling through to export columns (now falls back to __all__ key)
+- [x] Added optimistic update to upsertCustomRowMutation (title/value edits) — all custom row mutations now instant

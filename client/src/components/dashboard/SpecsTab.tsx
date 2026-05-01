@@ -958,8 +958,28 @@ export default function SpecsTab({}: SpecsTabProps) {
   );
 
    const upsertCustomRowMutation = trpc.specCustomRow.upsert.useMutation({
-    onSuccess: () => refetchCustomRows(),
-    onError: () => toast.error("Failed to save custom row"),
+    onMutate: async (updated) => {
+      if (!selectedStyle) return;
+      await utils.specCustomRow.getByStyle.cancel({ style: updated.style });
+      const prev = utils.specCustomRow.getByStyle.getData({ style: updated.style });
+      utils.specCustomRow.getByStyle.setData({ style: updated.style }, (old) =>
+        old
+          ? old.map((r) =>
+              r.id === updated.id
+                ? { ...r, title: updated.title, value: updated.value ?? r.value, colour: updated.colour ?? r.colour }
+                : r
+            )
+          : old
+      );
+      return { prev };
+    },
+    onError: (_err, updated, ctx) => {
+      if (ctx?.prev !== undefined) utils.specCustomRow.getByStyle.setData({ style: updated.style }, ctx.prev);
+      toast.error("Failed to save custom row");
+    },
+    onSettled: (_data, _err, updated) => {
+      utils.specCustomRow.getByStyle.invalidate({ style: updated.style });
+    },
   });
   const addCustomRowMutation = trpc.specCustomRow.upsert.useMutation({
     onMutate: async (newRow) => {
