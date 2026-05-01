@@ -6,6 +6,7 @@
 import { useMemo } from "react";
 import { skuData } from "@/lib/skuData";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
+import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { trpc } from "@/lib/trpc";
 
 const CATEGORY_COLOURS: Record<string, string> = {
@@ -38,6 +39,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 export default function CategoryTab() {
   const { getCategory, getTrendFlag } = useStyleCategories();
+  const { mergedRawSkus, mergedStyles } = useCustomSkus();
 
   // Fetch cancelled styles and SKUs
   const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
@@ -66,12 +68,33 @@ export default function CategoryTab() {
 
     const map = new Map<string, CatStats>();
 
-    for (const style of skuData.styles) {
-      // Skip cancelled styles
-      if (cancelledStyleSet.has(style.style)) continue;
+    // Build a lookup of style -> imageUrl from mergedStyles (includes custom SKU styles)
+    const styleImageMap: Record<string, string> = {};
+    for (const s of mergedStyles) {
+      if ((s as any).imageUrl) styleImageMap[s.style] = (s as any).imageUrl;
+    }
 
-      const resolvedCat = getCategory(style.style, style.category).toUpperCase();
-      const trendFlag = getTrendFlag(style.style);
+    // Group mergedRawSkus by style first (for efficient per-style SKU lookup)
+    const skusByStyle: Record<string, Array<{ colour: string; leather: string; is_new: boolean }>> = {};
+    for (const sku of mergedRawSkus) {
+      if (!skusByStyle[sku.style]) skusByStyle[sku.style] = [];
+      skusByStyle[sku.style].push(sku);
+    }
+
+    // Collect all active style names (from mergedRawSkus, excluding cancelled)
+    const activeStyles = new Set<string>();
+    for (const sku of mergedRawSkus) {
+      if (!cancelledStyleSet.has(sku.style)) activeStyles.add(sku.style);
+    }
+
+    // Build a category lookup from skuData.styles for resolving category/imageUrl
+    const styleCatMap: Record<string, string> = {};
+    for (const s of skuData.styles) styleCatMap[s.style] = s.category;
+
+    for (const styleName of Array.from(activeStyles)) {
+      const baseCategory = styleCatMap[styleName] ?? "Other";
+      const resolvedCat = getCategory(styleName, baseCategory).toUpperCase();
+      const trendFlag = getTrendFlag(styleName);
 
       if (!map.has(resolvedCat)) {
         map.set(resolvedCat, {
@@ -88,9 +111,9 @@ export default function CategoryTab() {
       const entry = map.get(resolvedCat)!;
       entry.totalStyles += 1;
 
-      // Count SKUs for this style (excluding individually cancelled SKUs)
-      const styleSKUs = skuData.rawSkus.filter(
-        (s) => s.style === style.style && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`)
+      // Count SKUs for this style (from mergedRawSkus, excluding individually cancelled SKUs)
+      const styleSKUs = (skusByStyle[styleName] ?? []).filter(
+        (s) => !cancelledSkuSet.has(`${styleName}|${s.colour}|${s.leather}`)
       );
       const newCount = styleSKUs.filter((s) => s.is_new).length;
       const existingCount = styleSKUs.filter((s) => !s.is_new).length;
@@ -99,8 +122,9 @@ export default function CategoryTab() {
       entry.existingSKUs += existingCount;
 
       // Collect images (up to 6)
-      if (style.imageUrl && entry.images.length < 6) {
-        entry.images.push(style.imageUrl);
+      const imageUrl = styleImageMap[styleName];
+      if (imageUrl && entry.images.length < 6) {
+        entry.images.push(imageUrl);
       }
 
       // Track trend breakdown
@@ -111,7 +135,7 @@ export default function CategoryTab() {
 
     // Sort by totalSKUs descending
     return Array.from(map.values()).sort((a, b) => b.totalSKUs - a.totalSKUs);
-  }, [getCategory, getTrendFlag, cancelledStyleSet, cancelledSkuSet]);
+  }, [getCategory, getTrendFlag, cancelledStyleSet, cancelledSkuSet, mergedRawSkus, mergedStyles]);
 
   return (
     <div className="space-y-6">

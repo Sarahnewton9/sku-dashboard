@@ -864,3 +864,9 @@
 - [x] Applied to SummaryCards Styles section (Total Styles, New Styles, Existing Styles cards)
 - [x] Applied to Dashboard sidebar Total Styles stat row
 - [x] Updated header subtitle, footer, and header badges to use live counts (New SKUs, Existing SKUs, X styles)
+
+## Phase 108: Live counts in By Category tab
+- [x] Added useCustomSkus to CategoryTab; mergedRawSkus replaces skuData.rawSkus for all SKU counting
+- [x] Per-category: totalStyles, totalSKUs, newSKUs, existingSKUs, pctNew all now live (includes custom SKUs, excludes cancelled)
+- [x] Category cards and comparison table both use live mergedCategories data
+- [x] Custom SKU styles without a static category entry fall back to "Other" category
