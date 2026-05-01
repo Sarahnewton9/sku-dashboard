@@ -858,3 +858,9 @@
 - [x] Category chart and table in SummaryCards: now use liveCategoryData (custom SKUs mapped to their style's category)
 - [x] Sample tracking counts also updated to use mergedRawSkus + cancelled filtering
 - [x] Header subtitle "X new SKUs across Y styles" also uses live count
+
+## Phase 107: All style counts live in Overview
+- [x] Compute live totalStyles, brandNewStyles (all SKUs new), existingStyles from mergedRawSkus + cancelled data in SummaryCards
+- [x] Applied to SummaryCards Styles section (Total Styles, New Styles, Existing Styles cards)
+- [x] Applied to Dashboard sidebar Total Styles stat row
+- [x] Updated header subtitle, footer, and header badges to use live counts (New SKUs, Existing SKUs, X styles)

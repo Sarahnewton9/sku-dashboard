@@ -80,13 +80,17 @@ export default function Dashboard() {
     return s;
   }, [cancelledSkuList]);
   const liveSummary = useMemo(() => {
-    const active = mergedRawSkus.filter((sku) =>
-      !cancelledStyleSet.has(sku.style) &&
-      !cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)
-    );
-    const total = active.length;
-    const newCount = active.filter((s) => s.is_new).length;
-    return { total, newCount };
+    const styleSet = new Set<string>();
+    let total = 0;
+    let newCount = 0;
+    for (const sku of mergedRawSkus) {
+      if (cancelledStyleSet.has(sku.style)) continue;
+      if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) continue;
+      total++;
+      if (sku.is_new) newCount++;
+      styleSet.add(sku.style);
+    }
+    return { total, newCount, totalStyles: styleSet.size };
   }, [mergedRawSkus, cancelledStyleSet, cancelledSkuSet]);
 
   return (
@@ -113,7 +117,7 @@ export default function Dashboard() {
               value={liveSummary.newCount.toLocaleString()}
               highlight
             />
-            <StatRow label="Total Styles" value={skuData.summary.totalStyles.toLocaleString()} />
+            <StatRow label="Total Styles" value={liveSummary.totalStyles.toLocaleString()} />
           </div>
         </div>
 
@@ -238,7 +242,7 @@ export default function Dashboard() {
             </span>
           </div>
           <p className="text-xs mt-1" style={{ color: "oklch(0.45 0.01 80)" }}>
-            {skuData.summary.totalStyles} styles · {skuData.summary.uniqueLeathers} leathers · {skuData.summary.uniqueColours} colours
+            {liveSummary.totalStyles} styles · {skuData.summary.uniqueLeathers} leathers · {skuData.summary.uniqueColours} colours
           </p>
         </div>
       </aside>
@@ -251,7 +255,7 @@ export default function Dashboard() {
           <div>
             <h2 className="font-display font-semibold text-xl text-foreground">{tabLabel}</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {activeTab === "overview" && `${liveSummary.newCount} new SKUs across ${skuData.summary.stylesWithNew} styles`}
+              {activeTab === "overview" && `${liveSummary.newCount} new SKUs across ${liveSummary.totalStyles} styles`}
               {activeTab === "categories" && `${skuData.categories.length} categories`}
               {activeTab === "styles" && `${skuData.styles.length} styles — click a style to expand SKUs`}
               {activeTab === "leathers" && `${skuData.leathers.length} unique leather types`}
@@ -270,11 +274,11 @@ export default function Dashboard() {
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
               style={{ background: "oklch(0.96 0.06 65)", color: "oklch(0.50 0.14 55)" }}>
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
-              {skuData.summary.newSKUs} New SKUs
+              {liveSummary.newCount} New SKUs
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
               style={{ background: "oklch(0.95 0.004 80)", color: "oklch(0.45 0.008 60)" }}>
-              {skuData.summary.existingSKUs} Existing
+              {liveSummary.total - liveSummary.newCount} Existing
             </span>
             <button
               onClick={() => setShowExport(true)}

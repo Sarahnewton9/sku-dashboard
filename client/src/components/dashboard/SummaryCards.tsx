@@ -122,17 +122,34 @@ export default function SummaryCards() {
     return s;
   }, [cancelledSkuList]);
 
-  // Compute live SKU counts (includes custom SKUs, excludes cancelled)
-  const liveCounts = useMemo(() => {
-    const activeSkus = mergedRawSkus.filter((sku) => {
-      if (cancelledStyleSet.has(sku.style)) return false;
-      if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) return false;
-      return true;
-    });
-    const total = activeSkus.length;
-    const newCount = activeSkus.filter((s) => s.is_new).length;
-    const existing = total - newCount;
-    return { total, newCount, existing };
+  // Compute live SKU and style counts (includes custom SKUs, excludes cancelled)
+  const { liveCounts, liveStyleCounts } = useMemo(() => {
+    // Group active SKUs by style
+    const styleMap: Record<string, { hasNew: boolean; hasExisting: boolean }> = {};
+    let totalSkus = 0;
+    let newSkus = 0;
+
+    for (const sku of mergedRawSkus) {
+      if (cancelledStyleSet.has(sku.style)) continue;
+      if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) continue;
+      totalSkus++;
+      if (sku.is_new) newSkus++;
+      if (!styleMap[sku.style]) styleMap[sku.style] = { hasNew: false, hasExisting: false };
+      if (sku.is_new) styleMap[sku.style].hasNew = true;
+      else styleMap[sku.style].hasExisting = true;
+    }
+
+    const activeStyles = Object.values(styleMap);
+    const totalStyles = activeStyles.length;
+    // Brand new = style where ALL SKUs are new (no existing carry-over SKUs)
+    const brandNewStyles = activeStyles.filter((s) => s.hasNew && !s.hasExisting).length;
+    // Existing = style has at least one carry-over SKU (may also have new ones)
+    const existingStyles = activeStyles.filter((s) => s.hasExisting).length;
+
+    return {
+      liveCounts: { total: totalSkus, newCount: newSkus, existing: totalSkus - newSkus },
+      liveStyleCounts: { total: totalStyles, brandNew: brandNewStyles, existing: existingStyles },
+    };
   }, [mergedRawSkus, cancelledStyleSet, cancelledSkuSet]);
 
   // Compute live category counts (custom SKUs mapped to their style's category)
@@ -157,12 +174,15 @@ export default function SummaryCards() {
     });
   }, [mergedRawSkus, cancelledStyleSet, cancelledSkuSet]);
 
-  // Build live summary (keep static values for totalStyles/brandNewStyles/existingStyles)
+  // Build live summary — all counts are now live
   const s = {
     ...skuData.summary,
     totalSKUs: liveCounts.total,
     newSKUs: liveCounts.newCount,
     existingSKUs: liveCounts.existing,
+    totalStyles: liveStyleCounts.total,
+    brandNewStyles: liveStyleCounts.brandNew,
+    existingStyles: liveStyleCounts.existing,
   };
 
   // Fetch live sample status counts
@@ -256,7 +276,7 @@ export default function SummaryCards() {
         <div className="grid grid-cols-3 gap-4">
           <MetricCard label="Total Styles" value={s.totalStyles} icon={Layers} />
           <MetricCard label="New Styles" value={s.brandNewStyles} icon={Star} accent accentColor="amber" sub="All SKUs are new" />
-          <MetricCard label="Existing Styles" value={(s as any).existingStyles} icon={RefreshCw} sub="Carrying over" />
+          <MetricCard label="Existing Styles" value={s.existingStyles} icon={RefreshCw} sub="Carrying over" />
         </div>
       </div>
 
