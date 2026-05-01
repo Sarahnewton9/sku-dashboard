@@ -211,27 +211,34 @@ def parse_slide(slide):
         return None
     boxes.sort(key=lambda s: (s.top, s.left))
 
-    # Find the heading (topmost box, or box with cyan highlight)
+    # Find the heading box.
+    # The heading is the topmost text box whose FIRST PARAGRAPH looks like a heading
+    # (contains a dash/em-dash separator like "DAZIE – YSL HEEL") OR is the topmost box.
+    # We deliberately do NOT use cyan highlight to find the heading, because style columns
+    # can contain cyan-highlighted SKU lines (specked_no_sample) which would be misidentified
+    # as the heading and then skipped during style parsing.
     last_name = None
     heading_box = None
     for box in boxes:
-        text = box.text_frame.text.strip()
-        # Check if it has cyan highlight (heading marker)
-        has_cyan = False
+        first_para_text = ''
         for para in box.text_frame.paragraphs:
-            c = get_para_highlight(para)
-            if c == '#00FFFF':
-                has_cyan = True
+            t = para.text.strip()
+            if t:
+                first_para_text = t
                 break
-        if has_cyan or heading_box is None:
-            heading_box = box
-            last_name = extract_last_name(text)
-            if has_cyan:
-                break  # found the cyan-highlighted heading
-
+        # A heading line contains a dash/em-dash separator (e.g. "DAZIE – YSL HEEL")
+        # OR it is the topmost box (fallback)
+        has_dash = bool(re.search(r'[\u2013\u2014\-]', first_para_text))
+        if has_dash or heading_box is None:
+            candidate_last = extract_last_name(first_para_text)
+            if candidate_last:
+                heading_box = box
+                last_name = candidate_last
+                if has_dash:
+                    break  # found a proper heading with a dash separator
     if not last_name:
         return None
-    # Clean last name: take only the first word (heading box may contain extra notes/colours below)
+    # Clean last name: take only the first word
     last_name = last_name.split()[0] if last_name.split() else last_name
 
     # Parse each remaining box as a potential style column

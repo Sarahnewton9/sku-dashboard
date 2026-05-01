@@ -6,7 +6,9 @@
  *
  * Layout per slide:
  *  - One heading text box (top-left): contains the LAST name
- *    Identified by cyan (#00FFFF) highlight OR being the topmost text box.
+ *    Identified by a dash/em-dash separator in its first paragraph (e.g. "DAZIE – YSL HEEL")
+ *    OR being the topmost text box. NOT identified by cyan highlight (style columns can
+ *    also contain cyan-highlighted SKU lines which must not be confused with the heading).
  *  - Multiple style text boxes (one per style column):
  *    First paragraph = style name line
  *    Subsequent paragraphs = SKU lines (colour + leather)
@@ -278,20 +280,24 @@ function parseSlide(slideXml: string): ParsedSlide | null {
   // Sort top→bottom, left→right
   shapes.sort((a, b) => a.top - b.top || a.left - b.left);
 
-  // Find heading box: prefer cyan-highlighted box, else topmost
+  // Find heading box: prefer a box whose first paragraph contains a dash/em-dash separator
+  // (e.g. "DAZIE – YSL HEEL"), falling back to the topmost box.
+  // We deliberately do NOT use cyan highlight to find the heading, because style columns
+  // can contain cyan-highlighted SKU lines (specked_no_sample) which would be misidentified
+  // as the heading and then skipped during style parsing.
   let headingShape: ShapeInfo | null = null;
   let lastName: string | null = null;
 
   for (const shape of shapes) {
-    const hasCyan = shape.paragraphs.some((p) => {
-      const h = p.highlight?.toUpperCase();
-      return h === "#00FFFF" || h === "00FFFF";
-    });
-    if (hasCyan || headingShape === null) {
-      headingShape = shape;
-      const allText = shape.paragraphs.map((p) => p.text).join(" ").trim();
-      lastName = extractLastName(allText);
-      if (hasCyan) break;
+    const firstParaText = shape.paragraphs.find((p) => p.text)?.text ?? "";
+    const hasDash = /[\u2013\u2014\-]/.test(firstParaText);
+    if (hasDash || headingShape === null) {
+      const candidateLast = extractLastName(firstParaText);
+      if (candidateLast) {
+        headingShape = shape;
+        lastName = candidateLast;
+        if (hasDash) break; // found a proper heading with a dash separator
+      }
     }
   }
 

@@ -839,3 +839,7 @@
 - [x] Audited exportSpecSheet.ts — custom rows were already passed and rendered after standard rows per section
 - [x] Fixed bug: __all__ colour value not falling through to export columns (now falls back to __all__ key)
 - [x] Added optimistic update to upsertCustomRowMutation (title/value edits) — all custom row mutations now instant
+
+## Phase 104: Fix DAZIE satins missing from PPT import
+- [x] Diagnosed: heading detection used cyan highlight to find heading box, but style columns with cyan-highlighted SKUs were being misidentified as the heading and then skipped
+- [x] Fixed both pptx_parser.py and pptx_parser.ts: heading detection now uses dash/em-dash separator (e.g. "DAZIE – YSL HEEL") instead of cyan highlight
