@@ -4,7 +4,7 @@
 
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
-import { skuData } from "@/lib/skuData";
+import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { FileDown, X, FileSpreadsheet, ClipboardList, RefreshCw, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
@@ -21,6 +21,7 @@ const AP21_SIZES_STANDARD = ["35", "36", "37", "38", "39", "40", "41"];
 const AP21_SIZES_WITH_11 = ["35", "36", "37", "38", "39", "40", "41", "42"];
 
 export default function ExportPanel({ onClose }: Props) {
+  const { mergedRawSkus, mergedStyles } = useCustomSkus();
   const [exporting, setExporting] = useState<string | null>(null);
   const [ap21Style, setAp21Style] = useState<string>("ALL");
   const [showPptxSync, setShowPptxSync] = useState(false);
@@ -32,6 +33,15 @@ export default function ExportPanel({ onClose }: Props) {
   const { data: customSkuList = [] } = trpc.customSku.getAll.useQuery();
   const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery();
   const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
+  const { data: heelHeightData = [] } = trpc.heelHeight.getAll.useQuery();
+  const heelHeightMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of heelHeightData as Array<{ lastName: string; heelHeightCm: number }>) {
+      map.set(row.lastName.toUpperCase(), row.heelHeightCm);
+    }
+    return map;
+  }, [heelHeightData]);
+  const HEEL_HEIGHT_CATEGORIES = new Set(["Dress Shoe", "Dress Sandal", "Wedge"]);
 
   const fetchRrpMutation = trpc.style.fetchFromTonyBianco.useMutation({
     onSuccess: (data) => {
@@ -44,7 +54,7 @@ export default function ExportPanel({ onClose }: Props) {
   });
 
   function handleFetchRrp() {
-    const styleNames = skuData.styles.map((s) => s.style);
+    const styleNames = (mergedStyles as any[]).map((s: any) => s.style);
     fetchRrpMutation.mutate({ styleNames });
   }
 
@@ -63,7 +73,7 @@ export default function ExportPanel({ onClose }: Props) {
   const [imageStyleSearch, setImageStyleSearch] = useState("");
   const [imageSelectedStyles, setImageSelectedStyles] = useState<Set<string>>(new Set());
 
-  const allStyleNames = useMemo(() => skuData.styles.map((s) => s.style).sort(), []);
+  const allStyleNames = useMemo(() => (mergedStyles as any[]).map((s: any) => s.style).sort(), [mergedStyles]);
   const filteredStyleNames = useMemo(() =>
     allStyleNames.filter((s) => s.toLowerCase().includes(imageStyleSearch.toLowerCase())),
     [allStyleNames, imageStyleSearch]
@@ -79,7 +89,7 @@ export default function ExportPanel({ onClose }: Props) {
 
   function handleFetchImages() {
     const styleNames = imageSelectMode === "all"
-      ? skuData.styles.map((s) => s.style)
+      ? (mergedStyles as any[]).map((s: any) => s.style)
       : Array.from(imageSelectedStyles);
     if (styleNames.length === 0) { toast.error("No styles selected."); return; }
     fetchImagesMutation.mutate({ styleNames });
@@ -95,9 +105,9 @@ export default function ExportPanel({ onClose }: Props) {
     styleMetaMap[m.style] = m;
   }
 
-  // Style lookup for category/last
+  // Style lookup for category/last (uses mergedStyles to include custom styles)
   const styleLookup: Record<string, { category: string; last: string }> = {};
-  for (const s of skuData.styles) {
+  for (const s of (mergedStyles as any[])) {
     styleLookup[s.style] = { category: s.category, last: s.last };
   }
 
@@ -112,25 +122,25 @@ export default function ExportPanel({ onClose }: Props) {
     return s;
   }, [cancelledSkuList]);
 
-  // Sorted style list for AP21 selector (excluding cancelled)
+  // Sorted style list for AP21 selector (excluding cancelled, uses mergedStyles)
   const ap21StyleOptions = useMemo(() => {
-    const styles = skuData.styles
-      .filter((s) => !cancelledStyleSet.has(s.style))
-      .map((s) => s.style)
+    const styles = (mergedStyles as any[])
+      .filter((s: any) => !cancelledStyleSet.has(s.style))
+      .map((s: any) => s.style)
       .sort();
     return ["ALL", ...styles];
-  }, [cancelledStyleSet]);
+  }, [mergedStyles, cancelledStyleSet]);
 
   // AP21 CSV generator
   function exportAP21Csv() {
     setExporting("ap21");
     try {
       type RawSku = { style: string; colour: string; leather: string; is_new: boolean };
-      const rawSkus = skuData.rawSkus as unknown as RawSku[];
+      const rawSkus = mergedRawSkus as unknown as RawSku[];
 
       // Determine which styles to export
       const stylesToExport = ap21Style === "ALL"
-        ? skuData.styles.filter((s) => !cancelledStyleSet.has(s.style)).map((s) => s.style)
+        ? (mergedStyles as any[]).filter((s: any) => !cancelledStyleSet.has(s.style)).map((s: any) => s.style)
         : [ap21Style];
 
       const csvRows: string[][] = [];
@@ -162,12 +172,8 @@ export default function ExportPanel({ onClose }: Props) {
             !cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`)
         );
 
-        // Also include custom SKUs for this style
-        const customForStyle = customSkuList
-          .filter((c) => c.style === styleName && !cancelledSkuSet.has(`${c.style}|${c.colour}|${c.leather}`))
-          .map((c) => ({ style: c.style, colour: c.colour, leather: c.leather, is_new: true }));
-
-        const allStyleSkus = [...styleSkus, ...customForStyle];
+        // mergedRawSkus already includes custom SKUs, so no extra merge needed
+        const allStyleSkus = styleSkus;
         if (allStyleSkus.length === 0) continue;
 
         // Determine if this style has size 11 (any SKU has isSize11=true)
@@ -375,13 +381,10 @@ export default function ExportPanel({ onClose }: Props) {
         cancelledSkuSet.add(`${c.style}|${c.colour}|${c.leather}`);
       }
 
-      // Merge custom SKUs with static SKUs
-      const customSkus = customSkuList as Array<{ style: string; colour: string; leather: string }>;
+      // Use mergedRawSkus which already includes custom SKUs
       type SkuRow = { style: string; colour: string; leather: string; is_new: boolean };
-      const allSkus: SkuRow[] = [
-        ...skuData.rawSkus.map((s) => ({ style: s.style, colour: s.colour, leather: s.leather, is_new: s.is_new })),
-        ...customSkus.map((c) => ({ style: c.style, colour: c.colour, leather: c.leather, is_new: true })),
-      ].filter((s) => !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`));
+      const allSkus: SkuRow[] = (mergedRawSkus as unknown as SkuRow[])
+        .filter((s) => !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`));
 
       // Fetch items for all sessions
       const wb = XLSX.utils.book_new();
@@ -442,13 +445,18 @@ export default function ExportPanel({ onClose }: Props) {
   function exportFullData() {
     setExporting("full");
     try {
-      const rows = skuData.rawSkus.map((sku) => {
+      const rows = (mergedRawSkus as any[]).map((sku: any) => {
         const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
         const meta = skuMetaMap[key];
+        const lastName = (styleLookup[sku.style]?.last ?? "").toUpperCase();
+        const category = styleLookup[sku.style]?.category ?? "";
+        const isHeelCategory = HEEL_HEIGHT_CATEGORIES.has(category);
+        const heelHeight = isHeelCategory ? (heelHeightMap.get(lastName) ?? "") : "";
         return {
           Style: sku.style,
-          Category: styleLookup[sku.style]?.category ?? "",
+          Category: category,
           Last: styleLookup[sku.style]?.last ?? "",
+          "Heel Height (cm)": heelHeight,
           Colour: sku.colour,
           Leather: sku.leather,
           Status: sku.is_new ? "New" : "Existing",
@@ -466,7 +474,7 @@ export default function ExportPanel({ onClose }: Props) {
 
       const ws = XLSX.utils.json_to_sheet(rows);
       ws["!cols"] = [
-        { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 22 },
+        { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 22 },
         { wch: 10 }, { wch: 8 }, { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 40 },
       ];
       const wb = XLSX.utils.book_new();

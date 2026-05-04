@@ -8,6 +8,7 @@
 import { useState, useMemo } from "react";
 import { ChevronDown, ChevronRight, Search, Star } from "lucide-react";
 import { skuData } from "@/lib/skuData";
+import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { trpc } from "@/lib/trpc";
 import { displayColourLeather } from "@/lib/utils";
 
@@ -121,8 +122,7 @@ export default function ColourLeatherTab() {
   const [filter, setFilter] = useState<"all" | "new" | "existing">("all");
   const [openKeys, setOpenKeys] = useState<Set<string>>(new Set());
 
-  // Fetch custom SKUs from DB so they appear like regular SKUs
-  const { data: customSkusRaw = [] } = trpc.customSku.getAll.useQuery();
+  const { mergedRawSkus, mergedStyles } = useCustomSkus();
 
   // Fetch cancelled styles and cancelled SKUs so they can be filtered out
   const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
@@ -143,25 +143,18 @@ export default function ColourLeatherTab() {
     [cancelledSkusRaw]
   );
 
-  // Build combos dynamically, merging custom SKUs into the static data
+  // Build combos dynamically from mergedRawSkus (already includes custom SKUs)
   const ALL_COMBOS = useMemo(() => {
-    // Build image map from static styles
+    // Build image map from mergedStyles
     const imageMap = new Map<string, string>();
-    for (const s of skuData.styles) imageMap.set(s.style, (s as any).imageUrl ?? "");
+    for (const s of mergedStyles) imageMap.set(s.style, (s as any).imageUrl ?? "");
 
     // Build style info map for category/last
     const styleInfoMap = new Map<string, { category: string; last: string }>();
     for (const s of skuData.styles) styleInfoMap.set(s.style, { category: s.category, last: s.last });
 
-    // Combine static rawSkus + custom SKUs, then filter cancelled styles and cancelled SKUs
-    const existingKeys = new Set(skuData.rawSkus.map((s) => `${s.style}|${s.colour}|${s.leather}`));
-    const customEntries = (customSkusRaw as Array<{ style: string; colour: string; leather: string }>)
-      .filter((c) => !existingKeys.has(`${c.style}|${c.colour}|${c.leather}`))
-      .map((c) => ({ style: c.style, colour: c.colour, leather: c.leather, is_new: true as const }));
-    const allRawSkus = [
-      ...(skuData.rawSkus as unknown as Array<{ style: string; colour: string; leather: string; is_new: boolean }>),
-      ...customEntries,
-    ].filter(
+    // Filter cancelled styles and cancelled SKUs from mergedRawSkus
+    const allRawSkus = (mergedRawSkus as unknown as Array<{ style: string; colour: string; leather: string; is_new: boolean }>).filter(
       (sku) =>
         !cancelledStyleSet.has(sku.style) &&
         !cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)
@@ -190,7 +183,7 @@ export default function ColourLeatherTab() {
       });
     }
     return Array.from(map.values()).sort((a, b) => b.totalCount - a.totalCount || a.key.localeCompare(b.key));
-  }, [customSkusRaw, cancelledStyleSet, cancelledSkuSet]);
+  }, [mergedRawSkus, mergedStyles, cancelledStyleSet, cancelledSkuSet]);
 
   const filtered = useMemo(() => {
     const results = ALL_COMBOS.filter((combo) => {

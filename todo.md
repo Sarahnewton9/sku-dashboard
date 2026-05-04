@@ -870,3 +870,19 @@
 - [x] Per-category: totalStyles, totalSKUs, newSKUs, existingSKUs, pctNew all now live (includes custom SKUs, excludes cancelled)
 - [x] Category cards and comparison table both use live mergedCategories data
 - [x] Custom SKU styles without a static category entry fall back to "Other" category
+
+## Phase 109: Live-merge logic across ALL tabs
+- [ ] Audit all tab components for static skuData.rawSkus usage
+- [ ] Apply mergedRawSkus to LeathersTab
+- [ ] Apply mergedRawSkus to ColoursTab
+- [ ] Apply mergedRawSkus to ColourLeatherTab
+- [ ] Apply mergedRawSkus to StylesTab (By Style)
+- [ ] Apply mergedRawSkus to ExpansionAnalysisTab
+- [ ] Apply mergedRawSkus to any other remaining tabs
+
+## Phase 110: Heel heights from tonybianco.com.au
+- [ ] Scrape tonybianco.com.au product pages to extract heel height per last name from item descriptions
+- [ ] Store heel heights in DB (lastHeelHeights table, keyed by last name)
+- [ ] Add tRPC procedures: getHeelHeights, upsertHeelHeight (admin editable)
+- [ ] Display heel height badge next to last name in By Style tab
+- [ ] Include heel height in full export (buy sheet / spec sheet)

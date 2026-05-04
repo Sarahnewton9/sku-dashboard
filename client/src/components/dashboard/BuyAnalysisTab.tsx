@@ -5,7 +5,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { skuData } from "@/lib/skuData";
+import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
 import { BarChart3, ChevronDown, Package, Check, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { displayColour, displayLeather } from "@/lib/utils";
@@ -22,6 +22,8 @@ export default function BuyAnalysisTab() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const [lastFilter, setLastFilter] = useState<string>("All");
+
+  const { mergedRawSkus, mergedStyles } = useCustomSkus();
 
   const { data: allSessions = [] } = trpc.buy.getSessions.useQuery();
   const { data: activeSession } = trpc.buy.getActive.useQuery();
@@ -62,30 +64,30 @@ export default function BuyAnalysisTab() {
     return Array.from(map.values());
   }, [sessionQueries, selectedSessionIds, allSessions]);
 
-  // Build style info lookup with runtime category overrides
+  // Build style info lookup with runtime category overrides (uses mergedStyles for custom styles)
   const styleInfoMap = useMemo((): Record<string, { category: string; last: string }> => {
     const map: Record<string, { category: string; last: string }> = {};
-    const styles = (skuData.styles as unknown) as Array<{ style: string; category: string; last: string }>;
+    const styles = (mergedStyles as unknown) as Array<{ style: string; category: string; last: string }>;
     styles.forEach((s) => {
       map[s.style] = { category: getCategory(s.style, s.category), last: s.last };
     });
     return map;
-  }, [getCategory]);
+  }, [mergedStyles, getCategory]);
 
-  // Build raw SKU lookup for is_new per SKU
+  // Build raw SKU lookup for is_new per SKU (uses mergedRawSkus to include custom SKUs)
   const rawSkuMap = useMemo((): Record<string, boolean> => {
     const map: Record<string, boolean> = {};
-    const rawSkus = (skuData.rawSkus as unknown) as Array<{ style: string; colour: string; leather: string; is_new: boolean }>;
+    const rawSkus = (mergedRawSkus as unknown) as Array<{ style: string; colour: string; leather: string; is_new: boolean }>;
     rawSkus.forEach((sku) => {
       map[`${sku.style}|${sku.colour}|${sku.leather}`] = sku.is_new;
     });
     return map;
-  }, []);
+  }, [mergedRawSkus]);
 
-  // All SKUs in the range (static + custom would need merging, but static is sufficient for not-bought)
+  // All SKUs in the range — use mergedRawSkus to include custom SKUs added via PPT import
   const allRangeSkus = useMemo(() => {
-    return (skuData.rawSkus as unknown) as Array<{ style: string; colour: string; leather: string; is_new: boolean }>;
-  }, []);
+    return (mergedRawSkus as unknown) as Array<{ style: string; colour: string; leather: string; is_new: boolean }>;
+  }, [mergedRawSkus]);
 
   // Only items with any qty (for selected sessions)
   const boughtItems = useMemo(() => mergedItems.filter((i) => i.auQty + i.usaQty > 0), [mergedItems]);

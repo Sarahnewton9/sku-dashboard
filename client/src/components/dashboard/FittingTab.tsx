@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { createPortal } from "react-dom";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
+import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -59,10 +60,10 @@ interface FittingSession {
   images: Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string }>;
 }
 
-// ─── Build style list ─────────────────────────────────────────────────────────
+// ─── Build style list (now used inside component with live data) ──────────────
 
-function buildStyleList(): StyleEntry[] {
-  return skuData.styles
+function buildStyleListFromData(styles: typeof skuData.styles): StyleEntry[] {
+  return styles
     .filter((s) => {
       const lastUpper = (s.last ?? "").toUpperCase();
       const isOnNewLast = NEW_LASTS.some((nl) => lastUpper.includes(nl));
@@ -1280,7 +1281,8 @@ export function FittingTab() {
   const [search, setSearch] = useState("");
   const [approvalFilter, setApprovalFilter] = useState<"all" | "waiting_revised" | "waiting_to_fit" | "approved">("waiting_to_fit");
 
-  const baseStyleList = buildStyleList();
+  // Live merged styles (includes custom SKUs from DB)
+  const { mergedStyles } = useCustomSkus();
 
   // ── Cancelled styles + cancelled SKUs ─────────────────────────────────────
   const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
@@ -1290,8 +1292,8 @@ export function FittingTab() {
   );
 
   const styleList = useMemo(
-    () => baseStyleList.filter((s) => !cancelledStyleSet.has(s.style)),
-    [baseStyleList, cancelledStyleSet]
+    () => buildStyleListFromData(mergedStyles as typeof skuData.styles).filter((s) => !cancelledStyleSet.has(s.style)),
+    [mergedStyles, cancelledStyleSet]
   );
 
   // Data queries

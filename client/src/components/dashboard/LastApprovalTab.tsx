@@ -1,6 +1,7 @@
-import { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
+import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { CheckCircle2, Clock, ChevronDown, ChevronRight, Upload, X, AlertTriangle, Trash2 } from "lucide-react";
 import * as XLSX from "xlsx";
 
@@ -26,14 +27,9 @@ const ALL_LASTS = [
 
 const ALL_LASTS_UPPER = new Set(ALL_LASTS.map((l) => l.toUpperCase()));
 
-  // Build style lookup per last
-const LAST_TO_STYLES: Record<string, string[]> = {};
-const LAST_NEW_SKU_COUNT: Record<string, number> = {};
+  // Static STYLE_IMAGE_MAP fallback (used when no DB override)
 const STYLE_IMAGE_MAP: Record<string, string> = {};
 for (const s of skuData.styles) {
-  if (!LAST_TO_STYLES[s.last]) LAST_TO_STYLES[s.last] = [];
-  LAST_TO_STYLES[s.last].push(s.style);
-  LAST_NEW_SKU_COUNT[s.last] = (LAST_NEW_SKU_COUNT[s.last] ?? 0) + (s.newSKUs ?? 0);
   if ((s as any).imageUrl) STYLE_IMAGE_MAP[s.style] = (s as any).imageUrl;
 }
 
@@ -45,6 +41,20 @@ interface ImportRow {
 }
 
 export default function LastApprovalTab() {
+  const { mergedStyles } = useCustomSkus();
+
+  // Build style lookup per last (live, includes custom SKUs)
+  const { lastToStyles, lastNewSkuCount } = useMemo(() => {
+    const lastToStyles: Record<string, string[]> = {};
+    const lastNewSkuCount: Record<string, number> = {};
+    for (const s of mergedStyles as typeof skuData.styles) {
+      if (!lastToStyles[s.last]) lastToStyles[s.last] = [];
+      lastToStyles[s.last].push(s.style);
+      lastNewSkuCount[s.last] = (lastNewSkuCount[s.last] ?? 0) + (s.newSKUs ?? 0);
+    }
+    return { lastToStyles, lastNewSkuCount };
+  }, [mergedStyles]);
+
   const { data: approvals, refetch } = trpc.lastApproval.getAll.useQuery();
   const { data: deletedLastsFromDb = [], refetch: refetchDeleted } = trpc.lastApproval.getDeleted.useQuery();
   const { data: imageOverrideList = [] } = trpc.styleImage.getAll.useQuery();
@@ -396,7 +406,7 @@ export default function LastApprovalTab() {
           const approval = approvalMap[lastName];
           const status = approval?.status ?? "waiting_revised";
           const notes = approval?.notes ?? null;
-          const styles = LAST_TO_STYLES[lastName] ?? [];
+          const styles = lastToStyles[lastName] ?? [];
           const isExpanded = expandedLast === lastName;
           const isEditingThisNotes = editingNotes === lastName;
 
@@ -436,7 +446,7 @@ export default function LastApprovalTab() {
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-foreground">{lastName}</span>
                     <span className="text-xs text-muted-foreground">
-                      {LAST_NEW_SKU_COUNT[lastName] ?? 0} new SKU{(LAST_NEW_SKU_COUNT[lastName] ?? 0) !== 1 ? "s" : ""}
+                      {lastNewSkuCount[lastName] ?? 0} new SKU{(lastNewSkuCount[lastName] ?? 0) !== 1 ? "s" : ""}
                     </span>
                   </div>
                   {notes && !isExpanded && (

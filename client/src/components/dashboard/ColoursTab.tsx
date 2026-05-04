@@ -3,7 +3,7 @@
  */
 
 import { useState, useMemo } from "react";
-import { skuData } from "@/lib/skuData";
+import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { trpc } from "@/lib/trpc";
 
 // Map colour names to approximate hex values for visual swatches
@@ -111,10 +111,12 @@ export default function ColoursTab() {
     [cancelledSkusRaw]
   );
 
-  // Rebuild colour counts dynamically from filtered rawSkus
+  const { mergedRawSkus } = useCustomSkus();
+
+  // Rebuild colour counts dynamically from mergedRawSkus (includes custom SKUs)
   const data = useMemo(() => {
     const colourMap = new Map<string, { name: string; allCount: number; newCount: number }>();
-    for (const sku of (skuData.rawSkus as unknown as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)) {
+    for (const sku of (mergedRawSkus as unknown as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)) {
       if (cancelledStyleSet.has(sku.style)) continue;
       if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) continue;
       if (!sku.colour) continue;
@@ -127,7 +129,7 @@ export default function ColoursTab() {
       .map((c) => ({ ...c, displayCount: showNewOnly ? c.newCount : c.allCount }))
       .filter((c) => c.displayCount > 0)
       .sort((a, b) => b.displayCount - a.displayCount);
-  }, [cancelledStyleSet, cancelledSkuSet, showNewOnly]);
+  }, [mergedRawSkus, cancelledStyleSet, cancelledSkuSet, showNewOnly]);
 
   const maxCount = data[0]?.displayCount ?? 1;
 

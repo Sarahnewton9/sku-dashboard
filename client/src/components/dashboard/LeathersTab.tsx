@@ -4,6 +4,7 @@
 
 import { useState, useMemo } from "react";
 import { skuData } from "@/lib/skuData";
+import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { trpc } from "@/lib/trpc";
 import { Calculator } from "lucide-react";
 import { displayLeather, displayColour, displayColourLeather } from "@/lib/utils";
@@ -28,6 +29,8 @@ export default function LeathersTab() {
   const [showCalculator, setShowCalculator] = useState(false);
   const [useOrderQty, setUseOrderQty] = useState(false);
 
+  const { mergedRawSkus } = useCustomSkus();
+
   // Fetch SKU meta for order quantities
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
 
@@ -44,13 +47,13 @@ export default function LeathersTab() {
     [cancelledSkusRaw]
   );
 
-  // Filtered rawSkus — exclude cancelled styles and individually cancelled SKUs
+  // Filtered rawSkus — use mergedRawSkus (includes custom SKUs), exclude cancelled
   const filteredRawSkus = useMemo(
     () =>
-      (skuData.rawSkus as unknown as RawSku[]).filter(
+      (mergedRawSkus as unknown as RawSku[]).filter(
         (s) => !cancelledStyleSet.has(s.style) && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`)
       ),
-    [cancelledStyleSet, cancelledSkuSet]
+    [mergedRawSkus, cancelledStyleSet, cancelledSkuSet]
   );
 
   const skuMetaMap = useMemo(() => {
@@ -81,7 +84,7 @@ export default function LeathersTab() {
 
   const maxCount = data[0]?.displayCount ?? 1;
 
-  // Build style lookup for category
+  // Build style lookup for category (static styles as base; custom SKU styles not in static default to Dress Shoe)
   const styleLookup = useMemo(() => {
     const map: Record<string, string> = {};
     for (const s of skuData.styles) {

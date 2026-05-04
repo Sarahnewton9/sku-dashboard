@@ -45,6 +45,17 @@ export default function StylesTab() {
 
   const utils = trpc.useUtils();
 
+  // Heel heights from DB (for Dress Shoe, Dress Sandal, Wedge categories)
+  const { data: heelHeightData = [] } = trpc.heelHeight.getAll.useQuery();
+  const heelHeightMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of heelHeightData as Array<{ lastName: string; heelHeightCm: number }>) {
+      map.set(row.lastName.toUpperCase(), row.heelHeightCm);
+    }
+    return map;
+  }, [heelHeightData]);
+  const HEEL_HEIGHT_CATEGORIES = new Set(["Dress Shoe", "Dress Sandal", "Wedge"]);
+
   // Cancelled styles
   const { cancelledSet, raw: cancelledList } = useCancelledStyles();
   const [cancelledSectionOpen, setCancelledSectionOpen] = useState(false);
@@ -584,6 +595,18 @@ export default function StylesTab() {
                 <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "oklch(0.50 0.14 55)" }}>
                   {last}
                 </span>
+                {(() => {
+                  const hh = heelHeightMap.get(last.toUpperCase());
+                  const hasDressCategory = lastStyles.some(s => HEEL_HEIGHT_CATEGORIES.has(s.category));
+                  if (hh != null && hasDressCategory) {
+                    return (
+                      <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: "oklch(0.94 0.06 30)", color: "oklch(0.45 0.14 30)" }}>
+                        {hh}cm
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
                 <span className="text-xs text-muted-foreground">
                   {lastStyles.length} {lastStyles.length === 1 ? "style" : "styles"}
                 </span>

@@ -426,3 +426,16 @@ export const pptxImports = mysqlTable("pptx_imports", {
 });
 export type PptxImport = typeof pptxImports.$inferSelect;
 export type InsertPptxImport = typeof pptxImports.$inferInsert;
+
+/**
+ * Heel heights per last — only relevant for Dress Shoe, Dress Sandal, and Wedge categories.
+ * Scraped from tonybianco.com.au product descriptions; editable via the admin UI.
+ */
+export const lastHeelHeights = mysqlTable("last_heel_heights", {
+  id: int("id").autoincrement().primaryKey(),
+  lastName: varchar("last_name", { length: 128 }).notNull().unique(),
+  heelHeightCm: float("heel_height_cm").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LastHeelHeight = typeof lastHeelHeights.$inferSelect;
+export type InsertLastHeelHeight = typeof lastHeelHeights.$inferInsert;

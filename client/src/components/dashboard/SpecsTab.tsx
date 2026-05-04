@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useMemo, useCallback, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
+import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { displayColourLeather } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,38 +35,6 @@ const NEW_LASTS = [
   "HARLEY", "JAYDE", "ROXIE", "VIVA", "PIXIE",
 ];
 
-// ─── Build colour+leather lookup from rawSkus ────────────────────────────────
-// Maps style → { colour → "COLOUR LEATHER" } e.g. MOMA → { BLACK: "BLACK NAPPA" }
-function buildColourLeatherMap(): Record<string, Record<string, string>> {
-  const map: Record<string, Record<string, string>> = {};
-  const rawSkus = (skuData as any).rawSkus ?? [];
-  for (const sku of rawSkus) {
-    const style = sku.style as string;
-    const colour = sku.colour as string;
-    const leather = sku.leather as string;
-    if (!map[style]) map[style] = {};
-    if (!map[style][colour]) {
-      map[style][colour] = leather ? displayColourLeather(colour, leather, style) : colour;
-    }
-  }
-  return map;
-}
-const COLOUR_LEATHER_MAP = buildColourLeatherMap();
-
-// ─── All colour+leather combos from rawSkus (for upper_1 dropdown) ───────────
-function buildAllColourLeatherOptions(): string[] {
-  const rawSkus = (skuData as any).rawSkus ?? [];
-  const seen = new Set<string>();
-  for (const sku of rawSkus) {
-    const colour = sku.colour as string;
-    const leather = sku.leather as string;
-    if (colour && leather) seen.add(displayColourLeather(colour, leather));
-    else if (colour) seen.add(colour);
-  }
-  return Array.from(seen).sort((a, b) => a.localeCompare(b));
-}
-const ALL_COLOUR_LEATHER_OPTIONS = buildAllColourLeatherOptions();
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface StyleEntry {
@@ -81,59 +50,7 @@ interface StyleEntry {
   newSKUs: number;
 }
 
-// ─── Build a set of new colours per style from rawSkus ───────────────────────
-function buildNewColoursPerStyle(): Record<string, string[]> {
-  const rawSkus = (skuData as any).rawSkus ?? [];
-  const map: Record<string, Set<string>> = {};
-  for (const sku of rawSkus) {
-    if (!sku.is_new) continue;
-    const style = sku.style as string;
-    const colour = sku.colour as string;
-    if (!map[style]) map[style] = new Set();
-    map[style].add(colour);
-  }
-  // Preserve original order from skuData.styles[].colours
-  const result: Record<string, string[]> = {};
-  for (const s of skuData.styles) {
-    const newSet = map[s.style];
-    if (!newSet) { result[s.style] = []; continue; }
-    const allColours: string[] = (s as any).colours ?? [];
-    result[s.style] = allColours.filter((c) => newSet.has(c));
-  }
-  return result;
-}
-const NEW_COLOURS_PER_STYLE = buildNewColoursPerStyle();
 
-// ─── Build style list: same filter as FittingTab ─────────────────────────────
-// Specs required for: new lasts OR all-new patterns (same logic as fitting)
-// Colours shown: ONLY new colours (is_new=true) — carry-over colours excluded
-
-function buildStyleList(): StyleEntry[] {
-  return skuData.styles
-    .filter((s) => {
-      const lastUpper = (s.last ?? "").toUpperCase();
-      const isOnNewLast = NEW_LASTS.some((nl) => lastUpper.includes(nl));
-      return isOnNewLast || s.isAllNew;
-    })
-    .map((s) => {
-      // Only include colours that belong to new SKUs
-      const newColours: string[] = NEW_COLOURS_PER_STYLE[s.style] ?? [];
-      return {
-        style: s.style,
-        last: s.last,
-        category: s.category,
-        imageUrl: (s as any).imageUrl,
-        colours: newColours,
-        colourLabels: newColours.map((c) => COLOUR_LEATHER_MAP[s.style]?.[c] ?? c),
-        isAllNew: s.isAllNew,
-        hasNew: s.hasNew,
-        totalSKUs: s.totalSKUs,
-        newSKUs: s.newSKUs,
-      };
-    })
-    .filter((s) => s.colours.length > 0) // skip styles with no new colours
-    .sort((a, b) => a.style.localeCompare(b.style));
-}
 
 // ─── Editable Dropdown Cell ───────────────────────────────────────────────────
 
@@ -730,7 +647,83 @@ function SpecForm({
 interface SpecsTabProps {}
 
 export default function SpecsTab({}: SpecsTabProps) {
-  const baseStyleList = buildStyleList();
+  const { mergedRawSkus, mergedStyles } = useCustomSkus();
+
+  // Build colour+leather lookup from live merged raw SKUs
+  const COLOUR_LEATHER_MAP = useMemo(() => {
+    const map: Record<string, Record<string, string>> = {};
+    for (const sku of mergedRawSkus as any[]) {
+      const style = sku.style as string;
+      const colour = sku.colour as string;
+      const leather = sku.leather as string;
+      if (!map[style]) map[style] = {};
+      if (!map[style][colour]) {
+        map[style][colour] = leather ? displayColourLeather(colour, leather, style) : colour;
+      }
+    }
+    return map;
+  }, [mergedRawSkus]);
+
+  // All colour+leather combos (for upper_1 dropdown)
+  const ALL_COLOUR_LEATHER_OPTIONS = useMemo(() => {
+    const seen = new Set<string>();
+    for (const sku of mergedRawSkus as any[]) {
+      const colour = sku.colour as string;
+      const leather = sku.leather as string;
+      if (colour && leather) seen.add(displayColourLeather(colour, leather));
+      else if (colour) seen.add(colour);
+    }
+    return Array.from(seen).sort((a, b) => a.localeCompare(b));
+  }, [mergedRawSkus]);
+
+  // Build new colours per style from live merged raw SKUs
+  const NEW_COLOURS_PER_STYLE = useMemo(() => {
+    const map: Record<string, Set<string>> = {};
+    for (const sku of mergedRawSkus as any[]) {
+      if (!sku.is_new) continue;
+      const style = sku.style as string;
+      const colour = sku.colour as string;
+      if (!map[style]) map[style] = new Set();
+      map[style].add(colour);
+    }
+    // Preserve original order from mergedStyles[].colours
+    const result: Record<string, string[]> = {};
+    for (const s of mergedStyles as typeof skuData.styles) {
+      const newSet = map[s.style];
+      if (!newSet) { result[s.style] = []; continue; }
+      const allColours: string[] = (s as any).colours ?? [];
+      result[s.style] = allColours.filter((c) => newSet.has(c));
+    }
+    return result;
+  }, [mergedRawSkus, mergedStyles]);
+
+  // Build base style list from live merged styles
+  const baseStyleList = useMemo(() => {
+    return (mergedStyles as typeof skuData.styles)
+      .filter((s) => {
+        const lastUpper = (s.last ?? "").toUpperCase();
+        const isOnNewLast = NEW_LASTS.some((nl) => lastUpper.includes(nl));
+        return isOnNewLast || s.isAllNew;
+      })
+      .map((s) => {
+        const newColours: string[] = NEW_COLOURS_PER_STYLE[s.style] ?? [];
+        return {
+          style: s.style,
+          last: s.last,
+          category: s.category,
+          imageUrl: (s as any).imageUrl,
+          colours: newColours,
+          colourLabels: newColours.map((c) => COLOUR_LEATHER_MAP[s.style]?.[c] ?? c),
+          isAllNew: s.isAllNew,
+          hasNew: s.hasNew,
+          totalSKUs: s.totalSKUs,
+          newSKUs: s.newSKUs,
+        };
+      })
+      .filter((s) => s.colours.length > 0)
+      .sort((a, b) => a.style.localeCompare(b.style));
+  }, [mergedStyles, NEW_COLOURS_PER_STYLE, COLOUR_LEATHER_MAP]);
+
   const utils = trpc.useUtils();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -820,18 +813,8 @@ export default function SpecsTab({}: SpecsTabProps) {
     return set;
   }, [cancelledSkusRaw]);
 
-  const { data: customSkusRaw = [] } = trpc.customSku.getAll.useQuery();
-  // Build a map: style → Set<colour> for custom SKUs
-  const customColourMap = useMemo(() => {
-    const map: Record<string, Array<{ colour: string; leather: string }>> = {};
-    for (const sku of customSkusRaw as any[]) {
-      if (!map[sku.style]) map[sku.style] = [];
-      map[sku.style].push({ colour: sku.colour, leather: sku.leather });
-    }
-    return map;
-  }, [customSkusRaw]);
-
-  // Merge custom SKU colours into style entries, filter cancelled styles + cancelled SKUs
+  // Filter cancelled styles + cancelled SKUs from the base list
+  // (custom SKUs are already merged into baseStyleList via mergedRawSkus)
   const styleList = useMemo(() => {
     return baseStyleList
       .filter((s) => !cancelledSet.has(s.style))
@@ -841,7 +824,6 @@ export default function SpecsTab({}: SpecsTabProps) {
         const filteredLabels: string[] = [];
         for (let i = 0; i < s.colours.length; i++) {
           const colour = s.colours[i];
-          // Look up the leather for this colour from the raw SKU map
           const leather = COLOUR_LEATHER_MAP[s.style]?.[colour]
             ? COLOUR_LEATHER_MAP[s.style][colour].replace(colour, "").trim()
             : "";
@@ -851,36 +833,14 @@ export default function SpecsTab({}: SpecsTabProps) {
             filteredLabels.push(s.colourLabels[i]);
           }
         }
-
-        // Add custom SKU colours (also check they're not cancelled)
-        // Deduplicate by colour+leather combo (not just colour) so BLACK KID
-        // is treated as distinct from BLACK VINTAGE etc.
-        const extras = customColourMap[s.style] ?? [];
-        const existingCombos = new Set(
-          filteredColours.map((c, i) => {
-            const lbl = filteredLabels[i] ?? c;
-            const leather = lbl.replace(c, "").trim();
-            return `${c}|${leather}`;
-          })
-        );
-        const newColours = extras.filter((e) => {
-          const comboKey = `${e.colour}|${e.leather ?? ""}`;
-          if (existingCombos.has(comboKey)) return false;
-          const key = `${s.style}|${e.colour}|${e.leather ?? ""}`;
-          return !cancelledSkuSet.has(key);
-        });
-        const addedColours = newColours.map((e) => e.colour);
-        const addedLabels = newColours.map((e) => e.leather ? `${e.colour} ${e.leather}` : e.colour);
-
         return {
           ...s,
-          colours: [...filteredColours, ...addedColours],
-          colourLabels: [...filteredLabels, ...addedLabels],
+          colours: filteredColours,
+          colourLabels: filteredLabels,
         };
       })
-      // Remove styles that end up with no colours after filtering
       .filter((s) => s.colours.length > 0);
-  }, [baseStyleList, cancelledSet, cancelledSkuSet, customColourMap]);
+  }, [baseStyleList, cancelledSet, cancelledSkuSet, COLOUR_LEATHER_MAP]);
 
   const filtered = styleList.filter((s) => {
     const q = search.toLowerCase();

@@ -32,6 +32,7 @@ import {
   createFittingGroup, getAllFittingGroups, updateFittingGroup, deleteFittingGroup, addStyleToFittingGroup, removeStyleFromFittingGroup,
   getSpecCustomRowsForStyle, upsertSpecCustomRow, deleteSpecCustomRow,
   getLatestPptxImport, listPptxImports,
+  getAllLastHeelHeights, upsertLastHeelHeight,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -1191,6 +1192,17 @@ export const appRouter = router({
       .input(z.object({ groupId: z.number(), style: z.string() }))
       .mutation(async ({ input }) => {
         await removeStyleFromFittingGroup(input.groupId, input.style);
+        return { success: true };
+      }),
+  }),
+
+  // ─── Last Heel Heights ────────────────────────────────────────────────────
+  heelHeight: router({
+    getAll: publicProcedure.query(async () => getAllLastHeelHeights()),
+    upsert: publicProcedure
+      .input(z.object({ lastName: z.string(), heelHeightCm: z.number() }))
+      .mutation(async ({ input }) => {
+        await upsertLastHeelHeight(input.lastName, input.heelHeightCm);
         return { success: true };
       }),
   }),

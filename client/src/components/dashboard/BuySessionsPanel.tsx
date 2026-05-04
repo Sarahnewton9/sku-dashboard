@@ -6,12 +6,14 @@
 import { useState, useMemo, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
+import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { Lock, Download, Plus, Clock, CheckCircle, Package, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 
 export default function BuySessionsPanel() {
+  const { mergedStyles } = useCustomSkus();
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
@@ -89,12 +91,12 @@ export default function BuySessionsPanel() {
     deleteMutation.mutate({ sessionId });
   }
 
-  // Build lookup maps
+  // Build lookup maps (uses mergedStyles to include custom-style SKUs)
   const styleInfoMap = useMemo(() => {
     const map: Record<string, { category: string; last: string }> = {};
-    skuData.styles.forEach((s) => { map[s.style] = { category: s.category, last: s.last }; });
+    (mergedStyles as any[]).forEach((s: any) => { map[s.style] = { category: s.category, last: s.last }; });
     return map;
-  }, []);
+  }, [mergedStyles]);
 
   // Resolved category: sub-category override > trend flag (CASUAL FLAT) > static category
   const resolvedCategoryMap = useMemo(() => {
@@ -102,13 +104,13 @@ export default function BuySessionsPanel() {
     for (const sc of subCategoryList as any[]) subCatMap[sc.style] = sc.subCategory;
     const trendStyleSet = new Set((trendFlagList as any[]).map((t: any) => t.style));
     const map: Record<string, string> = {};
-    skuData.styles.forEach((s) => {
+    (mergedStyles as any[]).forEach((s: any) => {
       if (subCatMap[s.style]) map[s.style] = subCatMap[s.style];
       else if (trendStyleSet.has(s.style)) map[s.style] = "CASUAL FLAT";
       else map[s.style] = s.category;
     });
     return map;
-  }, [subCategoryList, trendFlagList]);
+  }, [mergedStyles, subCategoryList, trendFlagList]);
 
   const skuMetaMap = useMemo(() => {
     const map: Record<string, { costPrice?: number | null; isSize11?: boolean }> = {};

@@ -1,6 +1,6 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -909,4 +909,20 @@ export async function listPptxImports(): Promise<Array<{ id: number; fileKey: st
   const db = await getDb();
   if (!db) return [];
   return db.select().from(pptxImports).orderBy(desc(pptxImports.uploadedAt)).limit(20);
+}
+
+// ─── Last Heel Heights ────────────────────────────────────────────────────────
+export async function getAllLastHeelHeights(): Promise<Array<{ lastName: string; heelHeightCm: number }>> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(lastHeelHeights);
+  return rows.map(r => ({ lastName: r.lastName, heelHeightCm: r.heelHeightCm }));
+}
+
+export async function upsertLastHeelHeight(lastName: string, heelHeightCm: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(lastHeelHeights)
+    .values({ lastName, heelHeightCm })
+    .onDuplicateKeyUpdate({ set: { heelHeightCm } });
 }

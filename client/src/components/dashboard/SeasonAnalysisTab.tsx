@@ -11,7 +11,7 @@
 import { useState, useMemo, useRef } from "react";
 import * as XLSX from "xlsx";
 import { trpc } from "@/lib/trpc";
-import { skuData } from "@/lib/skuData";
+import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -185,6 +185,8 @@ export default function SeasonAnalysisTab() {
   const importMutation = trpc.season.import.useMutation();
   const deleteMutation = trpc.season.delete.useMutation();
 
+  const { mergedRawSkus } = useCustomSkus();
+
   // Auto-select latest import
   const latestImport = imports.length > 0 ? imports[imports.length - 1] : null;
   const activeImportId = selectedImportId ?? latestImport?.id ?? null;
@@ -192,21 +194,21 @@ export default function SeasonAnalysisTab() {
   // Build lookup of current range: style -> { newSkus, existingSkus, allSkus }
   const rangeByStyle = useMemo(() => {
     const map: Record<string, { newSkus: number; existingSkus: number; colours: string[] }> = {};
-    for (const sku of skuData.rawSkus) {
+    for (const sku of (mergedRawSkus as any[])) {
       if (!map[sku.style]) map[sku.style] = { newSkus: 0, existingSkus: 0, colours: [] };
       if (sku.is_new) map[sku.style].newSkus++;
       else map[sku.style].existingSkus++;
       if (!map[sku.style].colours.includes(sku.colour)) map[sku.style].colours.push(sku.colour);
     }
     return map;
-  }, []);
+  }, [mergedRawSkus]);
 
   // Build lookup of current range colours (for colour insights)
   const rangeColours = useMemo(() => {
     const set = new Set<string>();
-    for (const sku of skuData.rawSkus) set.add(sku.colour.toUpperCase());
+    for (const sku of (mergedRawSkus as any[])) set.add((sku.colour as string).toUpperCase());
     return set;
-  }, []);
+  }, [mergedRawSkus]);
 
   // ─── Analysis computations ───────────────────────────────────────────────
   const analysis = useMemo(() => {
