@@ -54,7 +54,7 @@ export default function StylesTab() {
     }
     return map;
   }, [heelHeightData]);
-  const HEEL_HEIGHT_CATEGORIES = new Set(["Dress Shoe", "Dress Sandal", "Wedge"]);
+  const HEEL_HEIGHT_CATEGORIES = new Set(["DRESS SHOE", "DRESS SANDAL", "WEDGE", "DRESS WEDGE", "CASUAL WEDGE"]);
 
   // Cancelled styles
   const { cancelledSet, raw: cancelledList } = useCancelledStyles();
