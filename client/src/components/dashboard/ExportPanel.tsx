@@ -330,8 +330,8 @@ export default function ExportPanel({ onClose }: Props) {
   function exportFittingNotes() {
     setExporting("fitting");
     try {
-      const rows = skuData.rawSkus
-        .map((sku) => {
+      const rows = (mergedRawSkus as any[])
+        .map((sku: any) => {
           const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
           const meta = skuMetaMap[key];
           return {
@@ -351,7 +351,7 @@ export default function ExportPanel({ onClose }: Props) {
             RRP: styleMetaMap[sku.style]?.rrp != null ? styleMetaMap[sku.style].rrp : "",
           };
         })
-        .filter((r) => r["Fitting Notes"] || r["Fit Rating"] || r["Sample Status"] === "received");
+        .filter((r: any) => r["Fitting Notes"] || r["Fit Rating"] || r["Sample Status"] === "received");
 
       if (rows.length === 0) {
         toast.info("No fitting notes or sample data to export yet.");

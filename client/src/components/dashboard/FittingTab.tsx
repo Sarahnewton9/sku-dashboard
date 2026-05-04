@@ -1538,7 +1538,7 @@ export function FittingTab() {
 
       {filteredActive.length === 0 && !q && (
         <div className="text-center py-16 text-muted-foreground">
-          {approvalFilter === "not_approved" && (
+          {(approvalFilter === "waiting_to_fit" || approvalFilter === "waiting_revised" || approvalFilter === "all") && (
             <>
               <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
               <p className="text-sm font-medium text-green-700">All styles have been approved!</p>

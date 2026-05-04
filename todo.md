@@ -872,17 +872,19 @@
 - [x] Custom SKU styles without a static category entry fall back to "Other" category
 
 ## Phase 109: Live-merge logic across ALL tabs
-- [ ] Audit all tab components for static skuData.rawSkus usage
-- [ ] Apply mergedRawSkus to LeathersTab
-- [ ] Apply mergedRawSkus to ColoursTab
-- [ ] Apply mergedRawSkus to ColourLeatherTab
-- [ ] Apply mergedRawSkus to StylesTab (By Style)
-- [ ] Apply mergedRawSkus to ExpansionAnalysisTab
-- [ ] Apply mergedRawSkus to any other remaining tabs
+- [x] Audit all tab components for static skuData.rawSkus usage
+- [x] Apply mergedRawSkus to LeathersTab
+- [x] Apply mergedRawSkus to ColoursTab
+- [x] Apply mergedRawSkus to ColourLeatherTab
+- [x] Apply mergedRawSkus to StylesTab (By Style)
+- [x] Apply mergedRawSkus to ExpansionAnalysisTab
+- [x] Apply mergedRawSkus to FittingTab (live-merged via useCustomSkus)
+- [x] Apply mergedRawSkus to LastApprovalTab (live-merged via useCustomSkus)
+- [x] Apply mergedRawSkus to SpecsTab (live-merged via useCustomSkus)
 
 ## Phase 110: Heel heights from tonybianco.com.au
-- [ ] Scrape tonybianco.com.au product pages to extract heel height per last name from item descriptions
-- [ ] Store heel heights in DB (lastHeelHeights table, keyed by last name)
-- [ ] Add tRPC procedures: getHeelHeights, upsertHeelHeight (admin editable)
-- [ ] Display heel height badge next to last name in By Style tab
-- [ ] Include heel height in full export (buy sheet / spec sheet)
+- [x] Scrape tonybianco.com.au product pages to extract heel height per last name from item descriptions
+- [x] Store heel heights in DB (lastHeelHeights table, keyed by last name)
+- [x] Add tRPC procedures: getHeelHeights, upsertHeelHeight (admin editable)
+- [x] Display heel height badge next to last name in By Style tab (Dress Shoe, Dress Sandal, Wedge only)
+- [x] Include heel height in full export (Dress Shoe, Dress Sandal, Wedge categories only)

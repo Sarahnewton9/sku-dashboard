@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
@@ -296,6 +296,7 @@ interface SpecFormProps {
   specMeta: { hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null } | null;
   specs: Record<string, Record<string, string>>; // colour → component → value
   allDropdownOptions: Record<string, string[]>;
+  allColourLeatherOptions: string[];
   imageOverride?: string;
   customRows: CustomRowData[];
   onUpsert: (colour: string, component: string, value: string) => void;
@@ -323,7 +324,7 @@ const STYLE_CATEGORIES = [
 ];
 
 function SpecForm({
-  entry, specMeta, specs, allDropdownOptions, imageOverride, customRows,
+  entry, specMeta, specs, allDropdownOptions, allColourLeatherOptions, imageOverride, customRows,
   onUpsert, onAddDropdownOption, onMetaChange, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow,
   dbCategory, onSetCategory,
 }: SpecFormProps) {
@@ -528,7 +529,7 @@ function SpecForm({
                               savedOptions={savedOpts}
                               onSave={(v) => onUpsert(colour, comp.key, v)}
                               onAddOption={(v) => onAddDropdownOption(comp.key, v)}
-                              overrideOptions={isUpper1 ? ALL_COLOUR_LEATHER_OPTIONS : undefined}
+                              overrideOptions={isUpper1 ? allColourLeatherOptions : undefined}
                             />
                           ) : (
                             <TextCell
@@ -1530,6 +1531,7 @@ export default function SpecsTab({}: SpecsTabProps) {
               specMeta={specMeta}
               specs={specs}
               allDropdownOptions={allDropdownOptions}
+              allColourLeatherOptions={ALL_COLOUR_LEATHER_OPTIONS}
               imageOverride={imageOverrides[selectedEntry.style]}
               customRows={rawCustomRows as any[]}
               onUpsert={handleUpsert}

@@ -456,7 +456,7 @@ export default function StylesTab() {
   // Check sample status for all NEW SKUs in a style
   // Returns: 'all' | 'some' | 'none'
   function getStyleSampleStatus(styleName: string): 'all' | 'some' | 'none' {
-    const newSkus = getSkusForStyle(styleName).filter((s) => s.isNew);
+    const newSkus = getSkusForStyle(styleName).filter((s) => s.is_new);
     if (newSkus.length === 0) return 'none';
     const receivedCount = newSkus.filter((sku) => {
       const key = `${sku.style}|${sku.colour}|${sku.leather}`;
@@ -474,13 +474,13 @@ export default function StylesTab() {
   });
 
   function handleStyleSampleToggle(styleName: string) {
-    const newSkus = getSkusForStyle(styleName).filter((s) => s.isNew);
+    const newSkus = getSkusForStyle(styleName).filter((s) => s.is_new);
     if (newSkus.length === 0) return;
     const currentStatus = getStyleSampleStatus(styleName);
     const newStatus = currentStatus === 'all' ? 'waiting' : 'received';
     // Fire mutations sequentially using Promise chain to avoid race conditions
-    newSkus.reduce((p, sku) =>
-      p.then(() => updateStyleSampleMutation.mutateAsync({ style: sku.style, colour: sku.colour, leather: sku.leather ?? '', sampleStatus: newStatus })),
+    newSkus.reduce<Promise<void>>((p, sku) =>
+      p.then(() => { updateStyleSampleMutation.mutateAsync({ style: sku.style, colour: sku.colour, leather: sku.leather ?? '', sampleStatus: newStatus }); }),
       Promise.resolve()
     );
   }
@@ -645,7 +645,7 @@ export default function StylesTab() {
                       const sessionTotal = getStyleSessionTotal(style.style);
                       const styleSize11 = getStyleSize11(style.style);
                       const styleSampleStatus = getStyleSampleStatus(style.style);
-                      const hasNewSkus = getSkusForStyle(style.style).some((s) => s.isNew);
+                      const hasNewSkus = getSkusForStyle(style.style).some((s) => s.is_new);
                       return (
                         <React.Fragment key={style.style}>
                           <tr
