@@ -20,11 +20,33 @@ const AP21_SIZE_RANGE_WITH_11 = "EU35-42";
 const AP21_SIZES_STANDARD = ["35", "36", "37", "38", "39", "40", "41"];
 const AP21_SIZES_WITH_11 = ["35", "36", "37", "38", "39", "40", "41", "42"];
 
+// All available columns for the Full Data Export
+const FULL_EXPORT_ALL_COLS: Array<{ key: string; label: string }> = [
+  { key: "Style",             label: "Style" },
+  { key: "Category",          label: "Category" },
+  { key: "Last",              label: "Last" },
+  { key: "Heel Height (cm)",  label: "Heel Height (cm)" },
+  { key: "Colour",            label: "Colour" },
+  { key: "Leather",           label: "Leather" },
+  { key: "Status",            label: "New / Existing" },
+  { key: "Size 11",           label: "Size 11" },
+  { key: "Sample Status",     label: "Sample Status" },
+  { key: "Order Qty",         label: "Order Qty" },
+  { key: "Cost Price",        label: "Cost Price" },
+  { key: "RRP",               label: "RRP" },
+  { key: "Fit Rating",        label: "Fit Rating" },
+  { key: "Fitting Notes",     label: "Fitting Notes" },
+];
+// These columns are always included and cannot be deselected
+const FULL_EXPORT_REQUIRED_COLS = ["Style", "Colour", "Leather"];
+const FULL_EXPORT_DEFAULT_COLS = new Set(FULL_EXPORT_ALL_COLS.map(c => c.key));
+
 export default function ExportPanel({ onClose }: Props) {
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
   const [exporting, setExporting] = useState<string | null>(null);
   const [ap21Style, setAp21Style] = useState<string>("ALL");
   const [showPptxSync, setShowPptxSync] = useState(false);
+  const [fullExportCols, setFullExportCols] = useState<Set<string>>(FULL_EXPORT_DEFAULT_COLS);
   const utils = trpc.useUtils();
 
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
@@ -442,9 +464,20 @@ export default function ExportPanel({ onClose }: Props) {
     }
   }
 
+  // Column width map for the full export
+  const FULL_EXPORT_COL_WIDTHS: Record<string, number> = {
+    "Style": 14, "Category": 16, "Last": 14, "Heel Height (cm)": 14,
+    "Colour": 16, "Leather": 22, "Status": 10, "Size 11": 8,
+    "Sample Status": 14, "Order Qty": 10, "Cost Price": 12, "RRP": 10,
+    "Fit Rating": 16, "Fitting Notes": 40,
+  };
+
   function exportFullData() {
     setExporting("full");
     try {
+      // Build full row, then pick only selected columns in definition order
+      const selectedKeys = FULL_EXPORT_ALL_COLS.map(c => c.key).filter(k => fullExportCols.has(k));
+
       const rows = (mergedRawSkus as any[]).map((sku: any) => {
         const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
         const meta = skuMetaMap[key];
@@ -452,7 +485,7 @@ export default function ExportPanel({ onClose }: Props) {
         const category = styleLookup[sku.style]?.category ?? "";
         const isHeelCategory = HEEL_HEIGHT_CATEGORIES.has(category);
         const heelHeight = isHeelCategory ? (heelHeightMap.get(lastName) ?? "") : "";
-        return {
+        const allFields: Record<string, any> = {
           Style: sku.style,
           Category: category,
           Last: styleLookup[sku.style]?.last ?? "",
@@ -470,17 +503,18 @@ export default function ExportPanel({ onClose }: Props) {
             : "",
           "Fitting Notes": meta?.fittingNotes ?? "",
         };
+        // Return only selected columns in order
+        const filtered: Record<string, any> = {};
+        for (const k of selectedKeys) filtered[k] = allFields[k];
+        return filtered;
       });
 
       const ws = XLSX.utils.json_to_sheet(rows);
-      ws["!cols"] = [
-        { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 22 },
-        { wch: 10 }, { wch: 8 }, { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 16 }, { wch: 40 },
-      ];
+      ws["!cols"] = selectedKeys.map(k => ({ wch: FULL_EXPORT_COL_WIDTHS[k] ?? 14 }));
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Full SKU Data");
       XLSX.writeFile(wb, "SS26_Full_Export.xlsx");
-      toast.success(`Exported all ${rows.length} SKUs`);
+      toast.success(`Exported ${rows.length} SKUs · ${selectedKeys.length} columns`);
     } finally {
       setExporting(null);
     }
@@ -726,23 +760,72 @@ export default function ExportPanel({ onClose }: Props) {
           </button>
 
           {/* Full Data Export */}
-          <button
-            onClick={exportFullData}
-            disabled={exporting !== null}
-            className="w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all hover:bg-muted/30 disabled:opacity-50"
-            style={{ borderColor: "var(--border)" }}
-          >
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "var(--muted)" }}>
-              <FileDown className="w-5 h-5 text-muted-foreground" />
+          <div className="w-full rounded-xl border overflow-hidden" style={{ borderColor: "var(--border)" }}>
+            {/* Header row */}
+            <div className="flex items-start gap-4 p-4">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "var(--muted)" }}>
+                <FileDown className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-foreground">Full Data Export</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Choose which columns to include, then export all SKUs to Excel.
+                </p>
+                {/* Select All / None row */}
+                <div className="flex items-center gap-3 mt-3">
+                  <button
+                    onClick={() => setFullExportCols(new Set(FULL_EXPORT_ALL_COLS.map(c => c.key)))}
+                    className="text-xs px-2.5 py-1 rounded-full border font-medium transition-colors hover:bg-muted/40"
+                    style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+                  >Select All</button>
+                  <button
+                    onClick={() => setFullExportCols(new Set(FULL_EXPORT_REQUIRED_COLS))}
+                    className="text-xs px-2.5 py-1 rounded-full border font-medium transition-colors hover:bg-muted/40"
+                    style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
+                  >Reset</button>
+                  <span className="text-xs text-muted-foreground ml-auto">{fullExportCols.size} columns</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="font-semibold text-sm text-foreground">Full Data Export</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                All 1,018 SKUs with all fields including size 11, sample status, cost, RRP, fit notes.
-              </p>
+            {/* Column checkboxes */}
+            <div className="px-4 pb-3 border-t grid grid-cols-2 gap-x-4 gap-y-1.5 pt-3" style={{ borderColor: "var(--border)" }}>
+              {FULL_EXPORT_ALL_COLS.map((col) => (
+                <label key={col.key} className="flex items-center gap-2 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={fullExportCols.has(col.key)}
+                    disabled={FULL_EXPORT_REQUIRED_COLS.includes(col.key)}
+                    onChange={() => {
+                      setFullExportCols(prev => {
+                        const next = new Set(prev);
+                        if (next.has(col.key)) next.delete(col.key);
+                        else next.add(col.key);
+                        return next;
+                      });
+                    }}
+                    className="accent-amber-600 w-3.5 h-3.5 flex-shrink-0"
+                  />
+                  <span className={`text-xs font-medium truncate ${
+                    FULL_EXPORT_REQUIRED_COLS.includes(col.key)
+                      ? "text-muted-foreground"
+                      : "text-foreground group-hover:text-foreground"
+                  }`}>{col.label}</span>
+                </label>
+              ))}
             </div>
-            {exporting === "full" && <span className="ml-auto text-xs text-muted-foreground">Exporting…</span>}
-          </button>
+            {/* Export button */}
+            <div className="px-4 pb-4 pt-2">
+              <button
+                onClick={exportFullData}
+                disabled={exporting !== null || fullExportCols.size === 0}
+                className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-semibold text-white transition-colors disabled:opacity-50"
+                style={{ background: "oklch(0.50 0.14 55)" }}
+              >
+                <FileDown className="w-3.5 h-3.5" />
+                {exporting === "full" ? "Exporting…" : `Export ${fullExportCols.size} columns`}
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end px-6 py-4 border-t flex-shrink-0" style={{ borderColor: "var(--border)" }}>
