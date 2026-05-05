@@ -162,6 +162,13 @@
       "when": 1777863104943,
       "tag": "0022_rainy_tattoo",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1778023187992,
+      "tag": "0023_simple_joseph",
+      "breakpoints": true
     }
   ]
 }

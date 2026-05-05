@@ -748,7 +748,7 @@ export async function addCustomSku(style: string, colour: string, leather: strin
   return (result[0] as any).insertId as number;
 }
 
-export async function getAllCustomSkus(): Promise<{ id: number; style: string; colour: string; leather: string; createdAt: Date }[]> {
+export async function getAllCustomSkus(): Promise<{ id: number; style: string; colour: string; leather: string; isNew: boolean; createdAt: Date }[]> {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(customSkus);

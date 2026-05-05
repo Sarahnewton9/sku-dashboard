@@ -313,6 +313,7 @@ export const customSkus = mysqlTable("custom_skus", {
   style: varchar("style", { length: 64 }).notNull(),
   colour: varchar("colour", { length: 64 }).notNull(),
   leather: varchar("leather", { length: 64 }).notNull().default(""),
+  isNew: boolean("is_new").notNull().default(true),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type CustomSku = typeof customSkus.$inferSelect;

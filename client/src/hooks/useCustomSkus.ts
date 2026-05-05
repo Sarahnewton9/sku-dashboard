@@ -7,13 +7,16 @@ export type CustomSkuRow = {
   style: string;
   colour: string;
   leather: string;
+  isNew: boolean;
   createdAt: Date;
 };
 
 /**
  * Fetches custom SKUs from the DB and merges them with the static skuData.
  *
- * Custom SKUs are always treated as new (is_new = true).
+ * Custom SKUs respect the `isNew` flag from the DB:
+ *  - isNew = true  → treated as new (appears in sample tracking, new SKU counts)
+ *  - isNew = false → treated as existing carry-over (excluded from sample tracking)
  *
  * Returns:
  *  - customSkus: raw list of custom SKU rows from DB
@@ -34,7 +37,8 @@ export function useCustomSkus() {
       style: c.style as string,
       colour: c.colour as string,
       leather: c.leather as string,
-      is_new: true as const,
+      // Respect the isNew flag from DB — existing carry-overs are not new
+      is_new: (c.isNew ?? true) as boolean,
       _customId: c.id,
     }));
 
@@ -49,11 +53,11 @@ export function useCustomSkus() {
   const mergedStyles = useMemo(() => {
     if (customSkus.length === 0) return skuData.styles;
 
-    // Build a map of style -> extra {colour, leather} pairs
-    const extras: Record<string, Array<{ colour: string; leather: string }>> = {};
+    // Build a map of style -> extra {colour, leather, isNew} pairs
+    const extras: Record<string, Array<{ colour: string; leather: string; isNew: boolean }>> = {};
     for (const c of customSkus) {
       if (!extras[c.style]) extras[c.style] = [];
-      extras[c.style].push({ colour: c.colour, leather: c.leather });
+      extras[c.style].push({ colour: c.colour, leather: c.leather, isNew: c.isNew ?? true });
     }
 
     return skuData.styles.map((s) => {
@@ -66,13 +70,16 @@ export function useCustomSkus() {
       const newColours = Array.from(new Set(extra.map((e) => e.colour).filter((c) => !existingColours.has(c as any)))) as any[];
       const newLeathers = Array.from(new Set(extra.map((e) => e.leather).filter((l) => l && !existingLeathers.has(l as any)))) as any[];
 
+      // Only count truly new custom SKUs toward newSKUs
+      const newCount = extra.filter((e) => e.isNew).length;
+
       return {
         ...s,
         colours: [...s.colours, ...newColours],
         leathers: [...s.leathers, ...newLeathers],
         totalSKUs: s.totalSKUs + extra.length,
-        newSKUs: s.newSKUs + extra.length,
-        hasNew: true,
+        newSKUs: s.newSKUs + newCount,
+        hasNew: s.hasNew || newCount > 0,
       };
     });
   }, [customSkus]);

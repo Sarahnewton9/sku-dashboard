@@ -1,0 +1,1 @@
+ALTER TABLE `custom_skus` ADD `is_new` boolean DEFAULT true NOT NULL;
