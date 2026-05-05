@@ -342,7 +342,7 @@ export default function ExportPanel({ onClose }: Props) {
             Leather: sku.leather,
             Status: sku.is_new ? "New" : "Existing",
             "Size 11": meta?.isSize11 ? "Yes" : "No",
-            "Sample Status": meta?.sampleStatus ?? "waiting",
+            "Sample Status": meta?.sampleStatus === "received" ? "Received" : "Waiting",
             "Fit Rating": meta?.fitRating
               ? { tts: "True to Size", runs_small: "Runs Small", runs_large: "Runs Large" }[meta.fitRating] ?? meta.fitRating
               : "",
@@ -461,7 +461,7 @@ export default function ExportPanel({ onClose }: Props) {
           Leather: sku.leather,
           Status: sku.is_new ? "New" : "Existing",
           "Size 11": meta?.isSize11 ? "Yes" : "No",
-          "Sample Status": meta?.sampleStatus ?? "waiting",
+          "Sample Status": meta?.sampleStatus === "received" ? "Received" : "Waiting",
           "Order Qty": meta?.orderQty ?? 0,
           "Cost Price": meta?.costPrice != null ? meta.costPrice : "",
           RRP: styleMetaMap[sku.style]?.rrp != null ? styleMetaMap[sku.style].rrp : "",
@@ -488,17 +488,17 @@ export default function ExportPanel({ onClose }: Props) {
 
   return (
     <>
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.4)" }} onClick={onClose}>
-      <div className="w-[480px] max-w-full mx-4 rounded-2xl shadow-2xl bg-card overflow-hidden" style={{ border: "1px solid var(--border)" }} onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.4)" }} onClick={onClose}>
+      <div className="w-[480px] max-w-full rounded-2xl shadow-2xl bg-card flex flex-col" style={{ border: "1px solid var(--border)", maxHeight: "90vh" }} onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "var(--border)" }}>
           <h2 className="font-display font-bold text-lg text-foreground">Export Data</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
             <X className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-3">
+        <div className="px-6 py-5 space-y-3 overflow-y-auto flex-1 min-h-0">
           <p className="text-sm text-muted-foreground">
             Choose an export format. All exports include Size 11 flag and current DB data.
           </p>
@@ -745,7 +745,7 @@ export default function ExportPanel({ onClose }: Props) {
           </button>
         </div>
 
-        <div className="flex justify-end px-6 py-4 border-t" style={{ borderColor: "var(--border)" }}>
+        <div className="flex justify-end px-6 py-4 border-t flex-shrink-0" style={{ borderColor: "var(--border)" }}>
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-muted"
