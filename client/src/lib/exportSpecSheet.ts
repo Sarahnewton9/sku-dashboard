@@ -114,7 +114,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     }
   }
 
-  const template = getTemplateForCategory(category, { hasBuckle, dressShoeSubType });
+  const template = getTemplateForCategory(category, { hasBuckle, dressShoeSubType, style });
   const today = new Date().toLocaleDateString("en-AU", {
     day: "2-digit",
     month: "short",

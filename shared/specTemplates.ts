@@ -6,6 +6,9 @@
  * Universal components appear in all templates.
  * Category-specific components are added per template.
  * Buckle is handled separately via the hasBuckle toggle on styleSpecMeta.
+ *
+ * Per-style overrides are defined in STYLE_COMPONENT_OVERRIDES below.
+ * These add or remove specific components for named styles without changing the category template.
  */
 
 export type FieldType = "dropdown" | "text";
@@ -68,9 +71,11 @@ export type ShoeCategory =
   | "Platform"
   | "Boot"
   | "Sandal"
+  | "Dress Sandal"
   | "Wedge"
   | "Ankle Boot"
-  | "Calf Boot";
+  | "Calf Boot"
+  | "Casual Flat";
 
 export const SPEC_TEMPLATES: Record<ShoeCategory, SpecComponent[]> = {
   "Dress Shoe": [
@@ -158,6 +163,15 @@ export const SPEC_TEMPLATES: Record<ShoeCategory, SpecComponent[]> = {
     ...PACKAGING,
   ],
 
+  "Dress Sandal": [
+    ...UPPER_BASE,
+    { key: "foot_bed_cover", label: "Foot Bed Cover", type: "dropdown", section: "construction" },
+    { key: "insole_name",    label: "Insole Name",    type: "text",     section: "construction" },
+    ...SOLE_BASE,
+    ...HEEL_BASE,
+    ...PACKAGING,
+  ],
+
   "Wedge": [
     ...UPPER_BASE,
     ...SOCK_BASE,
@@ -169,6 +183,18 @@ export const SPEC_TEMPLATES: Record<ShoeCategory, SpecComponent[]> = {
     { key: "top_lift",       label: "Top Lift",       type: "dropdown", section: "heel" },
     ...PACKAGING,
   ],
+
+  "Casual Flat": [
+    ...UPPER_BASE,
+    { key: "topline",        label: "Topline",        type: "dropdown", section: "upper" },
+    { key: "sock",           label: "Sock",           type: "dropdown", section: "construction" },
+    { key: "sock_logo",      label: "Sock Logo",      type: "dropdown", section: "construction" },
+    { key: "heel_counter",   label: "Heel Counter",   type: "dropdown", section: "construction" },
+    { key: "insole_name",    label: "Insole Name",    type: "text",     section: "construction" },
+    ...SOLE_BASE,
+    { key: "top_lift",       label: "Top Lift",       type: "dropdown", section: "heel" },
+    ...PACKAGING,
+  ],
 };
 
 // Sling back elastic — injected after Upper 1 for Dress Shoe sling sub-type
@@ -176,16 +202,155 @@ export const SLING_BACK_COMPONENT: SpecComponent = {
   key: "sling_back_elastic", label: "Sling Back Elastic", type: "dropdown", section: "upper",
 };
 
+// ─── Per-style component overrides ───────────────────────────────────────────
+// Each entry specifies components to ADD and/or keys to REMOVE for a specific style.
+// ADD components are appended after the last component in the matching section.
+// REMOVE keys are filtered out of the final list.
+
+interface StyleOverride {
+  add?: SpecComponent[];
+  remove?: string[];  // keys to remove
+}
+
+export const STYLE_COMPONENT_OVERRIDES: Record<string, StyleOverride> = {
+  // DONTE – Add Binding, Toe Cap and Elastic
+  "DONTE": {
+    add: [
+      { key: "donte_binding",   label: "Binding",        type: "dropdown", section: "construction" },
+      { key: "donte_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "construction" },
+      { key: "donte_elastic",   label: "Elastic",        type: "dropdown", section: "construction" },
+    ],
+  },
+
+  // EMILY – Add Toe Cap
+  "EMILY": {
+    add: [
+      { key: "emily_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "construction" },
+    ],
+  },
+
+  // JANET – Remove Insole Name and Sole Edge
+  "JANET": {
+    remove: ["insole_name", "sole_edge"],
+  },
+
+  // KAILA – Add Inking, Sock Logo, Platform Cover. Remove Foot Bed Cover and Add Insole Cover.
+  "KAILA": {
+    add: [
+      { key: "kaila_inking",         label: "Inking",         type: "dropdown", section: "construction" },
+      { key: "kaila_sock_logo",      label: "Sock Logo",      type: "dropdown", section: "construction" },
+      { key: "kaila_platform_cover", label: "Platform Cover", type: "dropdown", section: "heel" },
+      { key: "kaila_insole_cover",   label: "Insole Cover",   type: "dropdown", section: "construction" },
+    ],
+    remove: ["foot_bed_cover"],
+  },
+
+  // LEGACY – Add Toe Cap
+  "LEGACY": {
+    add: [
+      { key: "legacy_toe_cap",  label: "Toe Cap",        type: "dropdown", section: "construction" },
+    ],
+  },
+
+  // LUNA – Remove Sole Edge, Sole Treatment, Insole Name
+  "LUNA": {
+    remove: ["sole_edge", "sole_treatment", "insole_name"],
+  },
+
+  // LAVA – Remove Sole Edge, Sole Treatment, Insole Name
+  "LAVA": {
+    remove: ["sole_edge", "sole_treatment", "insole_name"],
+  },
+
+  // MIXA – Add Elastic and Vamp
+  "MIXA": {
+    add: [
+      { key: "mixa_elastic",    label: "Elastic",        type: "dropdown", section: "upper" },
+      { key: "mixa_vamp",       label: "Vamp",           type: "dropdown", section: "upper" },
+    ],
+  },
+
+  // PIXIE – Add Elastic and Toe Cap
+  "PIXIE": {
+    add: [
+      { key: "pixie_elastic",   label: "Elastic",        type: "dropdown", section: "upper" },
+      { key: "pixie_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "construction" },
+    ],
+  },
+
+  // RORY – Add Grosgrain Binding, Toe Embroidery
+  "RORY": {
+    add: [
+      { key: "rory_grosgrain_binding", label: "Grosgrain Binding", type: "dropdown", section: "upper" },
+      { key: "rory_toe_embroidery",    label: "Toe Embroidery",    type: "dropdown", section: "construction" },
+    ],
+  },
+
+  // ROXIE – Add Leather Bow, Grosgrain Topline and Toe Cap
+  "ROXIE": {
+    add: [
+      { key: "roxie_leather_bow",      label: "Leather Bow",       type: "dropdown", section: "upper" },
+      { key: "roxie_grosgrain_topline",label: "Grosgrain Topline", type: "dropdown", section: "upper" },
+      { key: "roxie_toe_cap",          label: "Toe Cap",           type: "dropdown", section: "construction" },
+    ],
+  },
+
+  // ROBYN – Add Leather Bow, Grosgrain Topline and Toe Cap
+  "ROBYN": {
+    add: [
+      { key: "robyn_leather_bow",      label: "Leather Bow",       type: "dropdown", section: "upper" },
+      { key: "robyn_grosgrain_topline",label: "Grosgrain Topline", type: "dropdown", section: "upper" },
+      { key: "robyn_toe_cap",          label: "Toe Cap",           type: "dropdown", section: "construction" },
+    ],
+  },
+
+  // SARAH – Add Piping and Toe Cap
+  "SARAH": {
+    add: [
+      { key: "sarah_piping",    label: "Piping",         type: "dropdown", section: "upper" },
+      { key: "sarah_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "construction" },
+    ],
+  },
+
+  // SAVANT – Add Binding and Toe Cap
+  "SAVANT": {
+    add: [
+      { key: "savant_binding",  label: "Binding",        type: "dropdown", section: "construction" },
+      { key: "savant_toe_cap",  label: "Toe Cap",        type: "dropdown", section: "construction" },
+    ],
+  },
+
+  // VOLLI – Remove Toe Piece & Insole Binding
+  "VOLLI": {
+    remove: ["toe_piece", "insole_binding"],
+  },
+
+  // VILLA – Remove Toe Piece & Insole Binding
+  "VILLA": {
+    remove: ["toe_piece", "insole_binding"],
+  },
+};
+
+// Note: SAMMY – "Picking up Black Capri instead of Black Venice" is a data issue
+// (the colour/leather dropdown value), not a component structure issue.
+// TILDA – "Black Speckle missing" is a SKU data issue, not a component issue.
+// These are tracked separately.
+
 /**
- * Get the full component list for a style, injecting optional components based on meta.
+ * Get the full component list for a style, injecting optional components based on meta
+ * and applying any per-style overrides.
  */
 export function getTemplateForCategory(
   category: string,
-  opts: { hasBuckle?: boolean; dressShoeSubType?: "court" | "sling" | null } = {}
+  opts: {
+    hasBuckle?: boolean;
+    dressShoeSubType?: "court" | "sling" | null;
+    style?: string;
+  } = {}
 ): SpecComponent[] {
   const cat = category as ShoeCategory;
   const base = SPEC_TEMPLATES[cat] ?? SPEC_TEMPLATES["Dress Shoe"];
-  const result = [...base];
+  let result = [...base];
 
   // Inject sling back elastic after Upper 1 for sling-back dress shoes
   if (cat === "Dress Shoe" && opts.dressShoeSubType === "sling") {
@@ -197,6 +362,37 @@ export function getTemplateForCategory(
   if (opts.hasBuckle) {
     const upperIdx = result.findIndex((c) => c.key === "upper_1");
     result.splice(upperIdx + 1, 0, BUCKLE_COMPONENT);
+  }
+
+  // Apply per-style overrides
+  if (opts.style) {
+    const override = STYLE_COMPONENT_OVERRIDES[opts.style.toUpperCase()];
+    if (override) {
+      // Remove specified keys
+      if (override.remove && override.remove.length > 0) {
+        const removeSet = new Set(override.remove);
+        result = result.filter((c) => !removeSet.has(c.key));
+      }
+      // Add new components, grouped by section after the last component in that section
+      if (override.add && override.add.length > 0) {
+        for (const comp of override.add) {
+          // Find the last index of the same section, insert after it
+          let insertIdx = -1;
+          for (let i = result.length - 1; i >= 0; i--) {
+            if (result[i].section === comp.section) {
+              insertIdx = i + 1;
+              break;
+            }
+          }
+          if (insertIdx === -1) {
+            // Section not found — append before packaging
+            const pkgIdx = result.findIndex((c) => c.section === "packaging");
+            insertIdx = pkgIdx === -1 ? result.length : pkgIdx;
+          }
+          result.splice(insertIdx, 0, comp);
+        }
+      }
+    }
   }
 
   return result;
@@ -246,6 +442,32 @@ export const DEFAULT_DROPDOWN_OPTIONS: Record<string, string[]> = {
   tissue: ["TONY BIANCO", "PLAIN WHITE", "NONE"],
   commercial_markings_position: ["SOLE BOTTOM", "INSOLE", "SOCK"],
   barcode: ["YES", "NO"],
+  // New component dropdowns
+  donte_binding: ["MATCHING", "CONTRAST", "NONE"],
+  donte_toe_cap: ["MATCHING", "CONTRAST", "NONE"],
+  donte_elastic: ["MATCHING", "CONTRAST", "CLEAR", "NONE"],
+  emily_toe_cap: ["MATCHING", "CONTRAST", "NONE"],
+  kaila_inking: ["STANDARD", "NONE"],
+  kaila_sock_logo: ["EMBOSS", "LASER", "WOVEN LABEL"],
+  kaila_platform_cover: ["UPPER 1", "MATCHING", "CONTRAST"],
+  kaila_insole_cover: ["MATCHING", "SHEEP LEATHER", "NONE"],
+  legacy_toe_cap: ["MATCHING", "CONTRAST", "NONE"],
+  mixa_elastic: ["MATCHING", "CONTRAST", "CLEAR", "NONE"],
+  mixa_vamp: ["UPPER 1", "MATCHING", "CONTRAST"],
+  pixie_elastic: ["MATCHING", "CONTRAST", "CLEAR", "NONE"],
+  pixie_toe_cap: ["MATCHING", "CONTRAST", "NONE"],
+  rory_grosgrain_binding: ["MATCHING", "CONTRAST", "NONE"],
+  rory_toe_embroidery: ["MATCHING", "CONTRAST", "NONE"],
+  roxie_leather_bow: ["MATCHING", "CONTRAST", "NONE"],
+  roxie_grosgrain_topline: ["MATCHING GROSGRAIN", "CONTRAST GROSGRAIN", "NONE"],
+  roxie_toe_cap: ["MATCHING", "CONTRAST", "NONE"],
+  robyn_leather_bow: ["MATCHING", "CONTRAST", "NONE"],
+  robyn_grosgrain_topline: ["MATCHING GROSGRAIN", "CONTRAST GROSGRAIN", "NONE"],
+  robyn_toe_cap: ["MATCHING", "CONTRAST", "NONE"],
+  sarah_piping: ["MATCHING", "CONTRAST", "NONE"],
+  sarah_toe_cap: ["MATCHING", "CONTRAST", "NONE"],
+  savant_binding: ["MATCHING", "CONTRAST", "NONE"],
+  savant_toe_cap: ["MATCHING", "CONTRAST", "NONE"],
 };
 
 export const SECTION_LABELS: Record<string, string> = {
@@ -277,6 +499,14 @@ export const COMPONENT_LABEL_TO_KEY: Record<string, string> = (() => {
       map[comp.label.toUpperCase()] = comp.key;
     }
   }
+  // All style override components
+  for (const override of Object.values(STYLE_COMPONENT_OVERRIDES)) {
+    if (override.add) {
+      for (const comp of override.add) {
+        map[comp.label.toUpperCase()] = comp.key;
+      }
+    }
+  }
   // Factory spec sheet label aliases
   map["UPPER 1"] = "upper_1";
   map["GROSGRAIN TOPLINE"] = "topline";
@@ -305,5 +535,15 @@ export const COMPONENT_LABEL_TO_KEY: Record<string, string> = (() => {
   map["LEG HEIGHT"] = "leg_height";
   map["SOCK LOGO"] = "sock_logo";
   map["SLING BACK ELASTIC"] = "sling_back_elastic";
+  map["TOE CAP"] = "toe_cap";
+  map["BINDING"] = "binding";
+  map["ELASTIC"] = "elastic";
+  map["VAMP"] = "vamp";
+  map["PIPING"] = "piping";
+  map["LEATHER BOW"] = "leather_bow";
+  map["GROSGRAIN BINDING"] = "grosgrain_binding";
+  map["TOE EMBROIDERY"] = "toe_embroidery";
+  map["INKING"] = "inking";
+  map["INSOLE COVER"] = "insole_cover";
   return map;
 })();

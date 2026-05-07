@@ -336,6 +336,7 @@ function SpecForm({
   const template = getTemplateForCategory(entry.category, {
     hasBuckle,
     dressShoeSubType: isDressShoe ? dressShoeSubType : null,
+    style: entry.style,
   });
 
   // Group components by section
@@ -1245,6 +1246,7 @@ export default function SpecsTab({}: SpecsTabProps) {
     const template = getTemplateForCategory(entry.category, {
       hasBuckle: false,
       dressShoeSubType: null,
+      style: entry.style,
     });
     const total = template.length * entry.colours.length;
     if (total === 0) return 0;
