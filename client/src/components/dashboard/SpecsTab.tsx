@@ -652,15 +652,29 @@ export default function SpecsTab({}: SpecsTabProps) {
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
 
   // Build colour+leather lookup from live merged raw SKUs
+  // For styles with duplicate colours (different leathers), the key is "COLOUR LEATHER"
   const COLOUR_LEATHER_MAP = useMemo(() => {
+    // First pass: count leathers per colour per style
+    const leatherCount: Record<string, Record<string, Set<string>>> = {};
+    for (const sku of mergedRawSkus as any[]) {
+      const style = sku.style as string;
+      const colour = sku.colour as string;
+      const leather = (sku.leather as string) ?? "";
+      if (!leatherCount[style]) leatherCount[style] = {};
+      if (!leatherCount[style][colour]) leatherCount[style][colour] = new Set();
+      leatherCount[style][colour].add(leather);
+    }
+    // Second pass: build the map
     const map: Record<string, Record<string, string>> = {};
     for (const sku of mergedRawSkus as any[]) {
       const style = sku.style as string;
       const colour = sku.colour as string;
-      const leather = sku.leather as string;
+      const leather = (sku.leather as string) ?? "";
       if (!map[style]) map[style] = {};
-      if (!map[style][colour]) {
-        map[style][colour] = leather ? displayColourLeather(colour, leather, style) : colour;
+      const hasDuplicates = (leatherCount[style]?.[colour]?.size ?? 0) > 1;
+      const key = hasDuplicates && leather ? `${colour} ${leather}` : colour;
+      if (!map[style][key]) {
+        map[style][key] = leather ? displayColourLeather(colour, leather, style) : colour;
       }
     }
     return map;
@@ -679,22 +693,41 @@ export default function SpecsTab({}: SpecsTabProps) {
   }, [mergedRawSkus]);
 
   // Build new colours per style from live merged raw SKUs
+  // When a colour appears with multiple leathers (e.g. TILDA BLACK/CRINKLE + BLACK/SPECKLE),
+  // emit "COLOUR LEATHER" as the unique key so both get their own spec row.
   const NEW_COLOURS_PER_STYLE = useMemo(() => {
-    const map: Record<string, Set<string>> = {};
+    // First pass: detect which styles have duplicate colours across different leathers
+    const colourLeatherMap: Record<string, Record<string, Set<string>>> = {}; // style → colour → Set<leather>
     for (const sku of mergedRawSkus as any[]) {
       if (!sku.is_new) continue;
       const style = sku.style as string;
       const colour = sku.colour as string;
-      if (!map[style]) map[style] = new Set();
-      map[style].add(colour);
+      const leather = (sku.leather as string) ?? "";
+      if (!colourLeatherMap[style]) colourLeatherMap[style] = {};
+      if (!colourLeatherMap[style][colour]) colourLeatherMap[style][colour] = new Set();
+      colourLeatherMap[style][colour].add(leather);
     }
-    // Preserve original order from mergedStyles[].colours
+
+    // Second pass: build ordered colour key list per style
     const result: Record<string, string[]> = {};
     for (const s of mergedStyles as typeof skuData.styles) {
-      const newSet = map[s.style];
-      if (!newSet) { result[s.style] = []; continue; }
+      const leathersByColour = colourLeatherMap[s.style];
+      if (!leathersByColour) { result[s.style] = []; continue; }
       const allColours: string[] = (s as any).colours ?? [];
-      result[s.style] = allColours.filter((c) => newSet.has(c));
+      const keys: string[] = [];
+      for (const colour of allColours) {
+        const leathers = leathersByColour[colour];
+        if (!leathers) continue;
+        if (leathers.size > 1) {
+          // Multiple leathers for same colour — emit one key per leather
+          for (const leather of Array.from(leathers).sort()) {
+            keys.push(leather ? `${colour} ${leather}` : colour);
+          }
+        } else {
+          keys.push(colour);
+        }
+      }
+      result[s.style] = keys;
     }
     return result;
   }, [mergedRawSkus, mergedStyles]);
