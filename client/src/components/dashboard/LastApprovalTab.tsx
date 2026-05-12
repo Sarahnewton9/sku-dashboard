@@ -16,6 +16,7 @@ const ALL_LASTS = [
   "JAYDE",
   "LUCY",
   "MATISSE",
+  "MISTY",
   "PIXIE",
   "ROXIE",
   "SALLY",
