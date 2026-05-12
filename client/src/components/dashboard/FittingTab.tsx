@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useMemo, useEffect } from "react";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 import { createPortal } from "react-dom";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
@@ -616,7 +616,6 @@ function ExportDialog({
   styleList,
   styleMeta,
   sessionsMap,
-  imageOverrides,
   waitingToFitStyles,
   waitingRevisedStyles,
   approvedStyles,
@@ -632,127 +631,300 @@ function ExportDialog({
   onClose: () => void;
 }) {
   const [exporting, setExporting] = useState(false);
-  const [selectedStyles, setSelectedStyles] = useState<Set<string>>(() => new Set(styleList.map((s) => s.style)));
-  const [search, setSearch] = useState("");
 
-  // Quick-select groups
-  const selectGroup = (styles: StyleEntry[]) => {
-    setSelectedStyles(new Set(styles.map((s) => s.style)));
-  };
+  // Collect all unique fitting dates from sessions
+  const allDates = useMemo(() => {
+    const dateSet = new Set<string>();
+    for (const sessions of Object.values(sessionsMap)) {
+      for (const sess of sessions) {
+        if (sess.sessionDate) dateSet.add(sess.sessionDate);
+      }
+    }
+    return Array.from(dateSet).sort().reverse(); // most recent first
+  }, [sessionsMap]);
 
-  const toggleStyle = (style: string) => {
-    setSelectedStyles((prev) => {
-      const next = new Set(prev);
-      if (next.has(style)) next.delete(style); else next.add(style);
-      return next;
+  // Default: today's date if it has sessions, else most recent date
+  const todayStr = new Date().toISOString().split("T")[0];
+  const defaultDate = allDates.includes(todayStr) ? todayStr : (allDates[0] ?? todayStr);
+  const [selectedDate, setSelectedDate] = useState<string>(defaultDate);
+
+  // Styles that have sessions on the selected date
+  const stylesOnDate = useMemo(() => {
+    return styleList.filter((s) => {
+      const sessions = sessionsMap[s.style] ?? [];
+      return sessions.some((sess) => sess.sessionDate === selectedDate);
     });
+  }, [styleList, sessionsMap, selectedDate]);
+
+  const formatDateLabel = (d: string) => {
+    const dt = new Date(d + "T00:00:00");
+    return dt.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "long", year: "numeric" });
   };
 
-  const filteredList = search.trim()
-    ? styleList.filter((s) => s.style.toLowerCase().includes(search.trim().toLowerCase()) || s.last.toLowerCase().includes(search.trim().toLowerCase()))
-    : styleList;
-
-  const selectedCount = selectedStyles.size;
-
-  const sampleTypeColour = (t: string | null | undefined) =>
-    t === "Original" ? "#475569" : t === "Proto" ? "#c2410c" : t === "Revised" ? "#1d4ed8" : t === "Salesman Sample" ? "#15803d" : "#555";
+  const formatDateShort = (d: string) => {
+    const dt = new Date(d + "T00:00:00");
+    return dt.toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
+  };
 
   const handleExport = async () => {
+    if (stylesOnDate.length === 0) {
+      toast.error("No fitting sessions on the selected date");
+      return;
+    }
     setExporting(true);
     try {
-      const toExport = styleList.filter((s) => selectedStyles.has(s.style));
+      // ── Build data: group sessions by fit model for the selected date ──────
+      type SessionEntry = {
+        style: string;
+        category: string;
+        sessionDate: string | null;
+        notes: string | null;
+        sampleDate: string | null;
+        sampleType: string | null;
+        fitRating: string | null;
+        fitApproved: boolean | null;
+      };
+      const modelMap: Record<string, SessionEntry[]> = {};
 
-      const sections = toExport.map((s) => {
+      for (const s of stylesOnDate) {
+        const sessions = (sessionsMap[s.style] ?? []).filter((sess) => sess.sessionDate === selectedDate);
         const meta = styleMeta[s.style];
-        const sessions = sessionsMap[s.style] ?? [];
-        const fitLabel = meta?.fitRating ? FIT_LABELS[meta.fitRating] : null;
-        const fitColour = meta?.fitRating === "tts" ? "#166534" : meta?.fitRating === "runs_small" ? "#92400e" : "#1e40af";
-        const effectiveImageUrl = imageOverrides[s.style] ?? s.imageUrl;
-        const approvedBadge = meta?.fitApproved ? `<span style="display:inline-block;background:#dcfce7;color:#166534;border:1px solid #bbf7d0;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600;margin-left:8px;">Fit Approved</span>` : "";
+        for (const sess of sessions) {
+          const key = sess.fitModel?.trim() || "Unknown";
+          if (!modelMap[key]) modelMap[key] = [];
+          modelMap[key].push({
+            style: s.style,
+            category: s.category,
+            sessionDate: sess.sessionDate ?? null,
+            notes: sess.notes ?? null,
+            sampleDate: (sess as any).sampleDate ?? null,
+            sampleType: (sess as any).sampleType ?? null,
+            fitRating: meta?.fitRating ?? null,
+            fitApproved: meta?.fitApproved ?? null,
+          });
+        }
+      }
 
-        const sessionsHtml = sessions.length === 0
-          ? `<p style="font-size:12px;color:#999;font-style:italic;margin:8px 0 0;">No fitting sessions recorded.</p>`
-          : sessions.map((sess) => {
-              const fittingDateStr = sess.sessionDate
-                ? new Date(sess.sessionDate + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })
-                : "—";
-              const sampleDateStr = (sess as any).sampleDate
-                ? new Date((sess as any).sampleDate + "T00:00:00").toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit" })
-                : null;
-              const sampleType = (sess as any).sampleType as string | null;
-              const sampleTypeBadge = sampleType
-                ? `<span style="display:inline-block;background:${sampleType === "Original" ? "#f1f5f9" : sampleType === "Proto" ? "#fff7ed" : sampleType === "Revised" ? "#eff6ff" : "#f0fdf4"};color:${sampleTypeColour(sampleType)};border:1px solid ${sampleType === "Original" ? "#cbd5e1" : sampleType === "Proto" ? "#fed7aa" : sampleType === "Revised" ? "#bfdbfe" : "#bbf7d0"};border-radius:4px;padding:1px 7px;font-size:11px;font-weight:600;">${sampleType}</span>`
-                : "";
-              const imgHtml = sess.images.length > 0
-                ? sess.images.map((img) => `<img src="${img.imageUrl}" style="width:110px;height:110px;object-fit:cover;border-radius:6px;margin:3px;" />`).join("")
-                : "<span style='color:#aaa;font-size:11px;'>No photos</span>";
+      // ── xlsx-js-style setup ───────────────────────────────────────────────
+      const darkFill  = { patternType: "solid", fgColor: { rgb: "1A1A1A" } };
+      const midFill   = { patternType: "solid", fgColor: { rgb: "3D3D3D" } };
+      const sandFill  = { patternType: "solid", fgColor: { rgb: "F0EBE3" } };
+      const whiteFill = { patternType: "solid", fgColor: { rgb: "FFFFFF" } };
+      const altFill   = { patternType: "solid", fgColor: { rgb: "F9F9F9" } };
 
-              return `
-                <div style="margin-top:10px;padding:10px 12px;background:#f8f8f8;border-radius:8px;border:1px solid #e5e5e5;">
-                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-                    <span style="font-size:12px;font-weight:700;color:#222;">${sess.fitModel || "—"}</span>
-                    <span style="font-size:11px;color:#666;">Fitting: ${fittingDateStr}</span>
-                    ${sampleDateStr ? `<span style="font-size:11px;color:#666;">Sample: ${sampleDateStr}</span>` : ""}
-                    ${sampleTypeBadge}
-                  </div>
-                  ${sess.notes ? `<p style="font-size:12px;color:#333;font-style:italic;margin:0 0 8px;">${sess.notes}</p>` : ""}
-                  <div style="display:flex;flex-wrap:wrap;gap:4px;">${imgHtml}</div>
-                </div>
-              `;
-            }).join("");
+      const SAMPLE_COLOURS: Record<string, { bg: string; fg: string }> = {
+        "Original":        { bg: "EFF6FF", fg: "1D4ED8" },
+        "Proto":           { bg: "FFF7ED", fg: "C2410C" },
+        "Revised":         { bg: "DBEAFE", fg: "1E40AF" },
+        "Salesman Sample": { bg: "F0FDF4", fg: "15803D" },
+      };
 
-        return `
-          <div style="page-break-inside:avoid;margin-bottom:32px;border-bottom:2px solid #e5e5e5;padding-bottom:24px;">
-            <div style="display:flex;gap:16px;align-items:flex-start;">
-              <div style="flex-shrink:0;">
-                ${effectiveImageUrl
-                  ? `<img src="${effectiveImageUrl}" style="width:110px;height:110px;object-fit:cover;border-radius:8px;border:1px solid #e5e5e5;" />`
-                  : `<div style="width:110px;height:110px;background:#f5f5f5;border-radius:8px;display:flex;align-items:center;justify-content:center;"><span style="color:#bbb;font-size:11px;">No image</span></div>`
-                }
-              </div>
-              <div style="flex:1;">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
-                  <span style="font-size:16px;font-weight:700;color:#111;">${s.style}</span>
-                  ${approvedBadge}
-                </div>
-                <div style="font-size:12px;color:#888;margin-bottom:4px;">${s.last} &middot; ${s.category}</div>
-                ${fitLabel ? `<span style="display:inline-block;font-size:12px;font-weight:600;color:${fitColour};background:${meta?.fitRating === "tts" ? "#dcfce7" : meta?.fitRating === "runs_small" ? "#fef3c7" : "#dbeafe"};border-radius:4px;padding:2px 8px;margin-bottom:4px;">${fitLabel}</span>` : ""}
-                ${meta?.fittingNotes ? `<p style="font-size:12px;color:#444;font-style:italic;margin:4px 0 0;">${meta.fittingNotes}</p>` : ""}
-              </div>
-            </div>
-            <div style="margin-top:4px;">${sessionsHtml}</div>
-          </div>
-        `;
-      }).join("");
+      const FIT_RATING_COLOURS: Record<string, { bg: string; fg: string }> = {
+        tts:         { bg: "DCFCE7", fg: "166534" },
+        runs_small:  { bg: "FEF3C7", fg: "92400E" },
+        runs_large:  { bg: "DBEAFE", fg: "1E40AF" },
+      };
 
-      const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <title>Fitting Report</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 32px; color: #222; font-size: 13px; }
-    h1 { font-size: 22px; margin-bottom: 4px; }
-    .meta { font-size: 13px; color: #666; margin-bottom: 32px; }
-    @media print { body { margin: 16px; } }
-  </style>
-</head>
-<body>
-  <h1>Fitting Report</h1>
-  <div class="meta">Tony Bianco &nbsp;&nbsp; ${new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })} &nbsp;&nbsp; ${toExport.length} style${toExport.length !== 1 ? "s" : ""}</div>
-  ${sections}
-</body>
-</html>`;
+      const boldWhite12  = { name: "Calibri", sz: 12, bold: true,  color: { rgb: "FFFFFF" } };
+      const boldWhite10  = { name: "Calibri", sz: 10, bold: true,  color: { rgb: "FFFFFF" } };
+      const boldDark11   = { name: "Calibri", sz: 11, bold: true,  color: { rgb: "111111" } };
+      const boldDark10   = { name: "Calibri", sz: 10, bold: true,  color: { rgb: "111111" } };
+      const plain10      = { name: "Calibri", sz: 10, bold: false, color: { rgb: "222222" } };
+      const muted10      = { name: "Calibri", sz: 10, bold: false, color: { rgb: "666666" } };
+      const italic10     = { name: "Calibri", sz: 10, bold: false, italic: true, color: { rgb: "444444" } };
 
-      const blob = new Blob([html], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Fitting_Report_${new Date().toISOString().split("T")[0]}.html`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success(`Exported ${toExport.length} styles`, { description: "Open in browser and use Print → Save as PDF." });
+      const thinBorder = {
+        top:    { style: "thin", color: { rgb: "D0D0D0" } },
+        bottom: { style: "thin", color: { rgb: "D0D0D0" } },
+        left:   { style: "thin", color: { rgb: "D0D0D0" } },
+        right:  { style: "thin", color: { rgb: "D0D0D0" } },
+      };
+      const bottomOnlyBorder = {
+        bottom: { style: "thin", color: { rgb: "D0D0D0" } },
+      };
+      const mediumBottomBorder = {
+        bottom: { style: "medium", color: { rgb: "888888" } },
+      };
+
+      const NCOLS = 7; // Style | Category | Fitting Date | Sample Date | Sample Type | Fit Comments | Status
+      const sheetRows: any[][] = [];
+      const rowMeta: { type: string; altRow?: boolean }[] = [];
+      const merges: { s: { r: number; c: number }; e: { r: number; c: number } }[] = [];
+
+      const push = (row: any[], type: string, altRow = false) => {
+        sheetRows.push(row);
+        rowMeta.push({ type, altRow });
+      };
+
+      const emptyRow = Array(NCOLS).fill("");
+
+      // ── Row 1: Main header ────────────────────────────────────────────────
+      const dateLabel = formatDateShort(selectedDate);
+      push([`TONY BIANCO  ·  FITTING SESSION  ·  ${dateLabel.toUpperCase()}`, ...Array(NCOLS - 1).fill("")], "mainHeader");
+      merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: NCOLS - 1 } });
+
+      // ── Row 2: Sub-header ─────────────────────────────────────────────────
+      push([`Season: SS26   ·   Exported: ${new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" })}   ·   ${stylesOnDate.length} style${stylesOnDate.length !== 1 ? "s" : ""}`, ...Array(NCOLS - 1).fill("")], "subHeader");
+      merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: NCOLS - 1 } });
+
+      // ── Spacer ─────────────────────────────────────────────────────────────
+      push([...emptyRow], "spacer");
+
+      // ── Groups by fit model ───────────────────────────────────────────────
+      for (const [model, entries] of Object.entries(modelMap)) {
+        const startRow = sheetRows.length;
+
+        // Model divider
+        push([`  FOOT MODEL: ${model.toUpperCase()}`, ...Array(NCOLS - 1).fill("")], "modelDivider");
+        merges.push({ s: { r: startRow, c: 0 }, e: { r: startRow, c: NCOLS - 1 } });
+
+        // Column headers
+        push(["STYLE", "CATEGORY", "FITTING DATE", "SAMPLE DATE", "SAMPLE TYPE", "FIT COMMENTS", "STATUS"], "colHeader");
+
+        // Data rows
+        let altRow = false;
+        for (const entry of entries) {
+          const fittingDateStr = entry.sessionDate
+            ? new Date(entry.sessionDate + "T00:00:00").toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit" }).replace(/\//g, ".")
+            : "";
+          const sampleDateStr = entry.sampleDate
+            ? new Date(entry.sampleDate + "T00:00:00").toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "2-digit" }).replace(/\//g, ".")
+            : "";
+          const fitLabel = entry.fitRating ? FIT_LABELS[entry.fitRating] ?? "" : "";
+          const status = entry.fitApproved ? "✓ Approved" : (entry.notes ? "Pending review" : "");
+          push([
+            entry.style,
+            entry.category,
+            fittingDateStr,
+            sampleDateStr,
+            entry.sampleType ?? "",
+            entry.notes ?? "",
+            status,
+          ], "data", altRow);
+          altRow = !altRow;
+        }
+
+        // Spacer between model groups
+        push([...emptyRow], "groupSpacer");
+      }
+
+      // ── Build worksheet ───────────────────────────────────────────────────
+      const ws = XLSX.utils.aoa_to_sheet(sheetRows);
+
+      ws["!cols"] = [
+        { wch: 18 }, // Style
+        { wch: 13 }, // Category
+        { wch: 14 }, // Fitting Date
+        { wch: 14 }, // Sample Date
+        { wch: 17 }, // Sample Type
+        { wch: 52 }, // Fit Comments
+        { wch: 15 }, // Status
+      ];
+
+      ws["!rows"] = rowMeta.map(({ type }) => {
+        if (type === "mainHeader")   return { hpt: 32 };
+        if (type === "subHeader")    return { hpt: 20 };
+        if (type === "spacer")       return { hpt: 10 };
+        if (type === "modelDivider") return { hpt: 22 };
+        if (type === "colHeader")    return { hpt: 20 };
+        if (type === "groupSpacer")  return { hpt: 12 };
+        return { hpt: 18 };
+      });
+
+      ws["!merges"] = merges;
+
+      // ── Apply cell styles ─────────────────────────────────────────────────
+      for (let R = 0; R < sheetRows.length; R++) {
+        const { type, altRow } = rowMeta[R];
+        for (let C = 0; C < NCOLS; C++) {
+          const addr = XLSX.utils.encode_cell({ r: R, c: C });
+          if (!ws[addr]) ws[addr] = { v: "", t: "s" };
+
+          if (type === "mainHeader") {
+            ws[addr].s = {
+              font: boldWhite12,
+              fill: darkFill,
+              alignment: { horizontal: "left", vertical: "center", indent: 1 },
+            };
+          } else if (type === "subHeader") {
+            ws[addr].s = {
+              font: muted10,
+              fill: sandFill,
+              alignment: { horizontal: "left", vertical: "center", indent: 1 },
+            };
+          } else if (type === "spacer" || type === "groupSpacer") {
+            ws[addr].s = {};
+          } else if (type === "modelDivider") {
+            ws[addr].s = {
+              font: boldWhite10,
+              fill: midFill,
+              alignment: { horizontal: "left", vertical: "center" },
+            };
+          } else if (type === "colHeader") {
+            ws[addr].s = {
+              font: boldDark10,
+              fill: sandFill,
+              alignment: { horizontal: "center", vertical: "center" },
+              border: mediumBottomBorder,
+            };
+          } else if (type === "data") {
+            const fill = altRow ? altFill : whiteFill;
+            const cellVal = sheetRows[R][C];
+
+            // Default style
+            let cellStyle: any = {
+              font: C === 0 ? boldDark10 : (C === 5 ? italic10 : plain10),
+              fill,
+              alignment: {
+                horizontal: "left",
+                vertical: "center",
+                wrapText: C === 5,
+                indent: 1,
+              },
+              border: bottomOnlyBorder,
+            };
+
+            // Sample type colour badge
+            if (C === 4 && cellVal && SAMPLE_COLOURS[cellVal as string]) {
+              const sc = SAMPLE_COLOURS[cellVal as string];
+              cellStyle = {
+                font: { name: "Calibri", sz: 10, bold: true, color: { rgb: sc.fg } },
+                fill: { patternType: "solid", fgColor: { rgb: sc.bg } },
+                alignment: { horizontal: "center", vertical: "center" },
+                border: bottomOnlyBorder,
+              };
+            }
+
+            // Status colour
+            if (C === 6) {
+              const isApproved = (cellVal as string)?.startsWith("✓");
+              cellStyle = {
+                font: {
+                  name: "Calibri", sz: 10, bold: isApproved,
+                  color: { rgb: isApproved ? "166534" : (cellVal ? "92400E" : "AAAAAA") },
+                },
+                fill,
+                alignment: { horizontal: "left", vertical: "center", indent: 1 },
+                border: bottomOnlyBorder,
+              };
+            }
+
+            ws[addr].s = cellStyle;
+          }
+        }
+      }
+
+      // ── Write file ────────────────────────────────────────────────────────
+      const wb = XLSX.utils.book_new();
+      const sheetName = formatDateShort(selectedDate).replace(/[^a-z0-9 ]/gi, "").substring(0, 31);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      const fileName = `Fitting_${selectedDate}.xlsx`;
+      XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
+      toast.success(`Exported ${stylesOnDate.length} styles to ${fileName}`);
       onClose();
+    } catch (e) {
+      console.error(e);
+      toast.error("Export failed");
     } finally {
       setExporting(false);
     }
@@ -760,96 +932,85 @@ function ExportDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-xl p-6 space-y-4 max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between shrink-0">
+      <div className="bg-card border border-border rounded-xl shadow-xl w-full max-w-lg p-6 space-y-5">
+        <div className="flex items-center justify-between">
           <h3 className="font-semibold text-base">Export Fitting Report</h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
         </div>
 
-        {/* Quick-select group buttons */}
-        <div className="shrink-0 space-y-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Quick select</p>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { label: "All", styles: styleList },
-              { label: `Waiting to be Fit (${waitingToFitStyles.length})`, styles: waitingToFitStyles },
-              { label: `Waiting on Revised (${waitingRevisedStyles.length})`, styles: waitingRevisedStyles },
-              { label: `Approved (${approvedStyles.length})`, styles: approvedStyles },
-            ].map(({ label, styles }) => (
-              <button
-                key={label}
-                onClick={() => selectGroup(styles)}
-                className="px-3 py-1.5 rounded-md text-xs font-medium border border-border hover:bg-muted transition-colors"
-              >
-                {label}
-              </button>
-            ))}
-            <button
-              onClick={() => setSelectedStyles(new Set())}
-              className="px-3 py-1.5 rounded-md text-xs font-medium border border-border hover:bg-muted transition-colors text-muted-foreground"
-            >
-              Clear
-            </button>
-          </div>
-        </div>
-
-        {/* Search + style list */}
-        <div className="shrink-0">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search styles..."
-              className="w-full pl-8 pr-3 py-1.5 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-        </div>
-
-        <div className="overflow-y-auto flex-1 border border-border rounded-lg divide-y divide-border">
-          {filteredList.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic p-4 text-center">No styles match your search.</p>
+        {/* Date selector */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Select Fitting Date</p>
+          {allDates.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic">No fitting sessions recorded yet.</p>
           ) : (
-            filteredList.map((s) => {
-              const checked = selectedStyles.has(s.style);
-              const sessions = sessionsMap[s.style] ?? [];
-              const meta = styleMeta[s.style];
-              const hasData = meta?.fitRating || meta?.fittingNotes || sessions.some((sess) => sess.notes || sess.images.length > 0);
-              const approved = meta?.fitApproved;
-              return (
-                <label key={s.style} className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/40 transition-colors ${checked ? "bg-primary/5" : ""}`}>
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleStyle(s.style)}
-                    className="rounded shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium">{s.style}</span>
-                      <span className="text-xs text-muted-foreground">{s.last}</span>
-                      {approved && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)" }}>✓ Approved</span>}
+            <div className="grid gap-2 max-h-64 overflow-y-auto pr-1">
+              {allDates.map((d) => {
+                const count = styleList.filter((s) =>
+                  (sessionsMap[s.style] ?? []).some((sess) => sess.sessionDate === d)
+                ).length;
+                const isToday = d === todayStr;
+                const isSelected = d === selectedDate;
+                return (
+                  <button
+                    key={d}
+                    onClick={() => setSelectedDate(d)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border text-left transition-all ${
+                      isSelected
+                        ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                        : "border-border hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <div>
+                        <span className={`text-sm font-medium ${isSelected ? "text-primary" : ""}`}>
+                          {formatDateLabel(d)}
+                        </span>
+                        {isToday && (
+                          <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground font-medium">Today</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {sessions.length > 0 ? `${sessions.length} session${sessions.length !== 1 ? "s" : ""} · ${sessions.reduce((n, sess) => n + sess.images.length, 0)} photos` : "No sessions"}
-                      {hasData && !sessions.length ? " · has notes" : ""}
-                    </div>
-                  </div>
-                </label>
-              );
-            })
+                    <span className="text-xs text-muted-foreground shrink-0">{count} style{count !== 1 ? "s" : ""}</span>
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
 
-        <div className="flex items-center justify-between pt-2 shrink-0 border-t border-border">
-          <span className="text-xs text-muted-foreground">{selectedCount} style{selectedCount !== 1 ? "s" : ""} selected</span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
-            <Button size="sm" onClick={handleExport} disabled={exporting || selectedCount === 0}>
-              {exporting ? "Exporting..." : `Export ${selectedCount} Style${selectedCount !== 1 ? "s" : ""}`}
-            </Button>
+        {/* Preview of what will be exported */}
+        {selectedDate && stylesOnDate.length > 0 && (
+          <div className="rounded-lg bg-muted/40 border border-border px-4 py-3 space-y-1">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Will export</p>
+            <p className="text-sm">
+              <span className="font-semibold">{stylesOnDate.length} style{stylesOnDate.length !== 1 ? "s" : ""}</span>
+              {" "}from <span className="font-semibold">{formatDateLabel(selectedDate)}</span>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {Object.keys(
+                stylesOnDate.reduce<Record<string, boolean>>((acc, s) => {
+                  const sessions = (sessionsMap[s.style] ?? []).filter((sess) => sess.sessionDate === selectedDate);
+                  for (const sess of sessions) { if (sess.fitModel) acc[sess.fitModel] = true; }
+                  return acc;
+                }, {})
+              ).join(", ") || "No fit models"}
+            </p>
           </div>
+        )}
+
+        <div className="flex items-center justify-end gap-2 pt-1 border-t border-border">
+          <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
+          <Button
+            size="sm"
+            onClick={handleExport}
+            disabled={exporting || stylesOnDate.length === 0 || !selectedDate}
+            className="gap-2"
+          >
+            <Download className="w-3.5 h-3.5" />
+            {exporting ? "Exporting..." : `Export ${stylesOnDate.length} Style${stylesOnDate.length !== 1 ? "s" : ""}`}
+          </Button>
         </div>
       </div>
     </div>

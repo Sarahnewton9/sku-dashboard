@@ -888,3 +888,8 @@
 - [x] Add tRPC procedures: getHeelHeights, upsertHeelHeight (admin editable)
 - [x] Display heel height badge next to last name in By Style tab (Dress Shoe, Dress Sandal, Wedge only)
 - [x] Include heel height in full export (Dress Shoe, Dress Sandal, Wedge categories only)
+
+## Fitting Export Redesign
+- [x] Redesign fitting export to Option 3 format (one sheet per day, all models grouped with dividers)
+- [x] Add date picker filter to export dialog so user can select specific fitting date(s) to export
+- [x] Export filename uses the selected date (e.g. Fitting_12_May_2026.xlsx)
