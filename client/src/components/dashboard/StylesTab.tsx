@@ -13,7 +13,7 @@ import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
-import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock, FileSpreadsheet, X } from "lucide-react";
+import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock, FileSpreadsheet, X, Camera, ImageOff } from "lucide-react";
 import * as XLSX from "xlsx";
 import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
 import ImportPanel from "./ImportPanel";
@@ -106,7 +106,57 @@ export default function StylesTab() {
   });
 
   // Custom SKUs (added during buy)
-  const { mergedRawSkus, mergedStyles, customSkus, refetch: refetchCustomSkus } = useCustomSkus();
+  const { mergedRawSkus, mergedStyles, customSkus, refetch: refetchCustomSkus, refetchImageOverrides } = useCustomSkus();
+
+  // Style image upload
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null); // style name being uploaded
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [imageUploadTarget, setImageUploadTarget] = useState<string | null>(null);
+  const uploadImageMutation = trpc.styleImage.upload.useMutation({
+    onSuccess: () => {
+      refetchImageOverrides();
+      setUploadingImage(null);
+      toast.success(`Image updated for ${imageUploadTarget}`);
+    },
+    onError: (err) => {
+      setUploadingImage(null);
+      toast.error(`Failed to upload image: ${err.message}`);
+    },
+  });
+  const revertImageMutation = trpc.styleImage.revert.useMutation({
+    onSuccess: () => {
+      refetchImageOverrides();
+      toast.success(`Image reverted to original for ${imageUploadTarget}`);
+    },
+    onError: (err) => toast.error(`Failed to revert image: ${err.message}`),
+  });
+
+  function handleImageUploadClick(styleName: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    setImageUploadTarget(styleName);
+    imageInputRef.current?.click();
+  }
+
+  async function handleImageFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !imageUploadTarget) return;
+    e.target.value = "";
+    setUploadingImage(imageUploadTarget);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(",")[1];
+      uploadImageMutation.mutate({ style: imageUploadTarget, imageBase64: base64, mimeType: file.type });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Track which styles have DB image overrides (to show revert option)
+  const { data: imageOverridesList = [] } = trpc.styleImage.getAll.useQuery();
+  const imageOverridesSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const o of imageOverridesList as Array<{ style: string }>) s.add(o.style.toUpperCase());
+    return s;
+  }, [imageOverridesList]);
 
   // Category overrides (sub-categories + trend flags from DB)
   const { getCategory, getTrendFlag } = useStyleCategories();
@@ -660,10 +710,34 @@ export default function StylesTab() {
                           >
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-3">
-                                <div className="w-16 h-10 rounded flex-shrink-0 overflow-hidden" style={{ background: "var(--muted)" }}>
+                                <div
+                                  className="relative w-16 h-10 rounded flex-shrink-0 overflow-hidden group/img cursor-pointer"
+                                  style={{ background: "var(--muted)" }}
+                                  onClick={(e) => handleImageUploadClick(style.style, e)}
+                                  title={imageOverridesSet.has(style.style.toUpperCase()) ? "Click to replace image (right-click to revert)" : "Click to upload image"}
+                                  onContextMenu={(e) => {
+                                    if (!imageOverridesSet.has(style.style.toUpperCase())) return;
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setImageUploadTarget(style.style);
+                                    revertImageMutation.mutate({ style: style.style });
+                                  }}
+                                >
                                   {style.imageUrl ? (
                                     <img src={style.imageUrl} alt={style.style} className="w-full h-full object-contain" loading="lazy" />
-                                  ) : null}
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <ImageOff className="w-4 h-4 text-muted-foreground/40" />
+                                    </div>
+                                  )}
+                                  {/* Upload overlay — visible on hover */}
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover/img:opacity-100 transition-opacity">
+                                    {uploadingImage === style.style ? (
+                                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                      <Camera className="w-4 h-4 text-white" />
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   {style.hasNew && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#f59e0b" }} />}
@@ -1355,6 +1429,14 @@ export default function StylesTab() {
           onDone={() => { refetchSkuMeta(); setShowInvoiceImport(false); }}
         />
       )}
+      {/* Hidden file input for style image upload */}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleImageFileChange}
+      />
     </div>
   );
 }

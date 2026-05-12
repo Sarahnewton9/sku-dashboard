@@ -29,6 +29,18 @@ export function useCustomSkus() {
     staleTime: 30_000,
   });
 
+  // Fetch DB image overrides so they take precedence over static CDN URLs everywhere
+  const { data: imageOverrides = [], refetch: refetchImageOverrides } = trpc.styleImage.getAll.useQuery(undefined, {
+    staleTime: 60_000,
+  });
+  const imageOverrideMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const o of imageOverrides as Array<{ style: string; imageUrl: string }>) {
+      map[o.style.toUpperCase()] = o.imageUrl;
+    }
+    return map;
+  }, [imageOverrides]);
+
   // Merge custom SKUs into rawSkus — same shape as skuData.rawSkus entries
   const mergedRawSkus = useMemo(() => {
     if (customSkus.length === 0) return skuData.rawSkus;
@@ -62,7 +74,11 @@ export function useCustomSkus() {
 
     return skuData.styles.map((s) => {
       const extra = extras[s.style];
-      if (!extra || extra.length === 0) return s;
+      // Apply DB image override if present
+      const overrideUrl = imageOverrideMap[s.style.toUpperCase()];
+      if (!extra || extra.length === 0) {
+        return overrideUrl ? { ...s, imageUrl: overrideUrl } : s;
+      }
 
       const existingColours = new Set(s.colours);
       const existingLeathers = new Set(s.leathers);
@@ -75,6 +91,7 @@ export function useCustomSkus() {
 
       return {
         ...s,
+        ...(overrideUrl ? { imageUrl: overrideUrl } : {}),
         colours: [...s.colours, ...newColours],
         leathers: [...s.leathers, ...newLeathers],
         totalSKUs: s.totalSKUs + extra.length,
@@ -82,7 +99,7 @@ export function useCustomSkus() {
         hasNew: s.hasNew || newCount > 0,
       };
     });
-  }, [customSkus]);
+  }, [customSkus, imageOverrideMap]);
 
   return {
     customSkus: customSkus as CustomSkuRow[],
@@ -90,5 +107,6 @@ export function useCustomSkus() {
     mergedStyles,
     isLoading,
     refetch,
+    refetchImageOverrides,
   };
 }
