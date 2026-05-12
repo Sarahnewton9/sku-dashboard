@@ -9,7 +9,6 @@ import * as XLSX from "xlsx";
 const ALL_LASTS = [
   "BILLIE",
   "DAZIE",
-  "EDGY",
   "EMBER",
   "ENVY",
   "FINCH",
