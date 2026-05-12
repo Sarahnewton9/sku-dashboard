@@ -75,7 +75,8 @@ export default function LastApprovalTab() {
   const [localOverrides, setLocalOverrides] = useState<Record<string, "approved" | "waiting_revised">>({});
   const [expandedLast, setExpandedLast] = useState<string | null>(null);
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
-  const [notesValue, setNotesValue] = useState("");
+  // Per-last draft store: keyed by lastName — survives navigation between lasts
+  const [notesDrafts, setNotesDrafts] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState<"all" | "approved" | "waiting_revised">("all");
   const [deletingLast, setDeletingLast] = useState<string | null>(null);
   const [customLasts, setCustomLasts] = useState<string[]>([]);
@@ -156,11 +157,14 @@ export default function LastApprovalTab() {
   };
 
   const handleSaveNotes = (lastName: string) => {
+    const draft = notesDrafts[lastName] ?? "";
     upsert.mutate({
       lastName,
       status: approvalMap[lastName]?.status ?? "waiting_revised",
-      notes: notesValue || null,
+      notes: draft || null,
     });
+    // Clear the draft for this last after saving
+    setNotesDrafts((prev) => { const n = { ...prev }; delete n[lastName]; return n; });
     setEditingNotes(null);
   };
 
@@ -533,8 +537,12 @@ export default function LastApprovalTab() {
 
                   {/* Notes */}
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 flex items-center gap-1.5">
                       Notes
+                      {/* Unsaved draft indicator */}
+                      {notesDrafts[lastName] !== undefined && notesDrafts[lastName] !== (notes ?? "") && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" title="Unsaved draft" />
+                      )}
                     </p>
                     {isEditingThisNotes ? (
                       <div className="flex gap-2">
@@ -542,8 +550,8 @@ export default function LastApprovalTab() {
                           className="flex-1 text-sm rounded border px-3 py-2 bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/40"
                           style={{ borderColor: "var(--border)" }}
                           rows={3}
-                          value={notesValue}
-                          onChange={(e) => setNotesValue(e.target.value)}
+                          value={notesDrafts[lastName] ?? ""}
+                          onChange={(e) => setNotesDrafts((prev) => ({ ...prev, [lastName]: e.target.value }))}
                           placeholder="Add notes about this last..."
                           autoFocus
                         />
@@ -570,7 +578,11 @@ export default function LastApprovalTab() {
                         style={{ borderColor: "var(--border)" }}
                         onClick={() => {
                           setEditingNotes(lastName);
-                          setNotesValue(notes ?? "");
+                          // Only seed the draft from DB if there's no unsaved draft already
+                          setNotesDrafts((prev) => ({
+                            ...prev,
+                            [lastName]: prev[lastName] !== undefined ? prev[lastName] : (notes ?? ""),
+                          }));
                         }}
                       >
                         {notes ? notes : <span className="italic opacity-60">Click to add notes...</span>}
