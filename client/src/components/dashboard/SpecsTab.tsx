@@ -376,6 +376,7 @@ interface SpecFormProps {
   dbCategory: string | null;
   onSetCategory: (category: string | null) => void;
   allCustomRowTitles: string[]; // for autocomplete
+  allStyleEntries: StyleEntry[]; // for cross-style copy
 }
 
 const STYLE_CATEGORIES = [
@@ -392,10 +393,135 @@ const STYLE_CATEGORIES = [
   "Flat Sandal",
 ];
 
+// ─── Cross-Style Copy Panel ──────────────────────────────────────────────────
+
+interface CrossStyleCopyPanelProps {
+  currentStyle: string;
+  currentColours: string[];
+  currentColourLabels: string[];
+  allStyleEntries: StyleEntry[];
+  template: SpecComponent[];
+  onCopy: (sourceColour: string, targetColours: string[], sourceSpecs: Record<string, string>) => void;
+}
+
+function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels, allStyleEntries, template, onCopy }: CrossStyleCopyPanelProps) {
+  const [open, setOpen] = useState(false);
+  const [sourceStyle, setSourceStyle] = useState<string | null>(null);
+  const [sourceColour, setSourceColour] = useState<string | null>(null);
+  const [targets, setTargets] = useState<Set<string>>(new Set());
+
+  const sourceEntry = allStyleEntries.find((s) => s.style === sourceStyle);
+
+  // Fetch specs for the selected source style
+  const { data: sourceSpecsRaw = [] } = trpc.specs.getForStyle.useQuery(
+    { style: sourceStyle! },
+    { enabled: !!sourceStyle }
+  );
+
+  // Build a colour → component → value map from raw specs
+  const sourceSpecsMap = useMemo(() => {
+    const map: Record<string, Record<string, string>> = {};
+    for (const row of sourceSpecsRaw as any[]) {
+      if (!map[row.colour]) map[row.colour] = {};
+      if (row.value) map[row.colour][row.component] = row.value;
+    }
+    return map;
+  }, [sourceSpecsRaw]);
+
+  function toggleTarget(colour: string) {
+    setTargets((prev) => {
+      const next = new Set(prev);
+      if (next.has(colour)) next.delete(colour); else next.add(colour);
+      return next;
+    });
+  }
+
+  function handleCopy() {
+    if (!sourceStyle || !sourceColour || targets.size === 0) return;
+    const sourceValues = sourceSpecsMap[sourceColour] ?? {};
+    onCopy(sourceColour, Array.from(targets), sourceValues);
+    setOpen(false);
+    setSourceStyle(null);
+    setSourceColour(null);
+    setTargets(new Set());
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+      >
+        + Copy from another style
+      </button>
+    );
+  }
+
+  return (
+    <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800 text-xs space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="font-medium text-amber-900 dark:text-amber-200">Copy specs from another style</span>
+        <button onClick={() => { setOpen(false); setSourceStyle(null); setSourceColour(null); setTargets(new Set()); }} className="text-muted-foreground hover:text-foreground text-sm leading-none">×</button>
+      </div>
+      <div className="flex flex-wrap gap-2 items-center">
+        <span className="text-muted-foreground whitespace-nowrap">Source style:</span>
+        <Select value={sourceStyle ?? ""} onValueChange={(v) => { setSourceStyle(v); setSourceColour(null); setTargets(new Set()); }}>
+          <SelectTrigger className="h-7 w-44 text-xs">
+            <SelectValue placeholder="Select style…" />
+          </SelectTrigger>
+          <SelectContent>
+            {allStyleEntries.filter((s) => s.style !== currentStyle).map((s) => (
+              <SelectItem key={s.style} value={s.style} className="text-xs">{s.style}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {sourceEntry && (
+          <>
+            <span className="text-muted-foreground">colour:</span>
+            <Select value={sourceColour ?? ""} onValueChange={(v) => { setSourceColour(v); setTargets(new Set()); }}>
+              <SelectTrigger className="h-7 w-44 text-xs">
+                <SelectValue placeholder="Select colour…" />
+              </SelectTrigger>
+              <SelectContent>
+                {sourceEntry.colours.map((c, i) => (
+                  <SelectItem key={c} value={c} className="text-xs">{sourceEntry.colourLabels[i] ?? c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
+        )}
+      </div>
+      {sourceColour && (
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-muted-foreground whitespace-nowrap">Copy into:</span>
+          {currentColours.map((c, i) => (
+            <button
+              key={c}
+              onClick={() => toggleTarget(c)}
+              className={`px-2 py-1 rounded border text-xs transition-colors ${
+                targets.has(c)
+                  ? "bg-amber-600 text-white border-amber-600"
+                  : "bg-background border-border hover:bg-muted"
+              }`}
+            >
+              {currentColourLabels[i] ?? c}
+            </button>
+          ))}
+        </div>
+      )}
+      {targets.size > 0 && (
+        <Button size="sm" onClick={handleCopy} className="h-7 text-xs bg-amber-600 hover:bg-amber-700">
+          Copy {targets.size} colour{targets.size > 1 ? "s" : ""}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function SpecForm({
   entry, specMeta, specs, allDropdownOptions, allColourLeatherOptions, imageOverride, customRows,
   onUpsert, onAddDropdownOption, onMetaChange, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow,
-  dbCategory, onSetCategory, allCustomRowTitles,
+  dbCategory, onSetCategory, allCustomRowTitles, allStyleEntries,
 }: SpecFormProps) {
   const hasBuckle = specMeta?.hasBuckle ?? false;
   const dressShoeSubType = specMeta?.dressShoeSubType ?? null;
@@ -547,13 +673,31 @@ function SpecForm({
       </div>
 
       {/* Selective colour-to-colour copy */}
-      {entry.colours.length > 1 && (
-        <ColourCopyPanel
-          colours={entry.colours}
-          colourLabels={entry.colourLabels}
-          onCopy={handleCopyFrom}
+      <div className="flex flex-col gap-2">
+        {entry.colours.length > 1 && (
+          <ColourCopyPanel
+            colours={entry.colours}
+            colourLabels={entry.colourLabels}
+            onCopy={handleCopyFrom}
+          />
+        )}
+        <CrossStyleCopyPanel
+          currentStyle={entry.style}
+          currentColours={entry.colours}
+          currentColourLabels={entry.colourLabels}
+          allStyleEntries={allStyleEntries}
+          template={template}
+          onCopy={(sourceColour, targetColours, sourceSpecs) => {
+            for (const colour of targetColours) {
+              for (const comp of template) {
+                const val = sourceSpecs[comp.key];
+                if (val) onUpsert(colour, comp.key, val);
+              }
+            }
+            toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s)`);
+          }}
         />
-      )}
+      </div>
 
       {/* Spec grid */}
       <div className="overflow-x-auto">
@@ -1644,6 +1788,7 @@ export default function SpecsTab({}: SpecsTabProps) {
               dbCategory={dbCategory}
               onSetCategory={handleSetCategory}
               allCustomRowTitles={allCustomRowTitles}
+              allStyleEntries={styleList}
             />
           </div>
         )}

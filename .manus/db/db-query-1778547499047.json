@@ -1,0 +1,160 @@
+{
+  "query": "SELECT style, colour, component FROM style_specs WHERE style = 'TILDA' GROUP BY style, colour, component ORDER BY colour LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2PKnJnyFBef7ny1.49968122eb9d --database RGHTjKGQqzKd5FypxANQbT --execute SELECT style, colour, component FROM style_specs WHERE style = 'TILDA' GROUP BY style, colour, component ORDER BY colour LIMIT 30;",
+  "rows": [
+    {
+      "style": "TILDA",
+      "colour": "BLACK",
+      "component": "upper_1"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "barcode"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "heel_cover"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "heel_name"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "insole_binding"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "insole_name"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "lining"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "shoe_box"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "sock"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "sock_treatment"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "sole_colour"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "sole_edge"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "sole_name"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "sole_treatment"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "stitch"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "tissue"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "toe_piece"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "top_lift"
+    },
+    {
+      "style": "TILDA",
+      "colour": "BLACK SPECKLE",
+      "component": "upper_1"
+    },
+    {
+      "style": "TILDA",
+      "colour": "CHOC",
+      "component": "barcode"
+    },
+    {
+      "style": "TILDA",
+      "colour": "CHOC",
+      "component": "heel_cover"
+    },
+    {
+      "style": "TILDA",
+      "colour": "CHOC",
+      "component": "heel_name"
+    },
+    {
+      "style": "TILDA",
+      "colour": "CHOC",
+      "component": "insole_binding"
+    },
+    {
+      "style": "TILDA",
+      "colour": "CHOC",
+      "component": "insole_name"
+    },
+    {
+      "style": "TILDA",
+      "colour": "CHOC",
+      "component": "lining"
+    },
+    {
+      "style": "TILDA",
+      "colour": "CHOC",
+      "component": "shoe_box"
+    },
+    {
+      "style": "TILDA",
+      "colour": "CHOC",
+      "component": "sock"
+    },
+    {
+      "style": "TILDA",
+      "colour": "CHOC",
+      "component": "sock_treatment"
+    },
+    {
+      "style": "TILDA",
+      "colour": "CHOC",
+      "component": "sole_colour"
+    },
+    {
+      "style": "TILDA",
+      "colour": "CHOC",
+      "component": "sole_edge"
+    }
+  ],
+  "messages": [],
+  "stdout": "style\tcolour\tcomponent\nTILDA\tBLACK\tupper_1\nTILDA\tBLACK SPECKLE\tbarcode\nTILDA\tBLACK SPECKLE\theel_cover\nTILDA\tBLACK SPECKLE\theel_name\nTILDA\tBLACK SPECKLE\tinsole_binding\nTILDA\tBLACK SPECKLE\tinsole_name\nTILDA\tBLACK SPECKLE\tlining\nTILDA\tBLACK SPECKLE\tshoe_box\nTILDA\tBLACK SPECKLE\tsock\nTILDA\tBLACK SPECKLE\tsock_treatment\nTILDA\tBLACK SPECKLE\tsole_colour\nTILDA\tBLACK SPECKLE\tsole_edge\nTILDA\tBLACK SPECKLE\tsole_name\nTILDA\tBLACK SPECKLE\tsole_treatment\nTILDA\tBLACK SPECKLE\tstitch\nTILDA\tBLACK SPECKLE\ttissue\nTILDA\tBLACK SPECKLE\ttoe_piece\nTILDA\tBLACK SPECKLE\ttop_lift\nTILDA\tBLACK SPECKLE\tupper_1\nTILDA\tCHOC\tbarcode\nTILDA\tCHOC\theel_cover\nTILDA\tCHOC\theel_name\nTILDA\tCHOC\tinsole_binding\nTILDA\tCHOC\tinsole_name\nTILDA\tCHOC\tlining\nTILDA\tCHOC\tshoe_box\nTILDA\tCHOC\tsock\nTILDA\tCHOC\tsock_treatment\nTILDA\tCHOC\tsole_colour\nTILDA\tCHOC\tsole_edge\n",
+  "stderr": "",
+  "execution_time_ms": 1757
+}
