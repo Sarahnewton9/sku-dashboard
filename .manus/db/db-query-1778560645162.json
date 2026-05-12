@@ -1,0 +1,9 @@
+{
+  "query": "\nINSERT INTO cancelled_skus (style, colour, leather, cancelledAt)\nVALUES \n  ('FAVE', 'CHOC', 'VINTAGE', NOW()),\n  ('MAMZELLE', 'BLACK', 'NAPPA', NOW()),\n  ('MAMZELLE', 'PERU', 'NAPPA', NOW()),\n  ('MAMZELLE', 'DOVE', 'NAPPA', NOW()),\n  ('ROBYN', 'BLACK', 'SPECKLE', NOW()),\n  ('VIKA', 'CHOCOLATE', 'VENICE', NOW()),\n  ('VIKA', 'CHOC', 'VENICE', NOW())\nON DUPLICATE KEY UPDATE cancelledAt = NOW();\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2PKnJnyFBef7ny1.49968122eb9d --database RGHTjKGQqzKd5FypxANQbT --execute \nINSERT INTO cancelled_skus (style, colour, leather, cancelledAt)\nVALUES \n  ('FAVE', 'CHOC', 'VINTAGE', NOW()),\n  ('MAMZELLE', 'BLACK', 'NAPPA', NOW()),\n  ('MAMZELLE', 'PERU', 'NAPPA', NOW()),\n  ('MAMZELLE', 'DOVE', 'NAPPA', NOW()),\n  ('ROBYN', 'BLACK', 'SPECKLE', NOW()),\n  ('VIKA', 'CHOCOLATE', 'VENICE', NOW()),\n  ('VIKA', 'CHOC', 'VENICE', NOW())\nON DUPLICATE KEY UPDATE cancelledAt = NOW();\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1789
+}
