@@ -901,3 +901,10 @@
 - [x] Fix slow typing in "Add custom row" field + make it a dropdown/autocomplete like other fields
 - [x] Fix toe caps not being detected (e.g. ROXIE, LEGACY) — now uses dbCategory override in getTemplateForCategory
 - [x] Fix Excel specs export: add image (fixed EMU→px), wider columns, text wrap, COLOUR 1 / COLOUR 2 headings
+
+## Bulk Spec Import (May 2026)
+
+- [x] Add bulk upsert backend endpoint (specs.bulkUpsert) for fast multi-row saves
+- [x] Improve import parser: handle merged cells, alternate header formats, skip non-data rows
+- [x] Redesign bulk import modal: colour matching preview, manual style mapping for unmatched files, overwrite vs fill-blanks toggle
+- [x] Show per-style import result counts (X values saved, Y skipped)

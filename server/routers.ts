@@ -13,7 +13,7 @@ import {
   getBuySessionItems, upsertBuySessionItem, getSessionTotals, getAllSessionQtys,
   getAllLastApprovals, upsertLastApproval, getDeletedLasts, deleteLast, restoreDeletedLast,
   getAllSeasonImports, createSeasonImport, getSeasonSkuData, deleteSeasonImport,
-  getSpecsForStyle, upsertStyleSpec, deleteStyleSpecs,
+  getSpecsForStyle, upsertStyleSpec, deleteStyleSpecs, bulkUpsertStyleSpecs,
   getAllDropdownOptions, getDropdownOptions, addDropdownOption, deleteDropdownOption,
   getStyleSpecMeta, getAllStyleSpecMeta, upsertStyleSpecMeta,
   getSpecCountsForAllStyles,
@@ -142,8 +142,9 @@ export const appRouter = router({
           const ta = new Set(na.split(" "));
           const tb = new Set(nb.split(" "));
           let common = 0;
-          for (const t of ta) if (tb.has(t)) common++;
-          const union = new Set([...ta, ...tb]).size;
+          Array.from(ta).forEach(t => { if (tb.has(t)) common++; });
+          const unionSet = new Set(Array.from(ta).concat(Array.from(tb)));
+          const union = unionSet.size;
           return union === 0 ? 0 : common / union;
         }
 
@@ -653,6 +654,22 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         await deleteStyleSpecs(input.style);
         return { success: true };
+      }),
+
+    // Bulk upsert — saves many spec rows in a single DB call (much faster than individual upserts)
+    bulkUpsert: publicProcedure
+      .input(z.object({
+        rows: z.array(z.object({
+          style: z.string(),
+          colour: z.string(),
+          component: z.string(),
+          value: z.string(),
+        })),
+        overwrite: z.boolean().default(true),
+      }))
+      .mutation(async ({ input }) => {
+        const count = await bulkUpsertStyleSpecs(input.rows, input.overwrite);
+        return { success: true, count };
       }),
 
     // Dropdown options

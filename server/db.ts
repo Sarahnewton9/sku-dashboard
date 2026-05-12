@@ -525,6 +525,40 @@ export async function upsertStyleSpec(style: string, colour: string, component: 
     .onDuplicateKeyUpdate({ set: { value } });
 }
 
+/**
+ * Bulk upsert spec values — inserts or updates many rows in a single DB call.
+ * @param rows Array of { style, colour, component, value } objects
+ * @param overwrite If false, only inserts rows where value is currently NULL/empty
+ * @returns number of rows processed
+ */
+export async function bulkUpsertStyleSpecs(
+  rows: { style: string; colour: string; component: string; value: string }[],
+  overwrite: boolean = true
+): Promise<number> {
+  if (rows.length === 0) return 0;
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // MySQL supports multi-row INSERT ... ON DUPLICATE KEY UPDATE
+  // Drizzle's .insert().values([...]) handles this natively
+  if (overwrite) {
+    // Overwrite mode: update value regardless of existing content
+    await db.insert(styleSpecs)
+      .values(rows)
+      .onDuplicateKeyUpdate({ set: { value: sql`VALUES(value)` } });
+  } else {
+    // Fill-blanks mode: only update if current value is NULL or empty string
+    await db.insert(styleSpecs)
+      .values(rows)
+      .onDuplicateKeyUpdate({
+        set: {
+          value: sql`IF(COALESCE(style_specs.value, '') = '', VALUES(value), style_specs.value)`,
+        },
+      });
+  }
+  return rows.length;
+}
+
 export async function deleteStyleSpecs(style: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

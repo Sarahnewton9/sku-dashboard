@@ -17,7 +17,7 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import {
-  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2,
+  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2, X, ArrowRight, RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -967,10 +967,12 @@ export default function SpecsTab({}: SpecsTabProps) {
   const [importParsed, setImportParsed] = useState<ParsedSpecSheet | null>(null);
   const [importLoading, setImportLoading] = useState(false);
   const [importSaving, setImportSaving] = useState(false);
+  const [importOverwrite, setImportOverwrite] = useState(true);
   const importFileRef = React.useRef<HTMLInputElement>(null);
 
   // ── Bulk import state ────────────────────────────────────────────────────
   const [isDragOver, setIsDragOver] = useState(false);
+  const [bulkOverwrite, setBulkOverwrite] = useState(true);
 
   // Recursively collect all .xls/.xlsx files from a DataTransferItem (folder or file)
   async function collectFilesFromEntry(entry: FileSystemEntry): Promise<File[]> {
@@ -1022,7 +1024,9 @@ export default function SpecsTab({}: SpecsTabProps) {
     styleName: string;
     matchedStyle: string | null;
     colourCount: number;
+    valueCount: number;
     status: "pending" | "saving" | "done" | "error" | "unmatched";
+    savedCount?: number;
     error?: string;
   }
   const [bulkResults, setBulkResults] = useState<BulkImportResult[]>([]);
@@ -1030,6 +1034,8 @@ export default function SpecsTab({}: SpecsTabProps) {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkSaving, setBulkSaving] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
+  // Manual style mapping for unmatched files: fileName → style
+  const [manualMappings, setManualMappings] = useState<Record<string, string>>({});
   const bulkFileRef = React.useRef<HTMLInputElement>(null);
 
   // ── Cancelled styles + cancelled SKUs + custom SKUs ─────────────────────
@@ -1317,6 +1323,18 @@ export default function SpecsTab({}: SpecsTabProps) {
     },
   });
 
+  const bulkUpsertMutation = trpc.specs.bulkUpsert.useMutation({
+    onSuccess: (data, input) => {
+      // Invalidate specs for all affected styles
+      const stylesSet = new Set(input.rows.map((r) => r.style));
+      const styles = Array.from(stylesSet);
+      for (const style of styles) {
+        utils.specs.getForStyle.invalidate({ style });
+      }
+    },
+    onError: () => toast.error("Bulk import failed"),
+  });
+
   const addDropdownMutation = trpc.specs.addDropdownOption.useMutation({
     onSuccess: () => refetchDropdowns(),
     onError: () => toast.error("Failed to add dropdown option"),
@@ -1372,32 +1390,35 @@ export default function SpecsTab({}: SpecsTabProps) {
     }
   }
 
+  /** Build rows for bulk upsert from a parsed spec sheet */
+  function buildBulkRows(
+    parsed: ParsedSpecSheet,
+    targetStyle: string
+  ): { style: string; colour: string; component: string; value: string }[] {
+    const styleColourMap = COLOUR_LEATHER_MAP[targetStyle] ?? {};
+    const labelToRawColour: Record<string, string> = {};
+    for (const [rawColour, label] of Object.entries(styleColourMap)) {
+      labelToRawColour[label.toUpperCase()] = rawColour;
+      labelToRawColour[rawColour.toUpperCase()] = rawColour;
+    }
+    const rows: { style: string; colour: string; component: string; value: string }[] = [];
+    for (const [importedColour, compMap] of Object.entries(parsed.colourSpecs)) {
+      const rawColour = labelToRawColour[importedColour.toUpperCase()] ?? importedColour;
+      for (const [component, value] of Object.entries(compMap)) {
+        if (!value.trim()) continue;
+        rows.push({ style: targetStyle, colour: rawColour, component, value });
+      }
+    }
+    return rows;
+  }
+
   async function handleSaveImport() {
     if (!importParsed || !selectedStyle) return;
     setImportSaving(true);
-    let count = 0;
     try {
-      // Build a reverse map: full label (e.g. "DOVE NAPPA") → raw colour key (e.g. "DOVE")
-      // so that imported colour names from the factory spec sheet are saved under the correct key.
-      const styleColourMap = COLOUR_LEATHER_MAP[selectedStyle] ?? {};
-      const labelToRawColour: Record<string, string> = {};
-      for (const [rawColour, label] of Object.entries(styleColourMap)) {
-        labelToRawColour[label.toUpperCase()] = rawColour;
-        // Also map the raw colour itself (in case the factory sheet uses just the colour name)
-        labelToRawColour[rawColour.toUpperCase()] = rawColour;
-      }
-
-      for (const [importedColour, compMap] of Object.entries(importParsed.colourSpecs)) {
-        // Resolve the raw colour key: try exact label match first, then fall back to the imported name
-        const rawColour = labelToRawColour[importedColour.toUpperCase()] ?? importedColour;
-        for (const [component, value] of Object.entries(compMap)) {
-          if (!value.trim()) continue;
-          await upsertMutation.mutateAsync({ style: selectedStyle, colour: rawColour, component, value });
-          count++;
-        }
-      }
-      // Background invalidation is handled by upsertMutation.onSettled — no blocking refetch needed
-      toast.success(`Imported ${count} spec values for ${selectedStyle}`);
+      const rows = buildBulkRows(importParsed, selectedStyle);
+      const result = await bulkUpsertMutation.mutateAsync({ rows, overwrite: importOverwrite });
+      toast.success(`Imported ${result.count} spec values for ${selectedStyle}`);
       setImportParsed(null);
     } catch {
       toast.error("Failed to save imported specs");
@@ -1411,6 +1432,7 @@ export default function SpecsTab({}: SpecsTabProps) {
     setBulkLoading(true);
     setBulkResults([]);
     setBulkParsed([]);
+    setManualMappings({});
     setShowBulkModal(true);
     const items: { result: BulkImportResult; parsed: ParsedSpecSheet }[] = [];
     const results: BulkImportResult[] = [];
@@ -1422,11 +1444,19 @@ export default function SpecsTab({}: SpecsTabProps) {
         const matchedEntry = styleList.find(
           (s) => s.style.toLowerCase() === parsed.styleName.toLowerCase()
         );
+        // Count total non-empty values
+        let valueCount = 0;
+        for (const compMap of Object.values(parsed.colourSpecs)) {
+          for (const v of Object.values(compMap)) {
+            if (v.trim()) valueCount++;
+          }
+        }
         const result: BulkImportResult = {
           fileName: file.name,
           styleName: parsed.styleName,
           matchedStyle: matchedEntry ? matchedEntry.style : null,
           colourCount: Object.keys(parsed.colourSpecs).length,
+          valueCount,
           status: matchedEntry ? "pending" : "unmatched",
         };
         results.push(result);
@@ -1437,6 +1467,7 @@ export default function SpecsTab({}: SpecsTabProps) {
           styleName: "?",
           matchedStyle: null,
           colourCount: 0,
+          valueCount: 0,
           status: "error",
           error: e instanceof Error ? e.message : String(e),
         });
@@ -1450,38 +1481,29 @@ export default function SpecsTab({}: SpecsTabProps) {
   async function handleBulkSave() {
     setBulkSaving(true);
     const updatedResults = [...bulkResults];
+    // Process all pending files (including those with manual mappings)
     for (const item of bulkParsed) {
-      if (!item.result.matchedStyle) continue;
+      const effectiveStyle = item.result.matchedStyle ?? manualMappings[item.result.fileName] ?? null;
+      if (!effectiveStyle) continue;
       const idx = updatedResults.findIndex((r) => r.fileName === item.result.fileName);
       if (idx === -1) continue;
-      updatedResults[idx] = { ...updatedResults[idx], status: "saving" };
+      updatedResults[idx] = { ...updatedResults[idx], status: "saving", matchedStyle: effectiveStyle };
       setBulkResults([...updatedResults]);
       try {
-        const styleColourMap = COLOUR_LEATHER_MAP[item.result.matchedStyle] ?? {};
-        const labelToRawColour: Record<string, string> = {};
-        for (const [rawColour, label] of Object.entries(styleColourMap)) {
-          labelToRawColour[label.toUpperCase()] = rawColour;
-          labelToRawColour[rawColour.toUpperCase()] = rawColour;
-        }
-        for (const [importedColour, compMap] of Object.entries(item.parsed.colourSpecs)) {
-          const rawColour = labelToRawColour[importedColour.toUpperCase()] ?? importedColour;
-          for (const [component, value] of Object.entries(compMap)) {
-            if (!value.trim()) continue;
-            await upsertMutation.mutateAsync({ style: item.result.matchedStyle!, colour: rawColour, component, value });
-          }
-        }
-        updatedResults[idx] = { ...updatedResults[idx], status: "done" };
+        const rows = buildBulkRows(item.parsed, effectiveStyle);
+        const result = await bulkUpsertMutation.mutateAsync({ rows, overwrite: bulkOverwrite });
+        updatedResults[idx] = { ...updatedResults[idx], status: "done", savedCount: result.count };
         setBulkResults([...updatedResults]);
       } catch (e) {
         updatedResults[idx] = { ...updatedResults[idx], status: "error", error: e instanceof Error ? e.message : String(e) };
         setBulkResults([...updatedResults]);
       }
     }
-    // Background invalidation is handled by upsertMutation.onSettled — no blocking refetch needed
     setBulkSaving(false);
     const doneCount = updatedResults.filter((r) => r.status === "done").length;
+    const totalSaved = updatedResults.reduce((sum, r) => sum + (r.savedCount ?? 0), 0);
     const errCount = updatedResults.filter((r) => r.status === "error").length;
-    toast.success(`Bulk import complete: ${doneCount} saved${errCount > 0 ? `, ${errCount} errors` : ""}`);
+    toast.success(`Bulk import complete: ${doneCount} style${doneCount !== 1 ? "s" : ""} saved (${totalSaved} values)${errCount > 0 ? `, ${errCount} errors` : ""}`);
   }
 
   // Completion stats — uses live rawSpecs for selected style, DB counts for others
@@ -1736,35 +1758,69 @@ export default function SpecsTab({}: SpecsTabProps) {
             {importParsed && (
               <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
                       Ready to import: {importParsed.styleName}
                     </p>
                     <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
-                      {Object.keys(importParsed.colourSpecs).length} colours detected
+                      {importParsed.detectedColours.length} colour{importParsed.detectedColours.length !== 1 ? "s" : ""} detected
                       {importParsed.unmatchedComponents.length > 0 && (
                         <span className="ml-2 text-amber-600 dark:text-amber-400">
                           · {importParsed.unmatchedComponents.length} unrecognised fields skipped
                         </span>
                       )}
                     </p>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {Object.keys(importParsed.colourSpecs).map((c) => (
-                        <span key={c} className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded px-1.5 py-0.5">{c}</span>
-                      ))}
+                    {/* Colour preview: show detected colours with mapping arrows */}
+                    <div className="mt-2 space-y-1">
+                      {importParsed.detectedColours.map((detectedColour) => {
+                        const styleColourMap = COLOUR_LEATHER_MAP[selectedStyle ?? ""] ?? {};
+                        const labelToRaw: Record<string, string> = {};
+                        for (const [raw, label] of Object.entries(styleColourMap)) {
+                          labelToRaw[label.toUpperCase()] = raw;
+                          labelToRaw[raw.toUpperCase()] = raw;
+                        }
+                        const rawColour = labelToRaw[detectedColour.toUpperCase()];
+                        const valueCount = Object.values(importParsed.colourSpecs[detectedColour] ?? {}).filter(v => v.trim()).length;
+                        return (
+                          <div key={detectedColour} className="flex items-center gap-1.5 text-xs">
+                            <span className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded px-1.5 py-0.5 font-mono">{detectedColour}</span>
+                            {rawColour && rawColour.toUpperCase() !== detectedColour.toUpperCase() && (
+                              <>
+                                <ArrowRight className="w-3 h-3 text-blue-400" />
+                                <span className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded px-1.5 py-0.5 font-mono">{rawColour}</span>
+                              </>
+                            )}
+                            <span className="text-muted-foreground">{valueCount} values</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                  <button onClick={() => setImportParsed(null)} className="text-blue-400 hover:text-blue-600 text-lg leading-none">×</button>
+                  <button onClick={() => setImportParsed(null)} className="text-blue-400 hover:text-blue-600 flex-shrink-0">
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
                 {importParsed.unmatchedComponents.length > 0 && (
                   <div className="flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400">
                     <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                    <span>Skipped: {importParsed.unmatchedComponents.join(", ")}</span>
+                    <span>Skipped fields: {importParsed.unmatchedComponents.join(", ")}</span>
                   </div>
                 )}
+                {/* Overwrite toggle */}
+                <div className="flex items-center gap-2 pt-1">
+                  <Switch
+                    id="import-overwrite"
+                    checked={importOverwrite}
+                    onCheckedChange={setImportOverwrite}
+                    className="scale-90"
+                  />
+                  <Label htmlFor="import-overwrite" className="text-xs text-muted-foreground cursor-pointer">
+                    {importOverwrite ? "Overwrite existing values" : "Fill blanks only (keep existing values)"}
+                  </Label>
+                </div>
                 <div className="flex gap-2">
-                  <Button size="sm" disabled={importSaving} onClick={handleSaveImport} className="gap-1.5">
-                    {importSaving ? "Saving…" : "Save to dashboard"}
+                  <Button size="sm" disabled={importSaving || bulkUpsertMutation.isPending} onClick={handleSaveImport} className="gap-1.5">
+                    {importSaving ? <><RefreshCw className="w-3 h-3 animate-spin" /> Saving…</> : "Save to dashboard"}
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => setImportParsed(null)}>Cancel</Button>
                 </div>
@@ -1797,57 +1853,121 @@ export default function SpecsTab({}: SpecsTabProps) {
       {/* ── Bulk Import Modal ─────────────────────────────────────────────── */}
       {showBulkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => { if (!bulkLoading && !bulkSaving) setShowBulkModal(false); }}>
-          <div className="w-[520px] max-w-full mx-4 rounded-2xl shadow-2xl bg-card overflow-hidden" style={{ border: "1px solid var(--border)" }} onClick={(e) => e.stopPropagation()}>
+          <div className="w-[600px] max-w-full mx-4 rounded-2xl shadow-2xl bg-card overflow-hidden" style={{ border: "1px solid var(--border)" }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
-              <h2 className="font-bold text-base text-foreground">Bulk Spec Import</h2>
+              <div>
+                <h2 className="font-bold text-base text-foreground">Bulk Spec Import</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {bulkResults.length} file{bulkResults.length !== 1 ? "s" : ""} · {bulkResults.filter(r => r.status === "pending" || manualMappings[r.fileName]).length} ready · {bulkResults.filter(r => r.status === "done").length} saved
+                </p>
+              </div>
               {!bulkLoading && !bulkSaving && (
                 <button onClick={() => setShowBulkModal(false)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-                  <span className="text-muted-foreground text-lg leading-none">×</span>
+                  <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               )}
             </div>
-            <div className="px-6 py-4 space-y-3 max-h-[60vh] overflow-y-auto">
+
+            {/* Overwrite toggle */}
+            {!bulkLoading && bulkResults.length > 0 && (
+              <div className="px-6 py-3 border-b flex items-center gap-3" style={{ borderColor: "var(--border)" }}>
+                <Switch
+                  id="bulk-overwrite"
+                  checked={bulkOverwrite}
+                  onCheckedChange={setBulkOverwrite}
+                  disabled={bulkSaving}
+                  className="scale-90"
+                />
+                <Label htmlFor="bulk-overwrite" className="text-xs text-muted-foreground cursor-pointer">
+                  {bulkOverwrite ? "Overwrite existing values" : "Fill blanks only (keep existing values)"}
+                </Label>
+              </div>
+            )}
+
+            <div className="px-6 py-4 space-y-3 max-h-[55vh] overflow-y-auto">
               {bulkLoading && (
-                <div className="text-sm text-muted-foreground text-center py-6">Parsing files…</div>
+                <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Parsing files…
+                </div>
               )}
               {!bulkLoading && bulkResults.length === 0 && (
                 <div className="text-sm text-muted-foreground text-center py-6">No files parsed yet.</div>
               )}
-              {bulkResults.map((r) => (
-                <div key={r.fileName} className="flex items-center gap-3 p-3 rounded-lg border" style={{ borderColor: "var(--border)" }}>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{r.fileName}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {r.matchedStyle ? (
-                        <><span className="text-green-600 font-medium">{r.matchedStyle}</span> · {r.colourCount} colour{r.colourCount !== 1 ? "s" : ""}</>
-                      ) : (
-                        <span className="text-amber-600">"{r.styleName}" — not found in spec list</span>
-                      )}
-                    </p>
-                    {r.error && <p className="text-xs text-red-500 mt-0.5">{r.error}</p>}
+              {bulkResults.map((r) => {
+                const parsed = bulkParsed.find(p => p.result.fileName === r.fileName)?.parsed;
+                const manualStyle = manualMappings[r.fileName];
+                const effectiveStyle = r.matchedStyle ?? manualStyle ?? null;
+                return (
+                  <div key={r.fileName} className="rounded-lg border p-3 space-y-2" style={{ borderColor: "var(--border)" }}>
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">{r.fileName}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {effectiveStyle ? (
+                            <><span className="text-green-600 dark:text-green-400 font-medium">{effectiveStyle}</span> · {r.colourCount} colour{r.colourCount !== 1 ? "s" : ""} · {r.valueCount} values</>
+                          ) : r.styleName !== "?" ? (
+                            <span className="text-amber-600 dark:text-amber-400">"{r.styleName}" — not found in spec list</span>
+                          ) : (
+                            <span className="text-red-500">Parse error</span>
+                          )}
+                        </p>
+                        {r.error && <p className="text-xs text-red-500 mt-0.5">{r.error}</p>}
+                        {/* Colour preview for matched/manually-mapped files */}
+                        {effectiveStyle && parsed && r.status !== "done" && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {parsed.detectedColours.map((c) => (
+                              <span key={c} className="text-[10px] bg-muted text-muted-foreground rounded px-1.5 py-0.5 font-mono">{c}</span>
+                            ))}
+                          </div>
+                        )}
+                        {r.status === "done" && (
+                          <p className="text-xs text-green-600 dark:text-green-400 mt-1">✓ {r.savedCount ?? 0} values saved</p>
+                        )}
+                      </div>
+                      <div className="flex-shrink-0 mt-0.5">
+                        {r.status === "pending" && <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Ready</span>}
+                        {r.status === "saving" && <span className="text-xs text-blue-600 bg-blue-50 dark:bg-blue-950/30 px-2 py-0.5 rounded-full flex items-center gap-1"><RefreshCw className="w-2.5 h-2.5 animate-spin" />Saving</span>}
+                        {r.status === "done" && <span className="text-xs text-green-600 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 rounded-full">✓ Done</span>}
+                        {r.status === "unmatched" && !manualStyle && <span className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-full">Unmatched</span>}
+                        {r.status === "error" && <span className="text-xs text-red-600 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded-full">Error</span>}
+                      </div>
+                    </div>
+                    {/* Manual style mapping for unmatched files */}
+                    {(r.status === "unmatched" || (r.status === "pending" && !r.matchedStyle)) && r.styleName !== "?" && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground flex-shrink-0">Map to:</span>
+                        <select
+                          className="flex-1 text-xs rounded border border-border bg-background px-2 py-1 text-foreground"
+                          value={manualStyle ?? ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setManualMappings(prev => val ? { ...prev, [r.fileName]: val } : Object.fromEntries(Object.entries(prev).filter(([k]) => k !== r.fileName)));
+                          }}
+                        >
+                          <option value="">— select style —</option>
+                          {styleList.map(s => (
+                            <option key={s.style} value={s.style}>{s.style}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex-shrink-0">
-                    {r.status === "pending" && <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Ready</span>}
-                    {r.status === "saving" && <span className="text-xs text-blue-600 bg-blue-50 dark:bg-blue-950/30 px-2 py-0.5 rounded-full">Saving…</span>}
-                    {r.status === "done" && <span className="text-xs text-green-600 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 rounded-full">✓ Done</span>}
-                    {r.status === "unmatched" && <span className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-full">Unmatched</span>}
-                    {r.status === "error" && <span className="text-xs text-red-600 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded-full">Error</span>}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             {!bulkLoading && bulkResults.length > 0 && (
               <div className="px-6 py-4 border-t flex items-center justify-between gap-3" style={{ borderColor: "var(--border)" }}>
                 <p className="text-xs text-muted-foreground">
-                  {bulkResults.filter((r) => r.status === "pending").length} ready ·{" "}
-                  {bulkResults.filter((r) => r.status === "unmatched").length} unmatched ·{" "}
+                  {bulkResults.filter((r) => r.status === "pending" || (r.status === "unmatched" && manualMappings[r.fileName])).length} ready ·{" "}
+                  {bulkResults.filter((r) => r.status === "unmatched" && !manualMappings[r.fileName]).length} unmatched ·{" "}
                   {bulkResults.filter((r) => r.status === "done").length} saved
                 </p>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => setShowBulkModal(false)} disabled={bulkSaving}>Close</Button>
-                  {bulkResults.some((r) => r.status === "pending") && (
+                  {(bulkResults.some((r) => r.status === "pending") || bulkResults.some((r) => r.status === "unmatched" && manualMappings[r.fileName])) && (
                     <Button size="sm" onClick={handleBulkSave} disabled={bulkSaving} className="gap-1.5">
-                      {bulkSaving ? "Saving…" : `Save ${bulkResults.filter((r) => r.status === "pending").length} Specs`}
+                      {bulkSaving ? <><RefreshCw className="w-3 h-3 animate-spin" /> Saving…</> : `Save ${bulkResults.filter((r) => r.status === "pending" || (r.status === "unmatched" && manualMappings[r.fileName])).length} Spec${bulkResults.filter((r) => r.status === "pending" || (r.status === "unmatched" && manualMappings[r.fileName])).length !== 1 ? "s" : ""}`}
                     </Button>
                   )}
                 </div>
