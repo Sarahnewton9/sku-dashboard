@@ -989,13 +989,13 @@ function ExportDialog({
               {" "}from <span className="font-semibold">{formatDateLabel(selectedDate)}</span>
             </p>
             <p className="text-xs text-muted-foreground">
-              {Object.keys(
-                stylesOnDate.reduce<Record<string, boolean>>((acc, s) => {
-                  const sessions = (sessionsMap[s.style] ?? []).filter((sess) => sess.sessionDate === selectedDate);
-                  for (const sess of sessions) { if (sess.fitModel) acc[sess.fitModel] = true; }
-                  return acc;
-                }, {})
-              ).join(", ") || "No fit models"}
+              {Array.from(new Set(
+                stylesOnDate.flatMap((s) =>
+                  (sessionsMap[s.style] ?? [])
+                    .filter((sess) => sess.sessionDate === selectedDate && sess.fitModel)
+                    .map((sess) => (sess.fitModel?.trim() ?? "").toUpperCase())
+                )
+              )).sort().join(", ") || "No fit models"}
             </p>
           </div>
         )}
