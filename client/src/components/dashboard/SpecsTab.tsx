@@ -370,6 +370,7 @@ interface SpecFormProps {
   imageOverride?: string;
   customRows: CustomRowData[];
   onUpsert: (colour: string, component: string, value: string) => void;
+  onBulkAutoFill: (rows: Array<{ style: string; colour: string; component: string; value: string }>) => void;
   onAddDropdownOption: (component: string, value: string) => void;
   onMetaChange: (meta: Partial<{ hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null }>) => void;
   onAddCustomRow: (section: string) => void;
@@ -522,7 +523,7 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
 
 function SpecForm({
   entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allColourLeatherOptions, imageOverride, customRows,
-  onUpsert, onAddDropdownOption, onMetaChange, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow,
+  onUpsert, onBulkAutoFill, onAddDropdownOption, onMetaChange, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow,
   dbCategory, onSetCategory, allCustomRowTitles, allStyleEntries,
 }: SpecFormProps) {
   const hasBuckle = specMeta?.hasBuckle ?? false;
@@ -558,10 +559,10 @@ function SpecForm({
 
   // Auto-fill upper_1 with the colour+leather label, and toe cap with the toe cap leather,
   // for each colour that has no saved value yet.
+  // Uses a single bulk upsert call to avoid overwhelming the server with simultaneous mutations.
   const autoFillDoneRef = useRef<Set<string>>(new Set());
-  // Derive the toe cap component key for this style (e.g. "legacy_toe_cap" for LEGACY)
-  // (unused variable - key is computed inline in the useEffect below)
   useEffect(() => {
+    const rows: Array<{ style: string; colour: string; component: string; value: string }> = [];
     entry.colours.forEach((colour, colIdx) => {
       const key = `${entry.style}:${colour}`;
       if (autoFillDoneRef.current.has(key)) return;
@@ -570,7 +571,7 @@ function SpecForm({
       const existing = specs[colour]?.["upper_1"];
       if (!existing) {
         const label = entry.colourLabels[colIdx] ?? colour;
-        onUpsert(colour, "upper_1", label);
+        rows.push({ style: entry.style, colour, component: "upper_1", value: label });
       }
       // Auto-fill toe cap if this style has a toe cap component and the cell is empty
       const toeCapValue = toeCapsPerColour[colour];
@@ -578,10 +579,13 @@ function SpecForm({
         const toeCapKey = `${entry.style.toLowerCase()}_toe_cap`;
         const existingToeCap = specs[colour]?.[toeCapKey];
         if (!existingToeCap) {
-          onUpsert(colour, toeCapKey, toeCapValue);
+          rows.push({ style: entry.style, colour, component: toeCapKey, value: toeCapValue });
         }
       }
     });
+    if (rows.length > 0) {
+      onBulkAutoFill(rows);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entry.style, entry.colours.join(",")]);
 
@@ -1402,6 +1406,18 @@ export default function SpecsTab({}: SpecsTabProps) {
     // No onSuccess refetch needed — optimistic update handles the UI immediately
     upsertMutation.mutate({ style: selectedStyle, colour, component, value });
   }
+  // Batch auto-fill: sends all auto-fill rows in a single bulk upsert to avoid 502s from simultaneous mutations
+  function handleBulkAutoFill(rows: Array<{ style: string; colour: string; component: string; value: string }>) {
+    if (rows.length === 0) return;
+    bulkUpsertMutation.mutate(
+      { rows, overwrite: false },
+      {
+        onSuccess: () => {
+          utils.specs.getForStyle.invalidate({ style: rows[0].style });
+        },
+      }
+    );
+  }
 
   function handleAddDropdownOption(component: string, value: string) {
     addDropdownMutation.mutate({ component, value });
@@ -1886,6 +1902,7 @@ export default function SpecsTab({}: SpecsTabProps) {
               imageOverride={imageOverrides[selectedEntry.style]}
               customRows={rawCustomRows as any[]}
               onUpsert={handleUpsert}
+              onBulkAutoFill={handleBulkAutoFill}
               onAddDropdownOption={handleAddDropdownOption}
               onMetaChange={handleMetaChange}
               onAddCustomRow={handleAddCustomRow}
