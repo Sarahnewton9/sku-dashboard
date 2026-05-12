@@ -133,12 +133,14 @@ function Lightbox({ src, onClose, sampleDate, sampleType }: { src: string; onClo
 
 function SessionCard({
   session,
+  knownModels,
   onUploadImage,
   onDeleteImage,
   onUpdateSession,
   onDeleteSession,
 }: {
   session: FittingSession;
+  knownModels: string[];
   onUploadImage: (sessionId: number, style: string, file: File) => void;
   onDeleteImage: (id: number) => void;
   onUpdateSession: (id: number, fitModel: string, sessionDate: string, notes: string | null, sampleDate: string | null, sampleType: string | null) => void;
@@ -198,11 +200,12 @@ function SessionCard({
         <div className="flex items-center gap-3 text-sm">
           <User className="w-3.5 h-3.5 text-muted-foreground" />
           {editing ? (
-            <input
+            <FitModelInput
               value={localModel}
-              onChange={(e) => setLocalModel(e.target.value.toUpperCase())}
+              onChange={setLocalModel}
+              knownModels={knownModels}
               placeholder="Fit model name"
-              className="border border-border rounded px-2 py-0.5 text-sm bg-background w-40"
+              className="w-40"
             />
           ) : (
             <span className="font-medium">{session.fitModel || "—"}</span>
@@ -386,6 +389,7 @@ function StyleFitRow({
   entry,
   styleMeta,
   sessions,
+  knownModels,
   onFitUpdate,
   onCreateSession,
   onUploadImage,
@@ -399,6 +403,7 @@ function StyleFitRow({
   entry: StyleEntry;
   styleMeta: Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null }>;
   sessions: FittingSession[];
+  knownModels: string[];
   onFitUpdate: (style: string, fitRating: string | null, notes: string | null) => void;
   onCreateSession: (style: string) => void;
   onUploadImage: (sessionId: number, style: string, file: File) => void;
@@ -517,6 +522,7 @@ function StyleFitRow({
                 <SessionCard
                   key={session.id}
                   session={session}
+                  knownModels={knownModels}
                   onUploadImage={onUploadImage}
                   onDeleteImage={onDeleteImage}
                   onUpdateSession={onUpdateSession}
@@ -555,14 +561,80 @@ function StyleFitRow({
   );
 }
 
+// ─── FitModelInput: autocomplete input for fit model names ──────────────────
+
+function FitModelInput({
+  value,
+  onChange,
+  knownModels,
+  placeholder = "e.g. SARAH",
+  className = "",
+  autoFocus = false,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  knownModels: string[];
+  placeholder?: string;
+  className?: string;
+  autoFocus?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const suggestions = knownModels.filter(
+    (m) => m.includes(value.toUpperCase()) && m !== value.toUpperCase()
+  );
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={containerRef} className={`relative ${className}`}>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => { onChange(e.target.value.toUpperCase()); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        placeholder={placeholder}
+        autoFocus={autoFocus}
+        className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+      />
+      {open && suggestions.length > 0 && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg overflow-hidden">
+          {suggestions.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); onChange(m); setOpen(false); }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors font-medium"
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── New Session Dialog ───────────────────────────────────────────────────────
 
 function NewSessionDialog({
   style,
+  knownModels,
   onConfirm,
   onClose,
 }: {
   style: string;
+  knownModels: string[];
   onConfirm: (fitModel: string, sessionDate: string) => void;
   onClose: () => void;
 }) {
@@ -576,12 +648,11 @@ function NewSessionDialog({
         <div className="space-y-3">
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Fit Model</label>
-            <input
-              type="text"
+            <FitModelInput
               value={fitModel}
-              onChange={(e) => setFitModel(e.target.value.toUpperCase())}
-              placeholder="e.g. Sarah, Size 38"
-              className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
+              onChange={setFitModel}
+              knownModels={knownModels}
+              placeholder="e.g. SARAH"
               autoFocus
             />
           </div>
@@ -1482,6 +1553,15 @@ export function FittingTab() {
     return map;
   }, [allSessionsRaw]);
 
+  // Unique sorted fit model names (uppercase) for autocomplete
+  const knownModels = useMemo(() => {
+    const names = new Set<string>();
+    for (const s of allSessionsRaw) {
+      if (s.fitModel?.trim()) names.add(s.fitModel.trim().toUpperCase());
+    }
+    return Array.from(names).sort();
+  }, [allSessionsRaw]);
+
   // Split counts for tab badges
   const activeStyles = styleList.filter((s) => !styleMeta[s.style]?.fitApproved);
   const approvedStyles = styleList.filter((s) => styleMeta[s.style]?.fitApproved);
@@ -1576,6 +1656,7 @@ export function FittingTab() {
       {newSessionStyle && (
         <NewSessionDialog
           style={newSessionStyle}
+          knownModels={knownModels}
           onConfirm={handleConfirmCreateSession}
           onClose={() => setNewSessionStyle(null)}
         />
@@ -1678,6 +1759,7 @@ export function FittingTab() {
                 styleMeta={styleMeta}
                 imageOverrides={imageOverrides}
                 preloadedSessions={sessionsByStyle[entry.style] ?? []}
+                knownModels={knownModels}
                 onFitUpdate={handleFitUpdate}
                 onCreateSession={handleCreateSession}
                 onApprove={handleApprove}
@@ -1725,6 +1807,7 @@ function StyleFitRowWithSessions({
   styleMeta,
   imageOverrides,
   preloadedSessions,
+  knownModels,
   onFitUpdate,
   onCreateSession,
   onApprove,
@@ -1735,6 +1818,7 @@ function StyleFitRowWithSessions({
   styleMeta: Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null }>;
   imageOverrides: Record<string, string>;
   preloadedSessions: Array<{ id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; sampleDate?: string | null; sampleType?: string | null; createdAt: Date; images: Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string; createdAt: Date }> }>;
+  knownModels: string[];
   onFitUpdate: (style: string, fitRating: string | null, notes: string | null) => void;
   onCreateSession: (style: string) => void;
   onApprove: (style: string) => void;
@@ -1787,6 +1871,7 @@ function StyleFitRowWithSessions({
       entry={entry}
       styleMeta={styleMeta}
       sessions={sessions}
+      knownModels={knownModels}
       imageOverrides={imageOverrides}
       onFitUpdate={onFitUpdate}
       onCreateSession={onCreateSession}
