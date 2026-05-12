@@ -896,8 +896,8 @@
 
 ## Specking Bugs (May 12)
 - [x] Fix specs not filling on some colours (e.g. TILDA Black Crinkle) — now uses dbCategory override for template
-- [ ] Fix missing SKU imports (e.g. TILDA should have 8 SKUs but only 7 imported — Black Speckle missing)
-- [ ] Add "Copy Specs" feature: copy all spec values from one colour to a new colour (e.g. copy Tan Vintage → Vanilla Vintage)
+- [x] Fix missing SKU imports (e.g. TILDA should have 8 SKUs but only 7 imported — Black Speckle missing)
+- [x] Add "Copy Specs" feature: copy all spec values from one colour to a new colour (e.g. copy Tan Vintage → Vanilla Vintage)
 - [x] Fix slow typing in "Add custom row" field + make it a dropdown/autocomplete like other fields
 - [x] Fix toe caps not being detected (e.g. ROXIE, LEGACY) — now uses dbCategory override in getTemplateForCategory
 - [x] Fix Excel specs export: add image (fixed EMU→px), wider columns, text wrap, COLOUR 1 / COLOUR 2 headings
