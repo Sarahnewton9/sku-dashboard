@@ -329,6 +329,13 @@ export const STYLE_COMPONENT_OVERRIDES: Record<string, StyleOverride> = {
   "VILLA": {
     remove: ["toe_piece", "insole_binding"],
   },
+
+  // CAPPA – Add Toe Cap
+  "CAPPA": {
+    add: [
+      { key: "cappa_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "construction" },
+    ],
+  },
 };
 
 // Note: SAMMY – "Picking up Black Capri instead of Black Venice" is a data issue
@@ -468,6 +475,7 @@ export const DEFAULT_DROPDOWN_OPTIONS: Record<string, string[]> = {
   sarah_toe_cap: ["MATCHING", "CONTRAST", "NONE"],
   savant_binding: ["MATCHING", "CONTRAST", "NONE"],
   savant_toe_cap: ["MATCHING", "CONTRAST", "NONE"],
+  cappa_toe_cap: ["MATCHING", "CONTRAST", "NONE"],
 };
 
 export const SECTION_LABELS: Record<string, string> = {

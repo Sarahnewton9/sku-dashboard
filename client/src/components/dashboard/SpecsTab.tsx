@@ -44,6 +44,7 @@ interface StyleEntry {
   imageUrl?: string;
   colours: string[];       // raw colour names e.g. ["BLACK", "PETAL"]
   colourLabels: string[];  // full labels e.g. ["BLACK NAPPA", "PETAL NAPPA"]
+  toeCapsPerColour: Record<string, string>; // colour key → toe cap leather e.g. {"BLACK": "BLACK PATENT"}
   isAllNew: boolean;
   hasNew: boolean;
   totalSKUs: number;
@@ -361,6 +362,7 @@ interface CustomRowData {
 
 interface SpecFormProps {
   entry: StyleEntry;
+  toeCapsPerColour: Record<string, string>; // colour key → toe cap leather
   specMeta: { hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null } | null;
   specs: Record<string, Record<string, string>>; // colour → component → value
   allDropdownOptions: Record<string, string[]>;
@@ -519,7 +521,7 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
 }
 
 function SpecForm({
-  entry, specMeta, specs, allDropdownOptions, allColourLeatherOptions, imageOverride, customRows,
+  entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allColourLeatherOptions, imageOverride, customRows,
   onUpsert, onAddDropdownOption, onMetaChange, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow,
   dbCategory, onSetCategory, allCustomRowTitles, allStyleEntries,
 }: SpecFormProps) {
@@ -554,19 +556,30 @@ function SpecForm({
     toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s)`);
   }
 
-  // Auto-fill upper_1 with the colour+leather label for each colour that has no saved value
+  // Auto-fill upper_1 with the colour+leather label, and toe cap with the toe cap leather,
+  // for each colour that has no saved value yet.
   const autoFillDoneRef = useRef<Set<string>>(new Set());
+  // Derive the toe cap component key for this style (e.g. "legacy_toe_cap" for LEGACY)
+  // (unused variable - key is computed inline in the useEffect below)
   useEffect(() => {
     entry.colours.forEach((colour, colIdx) => {
       const key = `${entry.style}:${colour}`;
       if (autoFillDoneRef.current.has(key)) return;
+      autoFillDoneRef.current.add(key);
+      // Auto-fill upper_1
       const existing = specs[colour]?.["upper_1"];
       if (!existing) {
         const label = entry.colourLabels[colIdx] ?? colour;
-        autoFillDoneRef.current.add(key);
         onUpsert(colour, "upper_1", label);
-      } else {
-        autoFillDoneRef.current.add(key);
+      }
+      // Auto-fill toe cap if this style has a toe cap component and the cell is empty
+      const toeCapValue = toeCapsPerColour[colour];
+      if (toeCapValue) {
+        const toeCapKey = `${entry.style.toLowerCase()}_toe_cap`;
+        const existingToeCap = specs[colour]?.[toeCapKey];
+        if (!existingToeCap) {
+          onUpsert(colour, toeCapKey, toeCapValue);
+        }
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -893,6 +906,35 @@ export default function SpecsTab({}: SpecsTabProps) {
     return Array.from(seen).sort((a, b) => a.localeCompare(b));
   }, [mergedRawSkus]);
 
+  // Build toe cap map: style → colour key → toe cap leather
+  // Uses the same colour key logic as NEW_COLOURS_PER_STYLE ("COLOUR LEATHER" for multi-leather styles)
+  const TOE_CAP_MAP = useMemo(() => {
+    // First pass: detect multi-leather styles
+    const leatherCount: Record<string, Record<string, Set<string>>> = {};
+    for (const sku of mergedRawSkus as any[]) {
+      const style = sku.style as string;
+      const colour = sku.colour as string;
+      const leather = (sku.leather as string) ?? "";
+      if (!leatherCount[style]) leatherCount[style] = {};
+      if (!leatherCount[style][colour]) leatherCount[style][colour] = new Set();
+      leatherCount[style][colour].add(leather);
+    }
+    // Second pass: build map
+    const map: Record<string, Record<string, string>> = {};
+    for (const sku of mergedRawSkus as any[]) {
+      const toeCap = (sku.toe_cap as string) ?? "";
+      if (!toeCap) continue;
+      const style = sku.style as string;
+      const colour = sku.colour as string;
+      const leather = (sku.leather as string) ?? "";
+      const hasDuplicates = (leatherCount[style]?.[colour]?.size ?? 0) > 1;
+      const key = hasDuplicates && leather ? `${colour} ${leather}` : colour;
+      if (!map[style]) map[style] = {};
+      map[style][key] = toeCap;
+    }
+    return map;
+  }, [mergedRawSkus]);
+
   // Build new colours per style from live merged raw SKUs
   // When a colour appears with multiple leathers (e.g. TILDA BLACK/CRINKLE + BLACK/SPECKLE),
   // emit "COLOUR LEATHER" as the unique key so both get their own spec row.
@@ -950,6 +992,7 @@ export default function SpecsTab({}: SpecsTabProps) {
           imageUrl: (s as any).imageUrl,
           colours: newColours,
           colourLabels: newColours.map((c) => COLOUR_LEATHER_MAP[s.style]?.[c] ?? c),
+          toeCapsPerColour: TOE_CAP_MAP[s.style] ?? {},
           isAllNew: s.isAllNew,
           hasNew: s.hasNew,
           totalSKUs: s.totalSKUs,
@@ -958,7 +1001,7 @@ export default function SpecsTab({}: SpecsTabProps) {
       })
       .filter((s) => s.colours.length > 0)
       .sort((a, b) => a.style.localeCompare(b.style));
-  }, [mergedStyles, NEW_COLOURS_PER_STYLE, COLOUR_LEATHER_MAP]);
+  }, [mergedStyles, NEW_COLOURS_PER_STYLE, COLOUR_LEATHER_MAP, TOE_CAP_MAP]);
 
   const utils = trpc.useUtils();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
@@ -1075,10 +1118,16 @@ export default function SpecsTab({}: SpecsTabProps) {
             filteredLabels.push(s.colourLabels[i]);
           }
         }
+        // Also filter toeCapsPerColour to only include non-cancelled colours
+        const filteredToeCaps: Record<string, string> = {};
+        for (const colour of filteredColours) {
+          if (s.toeCapsPerColour[colour]) filteredToeCaps[colour] = s.toeCapsPerColour[colour];
+        }
         return {
           ...s,
           colours: filteredColours,
           colourLabels: filteredLabels,
+          toeCapsPerColour: filteredToeCaps,
         };
       })
       .filter((s) => s.colours.length > 0);
@@ -1829,6 +1878,7 @@ export default function SpecsTab({}: SpecsTabProps) {
 
             <SpecForm
               entry={selectedEntry}
+              toeCapsPerColour={selectedEntry.toeCapsPerColour}
               specMeta={specMeta}
               specs={specs}
               allDropdownOptions={allDropdownOptions}
