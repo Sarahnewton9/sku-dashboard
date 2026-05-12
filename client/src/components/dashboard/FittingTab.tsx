@@ -690,7 +690,7 @@ function ExportDialog({
         const sessions = (sessionsMap[s.style] ?? []).filter((sess) => sess.sessionDate === selectedDate);
         const meta = styleMeta[s.style];
         for (const sess of sessions) {
-          const key = sess.fitModel?.trim() || "Unknown";
+          const key = (sess.fitModel?.trim() || "Unknown").toUpperCase();
           if (!modelMap[key]) modelMap[key] = [];
           modelMap[key].push({
             style: s.style,
@@ -1083,7 +1083,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
           modelMap[key].push({ style, sessionDate: null, notes: null, sampleDate: null, sampleType: null });
         } else {
           for (const sess of sessions) {
-            const key = sess.fitModel?.trim() || "Unknown";
+            const key = (sess.fitModel?.trim() || "Unknown").toUpperCase();
             if (!modelMap[key]) modelMap[key] = [];
             modelMap[key].push({
               style,
