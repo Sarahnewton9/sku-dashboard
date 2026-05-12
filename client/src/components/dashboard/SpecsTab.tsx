@@ -279,6 +279,74 @@ function ColourCopyPanel({ colours, colourLabels, onCopy }: ColourCopyPanelProps
   );
 }
 
+// ─── Custom Row Title Input (local state to avoid lag) ──────────────────────────
+
+interface CustomRowTitleInputProps {
+  id: number;
+  initialTitle: string;
+  value: string;
+  onUpdate: (id: number, title: string, value: string) => void;
+  onDelete: (id: number) => void;
+  allTitles: string[]; // known titles for autocomplete
+}
+
+function CustomRowTitleInput({ id, initialTitle, value, onUpdate, onDelete, allTitles }: CustomRowTitleInputProps) {
+  const [localTitle, setLocalTitle] = useState(initialTitle);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+
+  // Sync if the DB title changes from outside (e.g. on first load)
+  useEffect(() => { setLocalTitle(initialTitle); }, [initialTitle]);
+
+  const suggestions = allTitles
+    .filter((t) => t && t.toLowerCase().includes(localTitle.toLowerCase()) && t !== localTitle)
+    .slice(0, 6);
+
+  function handleChange(val: string) {
+    setLocalTitle(val);
+    onUpdate(id, val, value);
+  }
+
+  function handleSelect(val: string) {
+    setLocalTitle(val);
+    onUpdate(id, val, value);
+    setOpen(false);
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 relative">
+      <input
+        className="text-xs font-medium text-amber-700 dark:text-amber-400 bg-transparent border-0 border-b border-dashed border-amber-300 dark:border-amber-700 focus:outline-none focus:border-amber-500 w-full min-w-0 placeholder:text-amber-400/60"
+        value={localTitle}
+        placeholder="Field name…"
+        onChange={(e) => handleChange(e.target.value)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+      />
+      {open && suggestions.length > 0 && (
+        <div className="absolute left-0 top-full mt-1 z-50 bg-popover border border-border rounded-md shadow-md min-w-[180px] py-1">
+          {suggestions.map((s) => (
+            <button
+              key={s}
+              className="w-full text-left text-xs px-3 py-1.5 hover:bg-accent hover:text-accent-foreground"
+              onMouseDown={(e) => { e.preventDefault(); handleSelect(s); }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+      <button
+        onClick={() => onDelete(id)}
+        className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 flex-shrink-0"
+        title="Delete this row"
+      >
+        <Trash2 className="w-3 h-3" />
+      </button>
+    </div>
+  );
+}
+
 // ─── Spec Form for a single style ─────────────────────────────────────────────
 
 interface CustomRowData {
@@ -307,6 +375,7 @@ interface SpecFormProps {
   onDeleteCustomRow: (id: number) => void;
   dbCategory: string | null;
   onSetCategory: (category: string | null) => void;
+  allCustomRowTitles: string[]; // for autocomplete
 }
 
 const STYLE_CATEGORIES = [
@@ -326,14 +395,16 @@ const STYLE_CATEGORIES = [
 function SpecForm({
   entry, specMeta, specs, allDropdownOptions, allColourLeatherOptions, imageOverride, customRows,
   onUpsert, onAddDropdownOption, onMetaChange, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow,
-  dbCategory, onSetCategory,
+  dbCategory, onSetCategory, allCustomRowTitles,
 }: SpecFormProps) {
   const hasBuckle = specMeta?.hasBuckle ?? false;
   const dressShoeSubType = specMeta?.dressShoeSubType ?? null;
   const notes = specMeta?.notes ?? "";
-  const isDressShoe = entry.category === "Dress Shoe";
+  // Use DB category override if set, otherwise fall back to static skuData category
+  const effectiveCategory = dbCategory ?? entry.category;
+  const isDressShoe = effectiveCategory === "Dress Shoe";
 
-  const template = getTemplateForCategory(entry.category, {
+  const template = getTemplateForCategory(effectiveCategory, {
     hasBuckle,
     dressShoeSubType: isDressShoe ? dressShoeSubType : null,
     style: entry.style,
@@ -551,21 +622,14 @@ function SpecForm({
                   .map((row) => (
                     <tr key={`custom-${row.id}`} className="border-b hover:bg-amber-50/30 dark:hover:bg-amber-900/10 group">
                       <td className="px-3 py-1.5 align-middle">
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            className="text-xs font-medium text-amber-700 dark:text-amber-400 bg-transparent border-0 border-b border-dashed border-amber-300 dark:border-amber-700 focus:outline-none focus:border-amber-500 w-full min-w-0 placeholder:text-amber-400/60"
-                            value={row.title}
-                            placeholder="Field name…"
-                            onChange={(e) => onUpdateCustomRow(row.id, e.target.value, row.value ?? "")}
-                          />
-                          <button
-                            onClick={() => onDeleteCustomRow(row.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 flex-shrink-0"
-                            title="Delete this row"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
+                        <CustomRowTitleInput
+                          id={row.id}
+                          initialTitle={row.title}
+                          value={row.value ?? ""}
+                          onUpdate={onUpdateCustomRow}
+                          onDelete={onDeleteCustomRow}
+                          allTitles={allCustomRowTitles}
+                        />
                       </td>
                       {entry.colours.map((colour, colIdx) => (
                         <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
@@ -608,21 +672,14 @@ function SpecForm({
                   {orphanRows.map((row) => (
                     <tr key={`custom-orphan-${row.id}`} className="border-b hover:bg-amber-50/30 dark:hover:bg-amber-900/10 group">
                       <td className="px-3 py-1.5 align-middle">
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            className="text-xs font-medium text-amber-700 dark:text-amber-400 bg-transparent border-0 border-b border-dashed border-amber-300 dark:border-amber-700 focus:outline-none focus:border-amber-500 w-full min-w-0 placeholder:text-amber-400/60"
-                            value={row.title}
-                            placeholder="Field name…"
-                            onChange={(e) => onUpdateCustomRow(row.id, e.target.value, row.value ?? "")}
-                          />
-                          <button
-                            onClick={() => onDeleteCustomRow(row.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 flex-shrink-0"
-                            title="Delete this row"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
+                        <CustomRowTitleInput
+                          id={row.id}
+                          initialTitle={row.title}
+                          value={row.value ?? ""}
+                          onUpdate={onUpdateCustomRow}
+                          onDelete={onDeleteCustomRow}
+                          allTitles={allCustomRowTitles}
+                        />
                       </td>
                       {entry.colours.map((colour, colIdx) => (
                         <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
@@ -951,6 +1008,15 @@ export default function SpecsTab({}: SpecsTabProps) {
     { style: selectedStyle! },
     { enabled: !!selectedStyle }
   );
+
+  // All known custom row titles (for autocomplete) — derived from current style's rows
+  const allCustomRowTitles = useMemo(() => {
+    const titles = new Set<string>();
+    for (const row of rawCustomRows as any[]) {
+      if (row.title) titles.add(row.title);
+    }
+    return Array.from(titles).sort();
+  }, [rawCustomRows]);
 
    const upsertCustomRowMutation = trpc.specCustomRow.upsert.useMutation({
     onMutate: async (updated) => {
@@ -1577,6 +1643,7 @@ export default function SpecsTab({}: SpecsTabProps) {
               onDeleteCustomRow={handleDeleteCustomRow}
               dbCategory={dbCategory}
               onSetCategory={handleSetCategory}
+              allCustomRowTitles={allCustomRowTitles}
             />
           </div>
         )}

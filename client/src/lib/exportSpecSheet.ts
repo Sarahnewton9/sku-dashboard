@@ -1,17 +1,17 @@
 /**
  * exportSpecSheet — generates an Excel file matching the factory spec sheet format exactly.
  *
- * Format reference (from MOMA-TONYBIANCODEVSUMMER2026.xls analysis):
+ * Format:
  * - Font: Arial throughout
- * - Row 0: "Tony Bianco" Arial Bold 12pt | "Product Specification Report" Arial Regular 12pt
- * - Rows 2-6 (DATE/LAST/STYLE NAME/BRAND/SEASON): both label and value Arial Bold 8pt
- * - Row 8 (COMPONENTS + COLOUR headers): Arial Bold 8pt
+ * - Row 1: "Tony Bianco" bold 12pt | "Product Specification Report" regular 12pt
+ * - Rows 3-7 (DATE/LAST/STYLE NAME/BRAND/SEASON): both label and value Arial Bold 8pt
+ * - Row 9: COMPONENTS + "COLOUR 1" / "COLOUR 2" etc. headers (Arial Bold 8pt)
+ * - Row 10: Colour labels e.g. "BLACK NAPPA" (Arial Bold 8pt)
  * - Component label rows (col A): Arial Regular 8pt, NOT bold
- * - Component value cells: Arial Regular 8pt, NOT bold
- * - No coloured backgrounds — pure white throughout
- * - Sections separated by blank spacer rows (not coloured section headers)
- * - Each colour occupies 2 columns (merged)
- * - Image in top-right area (rows 0-7, last colour columns)
+ * - Component value cells: Arial Regular 8pt, NOT bold, wrapText enabled
+ * - Sections separated by blank spacer rows
+ * - Each colour occupies 2 merged columns
+ * - Image in top-right area (rows 1-8)
  */
 
 import ExcelJS from "exceljs";
@@ -97,9 +97,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     customRows = [],
   } = params;
 
-  // Build a lookup: section -> sorted custom rows (colour-agnostic — use first colour's value or any)
-  // Custom rows are per-section, and value is stored per colour. We'll show all unique titles
-  // and for each colour column look up the value for that colour (or the "" default).
+  // Build a lookup: section -> sorted custom rows
   const customRowsBySection: Record<string, Array<{ title: string; valuesByColour: Record<string, string> }>> = {};
   for (const cr of customRows) {
     if (!customRowsBySection[cr.section]) customRowsBySection[cr.section] = [];
@@ -127,12 +125,12 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
   const ws = wb.addWorksheet("Sheet1");
 
   // ── Column widths ──────────────────────────────────────────────────────────
-  // Col A: component labels (~28 chars)
-  ws.getColumn(1).width = 30;
-  // Each colour occupies 2 columns (merged), each ~18 chars
+  // Col A: component labels — wider to avoid truncation
+  ws.getColumn(1).width = 36;
+  // Each colour occupies 2 merged columns, each ~22 chars wide
   const totalColCols = colours.length * 2;
   for (let i = 2; i <= 1 + totalColCols; i++) {
-    ws.getColumn(i).width = 18;
+    ws.getColumn(i).width = 22;
   }
 
   // ── Fetch image ────────────────────────────────────────────────────────────
@@ -144,18 +142,11 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     }
   }
 
-  // Helper: get the ExcelJS column letter for a 1-based col index
-  // We use numeric addressing throughout so no need for letters.
-
   // Total columns used: 1 (label) + colours.length * 2 (merged pairs)
   const lastDataCol = 1 + colours.length * 2;
 
   // ── Row 1: Tony Bianco | Product Specification Report ─────────────────────
-  // Col A: "Tony Bianco" bold 12pt
-  // Col B: "Product Specification Report" regular 12pt
-  // Image will sit in the right portion of the header block (rows 1-8)
   ws.getRow(1).height = 22;
-  const r1 = ws.getRow(1);
   const r1c1 = ws.getCell(1, 1);
   r1c1.value = "Tony Bianco";
   r1c1.font = arialBold12();
@@ -197,22 +188,21 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
   // ── Row 8: blank spacer ────────────────────────────────────────────────────
   ws.getRow(8).height = 6;
 
-  // ── Embed image at exactly 5 cm × 5 cm in top-right of header ───────────────
-  // ExcelJS uses EMU (English Metric Units): 1 cm = 360000 EMU
-  // We anchor at the top-right corner of the sheet (col A row 1 = tl {col:0, row:0})
-  // and use ext to fix the size to exactly 5 cm × 5 cm.
+  // ── Embed image in top-right of header (rows 1-8) ─────────────────────────
+  // ExcelJS ext uses pixels (96 DPI screen pixels).
+  // ~5 cm ≈ 189 px at 96 DPI.
   if (imageId !== null) {
-    const fiveCmEmu = 5 * 360000; // 1800000 EMU = 5 cm
-    // Anchor top-left of image at the start of the last colour column pair
-    const imgAnchorCol = Math.max(1, lastDataCol - 1); // 0-based col index
+    const sizePx = 189; // ~5 cm at 96 DPI
+    // Anchor top-left of image at the start of the last colour column pair (0-based)
+    const imgAnchorCol = Math.max(1, lastDataCol - 1);
     ws.addImage(imageId, {
       tl: { col: imgAnchorCol, row: 0 },
-      ext: { width: fiveCmEmu, height: fiveCmEmu },
+      ext: { width: sizePx, height: sizePx },
       editAs: "oneCell",
     } as unknown as ExcelJS.ImageRange);
   }
 
-  // ── Row 9: COMPONENTS + COLOUR headers ────────────────────────────────────
+  // ── Row 9: COMPONENTS + "COLOUR 1" / "COLOUR 2" etc. ──────────────────────
   ws.getRow(9).height = 16;
   const compHeaderCell = ws.getCell(9, 1);
   compHeaderCell.value = "COMPONENTS";
@@ -223,14 +213,23 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     const colEnd = colStart + 1;
     ws.mergeCells(9, colStart, 9, colEnd);
     const cell = ws.getCell(9, colStart);
-    // Use full colour+leather label if provided, otherwise fall back to raw colour name
-    cell.value = (colourLabels?.[i] ?? colours[i]).toUpperCase();
+    cell.value = `COLOUR ${i + 1}`;
     cell.font = arialBold8();
     cell.alignment = { horizontal: "center", vertical: "middle" };
   }
 
-  // ── Row 10: blank (part of merged COMPONENTS header in original) ───────────
-  ws.getRow(10).height = 6;
+  // ── Row 10: Colour labels (e.g. "BLACK NAPPA") ────────────────────────────
+  ws.getRow(10).height = 14;
+  ws.getCell(10, 1).value = "";
+  for (let i = 0; i < colours.length; i++) {
+    const colStart = 2 + i * 2;
+    const colEnd = colStart + 1;
+    ws.mergeCells(10, colStart, 10, colEnd);
+    const cell = ws.getCell(10, colStart);
+    cell.value = (colourLabels?.[i] ?? colours[i]).toUpperCase();
+    cell.font = arialBold8();
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+  }
 
   // ── Component rows ─────────────────────────────────────────────────────────
   // Group by section; sections are separated by a blank spacer row
@@ -249,15 +248,16 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     for (const comp of components) {
       const values = colours.map((colour) => specs[colour]?.[comp.key] ?? "");
 
-      ws.getRow(currentExcelRow).height = 14;
+      // Allow row to grow for wrapped text — set a generous minimum height
+      ws.getRow(currentExcelRow).height = 30;
 
       // Col A: component label — Arial Regular 8pt
       const labelCell = ws.getCell(currentExcelRow, 1);
       labelCell.value = comp.label.toUpperCase();
       labelCell.font = arialRegular8();
-      labelCell.alignment = { vertical: "middle" };
+      labelCell.alignment = { vertical: "top", wrapText: true };
 
-      // Colour value cells — merged pairs, Arial Regular 8pt
+      // Colour value cells — merged pairs, Arial Regular 8pt, text wrap enabled
       for (let ci = 0; ci < colours.length; ci++) {
         const colStart = 2 + ci * 2;
         const colEnd = colStart + 1;
@@ -265,7 +265,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
         const valueCell = ws.getCell(currentExcelRow, colStart);
         valueCell.value = values[ci] || "";
         valueCell.font = arialRegular8();
-        valueCell.alignment = { vertical: "middle", wrapText: true };
+        valueCell.alignment = { vertical: "top", wrapText: true };
       }
 
       currentExcelRow++;
@@ -275,12 +275,12 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     const sectionName = sectionEntries[si][0];
     const sectionCustomRows = customRowsBySection[sectionName] ?? [];
     for (const cr of sectionCustomRows) {
-      ws.getRow(currentExcelRow).height = 14;
+      ws.getRow(currentExcelRow).height = 30;
 
       const labelCell = ws.getCell(currentExcelRow, 1);
       labelCell.value = cr.title.toUpperCase();
       labelCell.font = arialRegular8();
-      labelCell.alignment = { vertical: "middle" };
+      labelCell.alignment = { vertical: "top", wrapText: true };
 
       for (let ci = 0; ci < colours.length; ci++) {
         const colStart = 2 + ci * 2;
@@ -290,7 +290,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
         // Fall back to the "__all__" value if no colour-specific value is stored
         valueCell.value = cr.valuesByColour[colours[ci]] ?? cr.valuesByColour["__all__"] ?? "";
         valueCell.font = arialRegular8();
-        valueCell.alignment = { vertical: "middle", wrapText: true };
+        valueCell.alignment = { vertical: "top", wrapText: true };
       }
 
       currentExcelRow++;
