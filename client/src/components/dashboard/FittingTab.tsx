@@ -200,7 +200,7 @@ function SessionCard({
           {editing ? (
             <input
               value={localModel}
-              onChange={(e) => setLocalModel(e.target.value)}
+              onChange={(e) => setLocalModel(e.target.value.toUpperCase())}
               placeholder="Fit model name"
               className="border border-border rounded px-2 py-0.5 text-sm bg-background w-40"
             />
@@ -579,7 +579,7 @@ function NewSessionDialog({
             <input
               type="text"
               value={fitModel}
-              onChange={(e) => setFitModel(e.target.value)}
+              onChange={(e) => setFitModel(e.target.value.toUpperCase())}
               placeholder="e.g. Sarah, Size 38"
               className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background"
               autoFocus
