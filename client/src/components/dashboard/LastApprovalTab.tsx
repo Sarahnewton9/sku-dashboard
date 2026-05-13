@@ -276,7 +276,7 @@ export default function LastApprovalTab() {
             }}
             onClick={() => setFilter("all")}
           >
-            <div className="text-2xl font-bold text-foreground">{ALL_LASTS.length}</div>
+            <div className="text-2xl font-bold text-foreground">{visibleLasts.length}</div>
             <div className="text-sm text-muted-foreground mt-0.5">Total Lasts</div>
           </div>
           <div
