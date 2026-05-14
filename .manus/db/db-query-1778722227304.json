@@ -1,0 +1,79 @@
+{
+  "query": "SELECT style FROM cancelled_styles ORDER BY style; SELECT DISTINCT style FROM cancelled_skus ORDER BY style LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2PKnJnyFBef7ny1.49968122eb9d --database RGHTjKGQqzKd5FypxANQbT --execute SELECT style FROM cancelled_styles ORDER BY style; SELECT DISTINCT style FROM cancelled_skus ORDER BY style LIMIT 20;",
+  "rows": [
+    {
+      "style": "BOHO"
+    },
+    {
+      "style": "CIRCA"
+    },
+    {
+      "style": "MAMZELLE"
+    },
+    {
+      "style": "style"
+    },
+    {
+      "style": "BLAIRE"
+    },
+    {
+      "style": "CAPPA"
+    },
+    {
+      "style": "CAPPI"
+    },
+    {
+      "style": "CARLA"
+    },
+    {
+      "style": "CASPIAN"
+    },
+    {
+      "style": "CHELSEA"
+    },
+    {
+      "style": "COMMA"
+    },
+    {
+      "style": "CUBA"
+    },
+    {
+      "style": "CURIOUS"
+    },
+    {
+      "style": "DAZIE"
+    },
+    {
+      "style": "DIMA"
+    },
+    {
+      "style": "FAVE"
+    },
+    {
+      "style": "KERI"
+    },
+    {
+      "style": "MAMZELLE"
+    },
+    {
+      "style": "MARAMEO"
+    },
+    {
+      "style": "MOMA"
+    },
+    {
+      "style": "ROBYN"
+    },
+    {
+      "style": "TREVI"
+    },
+    {
+      "style": "VIKA"
+    }
+  ],
+  "messages": [],
+  "stdout": "style\nBOHO\nCIRCA\nMAMZELLE\nstyle\nBLAIRE\nCAPPA\nCAPPI\nCARLA\nCASPIAN\nCHELSEA\nCOMMA\nCUBA\nCURIOUS\nDAZIE\nDIMA\nFAVE\nKERI\nMAMZELLE\nMARAMEO\nMOMA\nROBYN\nTREVI\nVIKA\n",
+  "stderr": "",
+  "execution_time_ms": 1920
+}

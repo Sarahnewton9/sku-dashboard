@@ -1,0 +1,15 @@
+{
+  "query": "SELECT * FROM cancelled_skus WHERE style = 'CIRCA' LIMIT 10; SELECT * FROM cancelled_styles WHERE style = 'CIRCA' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2PKnJnyFBef7ny1.49968122eb9d --database RGHTjKGQqzKd5FypxANQbT --execute SELECT * FROM cancelled_skus WHERE style = 'CIRCA' LIMIT 10; SELECT * FROM cancelled_styles WHERE style = 'CIRCA' LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "style": "CIRCA",
+      "cancelledAt": "2026-04-22 04:33:23"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tstyle\tcancelledAt\n1\tCIRCA\t2026-04-22 04:33:23\n",
+  "stderr": "",
+  "execution_time_ms": 2010
+}
