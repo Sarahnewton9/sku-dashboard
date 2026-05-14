@@ -88,3 +88,8 @@
 
 ### Global rename
 - [x] Rename all "Choc Venice" → "Chocolate Venice" throughout skuData.ts and DB
+
+## Fit Report Export (May 2026)
+- [x] Add exportFitReport function to generate Excel with style, last, category, fit rating, fit approved, most recent fit date, fit models, notes
+- [x] Add "Fit Report" button to FittingTab toolbar
+- [x] Only include styles that have been fitted (have sessions or fit rating set)

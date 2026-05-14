@@ -1646,6 +1646,97 @@ export function FittingTab() {
     createSession.mutate({ style: newSessionStyle, fitModel, sessionDate });
   }, [createSession, newSessionStyle]);
 
+  // ── Fit Report Export ────────────────────────────────────────────────────────────────────────────────
+  const handleExportFitReport = useCallback(() => {
+    // Only include styles that have been fitted (have sessions or a fit rating)
+    const fittedStyles = styleList.filter((s) => {
+      const sessions = sessionsByStyle[s.style] ?? [];
+      const meta = styleMeta[s.style];
+      return sessions.length > 0 || meta?.fitRating;
+    });
+
+    if (fittedStyles.length === 0) {
+      toast.error("No fitted styles to export yet.");
+      return;
+    }
+
+    const headers = ["Style", "Last", "Category", "Fit Rating", "Status", "Most Recent Fit Date", "Fit Models", "Notes"];
+    const rows: (string | number)[][] = fittedStyles.map((s) => {
+      const sessions = (sessionsByStyle[s.style] ?? []) as FittingSession[];
+      const meta = styleMeta[s.style];
+      const fitLabel = meta?.fitRating ? (FIT_LABELS[meta.fitRating] ?? meta.fitRating) : "";
+      const status = meta?.fitApproved ? "Approved" : sessions.length > 0 ? "Fitted - Pending Review" : "Rating Set";
+      const sortedDates = sessions.map((sess) => sess.sessionDate).filter(Boolean).sort().reverse();
+      const mostRecentDate = sortedDates[0] ?? "";
+      const fitModels = Array.from(new Set(sessions.map((sess) => sess.fitModel).filter(Boolean))).join(", ");
+      const allNotes = [
+        ...(meta?.fittingNotes ? [meta.fittingNotes] : []),
+        ...sessions.map((sess) => sess.notes).filter(Boolean),
+      ].join(" | ");
+      return [s.style, s.last, s.category, fitLabel, status, mostRecentDate, fitModels, allNotes];
+    });
+
+    const wb = XLSX.utils.book_new();
+    const aoa: (string | number)[][] = [];
+    const exportDate = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "long", year: "numeric" });
+    aoa.push([`SS26 Fit Report - ${exportDate}`, ...Array(headers.length - 1).fill("")]);
+    aoa.push(Array(headers.length).fill(""));
+    aoa.push(headers);
+    rows.forEach((r) => aoa.push(r));
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws["!cols"] = [
+      { wch: 14 }, { wch: 14 }, { wch: 20 }, { wch: 16 },
+      { wch: 24 }, { wch: 20 }, { wch: 30 }, { wch: 50 },
+    ];
+    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } }];
+
+    // Title row style
+    const titleCell = ws["A1"];
+    if (titleCell) {
+      titleCell.s = { font: { bold: true, sz: 13, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "2D2D2D" } }, alignment: { horizontal: "left" } };
+    }
+
+    // Header row style (row index 2)
+    headers.forEach((h, ci) => {
+      const addr = XLSX.utils.encode_cell({ r: 2, c: ci });
+      if (!ws[addr]) ws[addr] = { v: h, t: "s" };
+      ws[addr].s = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "4A3728" } },
+        alignment: { horizontal: "center", wrapText: true },
+        border: { bottom: { style: "thin", color: { rgb: "CCCCCC" } } },
+      };
+    });
+
+    // Data row styles - colour-code by fit rating
+    const FIT_ROW_COLOURS: Record<string, string> = {
+      "True to Size": "E8F5E9",
+      "Runs Small": "FFF8E1",
+      "Runs Large": "E3F2FD",
+    };
+    rows.forEach((row, ri) => {
+      const rowIdx = 3 + ri;
+      const fitLabel = row[3] as string;
+      const bgColour = FIT_ROW_COLOURS[fitLabel] ?? "FFFFFF";
+      row.forEach((_, ci) => {
+        const addr = XLSX.utils.encode_cell({ r: rowIdx, c: ci });
+        if (!ws[addr]) ws[addr] = { v: row[ci] ?? "", t: typeof row[ci] === "number" ? "n" : "s" };
+        ws[addr].s = {
+          fill: { fgColor: { rgb: bgColour } },
+          alignment: { wrapText: true, vertical: "top" },
+          border: { bottom: { style: "thin", color: { rgb: "EEEEEE" } } },
+        };
+      });
+    });
+
+    XLSX.utils.book_append_sheet(wb, ws, "Fit Report");
+    const today = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "-");
+    const fileName = `SS26_Fit_Report_${today}.xlsx`;
+    XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
+    toast.success(`Fit Report exported - ${fittedStyles.length} styles`);
+  }, [styleList, sessionsByStyle, styleMeta]);
+
   // Per-style session data — using individual queries
   // We render a sub-component that fetches its own sessions to avoid N+1 at top level
   // This is handled inside StyleFitRowWithSessions below
@@ -1708,6 +1799,10 @@ export function FittingTab() {
               {filteredActive.length} {filteredActive.length === 1 ? "match" : "matches"}
             </span>
           )}
+          <Button variant="outline" size="sm" onClick={handleExportFitReport} className="gap-2">
+            <Download className="w-4 h-4" />
+            Fit Report
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setExportOpen(true)} className="gap-2">
             <Download className="w-4 h-4" />
             Export Report
