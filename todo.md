@@ -93,3 +93,9 @@
 - [x] Add exportFitReport function to generate Excel with style, last, category, fit rating, fit approved, most recent fit date, fit models, notes
 - [x] Add "Fit Report" button to FittingTab toolbar
 - [x] Only include styles that have been fitted (have sessions or fit rating set)
+
+## Size Recommendation Field (May 2026)
+- [x] Add size_recommendation column to style_fit_meta DB table (nullable varchar: "half_size_up", "full_size_up", "half_size_down", "full_size_down")
+- [x] Add sizeRecommendation to getStyleFitMeta and upsertStyleFitMeta tRPC procedures
+- [x] Show size recommendation selector in FittingTab only when fit rating is Runs Small or Runs Large
+- [x] Include size recommendation in Fit Report Excel export column

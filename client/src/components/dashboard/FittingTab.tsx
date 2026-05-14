@@ -391,6 +391,7 @@ function StyleFitRow({
   sessions,
   knownModels,
   onFitUpdate,
+  onSizeRecommendationUpdate,
   onCreateSession,
   onUploadImage,
   onDeleteImage,
@@ -401,10 +402,11 @@ function StyleFitRow({
   imageOverrides,
 }: {
   entry: StyleEntry;
-  styleMeta: Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null }>;
+  styleMeta: Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; sizeRecommendation?: string | null }>;
   sessions: FittingSession[];
   knownModels: string[];
   onFitUpdate: (style: string, fitRating: string | null, notes: string | null) => void;
+  onSizeRecommendationUpdate: (style: string, sizeRecommendation: string | null, currentFitRating?: string | null) => void;
   onCreateSession: (style: string) => void;
   onUploadImage: (sessionId: number, style: string, file: File) => void;
   onDeleteImage: (id: number) => void;
@@ -416,9 +418,11 @@ function StyleFitRow({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [localFit, setLocalFit] = useState<string | null | undefined>(undefined);
+  const [localSizeRec, setLocalSizeRec] = useState<string | null | undefined>(undefined);
 
   const meta = styleMeta[entry.style];
   const fitRating = localFit !== undefined ? localFit : (meta?.fitRating ?? null);
+  const sizeRecommendation = localSizeRec !== undefined ? localSizeRec : (meta?.sizeRecommendation ?? null);
   const isApproved = meta?.fitApproved ?? false;
   const totalImages = sessions.reduce((sum, s) => sum + s.images.length, 0);
   const effectiveImageUrl = imageOverrides[entry.style] ?? entry.imageUrl;
@@ -426,7 +430,19 @@ function StyleFitRow({
   const handleFitChange = (val: string) => {
     const newVal = val === "none" ? null : val;
     setLocalFit(newVal);
+    // Clear size recommendation if switching to TTS
+    if (newVal === "tts" || newVal === null) {
+      setLocalSizeRec(null);
+      onSizeRecommendationUpdate(entry.style, null);
+    }
     onFitUpdate(entry.style, newVal, meta?.fittingNotes ?? null);
+  };
+
+  const handleSizeRecChange = (val: string) => {
+    const newVal = val === "none" ? null : val;
+    setLocalSizeRec(newVal);
+    // Pass the current local fit rating so the parent avoids using stale server data
+    onSizeRecommendationUpdate(entry.style, newVal, fitRating);
   };
 
   return (
@@ -495,6 +511,35 @@ function StyleFitRow({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Size Recommendation — only shown when Runs Small or Runs Large */}
+          {(fitRating === "runs_small" || fitRating === "runs_large") && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Size Recommendation
+              </label>
+              <Select value={sizeRecommendation ?? "none"} onValueChange={handleSizeRecChange}>
+                <SelectTrigger className="h-9 text-sm max-w-xs">
+                  <SelectValue placeholder="Select recommendation..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— No recommendation —</SelectItem>
+                  {fitRating === "runs_small" && (
+                    <>
+                      <SelectItem value="half_size_up">Go up half a size</SelectItem>
+                      <SelectItem value="full_size_up">Go up a full size</SelectItem>
+                    </>
+                  )}
+                  {fitRating === "runs_large" && (
+                    <>
+                      <SelectItem value="half_size_down">Go down half a size</SelectItem>
+                      <SelectItem value="full_size_down">Go down a full size</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Fitting Sessions */}
           <div className="space-y-2">
@@ -1532,7 +1577,7 @@ export function FittingTab() {
   const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery();
   const { data: imageOverrideList = [] } = trpc.styleImage.getAll.useQuery();
 
-  const styleMeta = styleMetaList.reduce<Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null }>>(
+  const styleMeta = styleMetaList.reduce<Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; sizeRecommendation?: string | null }>>(
     (acc, m) => { acc[m.style] = m; return acc; }, {}
   );
 
@@ -1614,6 +1659,18 @@ export function FittingTab() {
   const handleFitUpdate = useCallback((style: string, fitRating: string | null, notes: string | null) => {
     updateFit.mutate({ style, fitRating: fitRating as "tts" | "runs_small" | "runs_large" | null, fittingNotes: notes });
   }, [updateFit]);
+  const handleSizeRecommendationUpdate = useCallback((style: string, sizeRecommendation: string | null, currentFitRating?: string | null) => {
+    const meta = styleMetaList.find((m) => m.style === style);
+    // Use the caller-supplied current fit rating (avoids stale server value when user
+    // changes fit rating and immediately picks a recommendation in the same session)
+    const fitRating = currentFitRating !== undefined ? currentFitRating : (meta?.fitRating ?? null);
+    updateFit.mutate({
+      style,
+      fitRating: fitRating as "tts" | "runs_small" | "runs_large" | null,
+      fittingNotes: meta?.fittingNotes ?? null,
+      sizeRecommendation: sizeRecommendation as "half_size_up" | "full_size_up" | "half_size_down" | "full_size_down" | null,
+    });
+  }, [updateFit, styleMetaList]);
 
   const handleApprove = useCallback((style: string) => {
     const meta = styleMetaList.find((m) => m.style === style);
@@ -1660,11 +1717,18 @@ export function FittingTab() {
       return;
     }
 
-    const headers = ["Style", "Last", "Category", "Fit Rating", "Status", "Most Recent Fit Date", "Fit Models", "Notes"];
+    const SIZE_REC_LABELS: Record<string, string> = {
+      half_size_up: "Go up half a size",
+      full_size_up: "Go up a full size",
+      half_size_down: "Go down half a size",
+      full_size_down: "Go down a full size",
+    };
+    const headers = ["Style", "Last", "Category", "Fit Rating", "Size Recommendation", "Status", "Most Recent Fit Date", "Fit Models", "Notes"];
     const rows: (string | number)[][] = fittedStyles.map((s) => {
       const sessions = (sessionsByStyle[s.style] ?? []) as FittingSession[];
       const meta = styleMeta[s.style];
       const fitLabel = meta?.fitRating ? (FIT_LABELS[meta.fitRating] ?? meta.fitRating) : "";
+      const sizeRecLabel = meta?.sizeRecommendation ? (SIZE_REC_LABELS[meta.sizeRecommendation] ?? "") : "";
       const status = meta?.fitApproved ? "Approved" : sessions.length > 0 ? "Fitted - Pending Review" : "Rating Set";
       const sortedDates = sessions.map((sess) => sess.sessionDate).filter(Boolean).sort().reverse();
       const mostRecentDate = sortedDates[0] ?? "";
@@ -1673,7 +1737,7 @@ export function FittingTab() {
         ...(meta?.fittingNotes ? [meta.fittingNotes] : []),
         ...sessions.map((sess) => sess.notes).filter(Boolean),
       ].join(" | ");
-      return [s.style, s.last, s.category, fitLabel, status, mostRecentDate, fitModels, allNotes];
+      return [s.style, s.last, s.category, fitLabel, sizeRecLabel, status, mostRecentDate, fitModels, allNotes];
     });
 
     const wb = XLSX.utils.book_new();
@@ -1687,7 +1751,7 @@ export function FittingTab() {
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws["!cols"] = [
       { wch: 14 }, { wch: 14 }, { wch: 20 }, { wch: 16 },
-      { wch: 24 }, { wch: 20 }, { wch: 30 }, { wch: 50 },
+      { wch: 24 }, { wch: 24 }, { wch: 20 }, { wch: 30 }, { wch: 50 },
     ];
     ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } }];
 
@@ -1856,6 +1920,7 @@ export function FittingTab() {
                 preloadedSessions={sessionsByStyle[entry.style] ?? []}
                 knownModels={knownModels}
                 onFitUpdate={handleFitUpdate}
+                onSizeRecommendationUpdate={handleSizeRecommendationUpdate}
                 onCreateSession={handleCreateSession}
                 onApprove={handleApprove}
                 onUndoApproval={handleUndoApproval}
@@ -1904,17 +1969,19 @@ function StyleFitRowWithSessions({
   preloadedSessions,
   knownModels,
   onFitUpdate,
+  onSizeRecommendationUpdate,
   onCreateSession,
   onApprove,
   onUndoApproval,
   onRefreshSessions,
 }: {
   entry: StyleEntry;
-  styleMeta: Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null }>;
+  styleMeta: Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; sizeRecommendation?: string | null }>;
   imageOverrides: Record<string, string>;
   preloadedSessions: Array<{ id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; sampleDate?: string | null; sampleType?: string | null; createdAt: Date; images: Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string; createdAt: Date }> }>;
   knownModels: string[];
   onFitUpdate: (style: string, fitRating: string | null, notes: string | null) => void;
+  onSizeRecommendationUpdate: (style: string, sizeRecommendation: string | null, currentFitRating?: string | null) => void;
   onCreateSession: (style: string) => void;
   onApprove: (style: string) => void;
   onUndoApproval: (style: string) => void;
@@ -1969,6 +2036,7 @@ function StyleFitRowWithSessions({
       knownModels={knownModels}
       imageOverrides={imageOverrides}
       onFitUpdate={onFitUpdate}
+      onSizeRecommendationUpdate={onSizeRecommendationUpdate}
       onCreateSession={onCreateSession}
       onUploadImage={handleUploadImage}
       onDeleteImage={handleDeleteImage}

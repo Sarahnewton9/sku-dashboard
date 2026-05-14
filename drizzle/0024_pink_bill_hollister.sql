@@ -1,0 +1,1 @@
+ALTER TABLE `style_meta` ADD `sizeRecommendation` enum('half_size_up','full_size_up','half_size_down','full_size_down');

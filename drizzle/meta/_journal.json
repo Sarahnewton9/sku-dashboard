@@ -169,6 +169,13 @@
       "when": 1778023187992,
       "tag": "0023_simple_joseph",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1778739959749,
+      "tag": "0024_pink_bill_hollister",
+      "breakpoints": true
     }
   ]
 }

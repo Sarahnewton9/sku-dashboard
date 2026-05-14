@@ -530,9 +530,10 @@ export const appRouter = router({
         fitRating: z.enum(["tts", "runs_small", "runs_large"]).nullable().optional(),
         fittingNotes: z.string().nullable().optional(),
         fitApproved: z.boolean().optional(),
+        sizeRecommendation: z.enum(["half_size_up", "full_size_up", "half_size_down", "full_size_down"]).nullable().optional(),
       }))
       .mutation(async ({ input }) => {
-        await upsertStyleFit(input.style, input.fitRating ?? null, input.fittingNotes ?? null, input.fitApproved);
+        await upsertStyleFit(input.style, input.fitRating ?? null, input.fittingNotes ?? null, input.fitApproved, input.sizeRecommendation);
         return { success: true };
       }),
 

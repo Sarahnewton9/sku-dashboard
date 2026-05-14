@@ -57,6 +57,8 @@ export const styleMeta = mysqlTable("style_meta", {
   fitRating: mysqlEnum("fitRating", ["tts", "runs_small", "runs_large"]),
   fittingNotes: text("fittingNotes"),
   fitApproved: boolean("fitApproved").default(false).notNull(),
+  /** Size recommendation when fit rating is runs_small or runs_large */
+  sizeRecommendation: mysqlEnum("sizeRecommendation", ["half_size_up", "full_size_up", "half_size_down", "full_size_down"]),
   /** Image URL scraped from tonybianco.com.au — one representative image per style */
   websiteImageUrl: text("websiteImageUrl"),
   /** Shoe category — drives spec template and filtering across the app */

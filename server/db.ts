@@ -174,13 +174,15 @@ export async function upsertStyleFit(
   fitRating: "tts" | "runs_small" | "runs_large" | null,
   fittingNotes: string | null,
   fitApproved?: boolean,
+  sizeRecommendation?: "half_size_up" | "full_size_up" | "half_size_down" | "full_size_down" | null,
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const updateSet: Record<string, unknown> = { fitRating, fittingNotes };
   if (fitApproved !== undefined) updateSet.fitApproved = fitApproved;
+  if (sizeRecommendation !== undefined) updateSet.sizeRecommendation = sizeRecommendation;
   await db.insert(styleMeta)
-    .values({ style, fitRating, fittingNotes, fitApproved: fitApproved ?? false })
+    .values({ style, fitRating, fittingNotes, fitApproved: fitApproved ?? false, sizeRecommendation: sizeRecommendation ?? null })
     .onDuplicateKeyUpdate({ set: updateSet as any });
 }
 
