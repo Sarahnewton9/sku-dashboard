@@ -1733,10 +1733,16 @@ export function FittingTab() {
       const sortedDates = sessions.map((sess) => sess.sessionDate).filter(Boolean).sort().reverse();
       const mostRecentDate = sortedDates[0] ?? "";
       const fitModels = Array.from(new Set(sessions.map((sess) => sess.fitModel).filter(Boolean))).join(", ");
-      const allNotes = [
-        ...(meta?.fittingNotes ? [meta.fittingNotes] : []),
-        ...sessions.map((sess) => sess.notes).filter(Boolean),
-      ].join(" | ");
+      // Build notes: style-level note first, then each session note on a new line
+      const notesParts: string[] = [];
+      if (meta?.fittingNotes?.trim()) notesParts.push(meta.fittingNotes.trim());
+      sessions.forEach((sess, idx) => {
+        if (sess.notes?.trim()) {
+          const label = sessions.length > 1 ? `[Session ${idx + 1}${sess.fitModel ? ` - ${sess.fitModel}` : ""}] ` : "";
+          notesParts.push(label + sess.notes.trim());
+        }
+      });
+      const allNotes = notesParts.join("\n");
       return [s.style, s.last, s.category, fitLabel, sizeRecLabel, status, mostRecentDate, fitModels, allNotes];
     });
 
@@ -1751,9 +1757,20 @@ export function FittingTab() {
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     ws["!cols"] = [
       { wch: 14 }, { wch: 14 }, { wch: 20 }, { wch: 16 },
-      { wch: 24 }, { wch: 24 }, { wch: 20 }, { wch: 30 }, { wch: 50 },
+      { wch: 24 }, { wch: 24 }, { wch: 20 }, { wch: 30 }, { wch: 70 },
     ];
     ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } }];
+    // Row heights: title, spacer, header, then data rows sized by note line count
+    ws["!rows"] = [
+      { hpt: 28 },
+      { hpt: 6 },
+      { hpt: 22 },
+      ...rows.map((row) => {
+        const notes = row[8] as string;
+        const lineCount = notes ? notes.split("\n").length : 1;
+        return { hpt: Math.max(20, lineCount * 15) };
+      }),
+    ];
 
     // Title row style
     const titleCell = ws["A1"];

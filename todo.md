@@ -99,3 +99,11 @@
 - [x] Add sizeRecommendation to getStyleFitMeta and upsertStyleFitMeta tRPC procedures
 - [x] Show size recommendation selector in FittingTab only when fit rating is Runs Small or Runs Large
 - [x] Include size recommendation in Fit Report Excel export column
+
+## Fit Report Colourway Fix (May 2026)
+- [ ] Fix Fit Report export: propagate fit rating and size recommendation to all colourways of the same base style (e.g. ARLA GOLD WOVEN and ARLA SILVER should both show TTS if ARLA is rated TTS)
+- [ ] Fix FittingTab UI: ensure fit rating lookup uses base style name so all colourways show the same rating
+
+## Fit Report Notes Bug (May 2026)
+- [x] Investigate why fitting notes/comments are missing from the Fit Report Excel export
+- [x] Fix export to include both style-level fittingNotes and per-session notes in the Notes column
