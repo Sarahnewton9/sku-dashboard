@@ -101,17 +101,22 @@
 - [x] Include size recommendation in Fit Report Excel export column
 
 ## Fit Report Colourway Fix (May 2026)
-- [ ] Fix Fit Report export: propagate fit rating and size recommendation to all colourways of the same base style (e.g. ARLA GOLD WOVEN and ARLA SILVER should both show TTS if ARLA is rated TTS)
-- [ ] Fix FittingTab UI: ensure fit rating lookup uses base style name so all colourways show the same rating
+- [x] Fix Fit Report export: propagate fit rating and size recommendation to all colourways of the same base style — confirmed data is already at base style level, one row per base style in export
+- [x] Fix FittingTab UI: ensure fit rating lookup uses base style name — confirmed styleList is already base-style-level
 
 ## Fit Report Notes Bug (May 2026)
 - [x] Investigate why fitting notes/comments are missing from the Fit Report Excel export
 - [x] Fix export to include both style-level fittingNotes and per-session notes in the Notes column
 
 ## Cancelled Styles in Fit Report Export (May 2026)
-- [ ] Fix Fit Report export to exclude cancelled styles (MAMZELLE, CIRCA, etc.) — they currently appear despite being cancelled
+- [x] Fix Fit Report export to exclude cancelled styles (MAMZELLE, CIRCA, etc.) — they currently appear despite being cancelled (FittingTab exports already use filtered styleList)
 
 ## Permanent Cancelled Style Exclusion from All Exports (May 2026)
 - [x] Audit all export functions across all tabs to find every place styles/SKUs are included in exports
 - [x] Ensure every export (Fit Report, Buy Export, Overview Export, Specs Export, etc.) filters out cancelled styles at the point of export using the cancelledStyleSet from the DB
 - [x] Add a server-side helper that returns the cancelled style set so exports that run server-side are also protected
+
+## Fit Report Per-Colourway Rows (May 2026)
+- [x] Rewrite Fit Report export to output one row per colourway (all colours of each style), with the base style's fit rating and size recommendation applied to every colourway row
+- [x] Exclude cancelled styles and cancelled SKUs from the per-colourway rows (via filtered styleList)
+- [x] Notes and fit models on first colourway row only to keep it readable

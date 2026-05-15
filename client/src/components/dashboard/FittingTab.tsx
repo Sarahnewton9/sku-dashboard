@@ -1567,6 +1567,11 @@ export function FittingTab() {
     () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),
     [cancelledStylesRaw]
   );
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+  const cancelledSkuSet = useMemo(
+    () => new Set((cancelledSkusRaw as any[]).map((r: any) => `${r.style}|${r.colour}` as string)),
+    [cancelledSkusRaw]
+  );
 
   const styleList = useMemo(
     () => buildStyleListFromData(mergedStyles as typeof skuData.styles).filter((s) => !cancelledStyleSet.has(s.style)),
@@ -1723,8 +1728,16 @@ export function FittingTab() {
       half_size_down: "Go down half a size",
       full_size_down: "Go down a full size",
     };
-    const headers = ["Style", "Last", "Category", "Fit Rating", "Size Recommendation", "Status", "Most Recent Fit Date", "Fit Models", "Notes"];
-    const rows: (string | number)[][] = fittedStyles.map((s) => {
+
+    // Build a lookup: style -> colours[] from the live merged styles data
+    const styleColoursMap = (mergedStyles as typeof skuData.styles).reduce<Record<string, string[]>>(
+      (acc, s) => { acc[s.style] = (s as any).colours ?? []; return acc; }, {}
+    );
+
+    const headers = ["Style", "Colour", "Last", "Category", "Fit Rating", "Size Recommendation", "Status", "Most Recent Fit Date", "Fit Models", "Notes"];
+    const rows: (string | number)[][] = [];
+
+    fittedStyles.forEach((s) => {
       const sessions = (sessionsByStyle[s.style] ?? []) as FittingSession[];
       const meta = styleMeta[s.style];
       const fitLabel = meta?.fitRating ? (FIT_LABELS[meta.fitRating] ?? meta.fitRating) : "";
@@ -1743,7 +1756,27 @@ export function FittingTab() {
         }
       });
       const allNotes = notesParts.join("\n");
-      return [s.style, s.last, s.category, fitLabel, sizeRecLabel, status, mostRecentDate, fitModels, allNotes];
+
+      // Expand to one row per colour — shared fit data on every row, notes/models on first row only
+      // Exclude cancelled individual SKUs (cancelled by colour)
+      const colours = (styleColoursMap[s.style] ?? [""]).filter(
+        (colour) => !cancelledSkuSet.has(`${s.style}|${colour}`)
+      );
+      colours.forEach((colour, colIdx) => {
+        const isFirst = colIdx === 0;
+        rows.push([
+          s.style,
+          colour,
+          s.last,
+          s.category,
+          fitLabel,
+          sizeRecLabel,
+          status,
+          isFirst ? mostRecentDate : "",
+          isFirst ? fitModels : "",
+          isFirst ? allNotes : "",
+        ]);
+      });
     });
 
     const wb = XLSX.utils.book_new();
@@ -1755,8 +1788,9 @@ export function FittingTab() {
     rows.forEach((r) => aoa.push(r));
 
     const ws = XLSX.utils.aoa_to_sheet(aoa);
+    // Columns: Style, Colour, Last, Category, Fit Rating, Size Recommendation, Status, Most Recent Fit Date, Fit Models, Notes
     ws["!cols"] = [
-      { wch: 14 }, { wch: 14 }, { wch: 20 }, { wch: 16 },
+      { wch: 14 }, { wch: 20 }, { wch: 14 }, { wch: 20 }, { wch: 16 },
       { wch: 24 }, { wch: 24 }, { wch: 20 }, { wch: 30 }, { wch: 70 },
     ];
     ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } }];
@@ -1766,7 +1800,7 @@ export function FittingTab() {
       { hpt: 6 },
       { hpt: 22 },
       ...rows.map((row) => {
-        const notes = row[8] as string;
+        const notes = row[9] as string; // Notes is now column index 9
         const lineCount = notes ? notes.split("\n").length : 1;
         return { hpt: Math.max(20, lineCount * 15) };
       }),
@@ -1798,7 +1832,7 @@ export function FittingTab() {
     };
     rows.forEach((row, ri) => {
       const rowIdx = 3 + ri;
-      const fitLabel = row[3] as string;
+      const fitLabel = row[4] as string; // Fit Rating is now column index 4
       const bgColour = FIT_ROW_COLOURS[fitLabel] ?? "FFFFFF";
       row.forEach((_, ci) => {
         const addr = XLSX.utils.encode_cell({ r: rowIdx, c: ci });
@@ -1815,8 +1849,8 @@ export function FittingTab() {
     const today = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "-");
     const fileName = `SS26_Fit_Report_${today}.xlsx`;
     XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
-    toast.success(`Fit Report exported - ${fittedStyles.length} styles`);
-  }, [styleList, sessionsByStyle, styleMeta]);
+    toast.success(`Fit Report exported - ${fittedStyles.length} styles, ${rows.length} rows`);
+  }, [styleList, sessionsByStyle, styleMeta, mergedStyles, cancelledSkuSet]);
 
   // Per-style session data — using individual queries
   // We render a sub-component that fetches its own sessions to avoid N+1 at top level
