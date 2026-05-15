@@ -125,3 +125,9 @@
 - [x] Fix Full Data Export: Fit Rating column now reads from style_meta.fitRating (style-level, set in Fittings tab) with fallback to per-SKU fitRating
 - [x] Fit rating now applied to every SKU row for the matching style
 - [x] ARLA now correctly shows Runs Large in the export
+
+## Fit Rating Bulk Import + Size Recommendation Fix (May 2026)
+- [ ] Parse uploaded spreadsheet to identify style, fit rating, and size instruction columns
+- [ ] Bulk import fit ratings and size instructions from spreadsheet into style_meta via a migration script
+- [ ] Fix size recommendation dropdown: Runs Small → "Half size up / Full size up", Runs Large → "Half size down / Full size down"
+- [ ] Verify imported data appears correctly in Fittings tab and By Style detail panel

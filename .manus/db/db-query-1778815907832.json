@@ -1,0 +1,97 @@
+{
+  "query": "SELECT COUNT(*) as total_with_rating FROM style_meta WHERE fitRating IS NOT NULL;\nSELECT style, fitRating, sizeRecommendation FROM style_meta WHERE fitRating = 'runs_large' ORDER BY style LIMIT 20;\nSELECT style, fitRating, sizeRecommendation FROM style_meta WHERE style IN ('ARLA', 'DYNASTY', 'NIKI', 'MARTINEZ', 'PENELOPE', 'STEVIE');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2PKnJnyFBef7ny1.49968122eb9d --database RGHTjKGQqzKd5FypxANQbT --execute SELECT COUNT(*) as total_with_rating FROM style_meta WHERE fitRating IS NOT NULL;\nSELECT style, fitRating, sizeRecommendation FROM style_meta WHERE fitRating = 'runs_large' ORDER BY style LIMIT 20;\nSELECT style, fitRating, sizeRecommendation FROM style_meta WHERE style IN ('ARLA', 'DYNASTY', 'NIKI', 'MARTINEZ', 'PENELOPE', 'STEVIE');",
+  "rows": [
+    {
+      "total_with_rating": "234"
+    },
+    {
+      "total_with_rating": "style\tfitRating\tsizeRecommendation"
+    },
+    {
+      "total_with_rating": "ANJA\truns_large\thalf_size_down"
+    },
+    {
+      "total_with_rating": "ARLA\truns_large\tNULL"
+    },
+    {
+      "total_with_rating": "BIANCA\truns_large\tfull_size_down"
+    },
+    {
+      "total_with_rating": "BOSCO\truns_large\tfull_size_down"
+    },
+    {
+      "total_with_rating": "BRASH\truns_large\tfull_size_down"
+    },
+    {
+      "total_with_rating": "BREEZE\truns_large\thalf_size_down"
+    },
+    {
+      "total_with_rating": "CAMEO\truns_large\thalf_size_down"
+    },
+    {
+      "total_with_rating": "CAMILLE\truns_large\thalf_size_down"
+    },
+    {
+      "total_with_rating": "CAPPI\truns_large\thalf_size_down"
+    },
+    {
+      "total_with_rating": "CAPRICE\truns_large\thalf_size_down"
+    },
+    {
+      "total_with_rating": "CARLA\truns_large\tfull_size_down"
+    },
+    {
+      "total_with_rating": "CELESTE\truns_large\thalf_size_down"
+    },
+    {
+      "total_with_rating": "CHEEKY\truns_large\tfull_size_down"
+    },
+    {
+      "total_with_rating": "CHERRY\truns_large\thalf_size_down"
+    },
+    {
+      "total_with_rating": "CHILLI\truns_large\thalf_size_down"
+    },
+    {
+      "total_with_rating": "COMMA\truns_large\tfull_size_down"
+    },
+    {
+      "total_with_rating": "CRUSH\truns_large\thalf_size_down"
+    },
+    {
+      "total_with_rating": "CUBA\truns_large\thalf_size_down"
+    },
+    {
+      "total_with_rating": "MARTINEZ\truns_large\thalf_size_down"
+    },
+    {
+      "total_with_rating": "MAZEY\truns_large\tfull_size_down"
+    },
+    {
+      "total_with_rating": "style\tfitRating\tsizeRecommendation"
+    },
+    {
+      "total_with_rating": "ARLA\truns_large\tNULL"
+    },
+    {
+      "total_with_rating": "DYNASTY\ttts\tNULL"
+    },
+    {
+      "total_with_rating": "NIKI\ttts\tNULL"
+    },
+    {
+      "total_with_rating": "MARTINEZ\truns_large\thalf_size_down"
+    },
+    {
+      "total_with_rating": "PENELOPE\truns_large\thalf_size_down"
+    },
+    {
+      "total_with_rating": "STEVIE\truns_large\thalf_size_down"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_with_rating\n234\nstyle\tfitRating\tsizeRecommendation\nANJA\truns_large\thalf_size_down\nARLA\truns_large\tNULL\nBIANCA\truns_large\tfull_size_down\nBOSCO\truns_large\tfull_size_down\nBRASH\truns_large\tfull_size_down\nBREEZE\truns_large\thalf_size_down\nCAMEO\truns_large\thalf_size_down\nCAMILLE\truns_large\thalf_size_down\nCAPPI\truns_large\thalf_size_down\nCAPRICE\truns_large\thalf_size_down\nCARLA\truns_large\tfull_size_down\nCELESTE\truns_large\thalf_size_down\nCHEEKY\truns_large\tfull_size_down\nCHERRY\truns_large\thalf_size_down\nCHILLI\truns_large\thalf_size_down\nCOMMA\truns_large\tfull_size_down\nCRUSH\truns_large\thalf_size_down\nCUBA\truns_large\thalf_size_down\nMARTINEZ\truns_large\thalf_size_down\nMAZEY\truns_large\tfull_size_down\nstyle\tfitRating\tsizeRecommendation\nARLA\truns_large\tNULL\nDYNASTY\ttts\tNULL\nNIKI\ttts\tNULL\nMARTINEZ\truns_large\thalf_size_down\nPENELOPE\truns_large\thalf_size_down\nSTEVIE\truns_large\thalf_size_down\n",
+  "stderr": "",
+  "execution_time_ms": 2239
+}
