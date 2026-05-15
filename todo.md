@@ -127,7 +127,11 @@
 - [x] ARLA now correctly shows Runs Large in the export
 
 ## Fit Rating Bulk Import + Size Recommendation Fix (May 2026)
-- [ ] Parse uploaded spreadsheet to identify style, fit rating, and size instruction columns
-- [ ] Bulk import fit ratings and size instructions from spreadsheet into style_meta via a migration script
-- [ ] Fix size recommendation dropdown: Runs Small → "Half size up / Full size up", Runs Large → "Half size down / Full size down"
-- [ ] Verify imported data appears correctly in Fittings tab and By Style detail panel
+- [x] Parse uploaded spreadsheet to identify style, fit rating, and size instruction columns
+- [x] Bulk import fit ratings and size instructions from spreadsheet into style_meta via a migration script (234 styles imported)
+- [x] Fix size recommendation dropdown: Runs Small → "Half size up / Full size up", Runs Large → "Half size down / Full size down" (already correct)
+- [x] Verify imported data appears correctly in Fittings tab and By Style detail panel
+
+## By Style Add SKU Bug (May 2026)
+- [x] Fix: Adding a new colour/leather (e.g. Black Venice to MILAN) in By Style tab — was saving but no visible feedback; server-side duplicate check added
+- [x] Fix: Adding a SKU caused duplicate entries — removed 6 duplicate MILAN BLACK VENICE rows; server now throws error on duplicate; toast moved to bottom-right with richColors for visibility

@@ -780,6 +780,11 @@ export async function listCancelledStyles(): Promise<{ style: string; cancelledA
 export async function addCustomSku(style: string, colour: string, leather: string): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  // Prevent duplicates — check if this exact style/colour/leather already exists
+  const existing = await db.select({ id: customSkus.id }).from(customSkus)
+    .where(and(eq(customSkus.style, style), eq(customSkus.colour, colour), eq(customSkus.leather, leather)))
+    .limit(1);
+  if (existing.length > 0) throw new Error(`SKU already exists: ${style} ${colour} ${leather}`);
   const result = await db.insert(customSkus).values({ style, colour, leather });
   return (result[0] as any).insertId as number;
 }

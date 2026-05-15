@@ -1,0 +1,85 @@
+{
+  "query": "SELECT * FROM custom_skus WHERE style = 'MILAN' ORDER BY createdAt;\nSELECT style, colour, leather, COUNT(*) as cnt FROM custom_skus GROUP BY style, colour, leather HAVING cnt > 1 LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2PKnJnyFBef7ny1.49968122eb9d --database RGHTjKGQqzKd5FypxANQbT --execute SELECT * FROM custom_skus WHERE style = 'MILAN' ORDER BY createdAt;\nSELECT style, colour, leather, COUNT(*) as cnt FROM custom_skus GROUP BY style, colour, leather HAVING cnt > 1 LIMIT 20;",
+  "rows": [
+    {
+      "id": "180001",
+      "style": "MILAN",
+      "colour": "CHOC",
+      "leather": "VINTAGE",
+      "createdAt": "2026-05-05 23:52:05",
+      "is_new": "1"
+    },
+    {
+      "id": "330002",
+      "style": "MILAN",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "createdAt": "2026-05-15 05:20:43",
+      "is_new": "1"
+    },
+    {
+      "id": "330003",
+      "style": "MILAN",
+      "colour": "CHOC",
+      "leather": "VENICE",
+      "createdAt": "2026-05-15 05:20:50",
+      "is_new": "1"
+    },
+    {
+      "id": "330004",
+      "style": "MILAN",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "createdAt": "2026-05-15 05:21:26",
+      "is_new": "1"
+    },
+    {
+      "id": "330005",
+      "style": "MILAN",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "createdAt": "2026-05-15 05:21:41",
+      "is_new": "1"
+    },
+    {
+      "id": "330006",
+      "style": "MILAN",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "createdAt": "2026-05-15 05:22:13",
+      "is_new": "1"
+    },
+    {
+      "id": "330007",
+      "style": "MILAN",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "createdAt": "2026-05-15 05:22:35",
+      "is_new": "1"
+    },
+    {
+      "id": "330008",
+      "style": "MILAN",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "createdAt": "2026-05-15 05:22:53",
+      "is_new": "1"
+    },
+    {
+      "id": "360001",
+      "style": "MILAN",
+      "colour": "BLACK",
+      "leather": "VENICE",
+      "createdAt": "2026-05-15 05:26:40",
+      "is_new": "1"
+    }
+  ],
+  "messages": [
+    "style\tcolour\tleather\tcnt",
+    "MILAN\tBLACK\tVENICE\t7"
+  ],
+  "stdout": "id\tstyle\tcolour\tleather\tcreatedAt\tis_new\n180001\tMILAN\tCHOC\tVINTAGE\t2026-05-05 23:52:05\t1\n330002\tMILAN\tBLACK\tVENICE\t2026-05-15 05:20:43\t1\n330003\tMILAN\tCHOC\tVENICE\t2026-05-15 05:20:50\t1\n330004\tMILAN\tBLACK\tVENICE\t2026-05-15 05:21:26\t1\n330005\tMILAN\tBLACK\tVENICE\t2026-05-15 05:21:41\t1\n330006\tMILAN\tBLACK\tVENICE\t2026-05-15 05:22:13\t1\n330007\tMILAN\tBLACK\tVENICE\t2026-05-15 05:22:35\t1\n330008\tMILAN\tBLACK\tVENICE\t2026-05-15 05:22:53\t1\n360001\tMILAN\tBLACK\tVENICE\t2026-05-15 05:26:40\t1\nstyle\tcolour\tleather\tcnt\nMILAN\tBLACK\tVENICE\t7\n",
+  "stderr": "",
+  "execution_time_ms": 2085
+}
