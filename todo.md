@@ -135,3 +135,9 @@
 ## By Style Add SKU Bug (May 2026)
 - [x] Fix: Adding a new colour/leather (e.g. Black Venice to MILAN) in By Style tab — was saving but no visible feedback; server-side duplicate check added
 - [x] Fix: Adding a SKU caused duplicate entries — removed 6 duplicate MILAN BLACK VENICE rows; server now throws error on duplicate; toast moved to bottom-right with richColors for visibility
+
+## Buy Session Changes Report (May 2026)
+- [x] Add tRPC procedure to fetch all changes since a buy session started: cancelled styles, cancelled SKUs, new colours added (custom_skus)
+- [x] Build Changes Report panel in Buy Sessions area: show CANCELLED STYLES, CANCELLED COLOURS, and NEW COLOURS ADDED sections
+- [x] Add Export button to generate a clean Excel report (SS26_Changes_Report_SessionName_DD-MM-YYYY.xlsx)
+- [x] Include style, colour, leather, category, and date of change in the export

@@ -33,6 +33,7 @@ import {
   getSpecCustomRowsForStyle, upsertSpecCustomRow, deleteSpecCustomRow,
   getLatestPptxImport, listPptxImports,
   getAllLastHeelHeights, upsertLastHeelHeight,
+  getChangesReport,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -1223,6 +1224,13 @@ export const appRouter = router({
         await upsertLastHeelHeight(input.lastName, input.heelHeightCm);
         return { success: true };
       }),
+  }),
+
+  // ─── Changes Report ──────────────────────────────────────────────────────────
+  changesReport: router({
+    get: publicProcedure
+      .input(z.object({ since: z.date() }))
+      .query(async ({ input }) => getChangesReport(input.since)),
   }),
 
   // ─── Spec Custom Rows ───────────────────────────────────────────────────────

@@ -8,7 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
-import { Lock, Download, Plus, Clock, CheckCircle, Package, Trash2, Pencil } from "lucide-react";
+import { Lock, Download, Plus, Clock, CheckCircle, Package, Trash2, Pencil, FileText, X } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
@@ -22,6 +22,7 @@ export default function BuySessionsPanel() {
   const [editingSessionId, setEditingSessionId] = useState<number | null>(null);
   const [editingName, setEditingName] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
+  const [changesReportSessionId, setChangesReportSessionId] = useState<number | null>(null);
 
   const { data: allSessions = [], refetch: refetchSessions } = trpc.buy.getSessions.useQuery();
   const { data: activeSession, refetch: refetchActive } = trpc.buy.getActive.useQuery();
@@ -34,6 +35,17 @@ export default function BuySessionsPanel() {
   const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
   const { data: subCategoryList = [] } = trpc.styleSubCategory.getAll.useQuery();
   const { data: trendFlagList = [] } = trpc.trendFlag.getAll.useQuery();
+
+  // Changes Report
+  const changesReportSession = allSessions.find((s) => s.id === changesReportSessionId);
+  const changesReportSince = useMemo(() => {
+    if (!changesReportSession) return new Date(0);
+    return new Date((changesReportSession as any).createdAt ?? 0);
+  }, [changesReportSession]);
+  const { data: changesData, isLoading: changesLoading } = trpc.changesReport.get.useQuery(
+    { since: changesReportSince },
+    { enabled: changesReportSessionId !== null }
+  );
 
   const createMutation = trpc.buy.create.useMutation({
     onSuccess: (session) => {
@@ -323,6 +335,103 @@ export default function BuySessionsPanel() {
     toast.success(`Exported ${rows.length} SKUs to ${fileName}`);
   }
 
+  function exportChangesReport() {
+    if (!changesData) return;
+    const today = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "-");
+    const sessionLabel = changesReportSession?.name ?? "Session";
+    const fileName = `SS26_Changes_Report_${sessionLabel}_${today}.xlsx`;
+
+    type Row = (string | number)[];
+    const rows: Row[] = [];
+
+    // Section: Cancelled Styles
+    rows.push(["CANCELLED STYLES", "", "", ""]);
+    rows.push(["Style", "Category", "Last", "Date Cancelled"]);
+    if (changesData.cancelledStyles.length === 0) {
+      rows.push(["— None —", "", "", ""]);
+    } else {
+      for (const s of changesData.cancelledStyles) {
+        const info = (mergedStyles as any[]).find((m: any) => m.style === s.style);
+        rows.push([
+          s.style,
+          info?.category ?? "",
+          info?.last ?? "",
+          new Date(s.cancelledAt).toLocaleDateString("en-AU"),
+        ]);
+      }
+    }
+    rows.push(["", "", "", ""]);
+
+    // Section: Cancelled Colours
+    rows.push(["CANCELLED COLOURS", "", "", "", ""]);
+    rows.push(["Style", "Colour", "Category", "Last", "Date Cancelled"]);
+    if (changesData.cancelledSkus.length === 0) {
+      rows.push(["— None —", "", "", "", ""]);
+    } else {
+      for (const s of changesData.cancelledSkus) {
+        const info = (mergedStyles as any[]).find((m: any) => m.style === s.style);
+        rows.push([
+          s.style,
+          displayColourLeather(s.colour, s.leather, s.style),
+          info?.category ?? "",
+          info?.last ?? "",
+          new Date(s.cancelledAt).toLocaleDateString("en-AU"),
+        ]);
+      }
+    }
+    rows.push(["", "", "", "", ""]);
+
+    // Section: New Colours Added
+    rows.push(["NEW COLOURS ADDED", "", "", "", ""]);
+    rows.push(["Style", "Colour", "Category", "Last", "Date Added"]);
+    if (changesData.newColours.length === 0) {
+      rows.push(["— None —", "", "", "", ""]);
+    } else {
+      for (const s of changesData.newColours) {
+        const info = (mergedStyles as any[]).find((m: any) => m.style === s.style);
+        rows.push([
+          s.style,
+          displayColourLeather(s.colour, s.leather, s.style),
+          info?.category ?? "",
+          info?.last ?? "",
+          new Date(s.createdAt).toLocaleDateString("en-AU"),
+        ]);
+      }
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws["!cols"] = [{ wch: 22 }, { wch: 22 }, { wch: 20 }, { wch: 16 }, { wch: 16 }];
+
+    // Style section headers
+    const sectionHeaderRows = [0, rows.indexOf(["CANCELLED COLOURS", "", "", "", ""]), rows.indexOf(["NEW COLOURS ADDED", "", "", "", ""])];
+    for (let r = 0; r < rows.length; r++) {
+      const isSectionHeader = sectionHeaderRows.includes(r);
+      const isColHeader = rows[r][0] === "Style";
+      for (let c = 0; c < 5; c++) {
+        const addr = XLSX.utils.encode_cell({ r, c });
+        if (!ws[addr]) ws[addr] = { v: "", t: "s" };
+        if (isSectionHeader) {
+          ws[addr].s = {
+            font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
+            fill: { fgColor: { rgb: "3D2B1F" } },
+            alignment: { horizontal: "left", vertical: "center" },
+          };
+        } else if (isColHeader) {
+          ws[addr].s = {
+            font: { bold: true, sz: 10 },
+            fill: { fgColor: { rgb: "F5E6D3" } },
+            alignment: { horizontal: "left", vertical: "center" },
+          };
+        }
+      }
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Changes Report");
+    XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
+    toast.success(`Exported changes report to ${fileName}`);
+  }
+
   const selectedSession = allSessions.find((s) => s.id === selectedSessionId);
   const selectedTotal = (sessionItems as Array<{ auQty?: number; usaQty?: number; qty?: number }>).reduce((sum, item) => sum + (item.auQty ?? 0) + (item.usaQty ?? 0), 0);
 
@@ -495,6 +604,17 @@ export default function BuySessionsPanel() {
                       Delete
                     </button>
 
+                    {/* Changes Report button */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setChangesReportSessionId(session.id); }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700"
+                      style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+                      title="View changes made during this session (cancellations & new colours)"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      Changes Report
+                    </button>
+
                     {/* Export button */}
                     <button
                       onClick={(e) => { e.stopPropagation(); exportSession(session.id, session.name); }}
@@ -569,6 +689,159 @@ export default function BuySessionsPanel() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Changes Report Modal */}
+      {changesReportSessionId !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.5)" }}
+          onClick={() => setChangesReportSessionId(null)}
+        >
+          <div
+            className="bg-background rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col"
+            style={{ border: "1px solid var(--border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+              <div>
+                <h3 className="text-base font-bold text-foreground">Changes Report</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {changesReportSession?.name} — changes since session started
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={exportChangesReport}
+                  disabled={changesLoading || !changesData}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700"
+                  style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Export Excel
+                </button>
+                <button
+                  onClick={() => setChangesReportSessionId(null)}
+                  className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                >
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal body */}
+            <div className="overflow-y-auto flex-1 px-6 py-4 space-y-6">
+              {changesLoading ? (
+                <div className="text-sm text-muted-foreground text-center py-8">Loading changes…</div>
+              ) : !changesData ? (
+                <div className="text-sm text-muted-foreground text-center py-8">No data available.</div>
+              ) : (
+                <>
+                  {/* Cancelled Styles */}
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: "oklch(0.45 0.18 25)" }}>Cancelled Styles</h4>
+                    {changesData.cancelledStyles.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">— None —</p>
+                    ) : (
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b" style={{ borderColor: "var(--border)" }}>
+                            <th className="text-left py-1.5 pr-3 font-semibold text-foreground">Style</th>
+                            <th className="text-left py-1.5 pr-3 font-semibold text-foreground">Category</th>
+                            <th className="text-left py-1.5 pr-3 font-semibold text-foreground">Last</th>
+                            <th className="text-left py-1.5 font-semibold text-foreground">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {changesData.cancelledStyles.map((s, i) => {
+                            const info = (mergedStyles as any[]).find((m: any) => m.style === s.style);
+                            return (
+                              <tr key={i} className="border-b" style={{ borderColor: "var(--border)" }}>
+                                <td className="py-1.5 pr-3 font-medium text-foreground">{s.style}</td>
+                                <td className="py-1.5 pr-3 text-muted-foreground">{info?.category ?? "—"}</td>
+                                <td className="py-1.5 pr-3 text-muted-foreground">{info?.last ?? "—"}</td>
+                                <td className="py-1.5 text-muted-foreground">{new Date(s.cancelledAt).toLocaleDateString("en-AU")}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+
+                  {/* Cancelled Colours */}
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: "oklch(0.45 0.18 25)" }}>Cancelled Colours</h4>
+                    {changesData.cancelledSkus.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">— None —</p>
+                    ) : (
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b" style={{ borderColor: "var(--border)" }}>
+                            <th className="text-left py-1.5 pr-3 font-semibold text-foreground">Style</th>
+                            <th className="text-left py-1.5 pr-3 font-semibold text-foreground">Colour</th>
+                            <th className="text-left py-1.5 pr-3 font-semibold text-foreground">Category</th>
+                            <th className="text-left py-1.5 pr-3 font-semibold text-foreground">Last</th>
+                            <th className="text-left py-1.5 font-semibold text-foreground">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {changesData.cancelledSkus.map((s, i) => {
+                            const info = (mergedStyles as any[]).find((m: any) => m.style === s.style);
+                            return (
+                              <tr key={i} className="border-b" style={{ borderColor: "var(--border)" }}>
+                                <td className="py-1.5 pr-3 font-medium text-foreground">{s.style}</td>
+                                <td className="py-1.5 pr-3 text-muted-foreground">{displayColourLeather(s.colour, s.leather, s.style)}</td>
+                                <td className="py-1.5 pr-3 text-muted-foreground">{info?.category ?? "—"}</td>
+                                <td className="py-1.5 pr-3 text-muted-foreground">{info?.last ?? "—"}</td>
+                                <td className="py-1.5 text-muted-foreground">{new Date(s.cancelledAt).toLocaleDateString("en-AU")}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+
+                  {/* New Colours Added */}
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: "oklch(0.40 0.15 160)" }}>New Colours Added</h4>
+                    {changesData.newColours.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">— None —</p>
+                    ) : (
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b" style={{ borderColor: "var(--border)" }}>
+                            <th className="text-left py-1.5 pr-3 font-semibold text-foreground">Style</th>
+                            <th className="text-left py-1.5 pr-3 font-semibold text-foreground">Colour</th>
+                            <th className="text-left py-1.5 pr-3 font-semibold text-foreground">Category</th>
+                            <th className="text-left py-1.5 pr-3 font-semibold text-foreground">Last</th>
+                            <th className="text-left py-1.5 font-semibold text-foreground">Date Added</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {changesData.newColours.map((s, i) => {
+                            const info = (mergedStyles as any[]).find((m: any) => m.style === s.style);
+                            return (
+                              <tr key={i} className="border-b" style={{ borderColor: "var(--border)" }}>
+                                <td className="py-1.5 pr-3 font-medium text-foreground">{s.style}</td>
+                                <td className="py-1.5 pr-3 text-muted-foreground">{displayColourLeather(s.colour, s.leather, s.style)}</td>
+                                <td className="py-1.5 pr-3 text-muted-foreground">{info?.category ?? "—"}</td>
+                                <td className="py-1.5 pr-3 text-muted-foreground">{info?.last ?? "—"}</td>
+                                <td className="py-1.5 text-muted-foreground">{new Date(s.createdAt).toLocaleDateString("en-AU")}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

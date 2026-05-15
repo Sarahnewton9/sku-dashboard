@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -966,4 +966,26 @@ export async function upsertLastHeelHeight(lastName: string, heelHeightCm: numbe
   await db.insert(lastHeelHeights)
     .values({ lastName, heelHeightCm })
     .onDuplicateKeyUpdate({ set: { heelHeightCm } });
+}
+
+// ─── Changes Report ───────────────────────────────────────────────────────────
+export async function getChangesReport(since: Date): Promise<{
+  cancelledStyles: Array<{ style: string; cancelledAt: Date }>;
+  cancelledSkus: Array<{ style: string; colour: string; leather: string; cancelledAt: Date }>;
+  newColours: Array<{ style: string; colour: string; leather: string; createdAt: Date }>;
+}> {
+  const db = await getDb();
+  if (!db) return { cancelledStyles: [], cancelledSkus: [], newColours: [] };
+  const [cStyles, cSkus, nColours] = await Promise.all([
+    db.select({ style: cancelledStyles.style, cancelledAt: cancelledStyles.cancelledAt })
+      .from(cancelledStyles)
+      .where(gte(cancelledStyles.cancelledAt, since)),
+    db.select({ style: cancelledSkus.style, colour: cancelledSkus.colour, leather: cancelledSkus.leather, cancelledAt: cancelledSkus.cancelledAt })
+      .from(cancelledSkus)
+      .where(gte(cancelledSkus.cancelledAt, since)),
+    db.select({ style: customSkus.style, colour: customSkus.colour, leather: customSkus.leather, createdAt: customSkus.createdAt })
+      .from(customSkus)
+      .where(gte(customSkus.createdAt, since)),
+  ]);
+  return { cancelledStyles: cStyles, cancelledSkus: cSkus, newColours: nColours };
 }
