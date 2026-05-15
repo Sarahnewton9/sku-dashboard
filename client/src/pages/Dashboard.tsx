@@ -4,9 +4,13 @@
  * - Warm off-white background, Sora headings + Inter body
  * - Amber accent for new SKUs, slate sidebar
  * - Fixed left sidebar, tabbed main content
+ *
+ * Tab routing: each section has its own URL path (e.g. /styles, /fitting).
+ * Active tab is derived from the current URL so links are shareable.
  */
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
+import { useLocation } from "wouter";
 import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
@@ -25,6 +29,7 @@ import LastApprovalTab from "@/components/dashboard/LastApprovalTab";
 import { FittingTab } from "@/components/dashboard/FittingTab";
 import SeasonAnalysisTab from "@/components/dashboard/SeasonAnalysisTab";
 import SpecsTab from "@/components/dashboard/SpecsTab";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Tag,
@@ -45,6 +50,12 @@ import {
 
 type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval" | "fitting" | "specs" | "season-analysis";
 
+const VALID_TABS = new Set<Tab>([
+  "overview", "categories", "styles", "leathers", "colours",
+  "colourleather", "expansion", "buy-sessions", "buy-analysis",
+  "last-approval", "fitting", "specs", "season-analysis",
+]);
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group?: string }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -63,8 +74,12 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group
 ];
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [location, navigate] = useLocation();
   const [showExport, setShowExport] = useState(false);
+
+  // Derive active tab from the URL path (strip leading slash)
+  const pathTab = location.replace(/^\//, "") as Tab;
+  const activeTab: Tab = VALID_TABS.has(pathTab) ? pathTab : "overview";
 
   const tabLabel = NAV_ITEMS.find((n) => n.id === activeTab)?.label ?? "";
 
@@ -92,6 +107,31 @@ export default function Dashboard() {
     }
     return { total, newCount, totalStyles: styleSet.size };
   }, [mergedRawSkus, cancelledStyleSet, cancelledSkuSet]);
+
+  function NavItem({ item }: { item: typeof NAV_ITEMS[0] }) {
+    const Icon = item.icon;
+    const isActive = activeTab === item.id;
+    return (
+      <li key={item.id}>
+        <a
+          href={`/${item.id}`}
+          onClick={(e) => { e.preventDefault(); navigate(`/${item.id}`); }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150 no-underline"
+          style={{
+            background: isActive ? "var(--sidebar-accent)" : "transparent",
+            color: isActive ? "var(--sidebar-primary)" : "var(--sidebar-foreground)",
+            display: "flex",
+          }}
+        >
+          <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center"><Icon className="w-4 h-4" /></span>
+          <span>{item.label}</span>
+          {isActive && (
+            <ChevronRight className="w-3 h-3 ml-auto opacity-60" />
+          )}
+        </a>
+      </li>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -127,109 +167,33 @@ export default function Dashboard() {
             Sections
           </p>
           <ul className="space-y-0.5">
-            {NAV_ITEMS.filter((i) => !i.group).map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <li key={item.id}>
-                  <button
-                    onClick={() => setActiveTab(item.id)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150"
-                    style={{
-                      background: isActive ? "var(--sidebar-accent)" : "transparent",
-                      color: isActive ? "var(--sidebar-primary)" : "var(--sidebar-foreground)",
-                    }}
-                  >
-                    <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center"><Icon className="w-4 h-4" /></span>
-                    <span>{item.label}</span>
-                    {isActive && (
-                      <ChevronRight className="w-3 h-3 ml-auto opacity-60" />
-                    )}
-                  </button>
-                </li>
-              );
-            })}
+            {NAV_ITEMS.filter((i) => !i.group).map((item) => (
+              <NavItem key={item.id} item={item} />
+            ))}
           </ul>
           <p className="px-2 mt-4 mb-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "oklch(0.50 0.01 80)" }}>
             Buying
           </p>
           <ul className="space-y-0.5">
-            {NAV_ITEMS.filter((i) => i.group === "buying").map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <li key={item.id}>
-                  <button
-                    onClick={() => setActiveTab(item.id)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150"
-                    style={{
-                      background: isActive ? "var(--sidebar-accent)" : "transparent",
-                      color: isActive ? "var(--sidebar-primary)" : "var(--sidebar-foreground)",
-                    }}
-                  >
-                    <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center"><Icon className="w-4 h-4" /></span>
-                    <span>{item.label}</span>
-                    {isActive && (
-                      <ChevronRight className="w-3 h-3 ml-auto opacity-60" />
-                    )}
-                  </button>
-                </li>
-              );
-            })}
+            {NAV_ITEMS.filter((i) => i.group === "buying").map((item) => (
+              <NavItem key={item.id} item={item} />
+            ))}
           </ul>
           <p className="px-2 mt-4 mb-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "oklch(0.50 0.01 80)" }}>
             Approval
           </p>
           <ul className="space-y-0.5">
-            {NAV_ITEMS.filter((i) => i.group === "approval").map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <li key={item.id}>
-                  <button
-                    onClick={() => setActiveTab(item.id)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150"
-                    style={{
-                      background: isActive ? "var(--sidebar-accent)" : "transparent",
-                      color: isActive ? "var(--sidebar-primary)" : "var(--sidebar-foreground)",
-                    }}
-                  >
-                    <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center"><Icon className="w-4 h-4" /></span>
-                    <span>{item.label}</span>
-                    {isActive && (
-                      <ChevronRight className="w-3 h-3 ml-auto opacity-60" />
-                    )}
-                  </button>
-                </li>
-              );
-            })}
+            {NAV_ITEMS.filter((i) => i.group === "approval").map((item) => (
+              <NavItem key={item.id} item={item} />
+            ))}
           </ul>
           <p className="px-2 mt-4 mb-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "oklch(0.50 0.01 80)" }}>
             Analysis
           </p>
           <ul className="space-y-0.5">
-            {NAV_ITEMS.filter((i) => i.group === "analysis").map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <li key={item.id}>
-                  <button
-                    onClick={() => setActiveTab(item.id)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150"
-                    style={{
-                      background: isActive ? "var(--sidebar-accent)" : "transparent",
-                      color: isActive ? "var(--sidebar-primary)" : "var(--sidebar-foreground)",
-                    }}
-                  >
-                    <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center"><Icon className="w-4 h-4" /></span>
-                    <span>{item.label}</span>
-                    {isActive && (
-                      <ChevronRight className="w-3 h-3 ml-auto opacity-60" />
-                    )}
-                  </button>
-                </li>
-              );
-            })}
+            {NAV_ITEMS.filter((i) => i.group === "analysis").map((item) => (
+              <NavItem key={item.id} item={item} />
+            ))}
           </ul>
         </nav>
 

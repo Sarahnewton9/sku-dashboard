@@ -152,3 +152,9 @@
 - [x] Add a running total rollup of total units bought (AU + USA) that updates as quantities are entered
 - [x] Show total bought units per style (rollup across all colours/leathers of that style) — per-style Buy Qty column shows all-sessions total with AU/USA breakdown
 - [x] Show grand total units bought across all styles in a summary bar or header — amber summary bar below Buy Session Bar shows Total Bought: AU X · USA Y · Z units total
+
+## URL Routing for Shareable Tab Links (May 2026)
+- [x] Replace useState tab switching with URL-based routing so each section has its own path (e.g. /styles, /fitting, /buy-sessions)
+- [x] Sidebar nav items become links that update the URL; active tab is derived from the URL
+- [x] Navigating to / redirects to /overview; unknown paths fall back to /overview
+- [x] Browser back/forward buttons work correctly between tabs
