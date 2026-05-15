@@ -120,3 +120,8 @@
 - [x] Rewrite Fit Report export to output one row per colourway (all colours of each style), with the base style's fit rating and size recommendation applied to every colourway row
 - [x] Exclude cancelled styles and cancelled SKUs from the per-colourway rows (via filtered styleList)
 - [x] Notes and fit models on first colourway row only to keep it readable
+
+## Full Export Fit Rating Bug (May 2026)
+- [x] Fix Full Data Export: Fit Rating column now reads from style_meta.fitRating (style-level, set in Fittings tab) with fallback to per-SKU fitRating
+- [x] Fit rating now applied to every SKU row for the matching style
+- [x] ARLA now correctly shows Runs Large in the export

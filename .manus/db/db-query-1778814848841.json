@@ -1,0 +1,101 @@
+{
+  "query": "DESCRIBE style_meta; SELECT style, fitRating, sizeRecommendation, fitApproved FROM style_meta WHERE style = 'ARLA';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2PKnJnyFBef7ny1.49968122eb9d --database RGHTjKGQqzKd5FypxANQbT --execute DESCRIBE style_meta; SELECT style, fitRating, sizeRecommendation, fitApproved FROM style_meta WHERE style = 'ARLA';",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "style",
+      "Type": "varchar(64)",
+      "Null": "NO",
+      "Key": "UNI",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "rrp",
+      "Type": "float",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "Field": "fitRating",
+      "Type": "enum('tts','runs_small','runs_large')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "fittingNotes",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "fitApproved",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "websiteImageUrl",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "category",
+      "Type": "varchar(64)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "sizeRecommendation",
+      "Type": "enum('half_size_up','full_size_up','half_size_down','full_size_down')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [
+    "style\tfitRating\tsizeRecommendation\tfitApproved",
+    "ARLA\truns_large\tNULL\t1"
+  ],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\nstyle\tvarchar(64)\tNO\tUNI\tNULL\t\nrrp\tfloat\tYES\t\tNULL\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\nfitRating\tenum('tts','runs_small','runs_large')\tYES\t\tNULL\t\nfittingNotes\ttext\tYES\t\tNULL\t\nfitApproved\ttinyint(1)\tNO\t\t0\t\nwebsiteImageUrl\ttext\tYES\t\tNULL\t\ncategory\tvarchar(64)\tYES\t\tNULL\t\nsizeRecommendation\tenum('half_size_up','full_size_up','half_size_down','full_size_down')\tYES\t\tNULL\t\nstyle\tfitRating\tsizeRecommendation\tfitApproved\nARLA\truns_large\tNULL\t1\n",
+  "stderr": "",
+  "execution_time_ms": 2121
+}

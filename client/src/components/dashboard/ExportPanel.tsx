@@ -366,10 +366,14 @@ export default function ExportPanel({ onClose }: Props) {
             Status: sku.is_new ? "New" : "Existing",
             "Size 11": meta?.isSize11 ? "Yes" : "No",
             "Sample Status": meta?.sampleStatus === "received" ? "Received" : "Waiting",
-            "Fit Rating": meta?.fitRating
-              ? { tts: "True to Size", runs_small: "Runs Small", runs_large: "Runs Large" }[meta.fitRating] ?? meta.fitRating
-              : "",
-            "Fitting Notes": meta?.fittingNotes ?? "",
+            "Fit Rating": (() => {
+              // Prefer style-level fit rating (set in Fittings tab) over per-SKU fit rating
+              const rawRating = styleMetaMap[sku.style]?.fitRating || meta?.fitRating;
+              return rawRating
+                ? ({ tts: "True to Size", runs_small: "Runs Small", runs_large: "Runs Large" }[rawRating] ?? rawRating)
+                : "";
+            })(),
+            "Fitting Notes": styleMetaMap[sku.style]?.fittingNotes || meta?.fittingNotes || "",
             "Cost Price": meta?.costPrice != null ? meta.costPrice : "",
             RRP: styleMetaMap[sku.style]?.rrp != null ? styleMetaMap[sku.style].rrp : "",
           };
@@ -501,10 +505,14 @@ export default function ExportPanel({ onClose }: Props) {
           "Order Qty": meta?.orderQty ?? 0,
           "Cost Price": meta?.costPrice != null ? meta.costPrice : "",
           RRP: styleMetaMap[sku.style]?.rrp != null ? styleMetaMap[sku.style].rrp : "",
-          "Fit Rating": meta?.fitRating
-            ? { tts: "True to Size", runs_small: "Runs Small", runs_large: "Runs Large" }[meta.fitRating] ?? meta.fitRating
-            : "",
-          "Fitting Notes": meta?.fittingNotes ?? "",
+          "Fit Rating": (() => {
+            // Prefer style-level fit rating (set in Fittings tab) over per-SKU fit rating
+            const rawRating = styleMetaMap[sku.style]?.fitRating || meta?.fitRating;
+            return rawRating
+              ? ({ tts: "True to Size", runs_small: "Runs Small", runs_large: "Runs Large" }[rawRating] ?? rawRating)
+              : "";
+          })(),
+          "Fitting Notes": styleMetaMap[sku.style]?.fittingNotes || meta?.fittingNotes || "",
         };
         // Return only selected columns in order
         const filtered: Record<string, any> = {};
