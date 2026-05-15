@@ -107,3 +107,11 @@
 ## Fit Report Notes Bug (May 2026)
 - [x] Investigate why fitting notes/comments are missing from the Fit Report Excel export
 - [x] Fix export to include both style-level fittingNotes and per-session notes in the Notes column
+
+## Cancelled Styles in Fit Report Export (May 2026)
+- [ ] Fix Fit Report export to exclude cancelled styles (MAMZELLE, CIRCA, etc.) — they currently appear despite being cancelled
+
+## Permanent Cancelled Style Exclusion from All Exports (May 2026)
+- [x] Audit all export functions across all tabs to find every place styles/SKUs are included in exports
+- [x] Ensure every export (Fit Report, Buy Export, Overview Export, Specs Export, etc.) filters out cancelled styles at the point of export using the cancelledStyleSet from the DB
+- [x] Add a server-side helper that returns the cancelled style set so exports that run server-side are also protected

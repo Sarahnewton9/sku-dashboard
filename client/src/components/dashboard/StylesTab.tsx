@@ -369,6 +369,8 @@ export default function StylesTab() {
     });
     const rows = skuData.rawSkus
       .filter((sku) => {
+        if (cancelledSet.has(sku.style)) return false;
+        if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) return false;
         const meta = styleMetaLookup[sku.style];
         return categoryFilter === "All" || meta?.category === categoryFilter;
       })

@@ -353,6 +353,7 @@ export default function ExportPanel({ onClose }: Props) {
     setExporting("fitting");
     try {
       const rows = (mergedRawSkus as any[])
+        .filter((sku: any) => !cancelledStyleSet.has(sku.style) && !cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`))
         .map((sku: any) => {
           const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
           const meta = skuMetaMap[key];
@@ -406,7 +407,7 @@ export default function ExportPanel({ onClose }: Props) {
       // Use mergedRawSkus which already includes custom SKUs
       type SkuRow = { style: string; colour: string; leather: string; is_new: boolean };
       const allSkus: SkuRow[] = (mergedRawSkus as unknown as SkuRow[])
-        .filter((s) => !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`));
+        .filter((s) => !cancelledStyleSet.has(s.style) && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`));
 
       // Fetch items for all sessions
       const wb = XLSX.utils.book_new();
@@ -478,7 +479,9 @@ export default function ExportPanel({ onClose }: Props) {
       // Build full row, then pick only selected columns in definition order
       const selectedKeys = FULL_EXPORT_ALL_COLS.map(c => c.key).filter(k => fullExportCols.has(k));
 
-      const rows = (mergedRawSkus as any[]).map((sku: any) => {
+      const rows = (mergedRawSkus as any[])
+        .filter((sku: any) => !cancelledStyleSet.has(sku.style) && !cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`))
+        .map((sku: any) => {
         const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
         const meta = skuMetaMap[key];
         const lastName = (styleLookup[sku.style]?.last ?? "").toUpperCase();

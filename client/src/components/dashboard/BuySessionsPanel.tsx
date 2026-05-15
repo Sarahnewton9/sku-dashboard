@@ -7,6 +7,7 @@ import { useState, useMemo, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
+import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { Lock, Download, Plus, Clock, CheckCircle, Package, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
@@ -14,6 +15,7 @@ import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils
 
 export default function BuySessionsPanel() {
   const { mergedStyles } = useCustomSkus();
+  const { cancelledSet: cancelledStyleSet } = useCancelledStyles();
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
@@ -168,7 +170,7 @@ export default function BuySessionsPanel() {
     const allItems = items as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number }>;
 
     const rows: RowData[] = allItems
-      .filter((item) => ((item.auQty ?? 0) + (item.usaQty ?? 0)) > 0)
+      .filter((item) => ((item.auQty ?? 0) + (item.usaQty ?? 0)) > 0 && !cancelledStyleSet.has(item.style))
       .map((item) => {
         const styleInfo = styleInfoMap[item.style];
         const colourDesc = displayColourLeather(item.colour, item.leather, item.style);
