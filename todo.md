@@ -141,3 +141,14 @@
 - [x] Build Changes Report panel in Buy Sessions area: show CANCELLED STYLES, CANCELLED COLOURS, and NEW COLOURS ADDED sections
 - [x] Add Export button to generate a clean Excel report (SS26_Changes_Report_SessionName_DD-MM-YYYY.xlsx)
 - [x] Include style, colour, leather, category, and date of change in the export
+
+## Changes Report Email (May 2026)
+- [ ] Add sendChangesReport tRPC procedure that sends formatted HTML email to team (fatih, amanda, anthony, alison, sarah.newton @tonybianco.com)
+- [ ] Add "Send to Team" button to Changes Report modal
+- [ ] Email body: session name, date, three sections (Cancelled Styles, Cancelled Colours, New Colours Added) as HTML tables
+
+## Buy Quantity Rollup & Always-Visible (May 2026)
+- [x] Show buy quantities on every SKU row at all times (not gated by active buy session) — shows all-sessions AU/USA totals when no session selected
+- [x] Add a running total rollup of total units bought (AU + USA) that updates as quantities are entered
+- [x] Show total bought units per style (rollup across all colours/leathers of that style) — per-style Buy Qty column shows all-sessions total with AU/USA breakdown
+- [x] Show grand total units bought across all styles in a summary bar or header — amber summary bar below Buy Session Bar shows Total Bought: AU X · USA Y · Z units total

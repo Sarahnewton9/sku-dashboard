@@ -209,6 +209,7 @@ export default function StylesTab() {
   // User can click into a session via the session selector in the Buy Session bar.
 
   const upsertItemMutation = trpc.buy.upsertItem.useMutation({
+    onSuccess: () => { utils.buy.getAllSessionQtys.invalidate(); },
     onError: (err) => toast.error(`Failed to save qty: ${err.message}`),
   });
 
@@ -488,7 +489,18 @@ export default function StylesTab() {
     return mergedRawSkus.filter((s) => s.style === styleName && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`));
   }
 
-  // Session buy total for a style (AU + USA combined)
+  // All-sessions buy total for a style (AU + USA combined, across every session)
+  const allQtysTyped = allSessionQtys as Record<string, { totalAu: number; totalUsa: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number }> }>;
+  function getStyleAllSessionsTotal(styleName: string): { au: number; usa: number; total: number } {
+    let au = 0; let usa = 0;
+    for (const sku of getSkusForStyle(styleName)) {
+      const key = `${sku.style}|${sku.colour}|${sku.leather}`;
+      const d = allQtysTyped[key];
+      if (d) { au += d.totalAu; usa += d.totalUsa; }
+    }
+    return { au, usa, total: au + usa };
+  }
+  // Legacy: session buy total for a style (current selected session only)
   function getStyleSessionTotal(styleName: string) {
     return getSkusForStyle(styleName).reduce((sum, sku) => {
       const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
@@ -496,6 +508,13 @@ export default function StylesTab() {
       return sum + (item ? item.auQty + item.usaQty : 0);
     }, 0);
   }
+  // Grand totals across all sessions
+  const grandTotals = useMemo(() => {
+    let au = 0; let usa = 0;
+    for (const d of Object.values(allQtysTyped)) { au += d.totalAu; usa += d.totalUsa; }
+    return { au, usa, total: au + usa };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allSessionQtys]);
 
   // Check if style has Size 11 enabled (any SKU in the style)
   function getStyleSize11(styleName: string) {
@@ -550,6 +569,29 @@ export default function StylesTab() {
         onDeselect={() => setSelectedSessionId(null)}
         onSessionChange={handleSessionChange}
       />
+
+      {/* Grand Total Buy Summary */}
+      {grandTotals.total > 0 && (
+        <div
+          className="flex items-center gap-4 px-4 py-2.5 rounded-xl border"
+          style={{ background: "oklch(0.97 0.05 65 / 0.6)", borderColor: "oklch(0.85 0.08 65)" }}
+        >
+          <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "oklch(0.50 0.14 55)" }}>Total Bought</span>
+          <div className="flex items-center gap-3 text-sm">
+            <span className="font-semibold tabular-nums" style={{ color: "oklch(0.35 0.12 55)" }}>
+              AU <span className="text-base font-bold">{grandTotals.au.toLocaleString()}</span>
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span className="font-semibold tabular-nums" style={{ color: "oklch(0.35 0.12 55)" }}>
+              USA <span className="text-base font-bold">{grandTotals.usa.toLocaleString()}</span>
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span className="font-bold tabular-nums text-base" style={{ color: "oklch(0.45 0.16 55)" }}>
+              {grandTotals.total.toLocaleString()} units total
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
@@ -694,6 +736,7 @@ export default function StylesTab() {
                   </thead>
                   <tbody>
                     {lastStyles.map((style) => {
+                      const allSessionsTotal = getStyleAllSessionsTotal(style.style);
                       const sessionTotal = getStyleSessionTotal(style.style);
                       const styleSize11 = getStyleSize11(style.style);
                       const styleSampleStatus = getStyleSampleStatus(style.style);
@@ -833,8 +876,13 @@ export default function StylesTab() {
                               </div>
                             </td>
                             <td className="px-4 py-3 text-right">
-                              {sessionTotal > 0 ? (
-                                <span className="text-sm font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{sessionTotal}</span>
+                              {allSessionsTotal.total > 0 ? (
+                                <div className="flex flex-col items-end gap-0.5">
+                                  <span className="text-sm font-bold tabular-nums" style={{ color: "oklch(0.45 0.16 55)" }}>{allSessionsTotal.total}</span>
+                                  <span className="text-xs tabular-nums text-muted-foreground">
+                                    AU {allSessionsTotal.au} · USA {allSessionsTotal.usa}
+                                  </span>
+                                </div>
                               ) : (
                                 <span className="text-xs text-muted-foreground">—</span>
                               )}
@@ -1076,18 +1124,13 @@ export default function StylesTab() {
                                                 </div>
                                               </>
                                             ) : (
-                                              <div className="flex gap-2">
-                                                {sessionAuQty > 0 && (
-                                                  <span className="text-xs font-mono" style={{ color: "oklch(0.50 0.14 55)" }}>
-                                                    AU: {sessionAuQty}
-                                                  </span>
-                                                )}
-                                                {sessionUsaQty > 0 && (
-                                                  <span className="text-xs font-mono" style={{ color: "oklch(0.45 0.14 240)" }}>
-                                                    USA: {sessionUsaQty}
-                                                  </span>
-                                                )}
-                                                {sessionAuQty === 0 && sessionUsaQty === 0 && (
+                                              <div className="flex flex-col gap-0.5">
+                                                {allTotal > 0 ? (
+                                                  <>
+                                                    <span className="text-xs font-mono" style={{ color: "oklch(0.50 0.14 55)" }}>AU: {allTotalAu}</span>
+                                                    <span className="text-xs font-mono" style={{ color: "oklch(0.45 0.14 240)" }}>USA: {allTotalUsa}</span>
+                                                  </>
+                                                ) : (
                                                   <span className="text-xs text-muted-foreground">—</span>
                                                 )}
                                               </div>
