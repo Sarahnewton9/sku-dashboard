@@ -1001,7 +1001,10 @@ export async function getAllSkuNewOverrides(): Promise<Array<{ style: string; co
 export async function upsertSkuNewOverride(style: string, colour: string, leather: string, isNew: boolean): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  // Preserve the __all__ sentinel as-is; uppercase everything else
+  const normColour = colour === "__all__" ? "__all__" : colour.toUpperCase();
+  const normLeather = leather === "__all__" ? "__all__" : leather.toUpperCase();
   await db.insert(skuNewOverride)
-    .values({ style: style.toUpperCase(), colour: colour.toUpperCase(), leather: leather.toUpperCase(), isNew })
+    .values({ style: style.toUpperCase(), colour: normColour, leather: normLeather, isNew })
     .onDuplicateKeyUpdate({ set: { isNew } });
 }

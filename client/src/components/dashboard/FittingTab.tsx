@@ -1573,10 +1573,33 @@ export function FittingTab() {
     [cancelledSkusRaw]
   );
 
-  const styleList = useMemo(
-    () => buildStyleListFromData(mergedStyles as typeof skuData.styles).filter((s) => !cancelledStyleSet.has(s.style)),
-    [mergedStyles, cancelledStyleSet]
-  );
+  // SKU new/existing overrides (from AI assistant)
+  const { data: skuNewOverrideList = [] } = trpc.skuNewOverride.getAll.useQuery();
+  const skuNewOverrideMap = useMemo(() => {
+    const m: Record<string, boolean> = {};
+    for (const o of skuNewOverrideList as Array<{ style: string; colour: string; leather: string; isNew: boolean }>) {
+      m[`${o.style}|${o.colour}|${o.leather}`] = o.isNew;
+    }
+    return m;
+  }, [skuNewOverrideList]);
+
+  const styleList = useMemo(() => {
+    // Apply new/existing overrides to mergedStyles before building the fitting list
+    const stylesWithOverrides = (mergedStyles as typeof skuData.styles).map((s) => {
+      const styleAllKey = `${s.style}|__all__|`;
+      // If the whole style is overridden as existing, set isAllNew=false and hasNew=false
+      if (styleAllKey in skuNewOverrideMap && skuNewOverrideMap[styleAllKey] === false) {
+        // Check if any per-SKU override marks a colour as new
+        const anyNewOverride = (s as any).rawSkus?.some?.((sku: any) => {
+          const key = `${sku.style}|${sku.colour}|${sku.leather ?? ""}`;
+          return skuNewOverrideMap[key] === true;
+        }) ?? false;
+        return { ...s, isAllNew: anyNewOverride, hasNew: anyNewOverride };
+      }
+      return s;
+    });
+    return buildStyleListFromData(stylesWithOverrides).filter((s) => !cancelledStyleSet.has(s.style));
+  }, [mergedStyles, cancelledStyleSet, skuNewOverrideMap]);
 
   // Data queries
   const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery();
