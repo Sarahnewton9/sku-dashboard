@@ -1353,6 +1353,21 @@ export const appRouter = router({
           {
             type: "function" as const,
             function: {
+              name: "mark_style_existing",
+              description: "Mark ALL SKUs of an entire style as existing/carryover (not new). Use this when the user says a style is not new, is a carryover, is existing, or doesn't need to appear in fittings — and no specific colour is mentioned.",
+              parameters: {
+                type: "object",
+                properties: {
+                  style: { type: "string", description: "Style name in uppercase, e.g. PAXOS" },
+                },
+                required: ["style"],
+                additionalProperties: false,
+              },
+            },
+          },
+          {
+            type: "function" as const,
+            function: {
               name: "no_action",
               description: "Use this when the user is asking a question, making a comment, or the request is unclear and no data change is needed.",
               parameters: {
@@ -1367,19 +1382,22 @@ export const appRouter = router({
           },
         ];
 
-        const systemPrompt = `You are a helpful assistant for the Tony Bianco SKU dashboard. 
+        const systemPrompt = `You are a helpful assistant for the Tony Bianco SKU dashboard.
 You help the team make quick data changes by interpreting natural language commands.
 The dashboard tracks shoe styles, colours, leathers, sample status, and buy quantities for the AW25/SS26 season.
 
 When the user describes a change, call the appropriate tool. Be confident in interpreting shoe industry terminology:
-- "carryover", "existing", "not new", "carry over" → mark_sku_new_or_existing with is_new=false
-- "new sku", "new colour", "new style" → mark_sku_new_or_existing with is_new=true  
+- "carryover", "existing", "not new", "carry over", "is not new", "doesn't need to appear in fittings" → mark_style_existing if no colour is mentioned, OR mark_sku_new_or_existing if a specific colour is mentioned
+- "new sku", "new colour", "new style" → mark_sku_new_or_existing with is_new=true (or mark_style_existing with is_new=true)
 - "sample received", "sample arrived", "got the sample" → update_sample_status with status=received
 - "waiting on sample", "sample not here" → update_sample_status with status=waiting
 - "cancel", "drop", "remove" → cancel_sku or cancel_style
 - "restore", "reinstate", "bring back" → restore_sku
 
-Always uppercase style and colour names when calling tools (e.g. NESTA, VANILLA VINTAGE).
+IMPORTANT: If the user says a STYLE (not a specific colour) is not new / is existing / is a carryover, use mark_style_existing — this marks ALL colours of that style as existing in one go.
+If the user mentions a specific colour, use mark_sku_new_or_existing for that specific SKU.
+
+Always uppercase style and colour names when calling tools (e.g. NESTA, PAXOS, VANILLA VINTAGE).
 If leather/material is not mentioned, use an empty string.
 If the request is unclear or is a question, use no_action.`;
 
@@ -1391,14 +1409,19 @@ If the request is unclear or is a question, use no_action.`;
         const result = await invokeLLM({
           messages: llmMessages,
           tools,
-          tool_choice: "required",
+          tool_choice: "auto",
         });
 
         const choice = result.choices?.[0];
         const toolCall = choice?.message?.tool_calls?.[0];
 
         if (!toolCall) {
-          return { success: false, reply: "I couldn't understand that request. Could you rephrase it?", action: null };
+          // LLM chose to reply with text rather than call a tool — use that response
+          const textReply = choice?.message?.content;
+          if (textReply) {
+            return { success: true, reply: String(textReply), action: null };
+          }
+          return { success: false, reply: "I couldn't understand that request. Could you rephrase it? Try something like: \"Paxos is not a new style\" or \"Sample received for Anja Black Patent\".", action: null };
         }
 
         const fnName = toolCall.function?.name;
@@ -1449,6 +1472,14 @@ If the request is unclear or is a question, use no_action.`;
           await cancelStyle(style);
           reply = `Done — **${style}** (all colours) has been cancelled.`;
           action = { type: "cancel_style", style };
+
+        } else if (fnName === "mark_style_existing") {
+          const style = String(args.style ?? "").toUpperCase();
+          // Insert a style-level override row with colour="__all__" — the frontend checks this key
+          // and applies it to all SKUs of the style when no per-SKU override exists
+          await upsertSkuNewOverride(style, "__all__", "", false);
+          reply = `Done — **${style}** is now marked as an existing/carryover style. All its SKUs will show as existing.`;
+          action = { type: "mark_style_existing", style };
 
         } else if (fnName === "no_action") {
           reply = String(args.response ?? "How can I help?");

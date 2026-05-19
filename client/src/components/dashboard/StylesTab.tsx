@@ -98,6 +98,7 @@ export default function StylesTab() {
 
   // SKU new/existing overrides (set via AI assistant)
   const { data: skuNewOverrideList = [] } = trpc.skuNewOverride.getAll.useQuery();
+  // skuNewOverrideMap: key = "STYLE|COLOUR|LEATHER" or "STYLE|__all__|" for style-level overrides
   const skuNewOverrideMap = useMemo(() => {
     const m: Record<string, boolean> = {};
     for (const o of skuNewOverrideList as Array<{ style: string; colour: string; leather: string; isNew: boolean }>) {
@@ -499,9 +500,14 @@ export default function StylesTab() {
     return mergedRawSkus
       .filter((s) => s.style === styleName && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`))
       .map((s) => {
-        const key = `${s.style}|${s.colour}|${s.leather}`;
-        if (key in skuNewOverrideMap) {
-          return { ...s, is_new: skuNewOverrideMap[key] };
+        const skuKey = `${s.style}|${s.colour}|${s.leather}`;
+        const styleAllKey = `${s.style}|__all__|`;
+        // Per-SKU override takes priority over style-level override
+        if (skuKey in skuNewOverrideMap) {
+          return { ...s, is_new: skuNewOverrideMap[skuKey] };
+        }
+        if (styleAllKey in skuNewOverrideMap) {
+          return { ...s, is_new: skuNewOverrideMap[styleAllKey] };
         }
         return s;
       });
