@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -988,4 +988,20 @@ export async function getChangesReport(since: Date): Promise<{
       .where(gte(customSkus.createdAt, since)),
   ]);
   return { cancelledStyles: cStyles, cancelledSkus: cSkus, newColours: nColours };
+}
+
+// ─── SKU New/Existing Override ────────────────────────────────────────────────
+export async function getAllSkuNewOverrides(): Promise<Array<{ style: string; colour: string; leather: string; isNew: boolean }>> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({ style: skuNewOverride.style, colour: skuNewOverride.colour, leather: skuNewOverride.leather, isNew: skuNewOverride.isNew })
+    .from(skuNewOverride);
+}
+
+export async function upsertSkuNewOverride(style: string, colour: string, leather: string, isNew: boolean): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(skuNewOverride)
+    .values({ style: style.toUpperCase(), colour: colour.toUpperCase(), leather: leather.toUpperCase(), isNew })
+    .onDuplicateKeyUpdate({ set: { isNew } });
 }

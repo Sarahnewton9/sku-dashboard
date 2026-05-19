@@ -9,7 +9,7 @@
  * Active tab is derived from the current URL so links are shareable.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
@@ -29,7 +29,6 @@ import LastApprovalTab from "@/components/dashboard/LastApprovalTab";
 import { FittingTab } from "@/components/dashboard/FittingTab";
 import SeasonAnalysisTab from "@/components/dashboard/SeasonAnalysisTab";
 import SpecsTab from "@/components/dashboard/SpecsTab";
-import { useState } from "react";
 import {
   LayoutDashboard,
   Tag,
@@ -46,6 +45,11 @@ import {
   LineChart,
   Ruler,
   ClipboardList,
+  MessageSquare,
+  X,
+  Send,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
 
 type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval" | "fitting" | "specs" | "season-analysis";
@@ -73,9 +77,51 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group
   { id: "season-analysis", label: "Season Analysis", icon: LineChart, group: "analysis" },
 ];
 
+type ChatMessage = { role: "user" | "assistant"; content: string };
+
 export default function Dashboard() {
   const [location, navigate] = useLocation();
   const [showExport, setShowExport] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const utils = trpc.useUtils();
+
+  const chatMutation = trpc.chat.command.useMutation({
+    onSuccess: (data) => {
+      setChatMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+      // Invalidate relevant queries so the UI reflects the change immediately
+      if (data.action) {
+        const actionType = (data.action as { type: string }).type;
+        if (actionType === "mark_sku_new_or_existing") {
+          utils.skuNewOverride.getAll.invalidate();
+        } else if (actionType === "update_sample_status") {
+          utils.sku.getAll.invalidate();
+        } else if (actionType === "cancel_sku" || actionType === "restore_sku") {
+          utils.cancelledSku.list.invalidate();
+        } else if (actionType === "cancel_style") {
+          utils.styles.listCancelled.invalidate();
+        }
+      }
+    },
+    onError: (err) => {
+      setChatMessages((prev) => [...prev, { role: "assistant", content: `Sorry, something went wrong: ${err.message}` }]);
+    },
+  });
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  function handleChatSend() {
+    const text = chatInput.trim();
+    if (!text || chatMutation.isPending) return;
+    const newMessages: ChatMessage[] = [...chatMessages, { role: "user", content: text }];
+    setChatMessages(newMessages);
+    setChatInput("");
+    chatMutation.mutate({ messages: newMessages });
+  }
 
   // Derive active tab from the URL path (strip leading slash)
   const pathTab = location.replace(/^\//, "") as Tab;
@@ -285,6 +331,135 @@ export default function Dashboard() {
       {/* Export Panel */}
       {showExport && (
         <ExportPanel onClose={() => setShowExport(false)} />
+      )}
+
+      {/* ── AI Assistant Floating Button ── */}
+      <button
+        onClick={() => setShowChat((v) => !v)}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
+        style={{
+          background: showChat ? "oklch(0.35 0.02 60)" : "oklch(0.25 0.02 60)",
+          color: "#fff",
+          boxShadow: "0 4px 24px oklch(0.25 0.02 60 / 0.35)",
+        }}
+        title="AI Assistant"
+      >
+        <Sparkles className="w-4 h-4" />
+        <span>Quick Edit</span>
+      </button>
+
+      {/* ── AI Assistant Chat Panel ── */}
+      {showChat && (
+        <div
+          className="fixed bottom-20 right-6 z-50 flex flex-col rounded-2xl shadow-2xl overflow-hidden"
+          style={{
+            width: "380px",
+            height: "480px",
+            background: "var(--card)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          {/* Header */}
+          <div
+            className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+            style={{ background: "oklch(0.25 0.02 60)", color: "#fff" }}
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              <span className="font-semibold text-sm">Quick Edit Assistant</span>
+            </div>
+            <button
+              onClick={() => setShowChat(false)}
+              className="opacity-70 hover:opacity-100 transition-opacity"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            {chatMessages.length === 0 && (
+              <div className="text-center py-8">
+                <MessageSquare className="w-8 h-8 mx-auto mb-3 opacity-20" style={{ color: "var(--foreground)" }} />
+                <p className="text-sm font-medium" style={{ color: "var(--foreground)" }}>Make quick changes</p>
+                <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>Type a command like:</p>
+                <div className="mt-3 space-y-1.5">
+                  {[
+                    "Nesta Vanilla Vintage is not new",
+                    "Sample received for Anja Black Patent",
+                    "Cancel Edgy Black Capri",
+                  ].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setChatInput(s)}
+                      className="block w-full text-left text-xs px-3 py-2 rounded-lg transition-colors hover:opacity-80"
+                      style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {chatMessages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className="max-w-[85%] px-3 py-2 rounded-xl text-sm leading-relaxed"
+                  style={{
+                    background: msg.role === "user"
+                      ? "oklch(0.25 0.02 60)"
+                      : "var(--muted)",
+                    color: msg.role === "user" ? "#fff" : "var(--foreground)",
+                    borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                  }}
+                >
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {chatMutation.isPending && (
+              <div className="flex justify-start">
+                <div
+                  className="px-3 py-2 rounded-xl text-sm flex items-center gap-2"
+                  style={{ background: "var(--muted)", color: "var(--muted-foreground)", borderRadius: "18px 18px 18px 4px" }}
+                >
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>Processing...</span>
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Input */}
+          <div
+            className="flex-shrink-0 px-3 py-3 flex items-center gap-2"
+            style={{ borderTop: "1px solid var(--border)" }}
+          >
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleChatSend(); } }}
+              placeholder="Type a change..."
+              disabled={chatMutation.isPending}
+              className="flex-1 text-sm px-3 py-2 rounded-lg outline-none transition-colors"
+              style={{
+                background: "var(--muted)",
+                color: "var(--foreground)",
+                border: "1px solid var(--border)",
+              }}
+            />
+            <button
+              onClick={handleChatSend}
+              disabled={!chatInput.trim() || chatMutation.isPending}
+              className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all disabled:opacity-40"
+              style={{ background: "oklch(0.25 0.02 60)", color: "#fff" }}
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

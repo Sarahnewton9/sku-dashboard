@@ -176,6 +176,20 @@
       "when": 1778739959749,
       "tag": "0024_pink_bill_hollister",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1779232450934,
+      "tag": "0025_smart_metal_master",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1779232797464,
+      "tag": "0026_bizarre_viper",
+      "breakpoints": true
     }
   ]
 }

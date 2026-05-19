@@ -158,3 +158,10 @@
 - [x] Sidebar nav items become links that update the URL; active tab is derived from the URL
 - [x] Navigating to / redirects to /overview; unknown paths fall back to /overview
 - [x] Browser back/forward buttons work correctly between tabs
+
+## AI Dashboard Assistant Chatbot (May 2026)
+- [x] Add skuIsNewOverride DB table + helper to override is_new flag per SKU
+- [x] Add chat.command tRPC procedure using LLM tool-calling to interpret natural language commands
+- [x] Add floating chat panel UI using AIChatBox component in the dashboard
+- [x] Wire chat panel to chat.command mutation with conversation history
+- [x] Support commands: mark SKU as new/existing, update sample status, cancel/restore SKU, cancel style

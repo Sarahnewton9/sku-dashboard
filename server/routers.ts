@@ -34,6 +34,7 @@ import {
   getLatestPptxImport, listPptxImports,
   getAllLastHeelHeights, upsertLastHeelHeight,
   getChangesReport,
+  getAllSkuNewOverrides, upsertSkuNewOverride,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -1231,6 +1232,234 @@ export const appRouter = router({
     get: publicProcedure
       .input(z.object({ since: z.date() }))
       .query(async ({ input }) => getChangesReport(input.since)),
+  }),
+
+  // ─── SKU New/Existing Override ────────────────────────────────────────────
+  skuNewOverride: router({
+    getAll: publicProcedure.query(async () => getAllSkuNewOverrides()),
+
+    upsert: publicProcedure
+      .input(z.object({
+        style: z.string(),
+        colour: z.string(),
+        leather: z.string().default(""),
+        isNew: z.boolean(),
+      }))
+      .mutation(async ({ input }) => {
+        await upsertSkuNewOverride(input.style, input.colour, input.leather, input.isNew);
+        return { success: true };
+      }),
+  }),
+
+  // ─── AI Dashboard Assistant ──────────────────────────────────────────────────
+  chat: router({
+    command: publicProcedure
+      .input(z.object({
+        messages: z.array(z.object({
+          role: z.enum(["user", "assistant"]),
+          content: z.string(),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        const { invokeLLM } = await import("./_core/llm");
+
+        // Define the tools the assistant can call
+        const tools = [
+          {
+            type: "function" as const,
+            function: {
+              name: "mark_sku_new_or_existing",
+              description: "Mark a SKU (style + colour + leather) as new or existing. Use this when the user says a SKU is not new, is existing, is a carryover, or conversely is new.",
+              parameters: {
+                type: "object",
+                properties: {
+                  style: { type: "string", description: "Style name in uppercase, e.g. NESTA" },
+                  colour: { type: "string", description: "Colour name in uppercase, e.g. VANILLA VINTAGE" },
+                  leather: { type: "string", description: "Leather/material name in uppercase, e.g. SUEDE. Use empty string if not specified." },
+                  is_new: { type: "boolean", description: "true if the SKU is new, false if it is existing/carryover" },
+                },
+                required: ["style", "colour", "is_new"],
+                additionalProperties: false,
+              },
+            },
+          },
+          {
+            type: "function" as const,
+            function: {
+              name: "update_sample_status",
+              description: "Update the sample status for a SKU. Use when user says sample received, sample arrived, or sample is waiting.",
+              parameters: {
+                type: "object",
+                properties: {
+                  style: { type: "string", description: "Style name in uppercase" },
+                  colour: { type: "string", description: "Colour name in uppercase" },
+                  leather: { type: "string", description: "Leather/material name in uppercase. Use empty string if not specified." },
+                  status: { type: "string", enum: ["waiting", "received"], description: "waiting = sample not yet received, received = sample has arrived" },
+                },
+                required: ["style", "colour", "status"],
+                additionalProperties: false,
+              },
+            },
+          },
+          {
+            type: "function" as const,
+            function: {
+              name: "cancel_sku",
+              description: "Cancel a SKU (mark it as cancelled/dropped from the range). Use when user says cancel, drop, or remove a colour.",
+              parameters: {
+                type: "object",
+                properties: {
+                  style: { type: "string", description: "Style name in uppercase" },
+                  colour: { type: "string", description: "Colour name in uppercase" },
+                  leather: { type: "string", description: "Leather/material name in uppercase. Use empty string if not specified." },
+                },
+                required: ["style", "colour"],
+                additionalProperties: false,
+              },
+            },
+          },
+          {
+            type: "function" as const,
+            function: {
+              name: "restore_sku",
+              description: "Restore a previously cancelled SKU. Use when user says restore, reinstate, or bring back a colour.",
+              parameters: {
+                type: "object",
+                properties: {
+                  style: { type: "string", description: "Style name in uppercase" },
+                  colour: { type: "string", description: "Colour name in uppercase" },
+                  leather: { type: "string", description: "Leather/material name in uppercase. Use empty string if not specified." },
+                },
+                required: ["style", "colour"],
+                additionalProperties: false,
+              },
+            },
+          },
+          {
+            type: "function" as const,
+            function: {
+              name: "cancel_style",
+              description: "Cancel an entire style (all SKUs). Use when user says cancel or drop a whole style.",
+              parameters: {
+                type: "object",
+                properties: {
+                  style: { type: "string", description: "Style name in uppercase" },
+                },
+                required: ["style"],
+                additionalProperties: false,
+              },
+            },
+          },
+          {
+            type: "function" as const,
+            function: {
+              name: "no_action",
+              description: "Use this when the user is asking a question, making a comment, or the request is unclear and no data change is needed.",
+              parameters: {
+                type: "object",
+                properties: {
+                  response: { type: "string", description: "A helpful response to the user" },
+                },
+                required: ["response"],
+                additionalProperties: false,
+              },
+            },
+          },
+        ];
+
+        const systemPrompt = `You are a helpful assistant for the Tony Bianco SKU dashboard. 
+You help the team make quick data changes by interpreting natural language commands.
+The dashboard tracks shoe styles, colours, leathers, sample status, and buy quantities for the AW25/SS26 season.
+
+When the user describes a change, call the appropriate tool. Be confident in interpreting shoe industry terminology:
+- "carryover", "existing", "not new", "carry over" → mark_sku_new_or_existing with is_new=false
+- "new sku", "new colour", "new style" → mark_sku_new_or_existing with is_new=true  
+- "sample received", "sample arrived", "got the sample" → update_sample_status with status=received
+- "waiting on sample", "sample not here" → update_sample_status with status=waiting
+- "cancel", "drop", "remove" → cancel_sku or cancel_style
+- "restore", "reinstate", "bring back" → restore_sku
+
+Always uppercase style and colour names when calling tools (e.g. NESTA, VANILLA VINTAGE).
+If leather/material is not mentioned, use an empty string.
+If the request is unclear or is a question, use no_action.`;
+
+        const llmMessages = [
+          { role: "system" as const, content: systemPrompt },
+          ...input.messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+        ];
+
+        const result = await invokeLLM({
+          messages: llmMessages,
+          tools,
+          tool_choice: "required",
+        });
+
+        const choice = result.choices?.[0];
+        const toolCall = choice?.message?.tool_calls?.[0];
+
+        if (!toolCall) {
+          return { success: false, reply: "I couldn't understand that request. Could you rephrase it?", action: null };
+        }
+
+        const fnName = toolCall.function?.name;
+        let args: Record<string, unknown> = {};
+        try {
+          args = JSON.parse(toolCall.function?.arguments ?? "{}");
+        } catch {}
+
+        let reply = "";
+        let action: Record<string, unknown> | null = null;
+
+        if (fnName === "mark_sku_new_or_existing") {
+          const style = String(args.style ?? "").toUpperCase();
+          const colour = String(args.colour ?? "").toUpperCase();
+          const leather = String(args.leather ?? "").toUpperCase();
+          const isNew = Boolean(args.is_new);
+          await upsertSkuNewOverride(style, colour, leather, isNew);
+          reply = `Done — **${style} ${colour}${leather ? ` ${leather}` : ""}** is now marked as **${isNew ? "new" : "existing"}**.`;
+          action = { type: "mark_sku_new_or_existing", style, colour, leather, isNew };
+
+        } else if (fnName === "update_sample_status") {
+          const style = String(args.style ?? "").toUpperCase();
+          const colour = String(args.colour ?? "").toUpperCase();
+          const leather = String(args.leather ?? "").toUpperCase();
+          const status = args.status as "waiting" | "received";
+          await upsertSkuMeta({ style, colour, leather, sampleStatus: status });
+          reply = `Done — **${style} ${colour}${leather ? ` ${leather}` : ""}** sample status set to **${status}**.`;
+          action = { type: "update_sample_status", style, colour, leather, status };
+
+        } else if (fnName === "cancel_sku") {
+          const style = String(args.style ?? "").toUpperCase();
+          const colour = String(args.colour ?? "").toUpperCase();
+          const leather = String(args.leather ?? "").toUpperCase();
+          await cancelSku(style, colour, leather);
+          reply = `Done — **${style} ${colour}${leather ? ` ${leather}` : ""}** has been cancelled.`;
+          action = { type: "cancel_sku", style, colour, leather };
+
+        } else if (fnName === "restore_sku") {
+          const style = String(args.style ?? "").toUpperCase();
+          const colour = String(args.colour ?? "").toUpperCase();
+          const leather = String(args.leather ?? "").toUpperCase();
+          await restoreSku(style, colour, leather);
+          reply = `Done — **${style} ${colour}${leather ? ` ${leather}` : ""}** has been restored.`;
+          action = { type: "restore_sku", style, colour, leather };
+
+        } else if (fnName === "cancel_style") {
+          const style = String(args.style ?? "").toUpperCase();
+          await cancelStyle(style);
+          reply = `Done — **${style}** (all colours) has been cancelled.`;
+          action = { type: "cancel_style", style };
+
+        } else if (fnName === "no_action") {
+          reply = String(args.response ?? "How can I help?");
+          action = null;
+        } else {
+          reply = "I'm not sure what to do with that. Could you rephrase?";
+          action = null;
+        }
+
+        return { success: true, reply, action };
+      }),
   }),
 
   // ─── Spec Custom Rows ───────────────────────────────────────────────────────

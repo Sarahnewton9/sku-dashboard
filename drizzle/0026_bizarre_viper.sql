@@ -1,0 +1,1 @@
+ALTER TABLE `sku_new_override` ADD CONSTRAINT `sku_new_override_sku_idx` UNIQUE(`style`,`colour`,`leather`);

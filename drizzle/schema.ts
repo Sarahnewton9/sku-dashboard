@@ -442,3 +442,20 @@ export const lastHeelHeights = mysqlTable("last_heel_heights", {
 });
 export type LastHeelHeight = typeof lastHeelHeights.$inferSelect;
 export type InsertLastHeelHeight = typeof lastHeelHeights.$inferInsert;
+
+/**
+ * SKU new/existing override — allows manually overriding the is_new flag from static skuData.
+ * When a row exists here, it takes precedence over the static data.
+ */
+export const skuNewOverride = mysqlTable("sku_new_override", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull(),
+  colour: varchar("colour", { length: 64 }).notNull(),
+  leather: varchar("leather", { length: 64 }).notNull().default(""),
+  isNew: boolean("isNew").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  skuIdx: uniqueIndex("sku_new_override_sku_idx").on(t.style, t.colour, t.leather),
+}));
+export type SkuNewOverride = typeof skuNewOverride.$inferSelect;
+export type InsertSkuNewOverride = typeof skuNewOverride.$inferInsert;
