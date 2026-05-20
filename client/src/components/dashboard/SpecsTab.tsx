@@ -927,16 +927,13 @@ function SpecForm({
             </tr>
           </thead>
           <tbody>
-            {Object.entries(sections).map(([sectionKey, components]) => (
+            {Object.entries(sections).map(([sectionKey, components], sectionIdx) => (
               <React.Fragment key={sectionKey}>
-                <tr className="bg-muted/20">
-                  <td
-                    colSpan={entry.colours.length + 1}
-                    className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b"
-                  >
-                    {SECTION_LABELS[sectionKey] ?? sectionKey}
-                  </td>
-                </tr>
+                {sectionIdx > 0 && (
+                  <tr>
+                    <td colSpan={entry.colours.length + 1} className="py-1" />
+                  </tr>
+                )}
                 {components.map((comp) => (
                   <tr key={comp.key} className="border-b hover:bg-muted/10">
                     <td className="px-3 py-1.5 font-medium text-muted-foreground align-middle">{comp.label}</td>
