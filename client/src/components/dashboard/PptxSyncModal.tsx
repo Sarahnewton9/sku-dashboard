@@ -87,6 +87,7 @@ export default function PptxSyncModal({ onClose, onApplied }: Props) {
 
   const [rescanInfo, setRescanInfo] = useState<{ fileName: string; uploadedAt: Date } | null>(null);
   const buildDiffMutation = trpc.pptxSync.buildDiff.useMutation();
+  const parseFromUrlMutation = trpc.pptxSync.parseFromUrl.useMutation();
   const rescanMutation = trpc.pptxSync.rescan.useMutation();
 
   const applyMutation = trpc.pptxSync.applyChanges.useMutation({
@@ -159,18 +160,28 @@ export default function PptxSyncModal({ onClose, onApplied }: Props) {
     setStep("parsing");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/pptx-upload", {
+      // Upload directly to Manus storage from the browser to bypass proxy size limits
+      const forgeApiUrl = import.meta.env.VITE_FRONTEND_FORGE_API_URL;
+      const forgeApiKey = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
+      if (!forgeApiUrl || !forgeApiKey) throw new Error("Storage credentials not configured");
+
+      const fileKey = `pptx-uploads/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const uploadUrl = new URL("v1/storage/upload", forgeApiUrl.endsWith("/") ? forgeApiUrl : forgeApiUrl + "/");
+      uploadUrl.searchParams.set("path", fileKey);
+
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", file, fileKey.split("/").pop());
+      const uploadRes = await fetch(uploadUrl.toString(), {
         method: "POST",
-        credentials: "include",
-        body: formData,
+        headers: { Authorization: `Bearer ${forgeApiKey}` },
+        body: uploadFormData,
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(err.error || "Upload failed");
+      if (!uploadRes.ok) {
+        const errText = await uploadRes.text().catch(() => uploadRes.statusText);
+        throw new Error(`Storage upload failed (${uploadRes.status}): ${errText}`);
       }
-      const { parsed } = await res.json();
+      const { url: fileUrl } = await uploadRes.json();
+      if (!fileUrl) throw new Error("Storage upload did not return a URL");
 
       // Pass the full static SKU list so the server can detect new SKUs
       const knownSkus = (skuData.rawSkus as readonly { style: string; colour: string; leather: string }[]).map((s) => ({
@@ -179,8 +190,9 @@ export default function PptxSyncModal({ onClose, onApplied }: Props) {
         leather: s.leather ?? "",
       }));
 
-      const data = await buildDiffMutation.mutateAsync({ parsed, knownSkus });
-      if (!data) throw new Error("Failed to build diff");
+      // Ask the server to download from storage and parse
+      const data = await parseFromUrlMutation.mutateAsync({ url: fileUrl, fileName: file.name, knownSkus });
+      if (!data) throw new Error("Failed to parse PPTX");
       setSlideCount(data.slideCount);
       setRows(buildRows(data as unknown as ParseResult));
       setStep("review");

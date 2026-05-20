@@ -1182,6 +1182,90 @@ export const appRouter = router({
 
     // List stored PPTX imports
     listImports: publicProcedure.query(async () => listPptxImports()),
+
+    // Parse a PPTX from a URL (used when browser uploads directly to storage to bypass proxy size limits)
+    parseFromUrl: publicProcedure
+      .input(z.object({
+        url: z.string().url(),
+        fileName: z.string().optional(),
+        knownSkus: z.array(z.object({ style: z.string(), colour: z.string(), leather: z.string() })).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        // Download the PPTX from the provided URL
+        const resp = await fetch(input.url);
+        if (!resp.ok) throw new Error(`Failed to fetch PPTX from URL (${resp.status})`);
+        const buf = Buffer.from(await resp.arrayBuffer());
+
+        // Parse the PPTX
+        const { parsePptxBuffer } = await import('./pptx_parser');
+        const parsed = await parsePptxBuffer(buf);
+
+        // Store in S3 for re-scan later
+        try {
+          const fileName = input.fileName || 'range_review.pptx';
+          const fileKey = `pptx-imports/${Date.now()}-${fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+          const { storagePut } = await import('./storage');
+          const { key } = await storagePut(fileKey, buf, 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+          await recordPptxImport(key, fileName);
+        } catch (storeErr) {
+          console.warn('[pptxSync.parseFromUrl] Failed to store PPTX in S3:', storeErr);
+        }
+
+        // Build diff (same logic as buildDiff)
+        const [cancelledSkus, cancelledStyles, allSkuMeta, customSkus] = await Promise.all([
+          listCancelledSkus(),
+          listCancelledStyles(),
+          getAllSkuMeta(),
+          getAllCustomSkus(),
+        ]);
+        const cancelledSkuSet = new Set(cancelledSkus.map((s) => `${s.style}|${s.colour}|${s.leather}`));
+        const cancelledStyleSet = new Set(cancelledStyles.map((s) => s.style));
+        const skuMetaMap = new Map(allSkuMeta.map((s) => [`${s.style}|${s.colour}|${s.leather}`, s]));
+        const knownSkuSet = new Set<string>();
+        if (input.knownSkus && input.knownSkus.length > 0) {
+          for (const s of input.knownSkus) knownSkuSet.add(`${s.style}|${s.colour}|${s.leather}`);
+        }
+        for (const s of customSkus) knownSkuSet.add(`${s.style}|${s.colour}|${s.leather}`);
+
+        type DiffItem = { last: string; style: string; colour: string; leather: string; pptxStatus: string; currentStatus: string; action: string; sampleStatus?: string; };
+        const toCancel: DiffItem[] = [];
+        const toMarkSpecked: DiffItem[] = [];
+        const toMarkSpeckedNoSample: DiffItem[] = [];
+        const toAddNew: DiffItem[] = [];
+        const alreadyCancelled: DiffItem[] = [];
+
+        for (const slide of parsed) {
+          if (slide.error) continue;
+          const last = slide.last;
+          for (const styleData of slide.styles) {
+            const style = styleData.style;
+            for (const sku of styleData.skus) {
+              const { colour, leather, status } = sku;
+              const key = `${style}|${colour}|${leather}`;
+              const isAlreadyCancelledSku = cancelledSkuSet.has(key);
+              const isAlreadyCancelledStyle = cancelledStyleSet.has(style);
+              const meta = skuMetaMap.get(key);
+              const isKnown = knownSkuSet.size > 0 ? knownSkuSet.has(key) : true;
+              const item: DiffItem = { last, style, colour, leather, pptxStatus: status, currentStatus: isAlreadyCancelledSku ? 'cancelled_sku' : isAlreadyCancelledStyle ? 'cancelled_style' : (meta?.sampleStatus ?? 'no_meta'), action: 'none' };
+
+              if (status === 'cancelled') {
+                if (isAlreadyCancelledSku || isAlreadyCancelledStyle) alreadyCancelled.push({ ...item, action: 'already_cancelled' });
+                else if (isKnown) toCancel.push({ ...item, action: 'cancel_sku' });
+              } else if (!isKnown) {
+                const sampleStatus = status === 'specked' ? 'received' : 'waiting';
+                toAddNew.push({ ...item, action: 'add_new', sampleStatus });
+              } else if (status === 'specked') {
+                if (!isAlreadyCancelledSku && !isAlreadyCancelledStyle && (!meta || meta.sampleStatus !== 'received'))
+                  toMarkSpecked.push({ ...item, action: 'mark_specked' });
+              } else if (status === 'specked_no_sample') {
+                if (!isAlreadyCancelledSku && !isAlreadyCancelledStyle && (!meta || meta.sampleStatus !== 'received'))
+                  toMarkSpeckedNoSample.push({ ...item, action: 'mark_specked_no_sample' });
+              }
+            }
+          }
+        }
+        return { success: true, slideCount: parsed.filter((s) => !s.error).length, toCancel, toMarkSpecked, toMarkSpeckedNoSample, toAddNew, alreadyCancelled };
+      }),
   }),
 
   // ─── Fitting Groups ──────────────────────────────────────────────────────────
