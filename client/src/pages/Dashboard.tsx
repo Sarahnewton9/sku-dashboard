@@ -336,16 +336,15 @@ export default function Dashboard() {
       {/* ── AI Assistant Floating Button ── */}
       <button
         onClick={() => setShowChat((v) => !v)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
+        className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-11 h-11 rounded-full shadow-lg transition-all duration-200 hover:scale-110 active:scale-95"
         style={{
           background: showChat ? "oklch(0.35 0.02 60)" : "oklch(0.25 0.02 60)",
           color: "#fff",
           boxShadow: "0 4px 24px oklch(0.25 0.02 60 / 0.35)",
         }}
-        title="AI Assistant"
+        title="Quick Edit Assistant"
       >
         <Sparkles className="w-4 h-4" />
-        <span>Quick Edit</span>
       </button>
 
       {/* ── AI Assistant Chat Panel ── */}
