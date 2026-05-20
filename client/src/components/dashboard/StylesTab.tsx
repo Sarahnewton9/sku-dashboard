@@ -96,16 +96,6 @@ export default function StylesTab() {
   const { data: skuMetaList = [], refetch: refetchSkuMeta } = trpc.sku.getAll.useQuery();
   const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery();
 
-  // SKU new/existing overrides (set via AI assistant)
-  const { data: skuNewOverrideList = [] } = trpc.skuNewOverride.getAll.useQuery();
-  // skuNewOverrideMap: key = "STYLE|COLOUR|LEATHER" or "STYLE|__all__|" for style-level overrides
-  const skuNewOverrideMap = useMemo(() => {
-    const m: Record<string, boolean> = {};
-    for (const o of skuNewOverrideList as Array<{ style: string; colour: string; leather: string; isNew: boolean }>) {
-      m[`${o.style}|${o.colour}|${o.leather}`] = o.isNew;
-    }
-    return m;
-  }, [skuNewOverrideList]);
 
   // Fitting images for approved styles
   const { data: allFitImages = [], refetch: refetchFitImages } = trpc.styleFitting.getAll.useQuery();
@@ -497,20 +487,9 @@ export default function StylesTab() {
   }
 
   function getSkusForStyle(styleName: string) {
+    // mergedRawSkus already has overrides applied via useCustomSkus
     return mergedRawSkus
-      .filter((s) => s.style === styleName && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`))
-      .map((s) => {
-        const skuKey = `${s.style}|${s.colour}|${s.leather}`;
-        const styleAllKey = `${s.style}|__all__|`;
-        // Per-SKU override takes priority over style-level override
-        if (skuKey in skuNewOverrideMap) {
-          return { ...s, is_new: skuNewOverrideMap[skuKey] };
-        }
-        if (styleAllKey in skuNewOverrideMap) {
-          return { ...s, is_new: skuNewOverrideMap[styleAllKey] };
-        }
-        return s;
-      });
+      .filter((s) => s.style === styleName && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`));
   }
 
   // All-sessions buy total for a style (AU + USA combined, across every session)

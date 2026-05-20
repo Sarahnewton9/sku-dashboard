@@ -1,0 +1,18 @@
+{
+  "query": "SELECT * FROM sku_new_override WHERE style = 'PAXOS';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2PKnJnyFBef7ny1.49968122eb9d --database RGHTjKGQqzKd5FypxANQbT --execute SELECT * FROM sku_new_override WHERE style = 'PAXOS';",
+  "rows": [
+    {
+      "id": "1",
+      "style": "PAXOS",
+      "colour": "__all__",
+      "leather": "",
+      "isNew": "0",
+      "updatedAt": "2026-05-19 23:46:56"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tstyle\tcolour\tleather\tisNew\tupdatedAt\n1\tPAXOS\t__all__\t\t0\t2026-05-19 23:46:56\n",
+  "stderr": "",
+  "execution_time_ms": 1884
+}
