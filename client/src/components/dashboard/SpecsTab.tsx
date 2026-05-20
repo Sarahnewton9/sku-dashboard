@@ -17,8 +17,15 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import {
-  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2, X, ArrowRight, RefreshCw,
+  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2, X, ArrowRight, RefreshCw, GripVertical,
 } from "lucide-react";
+import {
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext, useSortable, verticalListSortingStrategy, arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
 import {
   getTemplateForCategory, DEFAULT_DROPDOWN_OPTIONS, SECTION_LABELS,
@@ -205,6 +212,144 @@ function TextCell({ value, onSave }: TextCellProps) {
   );
 }
 
+// ─── Sortable Custom Row (drag-and-drop) ─────────────────────────────────────
+
+interface SortableCustomRowProps {
+  row: CustomRowData;
+  colours: string[];
+  onUpdate: (id: number, title: string, value: string) => void;
+  onDelete: (id: number) => void;
+  allTitles: string[];
+  onInsertAfter: () => void;
+}
+
+function SortableCustomRow({ row, colours, onUpdate, onDelete, allTitles, onInsertAfter }: SortableCustomRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: row.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    background: isDragging ? "var(--muted)" : undefined,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  return (
+    <>
+      <tr ref={setNodeRef} style={style} className="border-b hover:bg-amber-50/30 dark:hover:bg-amber-900/10 group">
+        <td className="px-1 py-1.5 align-middle">
+          <div className="flex items-center gap-1">
+            {/* Drag handle */}
+            <button
+              {...attributes}
+              {...listeners}
+              className="p-0.5 text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
+              title="Drag to reorder"
+              tabIndex={-1}
+            >
+              <GripVertical className="w-3.5 h-3.5" />
+            </button>
+            <CustomRowTitleInput
+              id={row.id}
+              initialTitle={row.title}
+              value={row.value ?? ""}
+              onUpdate={onUpdate}
+              onDelete={onDelete}
+              allTitles={allTitles}
+            />
+          </div>
+        </td>
+        {colours.map((colour, colIdx) => (
+          <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
+            <TextCell
+              value={row.colour === "__all__" || row.colour === colour ? (row.value ?? "") : ""}
+              onSave={(v) => onUpdate(row.id, row.title, v)}
+            />
+          </td>
+        ))}
+      </tr>
+      {/* Insert-after button row */}
+      <tr className="h-0 group/insert">
+        <td colSpan={colours.length + 1} className="p-0">
+          <div className="flex items-center gap-1 opacity-0 group-hover/insert:opacity-100 transition-opacity h-4 px-8">
+            <button
+              onClick={onInsertAfter}
+              className="flex items-center gap-0.5 text-[10px] text-amber-500 hover:text-amber-700"
+              title="Insert row after this one"
+            >
+              <Plus className="w-2.5 h-2.5" />
+              insert
+            </button>
+          </div>
+        </td>
+      </tr>
+    </>
+  );
+}
+
+// ─── Sortable Custom Row List (per section) ───────────────────────────────────
+
+interface SortableCustomRowListProps {
+  sectionKey: string;
+  customRows: CustomRowData[];
+  colours: string[];
+  onUpdate: (id: number, title: string, value: string) => void;
+  onDelete: (id: number) => void;
+  allTitles: string[];
+  onAddCustomRow: (section: string, afterSortOrder?: number) => void;
+  onReorder: (section: string, orderedIds: number[]) => void;
+}
+
+function SortableCustomRowList({
+  sectionKey, customRows, colours, onUpdate, onDelete, allTitles, onAddCustomRow, onReorder,
+}: SortableCustomRowListProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
+
+  const sectionRows = customRows
+    .filter((r) => r.section === sectionKey)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const sectionIds = sectionRows.map((r) => r.id);
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = sectionIds.indexOf(active.id as number);
+    const newIdx = sectionIds.indexOf(over.id as number);
+    if (oldIdx === -1 || newIdx === -1) return;
+    const newOrder = arrayMove(sectionIds, oldIdx, newIdx);
+    onReorder(sectionKey, newOrder);
+  }
+
+  if (sectionRows.length === 0) return null;
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={sectionIds} strategy={verticalListSortingStrategy}>
+        {sectionRows.map((row) => (
+          <SortableCustomRow
+            key={row.id}
+            row={row}
+            colours={colours}
+            onUpdate={onUpdate}
+            onDelete={onDelete}
+            allTitles={allTitles}
+            onInsertAfter={() => onAddCustomRow(sectionKey, row.sortOrder)}
+          />
+        ))}
+      </SortableContext>
+    </DndContext>
+  );
+}
+
 // ─── Colour Copy Panel ───────────────────────────────────────────────────────
 
 interface ColourCopyPanelProps {
@@ -383,6 +528,7 @@ interface SpecFormProps {
   onAddCustomRow: (section: string, afterSortOrder?: number) => void;
   onUpdateCustomRow: (id: number, title: string, value: string) => void;
   onDeleteCustomRow: (id: number) => void;
+  onReorderCustomRows: (section: string, orderedIds: number[]) => void;
   dbCategory: string | null;
   onSetCategory: (category: string | null) => void;
   allCustomRowTitles: string[]; // for autocomplete
@@ -530,7 +676,7 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
 
 function SpecForm({
   entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allColourLeatherOptions, imageOverride, customRows,
-  onUpsert, onBulkAutoFill, onAddDropdownOption, onDeleteDropdownOption, onMetaChange, onAddSku, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow,
+  onUpsert, onBulkAutoFill, onAddDropdownOption, onDeleteDropdownOption, onMetaChange, onAddSku, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow, onReorderCustomRows,
   dbCategory, onSetCategory, allCustomRowTitles, allStyleEntries,
 }: SpecFormProps) {
   const [showAddSku, setShowAddSku] = useState(false);
@@ -821,53 +967,17 @@ function SpecForm({
                   </tr>
                 ))}
 
-                {/* Custom rows for this section */}
-                {customRows
-                  .filter((r) => r.section === sectionKey)
-                  .sort((a, b) => a.sortOrder - b.sortOrder)
-                  .map((row) => (
-                    <tr key={`custom-${row.id}`} className="border-b hover:bg-amber-50/30 dark:hover:bg-amber-900/10 group">
-                      <td className="px-3 py-1.5 align-middle">
-                        <CustomRowTitleInput
-                          id={row.id}
-                          initialTitle={row.title}
-                          value={row.value ?? ""}
-                          onUpdate={onUpdateCustomRow}
-                          onDelete={onDeleteCustomRow}
-                          allTitles={allCustomRowTitles}
-                        />
-                      </td>
-                      {entry.colours.map((colour, colIdx) => (
-                        <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
-                          <TextCell
-                            value={row.colour === "__all__" || row.colour === colour ? (row.value ?? "") : ""}
-                            onSave={(v) => onUpdateCustomRow(row.id, row.title, v)}
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-
-                {/* Insert custom row at position: show + button between each custom row */}
-                {customRows
-                  .filter((r) => r.section === sectionKey)
-                  .sort((a, b) => a.sortOrder - b.sortOrder)
-                  .map((row) => (
-                    <tr key={`insert-after-${row.id}`} className="h-0 group/insert">
-                      <td colSpan={entry.colours.length + 1} className="p-0">
-                        <div className="flex items-center gap-1 opacity-0 group-hover/insert:opacity-100 transition-opacity h-4 px-3">
-                          <button
-                            onClick={() => onAddCustomRow(sectionKey, row.sortOrder)}
-                            className="flex items-center gap-0.5 text-[10px] text-amber-500 hover:text-amber-700"
-                            title="Insert row after this one"
-                          >
-                            <Plus className="w-2.5 h-2.5" />
-                            insert
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                {/* Custom rows for this section — drag-and-drop sortable */}
+                <SortableCustomRowList
+                  sectionKey={sectionKey}
+                  customRows={customRows}
+                  colours={entry.colours}
+                  onUpdate={onUpdateCustomRow}
+                  onDelete={onDeleteCustomRow}
+                  allTitles={allCustomRowTitles}
+                  onAddCustomRow={onAddCustomRow}
+                  onReorder={onReorderCustomRows}
+                />
 
                 {/* Add custom row button for this section */}
                 <tr className="border-b">
@@ -1396,6 +1506,16 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   function handleDeleteCustomRow(id: number) {
     deleteCustomRowMutation.mutate({ id });
+  }
+
+  const batchReorderMutation = trpc.specs.batchReorderCustomRows.useMutation({
+    onSuccess: () => { refetchCustomRows(); },
+    onError: () => toast.error("Failed to reorder rows"),
+  });
+
+  function handleReorderCustomRows(_section: string, orderedIds: number[]) {
+    if (!selectedStyle) return;
+    batchReorderMutation.mutate({ orderedIds });
   }
 
   // ── Style category (DB-stored, overrides static skuData category) ──────────
@@ -2005,6 +2125,7 @@ export default function SpecsTab({}: SpecsTabProps) {
               onAddCustomRow={handleAddCustomRow}
               onUpdateCustomRow={handleUpdateCustomRow}
               onDeleteCustomRow={handleDeleteCustomRow}
+              onReorderCustomRows={handleReorderCustomRows}
               dbCategory={dbCategory}
               onSetCategory={handleSetCategory}
               allCustomRowTitles={allCustomRowTitles}

@@ -1016,3 +1016,19 @@ export async function upsertSkuNewOverride(style: string, colour: string, leathe
     .values({ style: style.toUpperCase(), colour: normColour, leather: normLeather, isNew })
     .onDuplicateKeyUpdate({ set: { isNew } });
 }
+
+// ─── Batch reorder custom spec rows ──────────────────────────────────────────
+
+export async function batchReorderCustomRows(orderedIds: number[]): Promise<void> {
+  if (orderedIds.length === 0) return;
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.transaction(async (tx) => {
+    for (let i = 0; i < orderedIds.length; i++) {
+      await tx
+        .update(specCustomRows)
+        .set({ sortOrder: i })
+        .where(eq(specCustomRows.id, orderedIds[i]));
+    }
+  });
+}

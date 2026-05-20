@@ -35,6 +35,7 @@ import {
   getAllLastHeelHeights, upsertLastHeelHeight,
   getChangesReport,
   getAllSkuNewOverrides, upsertSkuNewOverride,
+  batchReorderCustomRows,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -1529,6 +1530,12 @@ If the request is unclear or is a question, use no_action.`;
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await deleteSpecCustomRow(input.id);
+        return { success: true };
+      }),
+    batchReorderCustomRows: publicProcedure
+      .input(z.object({ orderedIds: z.array(z.number()) }))
+      .mutation(async ({ input }) => {
+        await batchReorderCustomRows(input.orderedIds);
         return { success: true };
       }),
   }),

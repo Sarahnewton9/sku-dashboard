@@ -185,3 +185,9 @@
 - [x] Max 7 colour columns per block on same sheet (ROXIE format), second block below first
 - [x] Wrap text in cells, use space efficiently — single column per colour
 - [x] Matched ROXIE format: label col 30 + 7 × 12 colour cols = A4 landscape fit
+
+## Drag-and-Drop Row Reordering in Specs Tab (May 2026)
+- [x] Install @dnd-kit/core and @dnd-kit/sortable
+- [x] Wrap custom spec rows in a SortableContext per section
+- [x] Add drag handle icon to each custom row
+- [x] On drag end, persist new sortOrder values to DB via batch upsert
