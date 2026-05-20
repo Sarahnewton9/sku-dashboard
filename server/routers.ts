@@ -14,7 +14,7 @@ import {
   getAllLastApprovals, upsertLastApproval, getDeletedLasts, deleteLast, restoreDeletedLast,
   getAllSeasonImports, createSeasonImport, getSeasonSkuData, deleteSeasonImport,
   getSpecsForStyle, upsertStyleSpec, deleteStyleSpecs, bulkUpsertStyleSpecs,
-  getAllDropdownOptions, getDropdownOptions, addDropdownOption, deleteDropdownOption,
+  getAllDropdownOptions, getDropdownOptions, addDropdownOption, deleteDropdownOption, deleteDropdownOptionByValue,
   getStyleSpecMeta, getAllStyleSpecMeta, upsertStyleSpecMeta,
   getSpecCountsForAllStyles,
   createFittingSession, updateFittingSession, deleteFittingSession, getFittingSessionsForStyle, getAllFittingSessions,
@@ -687,6 +687,13 @@ export const appRouter = router({
       .input(z.object({ component: z.string(), value: z.string() }))
       .mutation(async ({ input }) => addDropdownOption(input.component, input.value)),
 
+    deleteDropdownOptionByValue: publicProcedure
+      .input(z.object({ component: z.string(), value: z.string() }))
+      .mutation(async ({ input }) => {
+        await deleteDropdownOptionByValue(input.component, input.value);
+        return { success: true };
+      }),
+
     deleteDropdownOption: publicProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
@@ -1274,8 +1281,8 @@ export const appRouter = router({
                 type: "object",
                 properties: {
                   style: { type: "string", description: "Style name in uppercase, e.g. NESTA" },
-                  colour: { type: "string", description: "Colour name in uppercase, e.g. VANILLA VINTAGE" },
-                  leather: { type: "string", description: "Leather/material name in uppercase, e.g. SUEDE. Use empty string if not specified." },
+                  colour: { type: "string", description: "Colour name ONLY (not leather) in uppercase, e.g. VANILLA, BLACK, CHOC, MILK. Do NOT include the leather name here." },
+                  leather: { type: "string", description: "Leather/material name ONLY in uppercase, e.g. VINTAGE, SUEDE, CAPRETTO, NAPPA, VENICE. Use empty string if not specified." },
                   is_new: { type: "boolean", description: "true if the SKU is new, false if it is existing/carryover" },
                 },
                 required: ["style", "colour", "is_new"],
@@ -1397,8 +1404,15 @@ When the user describes a change, call the appropriate tool. Be confident in int
 IMPORTANT: If the user says a STYLE (not a specific colour) is not new / is existing / is a carryover, use mark_style_existing — this marks ALL colours of that style as existing in one go.
 If the user mentions a specific colour, use mark_sku_new_or_existing for that specific SKU.
 
-Always uppercase style and colour names when calling tools (e.g. NESTA, PAXOS, VANILLA VINTAGE).
-If leather/material is not mentioned, use an empty string.
+CRITICAL — Colour and leather are ALWAYS separate fields:
+- Shoe names are typically "STYLE COLOUR LEATHER" e.g. "NESTA VANILLA VINTAGE" → style=NESTA, colour=VANILLA, leather=VINTAGE
+- Common leathers: VINTAGE, SUEDE, NAPPA, CAPRETTO, VENICE, PATENT, SATIN, NUBUCK, BROCADE, SPECKLE, PONY
+- The colour is the word BEFORE the leather. e.g. "VANILLA VINTAGE" → colour=VANILLA, leather=VINTAGE
+- "BLACK VINTAGE" → colour=BLACK, leather=VINTAGE
+- "CHOC SUEDE" → colour=CHOC, leather=SUEDE
+- "MILK CAPRETTO" → colour=MILK, leather=CAPRETTO
+- NEVER combine colour and leather into one field
+Always uppercase all values.
 If the request is unclear or is a question, use no_action.`;
 
         const llmMessages = [

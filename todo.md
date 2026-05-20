@@ -165,3 +165,23 @@
 - [x] Add floating chat panel UI using AIChatBox component in the dashboard
 - [x] Wire chat panel to chat.command mutation with conversation history
 - [x] Support commands: mark SKU as new/existing, update sample status, cancel/restore SKU, cancel style
+
+## NESTA VANILLA VINTAGE Override Fix (May 2026)
+- [x] Debug why per-SKU override for NESTA VANILLA VINTAGE is not applying in StylesTab despite assistant saying Done
+- [x] Ensure the override key lookup matches exactly what is stored in DB — fixed __ALL__ vs __all__ case mismatch and colour+leather split
+
+## Specs Tab Improvements (May 2026)
+- [x] Rename all spec sections to a single "Components" section — no separate Construction/Upper sections
+- [x] Toe cap field moves into Components (not Construction)
+- [x] Free-type rows: each component row is a free-type text box, not a dropdown with fixed options
+- [x] Insert row like Excel: + button between rows to insert at any position
+- [x] Delete dropdown options with a small X when required
+- [x] When copying spec from one colour to another, do NOT copy Upper 1 field
+- [x] Add New Colour/SKU button inside each style in the Specs tab
+- [x] Remove buckle toggle — buckle should always appear in Components
+
+## Specs Export Improvements (May 2026)
+- [x] Export as A4 landscape
+- [x] Max 7 colour columns per block on same sheet (ROXIE format), second block below first
+- [x] Wrap text in cells, use space efficiently — single column per colour
+- [x] Matched ROXIE format: label col 30 + 7 × 12 colour cols = A4 landscape fit

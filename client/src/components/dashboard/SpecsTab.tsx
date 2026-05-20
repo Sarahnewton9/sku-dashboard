@@ -53,109 +53,114 @@ interface StyleEntry {
 
 
 
-// ─── Editable Dropdown Cell ───────────────────────────────────────────────────
+// ─── Free-Type Cell with optional suggestions ─────────────────────────────────
+// A plain text input that shows a suggestions dropdown when focused.
+// Replaces the old DropdownCell — all component cells are now free-type.
 
-interface DropdownCellProps {
+interface FreeTypeCellProps {
   component: SpecComponent;
   value: string;
   savedOptions: string[];
   onSave: (val: string) => void;
   onAddOption: (val: string) => void;
+  onDeleteOption?: (val: string) => void;
   /** If provided, overrides the default option list (used for upper_1) */
   overrideOptions?: string[];
 }
 
-function DropdownCell({ component, value, savedOptions, onSave, onAddOption, overrideOptions }: DropdownCellProps) {
+function FreeTypeCell({ component, value, savedOptions, onSave, onAddOption, onDeleteOption, overrideOptions }: FreeTypeCellProps) {
   const defaults = overrideOptions ?? DEFAULT_DROPDOWN_OPTIONS[component.key] ?? [];
-  // Merge defaults + saved options, deduplicated, sorted alphabetically
   const allOptions = Array.from(new Set([...defaults, ...savedOptions]))
     .filter(Boolean)
     .sort((a, b) => a.localeCompare(b));
 
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const [draft, setDraft] = useState(value);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Filtered options based on search query
-  const filtered = query
-    ? allOptions.filter((o) => o.toLowerCase().includes(query.toLowerCase()))
+  useEffect(() => { setDraft(value); }, [value]);
+
+  const filtered = draft.trim()
+    ? allOptions.filter((o) => o.toLowerCase().includes(draft.toLowerCase()))
     : allOptions;
 
-  function handleSelect(val: string) {
-    onSave(val);
-    setOpen(false);
-    setQuery("");
+  function commit(val: string) {
+    const trimmed = val.trim();
+    onSave(trimmed);
+    setDraft(trimmed);
+    setShowSuggestions(false);
   }
 
-  function handleAddNew() {
-    const trimmed = query.trim();
-    if (!trimmed) return;
-    onAddOption(trimmed);
-    onSave(trimmed);
-    setOpen(false);
-    setQuery("");
+  function handleSelect(opt: string) {
+    commit(opt);
+    inputRef.current?.blur();
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") { commit(draft); inputRef.current?.blur(); }
+    if (e.key === "Escape") { setDraft(value); setShowSuggestions(false); inputRef.current?.blur(); }
+  }
+
+  function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
+    // Delay so clicks on suggestions register first
+    setTimeout(() => {
+      if (!containerRef.current?.contains(document.activeElement)) {
+        commit(draft);
+        setShowSuggestions(false);
+      }
+    }, 150);
   }
 
   return (
-    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setQuery(""); }}>
-      <PopoverTrigger asChild>
-        <button
-          className="h-8 px-2 flex items-center justify-between gap-1 text-xs rounded border border-input bg-background hover:bg-accent hover:text-accent-foreground min-w-[160px] w-full text-left"
-        >
-          <span className={value ? "text-foreground" : "text-muted-foreground"}>
-            {value || "— select —"}
-          </span>
-          <ChevronsUpDown className="w-3 h-3 text-muted-foreground shrink-0" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-64 p-0" align="start">
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="Search or type new…"
-            value={query}
-            onValueChange={setQuery}
-            className="text-xs h-8"
-          />
-          <CommandList className="max-h-52">
-            {filtered.length === 0 && query.trim() === "" && (
-              <CommandEmpty className="text-xs py-3">No options.</CommandEmpty>
-            )}
-            {filtered.length === 0 && query.trim() !== "" && (
-              <div className="px-2 py-1.5">
+    <div ref={containerRef} className="relative min-w-[140px] w-full">
+      <input
+        ref={inputRef}
+        type="text"
+        value={draft}
+        onChange={(e) => { setDraft(e.target.value); setShowSuggestions(true); }}
+        onFocus={() => setShowSuggestions(true)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        placeholder="— type —"
+        className="h-8 w-full px-2 text-xs rounded border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
+      />
+      {showSuggestions && filtered.length > 0 && (
+        <div className="absolute z-50 top-full left-0 mt-0.5 w-64 max-h-52 overflow-y-auto bg-popover border border-border rounded shadow-md">
+          {filtered.map((opt) => (
+            <div
+              key={opt}
+              className="flex items-center justify-between px-2 py-1.5 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer group/opt"
+              onMouseDown={(e) => { e.preventDefault(); handleSelect(opt); }}
+            >
+              <span className="flex-1 truncate">{opt}</span>
+              {onDeleteOption && savedOptions.includes(opt) && (
                 <button
-                  className="w-full text-left text-xs text-blue-600 font-medium px-2 py-1.5 rounded hover:bg-accent"
-                  onMouseDown={(e) => { e.preventDefault(); handleAddNew(); }}
+                  className="ml-1 p-0.5 rounded opacity-0 group-hover/opt:opacity-100 hover:bg-destructive/20 hover:text-destructive text-muted-foreground flex-shrink-0"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDeleteOption(opt);
+                  }}
+                  title="Remove suggestion"
                 >
-                  + Add "{query.trim()}" as new option
+                  <X className="w-2.5 h-2.5" />
                 </button>
-              </div>
-            )}
-            <CommandGroup>
-              {filtered.map((opt) => (
-                <CommandItem
-                  key={opt}
-                  value={opt}
-                  onSelect={() => handleSelect(opt)}
-                  className="text-xs"
-                >
-                  <Check className={`w-3 h-3 mr-1 shrink-0 ${value === opt ? "opacity-100" : "opacity-0"}`} />
-                  {opt}
-                </CommandItem>
-              ))}
-              {/* Show "Add new" at bottom when query has no exact match */}
-              {query.trim() !== "" && !filtered.some((o) => o.toLowerCase() === query.trim().toLowerCase()) && (
-                <CommandItem
-                  value={`__add__${query}`}
-                  onSelect={handleAddNew}
-                  className="text-xs text-blue-600 font-medium"
-                >
-                  + Add "{query.trim()}" as new option
-                </CommandItem>
               )}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+            </div>
+          ))}
+          {/* Save as suggestion if typed value is new */}
+          {draft.trim() && !allOptions.some((o) => o.toLowerCase() === draft.trim().toLowerCase()) && (
+            <div
+              className="px-2 py-1.5 text-xs text-blue-600 font-medium hover:bg-accent cursor-pointer border-t border-border"
+              onMouseDown={(e) => { e.preventDefault(); onAddOption(draft.trim()); commit(draft.trim()); }}
+            >
+              + Save "{draft.trim()}" as suggestion
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -372,8 +377,10 @@ interface SpecFormProps {
   onUpsert: (colour: string, component: string, value: string) => void;
   onBulkAutoFill: (rows: Array<{ style: string; colour: string; component: string; value: string }>) => void;
   onAddDropdownOption: (component: string, value: string) => void;
+  onDeleteDropdownOption: (component: string, value: string) => void;
   onMetaChange: (meta: Partial<{ hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null }>) => void;
-  onAddCustomRow: (section: string) => void;
+  onAddSku: (colour: string, leather: string) => void;
+  onAddCustomRow: (section: string, afterSortOrder?: number) => void;
   onUpdateCustomRow: (id: number, title: string, value: string) => void;
   onDeleteCustomRow: (id: number) => void;
   dbCategory: string | null;
@@ -523,9 +530,12 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
 
 function SpecForm({
   entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allColourLeatherOptions, imageOverride, customRows,
-  onUpsert, onBulkAutoFill, onAddDropdownOption, onMetaChange, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow,
+  onUpsert, onBulkAutoFill, onAddDropdownOption, onDeleteDropdownOption, onMetaChange, onAddSku, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow,
   dbCategory, onSetCategory, allCustomRowTitles, allStyleEntries,
 }: SpecFormProps) {
+  const [showAddSku, setShowAddSku] = useState(false);
+  const [newSkuColour, setNewSkuColour] = useState("");
+  const [newSkuLeather, setNewSkuLeather] = useState("");
   const hasBuckle = specMeta?.hasBuckle ?? false;
   const dressShoeSubType = specMeta?.dressShoeSubType ?? null;
   const notes = specMeta?.notes ?? "";
@@ -550,11 +560,13 @@ function SpecForm({
     const sourceValues = specs[sourceColour] ?? {};
     for (const colour of targetColours) {
       for (const comp of template) {
+        // Never copy Upper 1 — each colour has its own upper material
+        if (comp.key === "upper_1") continue;
         const val = sourceValues[comp.key];
         if (val) onUpsert(colour, comp.key, val);
       }
     }
-    toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s)`);
+    toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s) (Upper 1 kept per-colour)`);
   }
 
   // Auto-fill upper_1 with the colour+leather label, and toe cap with the toe cap leather,
@@ -614,8 +626,15 @@ function SpecForm({
             <Badge variant="outline" className="text-xs">{entry.last}</Badge>
             {entry.isAllNew && <Badge className="text-xs bg-blue-100 text-blue-800 border-blue-200">New Pattern</Badge>}
           </div>
-          <div className="flex items-center gap-3 mt-1">
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
             <span className="text-sm text-muted-foreground">{entry.colours.length} colours · {entry.totalSKUs} SKUs</span>
+            <button
+              onClick={() => setShowAddSku((v) => !v)}
+              className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 font-medium"
+            >
+              <Plus className="w-3 h-3" />
+              Add Colour/SKU
+            </button>
             <div className="flex items-center gap-1.5">
               <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden">
                 <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
@@ -625,6 +644,46 @@ function SpecForm({
           </div>
         </div>
       </div>
+
+      {/* Add new SKU inline form */}
+      {showAddSku && (
+        <div className="flex flex-wrap items-end gap-2 p-3 bg-amber-50/60 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">Colour</label>
+            <Input
+              value={newSkuColour}
+              onChange={(e) => setNewSkuColour(e.target.value.toUpperCase())}
+              placeholder="e.g. BLACK"
+              className="h-8 w-36 text-xs"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">Leather</label>
+            <Input
+              value={newSkuLeather}
+              onChange={(e) => setNewSkuLeather(e.target.value.toUpperCase())}
+              placeholder="e.g. NAPPA"
+              className="h-8 w-36 text-xs"
+            />
+          </div>
+          <Button
+            size="sm"
+            className="h-8 bg-amber-600 hover:bg-amber-700 text-white"
+            disabled={!newSkuColour.trim()}
+            onClick={() => {
+              onAddSku(newSkuColour.trim(), newSkuLeather.trim());
+              setNewSkuColour("");
+              setNewSkuLeather("");
+              setShowAddSku(false);
+            }}
+          >
+            Add SKU
+          </Button>
+          <button onClick={() => setShowAddSku(false)} className="text-muted-foreground hover:text-foreground">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Style-level settings */}
       <div className="flex flex-wrap gap-6 items-start p-3 bg-muted/30 rounded-lg border">
@@ -645,16 +704,6 @@ function SpecForm({
               ))}
             </SelectContent>
           </Select>
-        </div>
-
-        {/* Buckle toggle */}
-        <div className="flex items-center gap-2">
-          <Switch
-            id="buckle-toggle"
-            checked={hasBuckle}
-            onCheckedChange={(v) => onMetaChange({ hasBuckle: v })}
-          />
-          <Label htmlFor="buckle-toggle" className="text-sm font-medium cursor-pointer">Has Buckle</Label>
         </div>
 
         {/* Dress shoe sub-type */}
@@ -707,11 +756,13 @@ function SpecForm({
           onCopy={(sourceColour, targetColours, sourceSpecs) => {
             for (const colour of targetColours) {
               for (const comp of template) {
+                // Never copy Upper 1 — each colour has its own upper material
+                if (comp.key === "upper_1") continue;
                 const val = sourceSpecs[comp.key];
                 if (val) onUpsert(colour, comp.key, val);
               }
             }
-            toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s)`);
+            toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s) (Upper 1 kept per-colour)`);
           }}
         />
       </div>
@@ -755,21 +806,15 @@ function SpecForm({
 
                       return (
                         <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
-                          {comp.type === "dropdown" ? (
-                            <DropdownCell
-                              component={comp}
-                              value={upper1EffectiveVal}
-                              savedOptions={savedOpts}
-                              onSave={(v) => onUpsert(colour, comp.key, v)}
-                              onAddOption={(v) => onAddDropdownOption(comp.key, v)}
-                              overrideOptions={isUpper1 ? allColourLeatherOptions : undefined}
-                            />
-                          ) : (
-                            <TextCell
-                              value={val}
-                              onSave={(v) => onUpsert(colour, comp.key, v)}
-                            />
-                          )}
+                          <FreeTypeCell
+                            component={comp}
+                            value={upper1EffectiveVal}
+                            savedOptions={savedOpts}
+                            onSave={(v) => onUpsert(colour, comp.key, v)}
+                            onAddOption={(v) => onAddDropdownOption(comp.key, v)}
+                            onDeleteOption={isUpper1 ? undefined : (v) => onDeleteDropdownOption(comp.key, v)}
+                            overrideOptions={isUpper1 ? allColourLeatherOptions : undefined}
+                          />
                         </td>
                       );
                     })}
@@ -803,6 +848,27 @@ function SpecForm({
                     </tr>
                   ))}
 
+                {/* Insert custom row at position: show + button between each custom row */}
+                {customRows
+                  .filter((r) => r.section === sectionKey)
+                  .sort((a, b) => a.sortOrder - b.sortOrder)
+                  .map((row) => (
+                    <tr key={`insert-after-${row.id}`} className="h-0 group/insert">
+                      <td colSpan={entry.colours.length + 1} className="p-0">
+                        <div className="flex items-center gap-1 opacity-0 group-hover/insert:opacity-100 transition-opacity h-4 px-3">
+                          <button
+                            onClick={() => onAddCustomRow(sectionKey, row.sortOrder)}
+                            className="flex items-center gap-0.5 text-[10px] text-amber-500 hover:text-amber-700"
+                            title="Insert row after this one"
+                          >
+                            <Plus className="w-2.5 h-2.5" />
+                            insert
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+
                 {/* Add custom row button for this section */}
                 <tr className="border-b">
                   <td colSpan={entry.colours.length + 1} className="px-3 py-1">
@@ -811,7 +877,7 @@ function SpecForm({
                       className="flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-amber-600 transition-colors"
                     >
                       <Plus className="w-3 h-3" />
-                      Add custom row
+                      Add row
                     </button>
                   </td>
                 </tr>
@@ -1288,10 +1354,17 @@ export default function SpecsTab({}: SpecsTabProps) {
   // Debounced custom row title/value save
   const customRowTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 
-  function handleAddCustomRow(section: string) {
+  function handleAddCustomRow(section: string, afterSortOrder?: number) {
     if (!selectedStyle) return;
     const sectionRows = rawCustomRows.filter((r: any) => r.section === section);
-    const nextOrder = sectionRows.length;
+    // If afterSortOrder is provided, insert after that position (shift later rows up)
+    let nextOrder: number;
+    if (afterSortOrder !== undefined) {
+      // Insert after the row with this sortOrder: use afterSortOrder + 0.5 then renormalize
+      nextOrder = afterSortOrder + 0.5;
+    } else {
+      nextOrder = sectionRows.length;
+    }
     addCustomRowMutation.mutate({
       style: selectedStyle,
       colour: "__all__",
@@ -1388,9 +1461,27 @@ export default function SpecsTab({}: SpecsTabProps) {
     onError: () => toast.error("Bulk import failed"),
   });
 
+  const addCustomSkuMutation = trpc.customSku.add.useMutation({
+    onSuccess: () => {
+      utils.customSku.getAll.invalidate();
+      toast.success("New SKU added — it will appear in the spec sheet after refresh");
+    },
+    onError: () => toast.error("Failed to add SKU"),
+  });
+
+  function handleAddSku(colour: string, leather: string) {
+    if (!selectedStyle) return;
+    addCustomSkuMutation.mutate({ style: selectedStyle, colour, leather });
+  }
+
   const addDropdownMutation = trpc.specs.addDropdownOption.useMutation({
     onSuccess: () => refetchDropdowns(),
     onError: () => toast.error("Failed to add dropdown option"),
+  });
+
+  const deleteDropdownMutation = trpc.specs.deleteDropdownOptionByValue.useMutation({
+    onSuccess: () => refetchDropdowns(),
+    onError: () => toast.error("Failed to remove dropdown option"),
   });
 
   const upsertMetaMutation = trpc.specs.upsertMeta.useMutation({
@@ -1421,6 +1512,10 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   function handleAddDropdownOption(component: string, value: string) {
     addDropdownMutation.mutate({ component, value });
+  }
+
+  function handleDeleteDropdownOption(component: string, value: string) {
+    deleteDropdownMutation.mutate({ component, value });
   }
 
   function handleMetaChange(patch: Partial<{ hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null }>) {
@@ -1904,6 +1999,8 @@ export default function SpecsTab({}: SpecsTabProps) {
               onUpsert={handleUpsert}
               onBulkAutoFill={handleBulkAutoFill}
               onAddDropdownOption={handleAddDropdownOption}
+              onDeleteDropdownOption={handleDeleteDropdownOption}
+              onAddSku={handleAddSku}
               onMetaChange={handleMetaChange}
               onAddCustomRow={handleAddCustomRow}
               onUpdateCustomRow={handleUpdateCustomRow}

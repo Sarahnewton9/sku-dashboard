@@ -1,0 +1,16 @@
+{
+  "query": "-- Delete the bad combined row\nDELETE FROM sku_new_override WHERE style = 'NESTA' AND colour = 'VANILLA VINTAGE';\n-- Insert the correct row with colour=VANILLA, leather=VINTAGE\nINSERT INTO sku_new_override (style, colour, leather, isNew)\nVALUES ('NESTA', 'VANILLA', 'VINTAGE', 0)\nON DUPLICATE KEY UPDATE isNew = 0;\n-- Verify\nSELECT style, colour, leather, isNew FROM sku_new_override WHERE style = 'NESTA';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2PKnJnyFBef7ny1.49968122eb9d --database RGHTjKGQqzKd5FypxANQbT --execute -- Delete the bad combined row\nDELETE FROM sku_new_override WHERE style = 'NESTA' AND colour = 'VANILLA VINTAGE';\n-- Insert the correct row with colour=VANILLA, leather=VINTAGE\nINSERT INTO sku_new_override (style, colour, leather, isNew)\nVALUES ('NESTA', 'VANILLA', 'VINTAGE', 0)\nON DUPLICATE KEY UPDATE isNew = 0;\n-- Verify\nSELECT style, colour, leather, isNew FROM sku_new_override WHERE style = 'NESTA';",
+  "rows": [
+    {
+      "style": "NESTA",
+      "colour": "VANILLA",
+      "leather": "VINTAGE",
+      "isNew": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "style\tcolour\tleather\tisNew\nNESTA\tVANILLA\tVINTAGE\t0\n",
+  "stderr": "",
+  "execution_time_ms": 2284
+}

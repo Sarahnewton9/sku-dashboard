@@ -17,36 +17,36 @@ export interface SpecComponent {
   key: string;           // DB key — stable identifier, never change
   label: string;         // Display label
   type: FieldType;
-  section: "upper" | "construction" | "sole" | "heel" | "packaging";
+  section: "upper" | "construction" | "sole" | "heel" | "packaging" | "components";
 }
 
 // ─── Universal components (shared across all categories) ─────────────────────
 
 const UPPER_BASE: SpecComponent[] = [
-  { key: "upper_1",       label: "Upper 1",        type: "dropdown", section: "upper" },
-  { key: "stitch",        label: "Stitch",          type: "dropdown", section: "upper" },
-  { key: "lining",        label: "Lining",          type: "dropdown", section: "upper" },
+  { key: "upper_1",       label: "Upper 1",        type: "dropdown", section: "components" },
+  { key: "stitch",        label: "Stitch",          type: "dropdown", section: "components" },
+  { key: "lining",        label: "Lining",          type: "dropdown", section: "components" },
 ];
 
 const SOCK_BASE: SpecComponent[] = [
-  { key: "sock",          label: "Sock",            type: "dropdown", section: "construction" },
-  { key: "sock_treatment",label: "Sock Treatment",  type: "dropdown", section: "construction" },
-  { key: "heel_counter",  label: "Heel Counter",    type: "dropdown", section: "construction" },
-  { key: "insole_name",   label: "Insole Name",     type: "text",     section: "construction" },
+  { key: "sock",          label: "Sock",            type: "dropdown", section: "components" },
+  { key: "sock_treatment",label: "Sock Treatment",  type: "dropdown", section: "components" },
+  { key: "heel_counter",  label: "Heel Counter",    type: "dropdown", section: "components" },
+  { key: "insole_name",   label: "Insole Name",     type: "text",     section: "components" },
 ];
 
 const SOLE_BASE: SpecComponent[] = [
-  { key: "sole_name",     label: "Sole Name",       type: "text",     section: "sole" },
-  { key: "sole_colour",   label: "Sole Colour",     type: "dropdown", section: "sole" },
-  { key: "sole_edge",     label: "Sole Edge",       type: "dropdown", section: "sole" },
-  { key: "sole_treatment",label: "Sole Treatment",  type: "dropdown", section: "sole" },
-  { key: "logo",          label: "Logo",            type: "dropdown", section: "sole" },
+  { key: "sole_name",     label: "Sole Name",       type: "text",     section: "components" },
+  { key: "sole_colour",   label: "Sole Colour",     type: "dropdown", section: "components" },
+  { key: "sole_edge",     label: "Sole Edge",       type: "dropdown", section: "components" },
+  { key: "sole_treatment",label: "Sole Treatment",  type: "dropdown", section: "components" },
+  { key: "logo",          label: "Logo",            type: "dropdown", section: "components" },
 ];
 
 const HEEL_BASE: SpecComponent[] = [
-  { key: "heel_name",     label: "Heel Name",       type: "text",     section: "heel" },
-  { key: "heel_cover",    label: "Heel Cover",      type: "dropdown", section: "heel" },
-  { key: "top_lift",      label: "Top Lift",        type: "dropdown", section: "heel" },
+  { key: "heel_name",     label: "Heel Name",       type: "text",     section: "components" },
+  { key: "heel_cover",    label: "Heel Cover",      type: "dropdown", section: "components" },
+  { key: "top_lift",      label: "Top Lift",        type: "dropdown", section: "components" },
 ];
 
 const PACKAGING: SpecComponent[] = [
@@ -57,9 +57,9 @@ const PACKAGING: SpecComponent[] = [
   { key: "barcode",       label: "Barcode",         type: "dropdown", section: "packaging" },
 ];
 
-// Buckle — added dynamically when hasBuckle = true
+// Buckle — always present in Components (not toggled)
 export const BUCKLE_COMPONENT: SpecComponent = {
-  key: "buckle",          label: "Buckle Colour",   type: "dropdown", section: "upper",
+  key: "buckle",          label: "Buckle",          type: "dropdown", section: "components",
 };
 
 // ─── Category templates ───────────────────────────────────────────────────────
@@ -216,16 +216,16 @@ export const STYLE_COMPONENT_OVERRIDES: Record<string, StyleOverride> = {
   // DONTE – Add Binding, Toe Cap and Elastic
   "DONTE": {
     add: [
-      { key: "donte_binding",   label: "Binding",        type: "dropdown", section: "construction" },
-      { key: "donte_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "construction" },
-      { key: "donte_elastic",   label: "Elastic",        type: "dropdown", section: "construction" },
+      { key: "donte_binding",   label: "Binding",        type: "dropdown", section: "components" },
+      { key: "donte_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "components" },
+      { key: "donte_elastic",   label: "Elastic",        type: "dropdown", section: "components" },
     ],
   },
 
   // EMILY – Add Toe Cap
   "EMILY": {
     add: [
-      { key: "emily_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "construction" },
+      { key: "emily_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "components" },
     ],
   },
 
@@ -237,10 +237,10 @@ export const STYLE_COMPONENT_OVERRIDES: Record<string, StyleOverride> = {
   // KAILA – Add Inking, Sock Logo, Platform Cover. Remove Foot Bed Cover and Add Insole Cover.
   "KAILA": {
     add: [
-      { key: "kaila_inking",         label: "Inking",         type: "dropdown", section: "construction" },
-      { key: "kaila_sock_logo",      label: "Sock Logo",      type: "dropdown", section: "construction" },
-      { key: "kaila_platform_cover", label: "Platform Cover", type: "dropdown", section: "heel" },
-      { key: "kaila_insole_cover",   label: "Insole Cover",   type: "dropdown", section: "construction" },
+      { key: "kaila_inking",         label: "Inking",         type: "dropdown", section: "components" },
+      { key: "kaila_sock_logo",      label: "Sock Logo",      type: "dropdown", section: "components" },
+      { key: "kaila_platform_cover", label: "Platform Cover", type: "dropdown", section: "components" },
+      { key: "kaila_insole_cover",   label: "Insole Cover",   type: "dropdown", section: "components" },
     ],
     remove: ["foot_bed_cover"],
   },
@@ -248,7 +248,7 @@ export const STYLE_COMPONENT_OVERRIDES: Record<string, StyleOverride> = {
   // LEGACY – Add Toe Cap
   "LEGACY": {
     add: [
-      { key: "legacy_toe_cap",  label: "Toe Cap",        type: "dropdown", section: "construction" },
+      { key: "legacy_toe_cap",  label: "Toe Cap",        type: "dropdown", section: "components" },
     ],
   },
 
@@ -265,58 +265,58 @@ export const STYLE_COMPONENT_OVERRIDES: Record<string, StyleOverride> = {
   // MIXA – Add Elastic and Vamp
   "MIXA": {
     add: [
-      { key: "mixa_elastic",    label: "Elastic",        type: "dropdown", section: "upper" },
-      { key: "mixa_vamp",       label: "Vamp",           type: "dropdown", section: "upper" },
+      { key: "mixa_elastic",    label: "Elastic",        type: "dropdown", section: "components" },
+      { key: "mixa_vamp",       label: "Vamp",           type: "dropdown", section: "components" },
     ],
   },
 
   // PIXIE – Add Elastic and Toe Cap
   "PIXIE": {
     add: [
-      { key: "pixie_elastic",   label: "Elastic",        type: "dropdown", section: "upper" },
-      { key: "pixie_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "construction" },
+      { key: "pixie_elastic",   label: "Elastic",        type: "dropdown", section: "components" },
+      { key: "pixie_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "components" },
     ],
   },
 
   // RORY – Add Grosgrain Binding, Toe Embroidery
   "RORY": {
     add: [
-      { key: "rory_grosgrain_binding", label: "Grosgrain Binding", type: "dropdown", section: "upper" },
-      { key: "rory_toe_embroidery",    label: "Toe Embroidery",    type: "dropdown", section: "construction" },
+      { key: "rory_grosgrain_binding", label: "Grosgrain Binding", type: "dropdown", section: "components" },
+      { key: "rory_toe_embroidery",    label: "Toe Embroidery",    type: "dropdown", section: "components" },
     ],
   },
 
   // ROXIE – Add Leather Bow, Grosgrain Topline and Toe Cap
   "ROXIE": {
     add: [
-      { key: "roxie_leather_bow",      label: "Leather Bow",       type: "dropdown", section: "upper" },
-      { key: "roxie_grosgrain_topline",label: "Grosgrain Topline", type: "dropdown", section: "upper" },
-      { key: "roxie_toe_cap",          label: "Toe Cap",           type: "dropdown", section: "construction" },
+      { key: "roxie_leather_bow",      label: "Leather Bow",       type: "dropdown", section: "components" },
+      { key: "roxie_grosgrain_topline",label: "Grosgrain Topline", type: "dropdown", section: "components" },
+      { key: "roxie_toe_cap",          label: "Toe Cap",           type: "dropdown", section: "components" },
     ],
   },
 
   // ROBYN – Add Leather Bow, Grosgrain Topline and Toe Cap
   "ROBYN": {
     add: [
-      { key: "robyn_leather_bow",      label: "Leather Bow",       type: "dropdown", section: "upper" },
-      { key: "robyn_grosgrain_topline",label: "Grosgrain Topline", type: "dropdown", section: "upper" },
-      { key: "robyn_toe_cap",          label: "Toe Cap",           type: "dropdown", section: "construction" },
+      { key: "robyn_leather_bow",      label: "Leather Bow",       type: "dropdown", section: "components" },
+      { key: "robyn_grosgrain_topline",label: "Grosgrain Topline", type: "dropdown", section: "components" },
+      { key: "robyn_toe_cap",          label: "Toe Cap",           type: "dropdown", section: "components" },
     ],
   },
 
   // SARAH – Add Piping and Toe Cap
   "SARAH": {
     add: [
-      { key: "sarah_piping",    label: "Piping",         type: "dropdown", section: "upper" },
-      { key: "sarah_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "construction" },
+      { key: "sarah_piping",    label: "Piping",         type: "dropdown", section: "components" },
+      { key: "sarah_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "components" },
     ],
   },
 
   // SAVANT – Add Binding and Toe Cap
   "SAVANT": {
     add: [
-      { key: "savant_binding",  label: "Binding",        type: "dropdown", section: "construction" },
-      { key: "savant_toe_cap",  label: "Toe Cap",        type: "dropdown", section: "construction" },
+      { key: "savant_binding",  label: "Binding",        type: "dropdown", section: "components" },
+      { key: "savant_toe_cap",  label: "Toe Cap",        type: "dropdown", section: "components" },
     ],
   },
 
@@ -333,7 +333,7 @@ export const STYLE_COMPONENT_OVERRIDES: Record<string, StyleOverride> = {
   // CAPPA – Add Toe Cap
   "CAPPA": {
     add: [
-      { key: "cappa_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "construction" },
+      { key: "cappa_toe_cap",   label: "Toe Cap",        type: "dropdown", section: "components" },
     ],
   },
 };
@@ -365,10 +365,14 @@ export function getTemplateForCategory(
     result.splice(upperIdx + 1, 0, SLING_BACK_COMPONENT);
   }
 
-  // Inject buckle after Upper 1 when hasBuckle is true
+  // Always inject buckle into components (after lining, before sock)
   if (opts.hasBuckle) {
-    const upperIdx = result.findIndex((c) => c.key === "upper_1");
-    result.splice(upperIdx + 1, 0, BUCKLE_COMPONENT);
+    // Insert after lining if present, otherwise after upper_1
+    const liningIdx = result.findIndex((c) => c.key === "lining");
+    const upper1Idx = result.findIndex((c) => c.key === "upper_1");
+    const insertAfter = liningIdx !== -1 ? liningIdx : upper1Idx;
+    if (insertAfter !== -1) result.splice(insertAfter + 1, 0, BUCKLE_COMPONENT);
+    else result.splice(0, 0, BUCKLE_COMPONENT);
   }
 
   // Apply per-style overrides
@@ -380,22 +384,12 @@ export function getTemplateForCategory(
         const removeSet = new Set(override.remove);
         result = result.filter((c) => !removeSet.has(c.key));
       }
-      // Add new components, grouped by section after the last component in that section
+      // Add new components before packaging section
       if (override.add && override.add.length > 0) {
         for (const comp of override.add) {
-          // Find the last index of the same section, insert after it
-          let insertIdx = -1;
-          for (let i = result.length - 1; i >= 0; i--) {
-            if (result[i].section === comp.section) {
-              insertIdx = i + 1;
-              break;
-            }
-          }
-          if (insertIdx === -1) {
-            // Section not found — append before packaging
-            const pkgIdx = result.findIndex((c) => c.section === "packaging");
-            insertIdx = pkgIdx === -1 ? result.length : pkgIdx;
-          }
+          // Insert before packaging
+          const pkgIdx = result.findIndex((c) => c.section === "packaging");
+          const insertIdx = pkgIdx === -1 ? result.length : pkgIdx;
           result.splice(insertIdx, 0, comp);
         }
       }
@@ -479,10 +473,11 @@ export const DEFAULT_DROPDOWN_OPTIONS: Record<string, string[]> = {
 };
 
 export const SECTION_LABELS: Record<string, string> = {
-  upper: "Upper & Materials",
-  construction: "Construction",
-  sole: "Sole & Logo",
-  heel: "Heel",
+  components: "Components",
+  upper: "Components",        // legacy — maps to Components
+  construction: "Components", // legacy — maps to Components
+  sole: "Components",         // legacy — maps to Components
+  heel: "Components",         // legacy — maps to Components
   packaging: "Packaging",
 };
 
