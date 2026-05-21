@@ -721,6 +721,15 @@ function SpecForm({
   const dndSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
+  // Pre-compute sorted custom rows and their IDs for SortableContext (must be stable, outside render)
+  const allCustomRowsSorted = useMemo(
+    () => [...customRows].sort((a, b) => a.sortOrder - b.sortOrder),
+    [customRows]
+  );
+  const allCustomRowIds = useMemo(
+    () => allCustomRowsSorted.map((r) => r.id),
+    [allCustomRowsSorted]
+  );
   const hasBuckle = specMeta?.hasBuckle ?? false;
   const dressShoeSubType = specMeta?.dressShoeSubType ?? null;
   const notes = specMeta?.notes ?? "";
@@ -962,16 +971,15 @@ function SpecForm({
           setActiveRowId(null);
           const { active, over } = event;
           if (!over || active.id === over.id) return;
-          const allSorted = [...customRows].sort((a, b) => a.sortOrder - b.sortOrder);
-          const allIds = allSorted.map((r) => r.id);
-          const oldIdx = allIds.indexOf(active.id as number);
-          const newIdx = allIds.indexOf(over.id as number);
+          const oldIdx = allCustomRowIds.indexOf(active.id as number);
+          const newIdx = allCustomRowIds.indexOf(over.id as number);
           if (oldIdx === -1 || newIdx === -1) return;
-          const newOrder = arrayMove(allIds, oldIdx, newIdx);
+          const newOrder = arrayMove(allCustomRowIds, oldIdx, newIdx);
           onReorderCustomRows("__all__", newOrder);
         }}
         onDragCancel={() => setActiveRowId(null)}
       >
+      <SortableContext items={allCustomRowIds} strategy={verticalListSortingStrategy}>
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-collapse">
           <thead>
@@ -1026,27 +1034,18 @@ function SpecForm({
               </React.Fragment>
             ))}
 
-            {/* All custom rows — single unified sortable list, drag-and-drop across sections */}
-            {(() => {
-              const allSorted = [...customRows].sort((a, b) => a.sortOrder - b.sortOrder);
-              const allIds = allSorted.map((r) => r.id);
-              if (allSorted.length === 0) return null;
-              return (
-                <SortableContext items={allIds} strategy={verticalListSortingStrategy}>
-                  {allSorted.map((row) => (
-                    <SortableCustomRow
-                      key={row.id}
-                      row={row}
-                      colours={entry.colours}
-                      onUpdate={onUpdateCustomRow}
-                      onDelete={onDeleteCustomRow}
-                      allTitles={allCustomRowTitles}
-                      isActive={activeRowId === row.id}
-                    />
-                  ))}
-                </SortableContext>
-              );
-            })()}
+            {/* All custom rows — rendered inside tbody as plain <tr>s; SortableContext wraps the table above */}
+            {allCustomRowsSorted.map((row) => (
+              <SortableCustomRow
+                key={row.id}
+                row={row}
+                colours={entry.colours}
+                onUpdate={onUpdateCustomRow}
+                onDelete={onDeleteCustomRow}
+                allTitles={allCustomRowTitles}
+                isActive={activeRowId === row.id}
+              />
+            ))}
             {/* Single Add Row button at the bottom */}
             <tr>
               <td colSpan={entry.colours.length + 1} className="px-3 py-2">
@@ -1062,6 +1061,7 @@ function SpecForm({
           </tbody>
         </table>
       </div>
+      </SortableContext>
       </DndContext>
     </div>
   );
