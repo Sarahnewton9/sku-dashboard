@@ -488,3 +488,18 @@ export const specRowOrder = mysqlTable("spec_row_order", {
 });
 export type SpecRowOrder = typeof specRowOrder.$inferSelect;
 export type InsertSpecRowOrder = typeof specRowOrder.$inferInsert;
+
+/**
+ * Spec hidden columns — stores manually hidden colour columns per style in the Specs tab.
+ * Each row represents one hidden column (style + colour key).
+ */
+export const specHiddenColumns = mysqlTable("spec_hidden_columns", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull(),
+  colour: varchar("colour", { length: 64 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  styleColourIdx: uniqueIndex("spec_hidden_col_idx").on(t.style, t.colour),
+}));
+export type SpecHiddenColumn = typeof specHiddenColumns.$inferSelect;
+export type InsertSpecHiddenColumn = typeof specHiddenColumns.$inferInsert;

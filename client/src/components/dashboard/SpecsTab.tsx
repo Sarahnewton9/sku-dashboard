@@ -536,6 +536,10 @@ interface SpecFormProps {
   onSetCategory: (category: string | null) => void;
   allCustomRowTitles: string[]; // for autocomplete
   allStyleEntries: StyleEntry[]; // for cross-style copy
+  onHideColumn: (colour: string) => void;
+  hiddenColumns: Set<string>; // for showing restore buttons when showHiddenColumns is on
+  showHiddenColumns: boolean;
+  onShowColumn: (colour: string) => void;
 }
 
 const STYLE_CATEGORIES = [
@@ -686,6 +690,7 @@ function SpecForm({
   entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allColourLeatherOptions, imageOverride, customRows,
   onUpsert, onBulkAutoFill, onAddDropdownOption, onDeleteDropdownOption, onMetaChange, onAddSku, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow, onReorderCustomRows,
   dbCategory, onSetCategory, allCustomRowTitles, allStyleEntries,
+  onHideColumn, hiddenColumns, showHiddenColumns, onShowColumn,
 }: SpecFormProps) {
   const [showAddSku, setShowAddSku] = useState(false);
   const [newSkuColour, setNewSkuColour] = useState("");
@@ -847,6 +852,14 @@ function SpecForm({
           </div>
           <div className="flex items-center gap-3 mt-1 flex-wrap">
             <span className="text-sm text-muted-foreground">{entry.colours.length} colours · {entry.totalSKUs} SKUs</span>
+            {hiddenColumns.size > 0 && (
+              <button
+                onClick={() => onShowColumn("__toggle__")}
+                className="text-xs text-amber-600 hover:text-amber-700 underline underline-offset-2"
+              >
+                {showHiddenColumns ? `Showing ${hiddenColumns.size} hidden` : `${hiddenColumns.size} hidden`}
+              </button>
+            )}
             <button
               onClick={() => setShowAddSku((v) => !v)}
               className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 font-medium"
@@ -1011,8 +1024,29 @@ function SpecForm({
             <tr className="bg-muted/50">
               <th className="text-left px-3 py-2 font-medium text-muted-foreground w-40 border-b">Colour</th>
               {entry.colours.map((colour, i) => (
-                <th key={`${colour}-${i}`} className="text-left px-3 py-2 font-medium border-b min-w-[160px]">
-                  {entry.colourLabels[i] ?? colour}
+                <th key={`${colour}-${i}`} className="text-left px-3 py-2 font-medium border-b min-w-[160px] group/col relative">
+                  <div className="flex items-center gap-1 justify-between">
+                    <span>{entry.colourLabels[i] ?? colour}</span>
+                    {showHiddenColumns && hiddenColumns.has(colour) ? (
+                      // Restore button for hidden columns (visible when showHiddenColumns is on)
+                      <button
+                        onClick={() => onShowColumn(colour)}
+                        title={`Restore ${colour} column`}
+                        className="flex-shrink-0 text-xs text-green-600 hover:text-green-700 font-medium px-1 py-0.5 rounded hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors"
+                      >
+                        Restore
+                      </button>
+                    ) : (
+                      // Hide button — only visible on hover
+                      <button
+                        onClick={() => onHideColumn(colour)}
+                        title={`Hide ${colour} column`}
+                        className="flex-shrink-0 opacity-0 group-hover/col:opacity-100 text-muted-foreground hover:text-red-500 transition-all p-0.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                 </th>
               ))}
             </tr>
@@ -1408,7 +1442,84 @@ export default function SpecsTab({}: SpecsTabProps) {
     return !q || s.style.toLowerCase().includes(q) || s.last.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
   });
 
-  const selectedEntry = styleList.find((s) => s.style === selectedStyle) ?? null;
+  const selectedEntryRaw = styleList.find((s) => s.style === selectedStyle) ?? null;
+
+  // ── Hidden columns (per-style, persisted in DB) ───────────────────────────
+  const { data: hiddenColumnsData, refetch: refetchHiddenColumns } = trpc.specHiddenColumns.getHidden.useQuery(
+    { style: selectedStyle! },
+    { enabled: !!selectedStyle }
+  );
+  const hiddenColumnsSet = useMemo(
+    () => new Set<string>(hiddenColumnsData?.hidden ?? []),
+    [hiddenColumnsData]
+  );
+  const [showHiddenColumns, setShowHiddenColumns] = useState(false);
+
+  const hideColumnMutation = trpc.specHiddenColumns.hide.useMutation({
+    onMutate: async ({ style, colour }) => {
+      await utils.specHiddenColumns.getHidden.cancel({ style });
+      const prev = utils.specHiddenColumns.getHidden.getData({ style });
+      utils.specHiddenColumns.getHidden.setData({ style }, (old) => ({
+        hidden: [...(old?.hidden ?? []), colour],
+      }));
+      return { prev };
+    },
+    onError: (_err, { style }, ctx) => {
+      if (ctx?.prev !== undefined) utils.specHiddenColumns.getHidden.setData({ style }, ctx.prev);
+      toast.error("Failed to hide column");
+    },
+    onSettled: (_data, _err, { style }) => {
+      utils.specHiddenColumns.getHidden.invalidate({ style });
+    },
+  });
+
+  const showColumnMutation = trpc.specHiddenColumns.show.useMutation({
+    onMutate: async ({ style, colour }) => {
+      await utils.specHiddenColumns.getHidden.cancel({ style });
+      const prev = utils.specHiddenColumns.getHidden.getData({ style });
+      utils.specHiddenColumns.getHidden.setData({ style }, (old) => ({
+        hidden: (old?.hidden ?? []).filter((c) => c !== colour),
+      }));
+      return { prev };
+    },
+    onError: (_err, { style }, ctx) => {
+      if (ctx?.prev !== undefined) utils.specHiddenColumns.getHidden.setData({ style }, ctx.prev);
+      toast.error("Failed to restore column");
+    },
+    onSettled: (_data, _err, { style }) => {
+      utils.specHiddenColumns.getHidden.invalidate({ style });
+    },
+  });
+
+  function handleHideColumn(colour: string) {
+    if (!selectedStyle) return;
+    hideColumnMutation.mutate({ style: selectedStyle, colour });
+  }
+
+  function handleShowColumn(colour: string) {
+    if (!selectedStyle) return;
+    showColumnMutation.mutate({ style: selectedStyle, colour });
+  }
+
+  // Filter hidden columns from selectedEntry (unless showHiddenColumns is on)
+  const selectedEntry = useMemo(() => {
+    if (!selectedEntryRaw) return null;
+    if (showHiddenColumns || hiddenColumnsSet.size === 0) return selectedEntryRaw;
+    const filteredColours: string[] = [];
+    const filteredLabels: string[] = [];
+    for (let i = 0; i < selectedEntryRaw.colours.length; i++) {
+      const colour = selectedEntryRaw.colours[i];
+      if (!hiddenColumnsSet.has(colour)) {
+        filteredColours.push(colour);
+        filteredLabels.push(selectedEntryRaw.colourLabels[i]);
+      }
+    }
+    const filteredToeCaps: Record<string, string> = {};
+    for (const colour of filteredColours) {
+      if (selectedEntryRaw.toeCapsPerColour[colour]) filteredToeCaps[colour] = selectedEntryRaw.toeCapsPerColour[colour];
+    }
+    return { ...selectedEntryRaw, colours: filteredColours, colourLabels: filteredLabels, toeCapsPerColour: filteredToeCaps };
+  }, [selectedEntryRaw, hiddenColumnsSet, showHiddenColumns]);
 
   // ── Data queries ──────────────────────────────────────────────────────────
   const { data: rawSpecs = [], refetch: refetchSpecs } = trpc.specs.getForStyle.useQuery(
@@ -2129,8 +2240,9 @@ export default function SpecsTab({}: SpecsTabProps) {
                       style: selectedEntry.style,
                       last: selectedEntry.last,
                       category: selectedEntry.category,
-                      colours: selectedEntry.colours,
-                      colourLabels: selectedEntry.colourLabels,
+                      // Export uses the unfiltered entry so hidden columns are still exported
+                      colours: selectedEntryRaw?.colours ?? selectedEntry.colours,
+                      colourLabels: selectedEntryRaw?.colourLabels ?? selectedEntry.colourLabels,
                       specs,
                       hasBuckle: specMeta?.hasBuckle ?? false,
                       dressShoeSubType: specMeta?.dressShoeSubType ?? null,
@@ -2241,6 +2353,16 @@ export default function SpecsTab({}: SpecsTabProps) {
               onSetCategory={handleSetCategory}
               allCustomRowTitles={allCustomRowTitles}
               allStyleEntries={styleList}
+              onHideColumn={handleHideColumn}
+              hiddenColumns={hiddenColumnsSet}
+              showHiddenColumns={showHiddenColumns}
+              onShowColumn={(colour) => {
+                if (colour === "__toggle__") {
+                  setShowHiddenColumns((v) => !v);
+                } else {
+                  handleShowColumn(colour);
+                }
+              }}
             />
           </div>
         )}

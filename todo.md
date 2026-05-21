@@ -211,3 +211,10 @@
 ## Specs Tab Custom Row UX Fixes (May 2026)
 - [x] Remove insert-between-rows ghost rows from SortableCustomRow (keep only Add Row at bottom of each section)
 - [x] Fix drag-and-drop reorder: add optimistic update so rows move immediately without snapping back
+
+## Delete SKU Colour Column in Specs Tab (May 2026)
+- [ ] Add spec_hidden_columns DB table (styleKey, colourKey) to store hidden columns per style
+- [ ] Add server-side tRPC procedures: getHiddenColumns, hideColumn, showColumn
+- [ ] Add × delete button on each colour column header in SpecsTab
+- [ ] Filter out hidden columns from the rendered spec grid and exports
+- [ ] Sync: cancelled SKUs from By Style tab should also be hidden in Specs

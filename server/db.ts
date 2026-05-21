@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1068,4 +1068,27 @@ export async function upsertSpecRowOrder(style: string, rowKeys: string[]): Prom
   const json = JSON.stringify(rowKeys);
   await db.insert(specRowOrder).values({ style: style.toUpperCase(), rowKeys: json })
     .onDuplicateKeyUpdate({ set: { rowKeys: json } });
+}
+
+// ── Spec Hidden Columns ─────────────────────────────────────────────────────
+
+export async function getSpecHiddenColumns(style: string): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(specHiddenColumns).where(eq(specHiddenColumns.style, style));
+  return rows.map((r) => r.colour);
+}
+
+export async function hideSpecColumn(style: string, colour: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(specHiddenColumns).values({ style, colour }).onDuplicateKeyUpdate({ set: { colour } });
+}
+
+export async function showSpecColumn(style: string, colour: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(specHiddenColumns).where(
+    and(eq(specHiddenColumns.style, style), eq(specHiddenColumns.colour, colour))
+  );
 }

@@ -38,6 +38,7 @@ import {
   batchReorderCustomRows,
   getAllCustomStyles, addCustomStyle, deleteCustomStyle,
   getSpecRowOrder, upsertSpecRowOrder,
+  getSpecHiddenColumns, hideSpecColumn, showSpecColumn,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -1655,6 +1656,27 @@ If the request is unclear or is a question, use no_action.`;
       .input(z.object({ orderedIds: z.array(z.number()) }))
       .mutation(async ({ input }) => {
         await batchReorderCustomRows(input.orderedIds);
+        return { success: true };
+      }),
+  }),
+  // ─── Spec Hidden Columns (hide individual colour columns per style) ───────────
+  specHiddenColumns: router({
+    getHidden: publicProcedure
+      .input(z.object({ style: z.string() }))
+      .query(async ({ input }) => {
+        const hidden = await getSpecHiddenColumns(input.style);
+        return { hidden };
+      }),
+    hide: publicProcedure
+      .input(z.object({ style: z.string(), colour: z.string() }))
+      .mutation(async ({ input }) => {
+        await hideSpecColumn(input.style, input.colour);
+        return { success: true };
+      }),
+    show: publicProcedure
+      .input(z.object({ style: z.string(), colour: z.string() }))
+      .mutation(async ({ input }) => {
+        await showSpecColumn(input.style, input.colour);
         return { success: true };
       }),
   }),
