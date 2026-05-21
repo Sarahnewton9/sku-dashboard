@@ -191,3 +191,10 @@
 - [x] Wrap custom spec rows in a SortableContext per section
 - [x] Add drag handle icon to each custom row
 - [x] On drag end, persist new sortOrder values to DB via batch upsert
+
+## Add Style to Last feature (May 2026)
+- [x] Add custom_styles DB table (style, last, category, createdAt) and push migration
+- [x] Add server-side tRPC procedures: customStyle.getAll, customStyle.add, customStyle.delete
+- [x] Update useCustomSkus hook to include custom styles in mergedStyles (so they appear in all tabs)
+- [x] Add "Add Style" UI inside each last's expanded section in LastApprovalTab with drag-and-drop image upload
+- [x] Custom styles should support image upload (reuse styleImage.upload tRPC procedure)

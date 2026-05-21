@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useRef } from "react";
+import { useState, useRef, useMemo, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
-import { CheckCircle2, Clock, ChevronDown, ChevronRight, Upload, X, AlertTriangle, Trash2 } from "lucide-react";
+import { CheckCircle2, Clock, ChevronDown, ChevronRight, Upload, X, AlertTriangle, Trash2, Plus, Image as ImageIcon } from "lucide-react";
 import * as XLSX from "xlsx";
+import { toast } from "sonner";
 
 // Brand new lasts this season — manually confirmed list
 const ALL_LASTS = [
@@ -28,7 +29,7 @@ const ALL_LASTS = [
 
 const ALL_LASTS_UPPER = new Set(ALL_LASTS.map((l) => l.toUpperCase()));
 
-  // Static STYLE_IMAGE_MAP fallback (used when no DB override)
+// Static STYLE_IMAGE_MAP fallback (used when no DB override)
 const STYLE_IMAGE_MAP: Record<string, string> = {};
 for (const s of skuData.styles) {
   if ((s as any).imageUrl) STYLE_IMAGE_MAP[s.style] = (s as any).imageUrl;
@@ -41,10 +42,222 @@ interface ImportRow {
   matched: boolean;
 }
 
-export default function LastApprovalTab() {
-  const { mergedStyles } = useCustomSkus();
+// ─── Style Card with drag-and-drop image upload ────────────────────────────────
+function StyleCard({
+  styleName,
+  imageUrl,
+  isCustom,
+  customStyleId,
+  onImageUploaded,
+  onDeleteCustomStyle,
+}: {
+  styleName: string;
+  imageUrl?: string;
+  isCustom?: boolean;
+  customStyleId?: number;
+  onImageUploaded: (style: string, url: string) => void;
+  onDeleteCustomStyle?: (id: number) => void;
+}) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Build style lookup per last (live, includes custom SKUs)
+  const uploadImageMutation = trpc.styleImage.upload.useMutation({
+    onSuccess: (data) => {
+      onImageUploaded(styleName, data.url);
+      toast.success(`Image uploaded for ${styleName}`);
+    },
+    onError: (err) => {
+      toast.error(`Upload failed: ${err.message}`);
+    },
+  });
+
+  const handleFile = useCallback(async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please drop an image file");
+      return;
+    }
+    setUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = (e.target!.result as string).split(",")[1];
+        uploadImageMutation.mutate({
+          style: styleName,
+          imageBase64: base64,
+          mimeType: file.type,
+        });
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      setUploading(false);
+    }
+  }, [styleName, uploadImageMutation]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  }, [handleFile]);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => setIsDragging(false);
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFile(file);
+    e.target.value = "";
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-1 group relative">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileInput}
+      />
+      {/* Image area — drag target */}
+      <div
+        className="relative w-24 h-24 rounded-lg border overflow-hidden cursor-pointer transition-all"
+        style={{
+          borderColor: isDragging ? "oklch(0.55 0.14 260)" : "var(--border)",
+          background: isDragging ? "oklch(0.94 0.04 260)" : imageUrl ? "white" : "var(--muted)",
+          boxShadow: isDragging ? "0 0 0 2px oklch(0.55 0.14 260)" : undefined,
+        }}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onClick={() => fileInputRef.current?.click()}
+        title="Click or drag an image to upload"
+      >
+        {uploading ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "oklch(0.55 0.14 260)" }} />
+          </div>
+        ) : imageUrl ? (
+          <>
+            <img src={imageUrl} alt={styleName} className="w-full h-full object-contain" />
+            {/* Upload overlay on hover */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <Upload className="w-5 h-5 text-white" />
+            </div>
+          </>
+        ) : isDragging ? (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+            <ImageIcon className="w-6 h-6" style={{ color: "oklch(0.55 0.14 260)" }} />
+            <span className="text-[9px] font-medium" style={{ color: "oklch(0.55 0.14 260)" }}>Drop here</span>
+          </div>
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-muted-foreground/40">
+            <ImageIcon className="w-5 h-5" />
+            <span className="text-[9px]">Add image</span>
+          </div>
+        )}
+      </div>
+
+      {/* Style name */}
+      <span className="text-[10px] font-medium text-foreground text-center leading-tight max-w-[80px] truncate">
+        {styleName}
+        {isCustom && (
+          <span className="ml-1 text-[8px] px-1 py-0.5 rounded font-semibold" style={{ background: "oklch(0.92 0.08 155)", color: "oklch(0.35 0.14 155)" }}>NEW</span>
+        )}
+      </span>
+
+      {/* Delete button for custom styles */}
+      {isCustom && customStyleId !== undefined && onDeleteCustomStyle && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDeleteCustomStyle(customStyleId); }}
+          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          title={`Remove ${styleName}`}
+        >
+          <X className="w-2.5 h-2.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── Add Style Form ────────────────────────────────────────────────────────────
+function AddStyleForm({
+  lastName,
+  onAdded,
+  onCancel,
+}: {
+  lastName: string;
+  onAdded: () => void;
+  onCancel: () => void;
+}) {
+  const [styleName, setStyleName] = useState("");
+  const [category, setCategory] = useState("");
+
+  const addMutation = trpc.customStyle.add.useMutation({
+    onSuccess: () => {
+      toast.success(`${styleName.toUpperCase()} added to ${lastName}`);
+      onAdded();
+    },
+    onError: (err) => {
+      toast.error(`Failed to add style: ${err.message}`);
+    },
+  });
+
+  const handleSubmit = () => {
+    const name = styleName.trim().toUpperCase();
+    if (!name) return;
+    addMutation.mutate({ style: name, lastName, category: category.trim() || undefined });
+  };
+
+  return (
+    <div className="flex items-center gap-2 mt-2 p-2 rounded-lg border" style={{ borderColor: "oklch(0.80 0.10 155)", background: "oklch(0.98 0.02 155)" }}>
+      <input
+        type="text"
+        value={styleName}
+        onChange={(e) => setStyleName(e.target.value.toUpperCase())}
+        onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") onCancel(); }}
+        placeholder="Style name (e.g. CORFU)"
+        className="flex-1 text-sm rounded border px-2 py-1 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-green-400/40 font-medium uppercase"
+        style={{ borderColor: "var(--border)" }}
+        autoFocus
+      />
+      <input
+        type="text"
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+        placeholder="Category (optional)"
+        className="w-36 text-sm rounded border px-2 py-1 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-green-400/40"
+        style={{ borderColor: "var(--border)" }}
+      />
+      <button
+        onClick={handleSubmit}
+        disabled={!styleName.trim() || addMutation.isPending}
+        className="px-3 py-1.5 rounded text-xs font-medium text-white disabled:opacity-50 transition-colors"
+        style={{ background: "oklch(0.45 0.14 155)" }}
+      >
+        {addMutation.isPending ? "Adding…" : "Add"}
+      </button>
+      <button
+        onClick={onCancel}
+        className="px-3 py-1.5 rounded text-xs font-medium text-muted-foreground border transition-colors hover:bg-muted"
+        style={{ borderColor: "var(--border)" }}
+      >
+        Cancel
+      </button>
+    </div>
+  );
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
+export default function LastApprovalTab() {
+  const { mergedStyles, customStyleRows, refetchCustomStyles, refetchImageOverrides } = useCustomSkus();
+
+  // Build style lookup per last (live, includes custom SKUs and custom styles)
   const { lastToStyles, lastNewSkuCount } = useMemo(() => {
     const lastToStyles: Record<string, string[]> = {};
     const lastNewSkuCount: Record<string, number> = {};
@@ -58,11 +271,12 @@ export default function LastApprovalTab() {
 
   const { data: approvals, refetch } = trpc.lastApproval.getAll.useQuery();
   const { data: deletedLastsFromDb = [], refetch: refetchDeleted } = trpc.lastApproval.getDeleted.useQuery();
-  const { data: imageOverrideList = [] } = trpc.styleImage.getAll.useQuery();
+  const { data: imageOverrideList = [], refetch: refetchImages } = trpc.styleImage.getAll.useQuery();
   const imageOverrides = useMemo(
     () => imageOverrideList.reduce<Record<string, string>>((acc, o) => { acc[o.style] = o.imageUrl; return acc; }, {}),
     [imageOverrideList]
   );
+
   const upsert = trpc.lastApproval.upsert.useMutation({
     onSuccess: () => refetch(),
     onError: (err) => console.error("[LastApproval] upsert error:", err),
@@ -70,6 +284,10 @@ export default function LastApprovalTab() {
   const deleteLastMutation = trpc.lastApproval.delete.useMutation({
     onSuccess: () => { refetchDeleted(); },
     onError: (err) => console.error("[LastApproval] delete error:", err),
+  });
+  const deleteCustomStyleMutation = trpc.customStyle.delete.useMutation({
+    onSuccess: () => { refetchCustomStyles(); toast.success("Style removed"); },
+    onError: (err) => toast.error(`Failed to remove style: ${err.message}`),
   });
 
   // Optimistic local state so the UI responds instantly without waiting for refetch
@@ -81,6 +299,8 @@ export default function LastApprovalTab() {
   const [filter, setFilter] = useState<"all" | "approved" | "waiting_revised">("all");
   const [deletingLast, setDeletingLast] = useState<string | null>(null);
   const [customLasts, setCustomLasts] = useState<string[]>([]);
+  // Track which last has the "Add Style" form open
+  const [addingStyleToLast, setAddingStyleToLast] = useState<string | null>(null);
 
   // Import state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,12 +324,6 @@ export default function LastApprovalTab() {
     }
     return map;
   }, [approvals, localOverrides]);
-
-  // Merged list: static lasts + any custom ones added, minus deleted ones
-  const activeLasts = useMemo(() => {
-    const deleted = new Set(Object.keys(approvalMap).filter((k) => approvalMap[k]?.status === undefined));
-    return [...ALL_LASTS, ...customLasts].filter((l) => !deleted.has(l + "__deleted"));
-  }, [approvalMap, customLasts]);
 
   // Track which lasts have been locally deleted (optimistic, synced with DB)
   const [localDeletedLasts, setLocalDeletedLasts] = useState<Set<string>>(new Set());
@@ -136,6 +350,9 @@ export default function LastApprovalTab() {
   const approvedCount = visibleLasts.filter((l) => (approvalMap[l]?.status ?? "waiting_revised") === "approved").length;
   const waitingCount = visibleLasts.length - approvedCount;
 
+  // Build a set of custom style names for quick lookup
+  const customStyleNames = useMemo(() => new Set(customStyleRows.map((cs) => cs.style.toUpperCase())), [customStyleRows]);
+
   const handleToggle = (lastName: string, current: "approved" | "waiting_revised") => {
     const next = current === "approved" ? "waiting_revised" : "approved";
     setLocalOverrides((prev) => ({ ...prev, [lastName]: next }));
@@ -150,10 +367,8 @@ export default function LastApprovalTab() {
   };
 
   const handleDeleteLast = (lastName: string) => {
-    // Optimistic local update
     setLocalDeletedLasts((prev) => new Set([...prev, lastName]));
     setDeletingLast(null);
-    // Persist to DB
     deleteLastMutation.mutate({ lastName });
   };
 
@@ -164,10 +379,14 @@ export default function LastApprovalTab() {
       status: approvalMap[lastName]?.status ?? "waiting_revised",
       notes: draft || null,
     });
-    // Clear the draft for this last after saving
     setNotesDrafts((prev) => { const n = { ...prev }; delete n[lastName]; return n; });
     setEditingNotes(null);
   };
+
+  const handleImageUploaded = useCallback((_style: string, _url: string) => {
+    refetchImages();
+    refetchImageOverrides();
+  }, [refetchImages, refetchImageOverrides]);
 
   // ── Excel import ────────────────────────────────────────────────────────────
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -189,7 +408,6 @@ export default function LastApprovalTab() {
           return;
         }
 
-        // Find columns — case-insensitive
         const firstRow = rows[0];
         const keys = Object.keys(firstRow);
         const lastCol = keys.find((k) => k.toLowerCase().includes("last"));
@@ -233,7 +451,6 @@ export default function LastApprovalTab() {
       }
     };
     reader.readAsArrayBuffer(file);
-    // Reset input so same file can be re-selected
     e.target.value = "";
   };
 
@@ -243,7 +460,6 @@ export default function LastApprovalTab() {
     const matched = importPreview.filter((r) => r.matched);
     try {
       for (const row of matched) {
-        // Find the canonical last name (preserving original casing)
         const canonical = ALL_LASTS.find((l) => l.toUpperCase() === row.lastName) ?? row.lastName;
         await upsert.mutateAsync({
           lastName: canonical,
@@ -414,6 +630,7 @@ export default function LastApprovalTab() {
           const styles = lastToStyles[lastName] ?? [];
           const isExpanded = expandedLast === lastName;
           const isEditingThisNotes = editingNotes === lastName;
+          const isAddingStyle = addingStyleToLast === lastName;
 
           return (
             <div
@@ -429,7 +646,7 @@ export default function LastApprovalTab() {
                 className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none hover:bg-muted/30 transition-colors"
                 onClick={() => setExpandedLast(isExpanded ? null : lastName)}
               >
-                {/* Toggle button — stop propagation so it doesn't also expand */}
+                {/* Toggle button */}
                 <button
                   onClick={(e) => { e.stopPropagation(); handleToggle(lastName, status); }}
                   className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all hover:opacity-80"
@@ -504,35 +721,56 @@ export default function LastApprovalTab() {
                 <div className="px-4 pb-4 border-t" style={{ borderColor: "var(--border)" }}>
                   {/* Styles on this last — with images */}
                   <div className="mt-3 mb-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                      Styles on this last
-                    </p>
-                    <div className="flex flex-wrap gap-3">
-                      {styles.map((s) => (
-                        <div
-                          key={s}
-                          className="flex flex-col items-center gap-1"
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Styles on this last
+                      </p>
+                      {/* Add Style button */}
+                      {!isAddingStyle && (
+                        <button
+                          onClick={() => setAddingStyleToLast(lastName)}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors hover:bg-muted/50"
+                          style={{ borderColor: "oklch(0.72 0.14 155)", color: "oklch(0.40 0.14 155)", background: "oklch(0.96 0.04 155)" }}
                         >
-                          {(imageOverrides[s] ?? STYLE_IMAGE_MAP[s]) ? (
-                            <img
-                              src={imageOverrides[s] ?? STYLE_IMAGE_MAP[s]}
-                              alt={s}
-                              className="w-24 h-24 object-contain rounded-lg border bg-white"
-                              style={{ borderColor: "var(--border)" }}
-                            />
-                          ) : (
-                            <div
-                              className="w-24 h-24 rounded-lg border flex items-center justify-center text-muted-foreground/40"
-                              style={{ borderColor: "var(--border)", background: "var(--muted)" }}
-                            >
-                              <span className="text-[9px]">No img</span>
-                            </div>
-                          )}
-                          <span
-                            className="text-[10px] font-medium text-foreground text-center leading-tight max-w-[64px] truncate"
-                          >{s}</span>
-                        </div>
-                      ))}
+                          <Plus className="w-3 h-3" />
+                          Add Style
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Add Style form */}
+                    {isAddingStyle && (
+                      <AddStyleForm
+                        lastName={lastName}
+                        onAdded={() => {
+                          setAddingStyleToLast(null);
+                          refetchCustomStyles();
+                        }}
+                        onCancel={() => setAddingStyleToLast(null)}
+                      />
+                    )}
+
+                    {/* Style cards grid */}
+                    <div className="flex flex-wrap gap-3 mt-2">
+                      {styles.map((s) => {
+                        const imgUrl = imageOverrides[s] ?? STYLE_IMAGE_MAP[s];
+                        const isCustom = customStyleNames.has(s.toUpperCase());
+                        const customStyleRow = customStyleRows.find((cs) => cs.style.toUpperCase() === s.toUpperCase());
+                        return (
+                          <StyleCard
+                            key={s}
+                            styleName={s}
+                            imageUrl={imgUrl}
+                            isCustom={isCustom}
+                            customStyleId={customStyleRow?.id}
+                            onImageUploaded={handleImageUploaded}
+                            onDeleteCustomStyle={isCustom ? (id) => deleteCustomStyleMutation.mutate({ id }) : undefined}
+                          />
+                        );
+                      })}
+                      {styles.length === 0 && !isAddingStyle && (
+                        <p className="text-xs text-muted-foreground italic">No styles on this last yet. Click "Add Style" to add one.</p>
+                      )}
                     </div>
                   </div>
 
@@ -540,7 +778,6 @@ export default function LastApprovalTab() {
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1 flex items-center gap-1.5">
                       Notes
-                      {/* Unsaved draft indicator */}
                       {notesDrafts[lastName] !== undefined && notesDrafts[lastName] !== (notes ?? "") && (
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" title="Unsaved draft" />
                       )}
@@ -579,7 +816,6 @@ export default function LastApprovalTab() {
                         style={{ borderColor: "var(--border)" }}
                         onClick={() => {
                           setEditingNotes(lastName);
-                          // Only seed the draft from DB if there's no unsaved draft already
                           setNotesDrafts((prev) => ({
                             ...prev,
                             [lastName]: prev[lastName] !== undefined ? prev[lastName] : (notes ?? ""),

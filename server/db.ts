@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -807,6 +807,26 @@ export async function deleteCustomSku(id: number): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(customSkus).where(eq(customSkus.id, id));
+}
+
+// ─── Custom Styles ────────────────────────────────────────────────────────────
+export async function getAllCustomStyles(): Promise<{ id: number; style: string; lastName: string; category: string | null; createdAt: Date }[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(customStyles);
+}
+
+export async function addCustomStyle(style: string, lastName: string, category?: string): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(customStyles).values({ style, lastName, category: category ?? null });
+  return (result[0] as any).insertId as number;
+}
+
+export async function deleteCustomStyle(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(customStyles).where(eq(customStyles.id, id));
 }
 
 // ─── Unlock Buy Session ────────────────────────────────────────────────────────

@@ -190,6 +190,13 @@
       "when": 1779232797464,
       "tag": "0026_bizarre_viper",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1779339134854,
+      "tag": "0027_chief_grey_gargoyle",
+      "breakpoints": true
     }
   ]
 }

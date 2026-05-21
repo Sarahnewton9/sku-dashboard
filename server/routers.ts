@@ -36,6 +36,7 @@ import {
   getChangesReport,
   getAllSkuNewOverrides, upsertSkuNewOverride,
   batchReorderCustomRows,
+  getAllCustomStyles, addCustomStyle, deleteCustomStyle,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -822,6 +823,25 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await deleteCustomSku(input.id);
+        return { success: true };
+      }),
+  }),
+
+  customStyle: router({
+    getAll: publicProcedure
+      .query(async () => getAllCustomStyles()),
+
+    add: publicProcedure
+      .input(z.object({ style: z.string(), lastName: z.string(), category: z.string().optional() }))
+      .mutation(async ({ input }) => {
+        const id = await addCustomStyle(input.style, input.lastName, input.category);
+        return { id };
+      }),
+
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteCustomStyle(input.id);
         return { success: true };
       }),
   }),

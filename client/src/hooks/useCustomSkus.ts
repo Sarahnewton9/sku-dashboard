@@ -42,6 +42,11 @@ export function useCustomSkus() {
     staleTime: 30_000,
   });
 
+  // Fetch custom styles (brand-new styles added manually, not in static skuData)
+  const { data: customStyleRows = [], refetch: refetchCustomStyles } = trpc.customStyle.getAll.useQuery(undefined, {
+    staleTime: 30_000,
+  });
+
   const imageOverrideMap = useMemo(() => {
     const map: Record<string, string> = {};
     for (const o of imageOverrides as Array<{ style: string; imageUrl: string }>) {
@@ -115,7 +120,8 @@ export function useCustomSkus() {
       });
     }
 
-    return skuData.styles.map((s) => {
+    // Static styles enriched with custom SKUs
+    const staticStyles = skuData.styles.map((s) => {
       const extra = extras[s.style] ?? [];
       const overrideUrl = imageOverrideMap[s.style.toUpperCase()];
 
@@ -143,14 +149,43 @@ export function useCustomSkus() {
         isAllNew: totalNewSKUs === totalSKUs && totalSKUs > 0,
       };
     });
-  }, [customSkus, imageOverrideMap, skuNewOverrideMap]);
+
+    // Synthetic style entries for custom styles (brand-new, not in static data)
+    const staticStyleNames = new Set(skuData.styles.map((s) => s.style.toUpperCase()));
+    const syntheticStyles = (customStyleRows as Array<{ id: number; style: string; lastName: string; category: string | null; createdAt: Date }>)
+      .filter((cs) => !staticStyleNames.has(cs.style.toUpperCase()))
+      .map((cs) => {
+        const overrideUrl = imageOverrideMap[cs.style.toUpperCase()];
+        // Custom SKUs for this style
+        const extra = extras[cs.style] ?? [];
+        const customNewCount = extra.filter((e) => e.isNew).length;
+        const totalSKUs = extra.length;
+        return {
+          style: cs.style,
+          last: cs.lastName,
+          category: cs.category ?? "",
+          colours: extra.map((e) => e.colour) as any[],
+          leathers: extra.map((e) => e.leather).filter(Boolean) as any[],
+          totalSKUs,
+          newSKUs: customNewCount,
+          hasNew: customNewCount > 0,
+          isAllNew: customNewCount === totalSKUs && totalSKUs > 0,
+          imageUrl: overrideUrl ?? undefined,
+          _isCustomStyle: true,
+        };
+      });
+
+    return [...staticStyles, ...syntheticStyles];
+  }, [customSkus, customStyleRows, imageOverrideMap, skuNewOverrideMap]);
 
   return {
     customSkus: customSkus as CustomSkuRow[],
+    customStyleRows: customStyleRows as Array<{ id: number; style: string; lastName: string; category: string | null; createdAt: Date }>,
     mergedRawSkus,
     mergedStyles,
     isLoading,
     refetch,
     refetchImageOverrides,
+    refetchCustomStyles,
   };
 }

@@ -444,6 +444,20 @@ export type LastHeelHeight = typeof lastHeelHeights.$inferSelect;
 export type InsertLastHeelHeight = typeof lastHeelHeights.$inferInsert;
 
 /**
+ * Custom styles — brand-new styles added manually (not yet in the static skuData).
+ * Linked to a last so they appear in the Last Approval tab and all downstream tabs.
+ */
+export const customStyles = mysqlTable("custom_styles", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull().unique(),
+  lastName: varchar("last_name", { length: 128 }).notNull(),
+  category: varchar("category", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CustomStyle = typeof customStyles.$inferSelect;
+export type InsertCustomStyle = typeof customStyles.$inferInsert;
+
+/**
  * SKU new/existing override — allows manually overriding the is_new flag from static skuData.
  * When a row exists here, it takes precedence over the static data.
  */

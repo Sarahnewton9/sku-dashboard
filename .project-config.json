@@ -1,0 +1,41 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [
+    "db",
+    "server",
+    "user"
+  ],
+  "dev_command": "pnpm run dev",
+  "env_vars": {
+    "DATABASE_URL": "mysql://2PKnJnyFBef7ny1.49968122eb9d:83pN3EpLdF7Fg2kzRY4n@gateway05.us-east-1.prod.aws.tidbcloud.com:4000/RGHTjKGQqzKd5FypxANQbT?ssl={\"rejectUnauthorized\":true}"
+  },
+  "experiments": null,
+  "git_remote": {
+    "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663500263115/RGHTjKGQqzKd5FypxANQbT",
+    "access_key_id": "ASIAZV3A2ECZAIZX42EU",
+    "secret_access_key": "1ZTOn/5MdiIdIXDShaJjLYqFxmDwscW0lTUHa/Ez",
+    "session_token": "IQoJb3JpZ2luX2VjEDUaCXVzLWVhc3QtMSJGMEQCIB/7g32L3efjAIwSb4F1Eg1TBkOx8r/WTbSOs3U7F28tAiBBmNjuxRbzjx7SjQQ3M+Jn7Awswu64YNU2GrNKs0999yr/Awj+//////////8BEAQaDDY2NTM4NjA5ODg2NiIM4ouM4RPPU8LByQutKtMDqcaD3g0l37J15E7L8VWi412pWVCqmkr3FmVW3RFr6DwXes2MnAsvwFjWSWH77UsYCBWTGboqgu1hBiCQmUf3Lt1wlyUyepAt65BqdxRGVbOHscJDt7u2Pe2J5ggZXU8IAD7LHAD8OFMcrRnJ9vrW8RpKMk/rDCpMFvF/opYU29TyvYfY+8cJceZJ77CbvI9DToV0lj1Jxs3ZrZIF6JHAyTSe1jfvf46LF0x/TbgNaqn2PTp4QGuvmloD9cBu9GfgOAX3lTviG2auF9VVtiODhD+IXEH9Oro8/YS2k36AsF3UruMA7oIB5+mosgU9wAxFeoeZYdKuNV4bRniStBXr6EBbbxwHHbr3y5fBGk901lv3yLYVxjZCfuFsT6E0uUgzeulKgwvxHPdI6dJYyBcV0FbHC0WbS2KrRiIBBRL6QIExPLreGZyeW7sePuvsM3Yh1uw516fBsIQf4UHmT7ANdEQI82GJS0LO/00nHnaTZonnDuwyPPX902UyZo+YBUSgkTSQduFZHr80YF3dhvQSstTqhWA5ot3lGPRcQElO7MqWcK4Fz6cBlPCi1cqDBi5FsQ+5jBsNTuHZmdNpzUOkiGH8X8TBATVZX40T+kTiI/mpye4w55y60AY6ngGtiTzaVyeHalKmFQY3ZBanxCLlTe+AnN7pjJTB3JuZu2LFrVt3uoqXHkqLEp5sxTXZzGpvBu2yf1cILoAZ9LBfpOcPtTXNwT22LeFuF0e6DQV/U3Xw6YgGEkJdUP7iPsE4kSSFyu6YiuBHb7HpWe9KBrpHABK0x6XF8a484rB+bSwcQ1+gCCqQSOz+vUVsIfG8vGbKCcZ+5u10leuksg==",
+    "expiration": "2026-05-21T16:47:35.000Z"
+  },
+  "name": "sku-dashboard",
+  "path": "/home/ubuntu/sku-dashboard",
+  "port": 3000,
+  "secrets": {
+    "BUILT_IN_FORGE_API_KEY": "Fe5t2teCJVMfQaMxEgNeSp",
+    "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "JWT_SECRET": "33GTt9rdLqBBuxE6HNZrpe",
+    "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OWNER_NAME": "sarah.newton",
+    "OWNER_OPEN_ID": "iKEsFE8HXba8i8w5GAQbFw",
+    "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
+    "VITE_ANALYTICS_WEBSITE_ID": "4c397fe9-8d77-4096-afa0-fd820c5350bd",
+    "VITE_APP_ID": "RGHTjKGQqzKd5FypxANQbT",
+    "VITE_APP_LOGO": "https://files.manuscdn.com/user_upload_by_module/web_dev_logo/310519663500263115/EzVbRPJXjVFAtuPl.png",
+    "VITE_APP_TITLE": "SKU Analysis Dashboard",
+    "VITE_FRONTEND_FORGE_API_KEY": "ifNcrDwx52g2GaijjPkrTx",
+    "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
+    "VITE_OAUTH_PORTAL_URL": "https://manus.im"
+  },
+  "template_id": "web-db-user",
+  "test_command": "pnpm test"
+}
