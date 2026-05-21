@@ -168,6 +168,7 @@ export function useCustomSkus() {
           leathers: extra.map((e) => e.leather).filter(Boolean) as any[],
           totalSKUs,
           newSKUs: customNewCount,
+          existingSKUs: totalSKUs - customNewCount,
           hasNew: customNewCount > 0,
           isAllNew: customNewCount === totalSKUs && totalSKUs > 0,
           imageUrl: overrideUrl ?? undefined,

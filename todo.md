@@ -198,3 +198,8 @@
 - [x] Update useCustomSkus hook to include custom styles in mergedStyles (so they appear in all tabs)
 - [x] Add "Add Style" UI inside each last's expanded section in LastApprovalTab with drag-and-drop image upload
 - [x] Custom styles should support image upload (reuse styleImage.upload tRPC procedure)
+
+## Add Style to By Style Tab (May 2026)
+- [x] Add "Add Style" button in By Style tab toolbar
+- [x] Modal with style name, last selector (from all known lasts), category selector, drag-and-drop image upload
+- [x] Custom style appears in grouped-by-last table immediately after adding

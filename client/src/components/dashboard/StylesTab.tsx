@@ -39,7 +39,16 @@ export default function StylesTab() {
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
   const [fitApprovedSectionOpen, setFitApprovedSectionOpen] = useState(false);
   const [expandedApprovedStyle, setExpandedApprovedStyle] = useState<string | null>(null);
-
+  // Add Style modal state
+  const [showAddStyleModal, setShowAddStyleModal] = useState(false);
+  const [newStyleName, setNewStyleName] = useState("");
+  const [newStyleLast, setNewStyleLast] = useState("");
+  const [newStyleCategory, setNewStyleCategory] = useState("");
+  const [newStyleImageFile, setNewStyleImageFile] = useState<File | null>(null);
+  const [newStyleImagePreview, setNewStyleImagePreview] = useState<string | null>(null);
+  const [newStyleDragging, setNewStyleDragging] = useState(false);
+  const [isAddingStyle, setIsAddingStyle] = useState(false);
+  const addStyleImageInputRef = useRef<HTMLInputElement>(null);
   // Pending qty changes (local before saving)
   const pendingQty = useRef<Record<string, number>>({});
 
@@ -107,7 +116,7 @@ export default function StylesTab() {
   });
 
   // Custom SKUs (added during buy)
-  const { mergedRawSkus, mergedStyles, customSkus, refetch: refetchCustomSkus, refetchImageOverrides } = useCustomSkus();
+  const { mergedRawSkus, mergedStyles, customSkus, customStyleRows, refetch: refetchCustomSkus, refetchImageOverrides } = useCustomSkus();
 
   // Style image upload
   const [uploadingImage, setUploadingImage] = useState<string | null>(null); // style name being uploaded
@@ -178,6 +187,80 @@ export default function StylesTab() {
     onError: (err) => toast.error(`Failed to add colour: ${err.message}`),
   });
 
+  // Add Style mutation
+  const addCustomStyleMutation = trpc.customStyle.add.useMutation({
+    onSuccess: () => {
+      utils.customStyle.getAll.invalidate();
+      setShowAddStyleModal(false);
+      setNewStyleName("");
+      setNewStyleLast("");
+      setNewStyleCategory("");
+      setNewStyleImageFile(null);
+      setNewStyleImagePreview(null);
+      setIsAddingStyle(false);
+      toast.success("Style added successfully");
+    },
+    onError: (err) => {
+      setIsAddingStyle(false);
+      toast.error(`Failed to add style: ${err.message}`);
+    },
+  });
+  // All unique lasts from skuData (for the Add Style dropdown)
+  const allKnownLasts = useMemo(() => {
+    const s = new Set<string>();
+    for (const style of skuData.styles) { if (style.last) s.add(style.last); }
+    return Array.from(s).sort();
+  }, []);
+  // Add Style drag-and-drop handlers
+  function handleAddStyleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setNewStyleDragging(false);
+    const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith("image/"));
+    if (file) {
+      setNewStyleImageFile(file);
+      const reader = new FileReader();
+      reader.onload = () => setNewStyleImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  }
+  function handleAddStyleBrowse(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setNewStyleImageFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setNewStyleImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+  async function handleAddStyleSubmit() {
+    const name = newStyleName.trim().toUpperCase();
+    const lastName = newStyleLast.trim().toUpperCase();
+    if (!name || !lastName) {
+      toast.error("Style name and last are required");
+      return;
+    }
+    setIsAddingStyle(true);
+    // If an image was selected, upload it first then add the style
+    if (newStyleImageFile) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = (reader.result as string).split(",")[1];
+        // Add the style first, then upload the image
+        addCustomStyleMutation.mutate(
+          { style: name, lastName, category: newStyleCategory.trim().toUpperCase() || undefined },
+          {
+            onSuccess: () => {
+              // Upload the image after style is created
+              uploadImageMutation.mutate({ style: name, imageBase64: base64, mimeType: newStyleImageFile.type });
+            },
+          }
+        );
+      };
+      reader.readAsDataURL(newStyleImageFile);
+    } else {
+      addCustomStyleMutation.mutate({ style: name, lastName, category: newStyleCategory.trim().toUpperCase() || undefined });
+    }
+  }
   const unlockSessionMutation = trpc.buy.unlock.useMutation({
     onSuccess: () => { refetchSessions(); refetchActive(); toast.success("Session unlocked"); },
     onError: (err) => toast.error(`Failed to unlock: ${err.message}`),
@@ -656,7 +739,14 @@ export default function StylesTab() {
           <Download className="w-4 h-4" />
           Export Excel
         </button>
-
+        <button
+          onClick={() => setShowAddStyleModal(true)}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-purple-50 hover:border-purple-400 hover:text-purple-700"
+          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+        >
+          <Plus className="w-4 h-4" />
+          Add Style
+        </button>
         <button
           onClick={handleFetchSize11}
           disabled={isFetchingSize11}
@@ -1477,6 +1567,130 @@ export default function StylesTab() {
           onDone={() => { refetchSkuMeta(); setShowInvoiceImport(false); }}
         />
       )}
+      {/* Add Style Modal */}
+      {showAddStyleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddStyleModal(false)}>
+          <div
+            className="relative bg-card rounded-2xl shadow-2xl border w-full max-w-md mx-4 p-6 flex flex-col gap-5"
+            style={{ borderColor: "var(--border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-foreground">Add New Style</h2>
+              <button onClick={() => setShowAddStyleModal(false)} className="p-1 rounded hover:bg-muted transition-colors">
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            {/* Style Name */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-foreground">Style Name <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                value={newStyleName}
+                onChange={(e) => setNewStyleName(e.target.value.toUpperCase())}
+                placeholder="e.g. CORFU"
+                className="px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-400/40"
+                style={{ borderColor: "var(--border)" }}
+                autoFocus
+              />
+            </div>
+
+            {/* Last */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-foreground">Last <span className="text-red-500">*</span></label>
+              <select
+                value={newStyleLast}
+                onChange={(e) => setNewStyleLast(e.target.value)}
+                className="px-3 py-2 text-sm rounded-lg border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-purple-400/40"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <option value="">Select a last…</option>
+                {allKnownLasts.map((l) => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Category */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-foreground">Category <span className="text-muted-foreground text-xs">(optional)</span></label>
+              <select
+                value={newStyleCategory}
+                onChange={(e) => setNewStyleCategory(e.target.value)}
+                className="px-3 py-2 text-sm rounded-lg border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-purple-400/40"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <option value="">Select a category…</option>
+                {availableCategories.filter((c) => c !== "All").map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Image Upload */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-foreground">Style Image <span className="text-muted-foreground text-xs">(optional)</span></label>
+              <div
+                className={`relative rounded-xl border-2 border-dashed transition-colors cursor-pointer flex flex-col items-center justify-center gap-2 p-4 min-h-[120px] ${
+                  newStyleDragging ? "border-purple-400 bg-purple-50/30" : "border-border hover:border-purple-300 hover:bg-muted/30"
+                }`}
+                onDragOver={(e) => { e.preventDefault(); setNewStyleDragging(true); }}
+                onDragLeave={() => setNewStyleDragging(false)}
+                onDrop={handleAddStyleDrop}
+                onClick={() => addStyleImageInputRef.current?.click()}
+              >
+                {newStyleImagePreview ? (
+                  <>
+                    <img src={newStyleImagePreview} alt="Preview" className="h-20 w-20 object-cover rounded-lg" />
+                    <span className="text-xs text-muted-foreground">{newStyleImageFile?.name}</span>
+                    <button
+                      className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-red-100 transition-colors"
+                      onClick={(e) => { e.stopPropagation(); setNewStyleImageFile(null); setNewStyleImagePreview(null); }}
+                    >
+                      <X className="w-3.5 h-3.5 text-red-500" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-8 h-8 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground text-center">
+                      {newStyleDragging ? "Drop image here" : "Drag & drop or click to browse"}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 justify-end pt-1">
+              <button
+                onClick={() => setShowAddStyleModal(false)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border hover:bg-muted transition-colors"
+                style={{ borderColor: "var(--border)" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddStyleSubmit}
+                disabled={isAddingStyle || !newStyleName.trim() || !newStyleLast}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isAddingStyle ? "Adding…" : "Add Style"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Hidden file input for Add Style image */}
+      <input
+        ref={addStyleImageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleAddStyleBrowse}
+      />
       {/* Hidden file input for style image upload */}
       <input
         ref={imageInputRef}
