@@ -203,3 +203,7 @@
 - [x] Add "Add Style" button in By Style tab toolbar
 - [x] Modal with style name, last selector (from all known lasts), category selector, drag-and-drop image upload
 - [x] Custom style appears in grouped-by-last table immediately after adding
+
+## Custom Style Flow-through Fix (May 2026)
+- [x] Fix FittingTab: custom styles (_isCustomStyle) now always appear in style list regardless of last name (were filtered out by NEW_LASTS check)
+- [x] Fix SpecsTab: custom styles now always appear in baseStyleList regardless of last name, even with 0 colours

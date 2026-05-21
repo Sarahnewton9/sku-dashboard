@@ -1575,7 +1575,28 @@ export function FittingTab() {
 
   // mergedStyles already has new/existing overrides applied via useCustomSkus
   const styleList = useMemo(() => {
-    return buildStyleListFromData(mergedStyles as typeof skuData.styles).filter((s) => !cancelledStyleSet.has(s.style));
+    // Custom styles (_isCustomStyle) always appear regardless of last name
+    const allStyles = mergedStyles as Array<typeof skuData.styles[number] & { _isCustomStyle?: boolean }>;
+    const customEntries: StyleEntry[] = allStyles
+      .filter((s) => s._isCustomStyle && !cancelledStyleSet.has(s.style))
+      .map((s) => ({
+        style: s.style,
+        last: s.last ?? "",
+        category: s.category ?? "",
+        imageUrl: (s as any).imageUrl,
+        hasNew: s.hasNew,
+        isAllNew: s.isAllNew,
+        newSKUs: s.newSKUs,
+        totalSKUs: s.totalSKUs,
+      }));
+    const staticEntries = buildStyleListFromData(mergedStyles as typeof skuData.styles)
+      .filter((s) => !cancelledStyleSet.has(s.style));
+    // Merge, deduplicate (custom style wins if same name)
+    const seen = new Set(customEntries.map((s) => s.style));
+    return [
+      ...customEntries,
+      ...staticEntries.filter((s) => !seen.has(s.style)),
+    ].sort((a, b) => a.last.localeCompare(b.last) || a.style.localeCompare(b.style));
   }, [mergedStyles, cancelledStyleSet]);
 
   // Data queries

@@ -1154,8 +1154,11 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   // Build base style list from live merged styles
   const baseStyleList = useMemo(() => {
-    return (mergedStyles as typeof skuData.styles)
+    const allStyles = mergedStyles as Array<typeof skuData.styles[number] & { _isCustomStyle?: boolean }>;
+    return allStyles
       .filter((s) => {
+        // Custom styles always appear regardless of last name
+        if ((s as any)._isCustomStyle) return true;
         const lastUpper = (s.last ?? "").toUpperCase();
         const isOnNewLast = NEW_LASTS.some((nl) => lastUpper.includes(nl));
         return isOnNewLast || s.isAllNew;
@@ -1174,9 +1177,11 @@ export default function SpecsTab({}: SpecsTabProps) {
           hasNew: s.hasNew,
           totalSKUs: s.totalSKUs,
           newSKUs: s.newSKUs,
+          _isCustomStyle: !!(s as any)._isCustomStyle,
         };
       })
-      .filter((s) => s.colours.length > 0)
+      // Custom styles appear even with 0 colours (they can have specs added)
+      .filter((s) => s.colours.length > 0 || s._isCustomStyle)
       .sort((a, b) => a.style.localeCompare(b.style));
   }, [mergedStyles, NEW_COLOURS_PER_STYLE, COLOUR_LEATHER_MAP, TOE_CAP_MAP]);
 
