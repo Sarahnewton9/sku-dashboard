@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1051,4 +1051,21 @@ export async function batchReorderCustomRows(orderedIds: number[]): Promise<void
         .where(eq(specCustomRows.id, orderedIds[i]));
     }
   });
+}
+
+// ─── Spec row order (custom ordering of all rows per style) ──────────────────
+export async function getSpecRowOrder(style: string): Promise<string[] | null> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select().from(specRowOrder).where(eq(specRowOrder.style, style.toUpperCase())).limit(1);
+  if (rows.length === 0) return null;
+  try { return JSON.parse(rows[0].rowKeys) as string[]; } catch { return null; }
+}
+
+export async function upsertSpecRowOrder(style: string, rowKeys: string[]): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const json = JSON.stringify(rowKeys);
+  await db.insert(specRowOrder).values({ style: style.toUpperCase(), rowKeys: json })
+    .onDuplicateKeyUpdate({ set: { rowKeys: json } });
 }

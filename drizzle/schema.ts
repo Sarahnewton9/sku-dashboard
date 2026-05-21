@@ -473,3 +473,18 @@ export const skuNewOverride = mysqlTable("sku_new_override", {
 }));
 export type SkuNewOverride = typeof skuNewOverride.$inferSelect;
 export type InsertSkuNewOverride = typeof skuNewOverride.$inferInsert;
+
+/**
+ * Spec row order — stores the custom row order for a style's spec form.
+ * rowKeys is a JSON array of strings like ["template:upper_1", "custom:42", "template:lining", ...].
+ * If a template key is absent from the array it is treated as hidden/deleted.
+ * If no row exists for a style the default template order is used.
+ */
+export const specRowOrder = mysqlTable("spec_row_order", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull().unique(),
+  rowKeys: text("row_keys").notNull(), // JSON array of "template:key" | "custom:id"
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type SpecRowOrder = typeof specRowOrder.$inferSelect;
+export type InsertSpecRowOrder = typeof specRowOrder.$inferInsert;

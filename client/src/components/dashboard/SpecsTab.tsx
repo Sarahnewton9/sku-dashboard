@@ -20,7 +20,7 @@ import {
   ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2, X, ArrowRight, RefreshCw, GripVertical,
 } from "lucide-react";
 import {
-  DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent, DragOverlay,
 } from "@dnd-kit/core";
 import {
   SortableContext, useSortable, verticalListSortingStrategy, arrayMove,
@@ -212,8 +212,90 @@ function TextCell({ value, onSave }: TextCellProps) {
   );
 }
 
-// ─── Sortable Custom Row (drag-and-drop) ─────────────────────────────────────
-interface SortableCustomRowProps {
+// ─── Unified Template Row (sortable template row) ────────────────────────────────────────────
+interface UnifiedTemplateRowProps {
+  id: string;
+  comp: SpecComponent;
+  colours: string[];
+  colourLabels: string[];
+  specs: Record<string, Record<string, string>>;
+  allDropdownOptions: Record<string, string[]>;
+  allColourLeatherOptions: string[];
+  onUpsert: (colour: string, key: string, value: string) => void;
+  onAddDropdownOption: (key: string, value: string) => void;
+  onDeleteDropdownOption: (key: string, value: string) => void;
+  isActive?: boolean;
+  onDelete: (id: string) => void;
+}
+function UnifiedTemplateRow({
+  id, comp, colours, colourLabels, specs, allDropdownOptions, allColourLeatherOptions,
+  onUpsert, onAddDropdownOption, onDeleteDropdownOption, isActive, onDelete,
+}: UnifiedTemplateRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.15 : 1,
+  };
+  return (
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={`border-b group ${
+        isOver && !isDragging ? "ring-2 ring-amber-400 ring-inset" : ""
+      } ${
+        isDragging ? "bg-amber-50/20" : "hover:bg-muted/10"
+      }`}
+    >
+      <td className="px-1 py-1.5 font-medium text-muted-foreground align-middle">
+        <div className="flex items-center gap-1">
+          <button
+            {...attributes}
+            {...listeners}
+            className="p-0.5 text-muted-foreground/30 hover:text-amber-500 cursor-grab active:cursor-grabbing touch-none flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Drag to reorder"
+            tabIndex={-1}
+          >
+            <GripVertical className="w-3.5 h-3.5" />
+          </button>
+          <span className="text-xs">{comp.label}</span>
+          <button
+            onClick={() => onDelete(id)}
+            className="ml-auto p-0.5 text-muted-foreground/20 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+            title="Hide row"
+            tabIndex={-1}
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      </td>
+      {colours.map((colour, colIdx) => {
+        const val = specs[colour]?.[comp.key] ?? "";
+        const savedOpts = allDropdownOptions[comp.key] ?? [];
+        const isUpper1 = comp.key === "upper_1";
+        const upper1AutoValue = colourLabels[colIdx] ?? colour;
+        const upper1EffectiveVal = isUpper1 && !val ? upper1AutoValue : val;
+        return (
+          <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
+            <FreeTypeCell
+              component={comp}
+              value={upper1EffectiveVal}
+              savedOptions={savedOpts}
+              onSave={(v) => onUpsert(colour, comp.key, v)}
+              onAddOption={(v) => onAddDropdownOption(comp.key, v)}
+              onDeleteOption={isUpper1 ? undefined : (v) => onDeleteDropdownOption(comp.key, v)}
+              overrideOptions={isUpper1 ? allColourLeatherOptions : undefined}
+            />
+          </td>
+        );
+      })}
+    </tr>
+  );
+}
+
+// ─── Unified Custom Row (sortable custom row) ───────────────────────────────────────────────
+interface UnifiedCustomRowProps {
+  id: string;
   row: CustomRowData;
   colours: string[];
   onUpdate: (id: number, title: string, value: string) => void;
@@ -221,166 +303,53 @@ interface SortableCustomRowProps {
   allTitles: string[];
   isActive?: boolean;
 }
-function SortableCustomRow({ row, colours, onUpdate, onDelete, allTitles, isActive }: SortableCustomRowProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-    isOver,
-  } = useSortable({ id: row.id });
+function UnifiedCustomRow({ id, row, colours, onUpdate, onDelete, allTitles, isActive }: UnifiedCustomRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({ id });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.3 : 1,
-    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.15 : 1,
   };
   return (
-    <>
-      {/* Drop indicator line — shown above this row when something is dragged over it */}
-      {isOver && !isDragging && (
-        <tr aria-hidden="true">
-          <td colSpan={colours.length + 1} className="p-0">
-            <div className="h-0.5 bg-amber-500 rounded-full mx-2" />
-          </td>
-        </tr>
-      )}
-      <tr
-        ref={setNodeRef}
-        style={style}
-        className={`border-b group ${
-          isDragging
-            ? "bg-amber-50/50 dark:bg-amber-900/20 shadow-md"
-            : "hover:bg-amber-50/30 dark:hover:bg-amber-900/10"
-        }`}
-      >
-        <td className="px-1 py-1.5 align-middle">
-          <div className="flex items-center gap-1">
-            {/* Drag handle */}
-            <button
-              {...attributes}
-              {...listeners}
-              className="p-0.5 text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing touch-none flex-shrink-0"
-              title="Drag to reorder"
-              tabIndex={-1}
-            >
-              <GripVertical className="w-3.5 h-3.5" />
-            </button>
-            <CustomRowTitleInput
-              id={row.id}
-              initialTitle={row.title}
-              value={row.value ?? ""}
-              onUpdate={onUpdate}
-              onDelete={onDelete}
-              allTitles={allTitles}
-            />
-          </div>
-        </td>
-        {colours.map((colour, colIdx) => (
-          <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
-            <TextCell
-              value={row.colour === "__all__" || row.colour === colour ? (row.value ?? "") : ""}
-              onSave={(v) => onUpdate(row.id, row.title, v)}
-            />
-          </td>
-        ))}
-      </tr>
-    </>
-  );
-}
-
-// ─── Sortable Custom Row List (per section) ───────────────────────────────────
-
-interface SortableCustomRowListProps {
-  sectionKey: string;
-  customRows: CustomRowData[];
-  colours: string[];
-  onUpdate: (id: number, title: string, value: string) => void;
-  onDelete: (id: number) => void;
-  allTitles: string[];
-  onAddCustomRow: (section: string, afterSortOrder?: number) => void;
-  onReorder: (section: string, orderedIds: number[]) => void;
-}
-
-function SortableCustomRowList({
-  sectionKey, customRows, colours, onUpdate, onDelete, allTitles, onAddCustomRow, onReorder,
-}: SortableCustomRowListProps) {
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-  );
-  const sectionRows = customRows
-    .filter((r) => r.section === sectionKey)
-    .sort((a, b) => a.sortOrder - b.sortOrder);
-  const sectionIds = sectionRows.map((r) => r.id);
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIdx = sectionIds.indexOf(active.id as number);
-    const newIdx = sectionIds.indexOf(over.id as number);
-    if (oldIdx === -1 || newIdx === -1) return;
-    const newOrder = arrayMove(sectionIds, oldIdx, newIdx);
-    onReorder(sectionKey, newOrder);
-  }
-  if (sectionRows.length === 0) return null;
-  // DndContext renders a <div> which is invalid inside <tbody>.
-  // We use createPortal to mount DndContext outside the table DOM,
-  // while the actual <tr> rows render inline via SortableContext.
-  // The trick: wrap in a Fragment so only <tr>s go into <tbody>,
-  // and hoist DndContext to body via portal.
-  return (
-    <SortableCustomRowListInner
-      sectionRows={sectionRows}
-      sectionIds={sectionIds}
-      colours={colours}
-      onUpdate={onUpdate}
-      onDelete={onDelete}
-      allTitles={allTitles}
-      sensors={sensors}
-      handleDragEnd={handleDragEnd}
-    />
-  );
-}
-
-function SortableCustomRowListInner({
-  sectionRows, sectionIds, colours, onUpdate, onDelete, allTitles, sensors, handleDragEnd,
-}: {
-  sectionRows: CustomRowData[];
-  sectionIds: number[];
-  colours: string[];
-  onUpdate: (id: number, title: string, value: string) => void;
-  onDelete: (id: number) => void;
-  allTitles: string[];
-  sensors: ReturnType<typeof useSensors>;
-  handleDragEnd: (event: DragEndEvent) => void;
-}) {
-  // DndContext renders an accessibility <div> (HiddenText/LiveRegion) inline.
-  // Inside a <tbody> this is invalid HTML and causes a React warning.
-  // Fix: pass accessibility.container = document.body so dnd-kit portals
-  // the accessibility markup to <body> instead of rendering it inline.
-  const accessibilityContainer = typeof document !== 'undefined' ? document.body : undefined;
-
-  return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-      accessibility={{ container: accessibilityContainer }}
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={`border-b group ${
+        isOver && !isDragging ? "ring-2 ring-amber-400 ring-inset" : ""
+      } ${
+        isDragging ? "bg-amber-50/20" : "hover:bg-amber-50/30 dark:hover:bg-amber-900/10"
+      }`}
     >
-      <SortableContext items={sectionIds} strategy={verticalListSortingStrategy}>
-        {sectionRows.map((row) => (
-          <SortableCustomRow
-            key={row.id}
-            row={row}
-            colours={colours}
+      <td className="px-1 py-1.5 align-middle">
+        <div className="flex items-center gap-1">
+          <button
+            {...attributes}
+            {...listeners}
+            className="p-0.5 text-muted-foreground/30 hover:text-amber-500 cursor-grab active:cursor-grabbing touch-none flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Drag to reorder"
+            tabIndex={-1}
+          >
+            <GripVertical className="w-3.5 h-3.5" />
+          </button>
+          <CustomRowTitleInput
+            id={row.id}
+            initialTitle={row.title}
+            value={row.value ?? ""}
             onUpdate={onUpdate}
             onDelete={onDelete}
             allTitles={allTitles}
           />
-        ))}
-      </SortableContext>
-    </DndContext>
+        </div>
+      </td>
+      {colours.map((colour, colIdx) => (
+        <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
+          <TextCell
+            value={row.colour === "__all__" || row.colour === colour ? (row.value ?? "") : ""}
+            onSave={(v) => onUpdate(row.id, row.title, v)}
+          />
+        </td>
+      ))}
+    </tr>
   );
 }
 
@@ -708,6 +677,11 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
   );
 }
 
+// ─── Unified Row type for drag-and-drop ──────────────────────────────────────
+type UnifiedRow =
+  | { kind: "template"; id: string; comp: SpecComponent }
+  | { kind: "custom"; id: string; row: CustomRowData };
+
 function SpecForm({
   entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allColourLeatherOptions, imageOverride, customRows,
   onUpsert, onBulkAutoFill, onAddDropdownOption, onDeleteDropdownOption, onMetaChange, onAddSku, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow, onReorderCustomRows,
@@ -716,12 +690,22 @@ function SpecForm({
   const [showAddSku, setShowAddSku] = useState(false);
   const [newSkuColour, setNewSkuColour] = useState("");
   const [newSkuLeather, setNewSkuLeather] = useState("");
-  // Unified drag-and-drop state for all custom rows
-  const [activeRowId, setActiveRowId] = useState<number | null>(null);
+  // Unified drag-and-drop state — activeId is a string like "t:upper_1" or "c:42"
+  const [activeId, setActiveId] = useState<string | null>(null);
+  // Local row order override (optimistic, updated on drag)
+  const [localRowKeys, setLocalRowKeys] = useState<string[] | null>(null);
   const dndSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
-  // Pre-compute sorted custom rows and their IDs for SortableContext (must be stable, outside render)
+
+  // Load saved row order from server
+  const { data: rowOrderData } = trpc.specRowOrder.get.useQuery(
+    { style: entry.style },
+    { enabled: !!entry.style }
+  );
+  const upsertRowOrderMutation = trpc.specRowOrder.upsert.useMutation();
+
+  // Pre-compute sorted custom rows
   const allCustomRowsSorted = useMemo(
     () => [...customRows].sort((a, b) => a.sortOrder - b.sortOrder),
     [customRows]
@@ -749,6 +733,47 @@ function SpecForm({
     acc[comp.section].push(comp);
     return acc;
   }, {});
+
+  // Build unified row list — template rows get id "t:key", custom rows get id "c:id"
+  // Order: saved rowKeys from server (or local override), falling back to template order + custom rows at end
+  const unifiedRows = useMemo((): UnifiedRow[] => {
+    const templateMap = new Map(template.map((c) => [`t:${c.key}`, c]));
+    const customMap = new Map(allCustomRowsSorted.map((r) => [`c:${r.id}`, r]));
+    const savedKeys = localRowKeys ?? rowOrderData?.rowKeys ?? null;
+    if (savedKeys && savedKeys.length > 0) {
+      // Use saved order, adding any new rows not in saved order at the end
+      const result: UnifiedRow[] = [];
+      const usedKeys = new Set<string>();
+      for (const key of savedKeys) {
+        if (key.startsWith("deleted:")) continue; // skip deleted template rows
+        if (key.startsWith("t:") && templateMap.has(key)) {
+          result.push({ kind: "template", id: key, comp: templateMap.get(key)! });
+          usedKeys.add(key);
+        } else if (key.startsWith("c:") && customMap.has(key)) {
+          result.push({ kind: "custom", id: key, row: customMap.get(key)! });
+          usedKeys.add(key);
+        }
+      }
+      // Add any template rows not in saved order (new template rows added after order was saved)
+      for (const [key, comp] of Array.from(templateMap)) {
+        if (!usedKeys.has(key)) result.push({ kind: "template", id: key, comp });
+      }
+      // Add any custom rows not in saved order (newly added custom rows)
+      for (const [key, row] of Array.from(customMap)) {
+        if (!usedKeys.has(key)) result.push({ kind: "custom", id: key, row });
+      }
+      return result;
+    }
+    // Default: template rows in template order, then custom rows
+    const result: UnifiedRow[] = [
+      ...template.map((c): UnifiedRow => ({ kind: "template", id: `t:${c.key}`, comp: c })),
+      ...allCustomRowsSorted.map((r): UnifiedRow => ({ kind: "custom", id: `c:${r.id}`, row: r })),
+    ];
+    return result;
+  }, [template, allCustomRowsSorted, rowOrderData, localRowKeys]);
+
+  const unifiedRowIds = useMemo(() => unifiedRows.map((r) => r.id), [unifiedRows]);
+  const activeRow = activeId ? unifiedRows.find((r) => r.id === activeId) ?? null : null;
 
   function handleCopyFrom(sourceColour: string, targetColours: string[]) {
     const sourceValues = specs[sourceColour] ?? {};
@@ -961,25 +986,25 @@ function SpecForm({
         />
       </div>
 
-      {/* Spec grid — DndContext wraps the whole table so custom rows can be dragged anywhere */}
+      {/* Spec grid — unified drag-and-drop for ALL rows (template + custom) */}
       <DndContext
         sensors={dndSensors}
         collisionDetection={closestCenter}
         accessibility={{ container: typeof document !== 'undefined' ? document.body : undefined }}
-        onDragStart={({ active }) => setActiveRowId(active.id as number)}
+        onDragStart={({ active }) => setActiveId(active.id as string)}
         onDragEnd={(event) => {
-          setActiveRowId(null);
+          setActiveId(null);
           const { active, over } = event;
           if (!over || active.id === over.id) return;
-          const oldIdx = allCustomRowIds.indexOf(active.id as number);
-          const newIdx = allCustomRowIds.indexOf(over.id as number);
+          const oldIdx = unifiedRowIds.indexOf(active.id as string);
+          const newIdx = unifiedRowIds.indexOf(over.id as string);
           if (oldIdx === -1 || newIdx === -1) return;
-          const newOrder = arrayMove(allCustomRowIds, oldIdx, newIdx);
-          onReorderCustomRows("__all__", newOrder);
+          const newKeys = arrayMove(unifiedRowIds, oldIdx, newIdx);
+          setLocalRowKeys(newKeys);
+          upsertRowOrderMutation.mutate({ style: entry.style, rowKeys: newKeys });
         }}
-        onDragCancel={() => setActiveRowId(null)}
+        onDragCancel={() => setActiveId(null)}
       >
-      <SortableContext items={allCustomRowIds} strategy={verticalListSortingStrategy}>
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-collapse">
           <thead>
@@ -993,59 +1018,49 @@ function SpecForm({
             </tr>
           </thead>
           <tbody>
-            {Object.entries(sections).map(([sectionKey, components], sectionIdx) => (
-              <React.Fragment key={sectionKey}>
-                {sectionIdx > 0 && (
-                  <tr>
-                    <td colSpan={entry.colours.length + 1} className="py-1" />
-                  </tr>
-                )}
-                {components.map((comp) => (
-                  <tr key={comp.key} className="border-b hover:bg-muted/10">
-                    <td className="px-3 py-1.5 font-medium text-muted-foreground align-middle">{comp.label}</td>
-                    {entry.colours.map((colour, colIdx) => {
-                      const val = specs[colour]?.[comp.key] ?? "";
-                      const savedOpts = allDropdownOptions[comp.key] ?? [];
-
-                      // Upper 1: use all real colour+leather combos as options;
-                      // show the colour+leather label as the effective value when not yet saved
-                      const isUpper1 = comp.key === "upper_1";
-                      const upper1AutoValue = entry.colourLabels[colIdx] ?? colour;
-                      const upper1EffectiveVal = isUpper1 && !val ? upper1AutoValue : val;
-
-                      return (
-                        <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
-                          <FreeTypeCell
-                            component={comp}
-                            value={upper1EffectiveVal}
-                            savedOptions={savedOpts}
-                            onSave={(v) => onUpsert(colour, comp.key, v)}
-                            onAddOption={(v) => onAddDropdownOption(comp.key, v)}
-                            onDeleteOption={isUpper1 ? undefined : (v) => onDeleteDropdownOption(comp.key, v)}
-                            overrideOptions={isUpper1 ? allColourLeatherOptions : undefined}
-                          />
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-
-                
-              </React.Fragment>
-            ))}
-
-            {/* All custom rows — rendered inside tbody as plain <tr>s; SortableContext wraps the table above */}
-            {allCustomRowsSorted.map((row) => (
-              <SortableCustomRow
-                key={row.id}
-                row={row}
-                colours={entry.colours}
-                onUpdate={onUpdateCustomRow}
-                onDelete={onDeleteCustomRow}
-                allTitles={allCustomRowTitles}
-                isActive={activeRowId === row.id}
-              />
-            ))}
+            <SortableContext items={unifiedRowIds} strategy={verticalListSortingStrategy}>
+              {unifiedRows.map((uRow) => {
+                if (uRow.kind === "template") {
+                  const comp = uRow.comp;
+                  return (
+                    <UnifiedTemplateRow
+                      key={uRow.id}
+                      id={uRow.id}
+                      comp={comp}
+                      colours={entry.colours}
+                      colourLabels={entry.colourLabels}
+                      specs={specs}
+                      allDropdownOptions={allDropdownOptions}
+                      allColourLeatherOptions={allColourLeatherOptions}
+                      onUpsert={onUpsert}
+                      onAddDropdownOption={onAddDropdownOption}
+                      onDeleteDropdownOption={onDeleteDropdownOption}
+                      isActive={activeId === uRow.id}
+                      onDelete={(id) => {
+                        // Hide this template row by saving order with it removed
+                        const newKeys = unifiedRowIds.filter((k) => k !== id);
+                        setLocalRowKeys(newKeys);
+                        upsertRowOrderMutation.mutate({ style: entry.style, rowKeys: newKeys });
+                      }}
+                    />
+                  );
+                } else {
+                  const row = uRow.row;
+                  return (
+                    <UnifiedCustomRow
+                      key={uRow.id}
+                      id={uRow.id}
+                      row={row}
+                      colours={entry.colours}
+                      onUpdate={onUpdateCustomRow}
+                      onDelete={onDeleteCustomRow}
+                      allTitles={allCustomRowTitles}
+                      isActive={activeId === uRow.id}
+                    />
+                  );
+                }
+              })}
+            </SortableContext>
             {/* Single Add Row button at the bottom */}
             <tr>
               <td colSpan={entry.colours.length + 1} className="px-3 py-2">
@@ -1061,7 +1076,48 @@ function SpecForm({
           </tbody>
         </table>
       </div>
-      </SortableContext>
+      {/* DragOverlay — floating row shown while dragging */}
+      <DragOverlay>
+        {activeRow && (
+          <table className="w-full text-xs border-collapse shadow-xl opacity-95">
+            <tbody>
+              {activeRow.kind === "template" ? (
+                <tr className="bg-amber-50 dark:bg-amber-900/40 border border-amber-300">
+                  <td className="px-3 py-1.5 font-medium text-muted-foreground align-middle w-40">
+                    <div className="flex items-center gap-1">
+                      <GripVertical className="w-3.5 h-3.5 text-amber-500" />
+                      {activeRow.comp.label}
+                    </div>
+                  </td>
+                  {entry.colours.map((colour, i) => (
+                    <td key={i} className="px-2 py-1 align-middle min-w-[160px]">
+                      <div className="h-8 px-2 flex items-center text-xs rounded border border-amber-200 bg-amber-50/50">
+                        {specs[colour]?.[activeRow.comp.key] ?? <span className="text-muted-foreground">— type —</span>}
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              ) : (
+                <tr className="bg-amber-50 dark:bg-amber-900/40 border border-amber-300">
+                  <td className="px-1 py-1.5 align-middle w-40">
+                    <div className="flex items-center gap-1">
+                      <GripVertical className="w-3.5 h-3.5 text-amber-500" />
+                      <span className="text-xs font-medium text-amber-700">{activeRow.row.title || "(untitled)"}</span>
+                    </div>
+                  </td>
+                  {entry.colours.map((colour, i) => (
+                    <td key={i} className="px-2 py-1 align-middle min-w-[160px]">
+                      <div className="h-8 px-2 flex items-center text-xs rounded border border-amber-200 bg-amber-50/50">
+                        {activeRow.row.value ?? <span className="text-muted-foreground">— type —</span>}
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </DragOverlay>
       </DndContext>
     </div>
   );

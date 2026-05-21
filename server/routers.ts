@@ -37,6 +37,7 @@ import {
   getAllSkuNewOverrides, upsertSkuNewOverride,
   batchReorderCustomRows,
   getAllCustomStyles, addCustomStyle, deleteCustomStyle,
+  getSpecRowOrder, upsertSpecRowOrder,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -1612,7 +1613,21 @@ If the request is unclear or is a question, use no_action.`;
       }),
   }),
 
-  // ─── Spec Custom Rows ───────────────────────────────────────────────────────
+  // ─── Spec Row Order (custom ordering of all rows per style) ──────────────────────────
+  specRowOrder: router({
+    get: publicProcedure
+      .input(z.object({ style: z.string() }))
+      .query(async ({ input }) => {
+        const rowKeys = await getSpecRowOrder(input.style);
+        return { rowKeys };
+      }),
+    upsert: publicProcedure
+      .input(z.object({ style: z.string(), rowKeys: z.array(z.string()) }))
+      .mutation(async ({ input }) => {
+        await upsertSpecRowOrder(input.style, input.rowKeys);
+        return { success: true };
+      }),
+  }),
   specCustomRow: router({
     getByStyle: publicProcedure
       .input(z.object({ style: z.string() }))
