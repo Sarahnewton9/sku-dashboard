@@ -3,6 +3,7 @@
  * and apply changes (cancel red SKUs, mark specked SKUs, add new SKUs).
  */
 import { useState, useRef, useMemo } from "react";
+import JSZip from "jszip";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { toast } from "sonner";
@@ -160,41 +161,61 @@ export default function PptxSyncModal({ onClose, onApplied }: Props) {
     setStep("parsing");
 
     try {
-      // Upload directly to Manus storage from the browser to bypass proxy size limits
-      const forgeApiUrl = import.meta.env.VITE_FRONTEND_FORGE_API_URL;
-      const forgeApiKey = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
-      if (!forgeApiUrl || !forgeApiKey) throw new Error("Storage credentials not configured");
+      // Strip media files from the PPTX client-side to reduce file size before upload.
+      // A PPTX is a ZIP file — images live in ppt/media/ and make up ~95% of the size.
+      // Removing them shrinks a 34MB file to <1MB while keeping all text XML intact.
+      const originalBuffer = await file.arrayBuffer();
+      const zip = await JSZip.loadAsync(originalBuffer);
 
-      const fileKey = `pptx-uploads/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-      const uploadUrl = new URL("v1/storage/upload", forgeApiUrl.endsWith("/") ? forgeApiUrl : forgeApiUrl + "/");
-      uploadUrl.searchParams.set("path", fileKey);
+      // Remove all files under ppt/media/ (images, videos, thumbnails)
+      const mediaFiles = Object.keys(zip.files).filter(
+        (name) => name.startsWith("ppt/media/") || name.startsWith("docProps/thumbnail")
+      );
+      for (const name of mediaFiles) {
+        zip.remove(name);
+      }
 
-      const uploadFormData = new FormData();
-      uploadFormData.append("file", file, fileKey.split("/").pop());
-      const uploadRes = await fetch(uploadUrl.toString(), {
-        method: "POST",
-        headers: { Authorization: `Bearer ${forgeApiKey}` },
-        body: uploadFormData,
+      const strippedBuffer = await zip.generateAsync({
+        type: "arraybuffer",
+        compression: "DEFLATE",
+        compressionOptions: { level: 6 },
       });
+
+      const strippedFile = new File(
+        [strippedBuffer],
+        file.name,
+        { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" }
+      );
+
+      // Upload the stripped file to the server via the existing /api/pptx-upload endpoint
+      const formData = new FormData();
+      formData.append("file", strippedFile, file.name);
+
+      const uploadRes = await fetch("/api/pptx-upload", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
       if (!uploadRes.ok) {
         const errText = await uploadRes.text().catch(() => uploadRes.statusText);
-        throw new Error(`Storage upload failed (${uploadRes.status}): ${errText}`);
+        throw new Error(`Upload failed (${uploadRes.status}): ${errText}`);
       }
-      const { url: fileUrl } = await uploadRes.json();
-      if (!fileUrl) throw new Error("Storage upload did not return a URL");
 
-      // Pass the full static SKU list so the server can detect new SKUs
+      const { parsed } = await uploadRes.json();
+      if (!parsed) throw new Error("Server returned no parsed data");
+
+      // Build the diff (new vs existing SKUs) using the tRPC procedure
       const knownSkus = (skuData.rawSkus as readonly { style: string; colour: string; leather: string }[]).map((s) => ({
         style: s.style,
         colour: s.colour,
         leather: s.leather ?? "",
       }));
 
-      // Ask the server to download from storage and parse
-      const data = await parseFromUrlMutation.mutateAsync({ url: fileUrl, fileName: file.name, knownSkus });
-      if (!data) throw new Error("Failed to parse PPTX");
-      setSlideCount(data.slideCount);
-      setRows(buildRows(data as unknown as ParseResult));
+      const diffData = await buildDiffMutation.mutateAsync({ parsed, knownSkus });
+      if (!diffData) throw new Error("Failed to build diff");
+      setSlideCount(diffData.slideCount);
+      setRows(buildRows(diffData as unknown as ParseResult));
       setStep("review");
     } catch (err: any) {
       toast.error(`Parse failed: ${err.message}`);
