@@ -207,3 +207,7 @@
 ## Custom Style Flow-through Fix (May 2026)
 - [x] Fix FittingTab: custom styles (_isCustomStyle) now always appear in style list regardless of last name (were filtered out by NEW_LASTS check)
 - [x] Fix SpecsTab: custom styles now always appear in baseStyleList regardless of last name, even with 0 colours
+
+## Specs Tab Custom Row UX Fixes (May 2026)
+- [x] Remove insert-between-rows ghost rows from SortableCustomRow (keep only Add Row at bottom of each section)
+- [x] Fix drag-and-drop reorder: add optimistic update so rows move immediately without snapping back

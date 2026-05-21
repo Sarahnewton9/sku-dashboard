@@ -220,10 +220,9 @@ interface SortableCustomRowProps {
   onUpdate: (id: number, title: string, value: string) => void;
   onDelete: (id: number) => void;
   allTitles: string[];
-  onInsertAfter: () => void;
 }
 
-function SortableCustomRow({ row, colours, onUpdate, onDelete, allTitles, onInsertAfter }: SortableCustomRowProps) {
+function SortableCustomRow({ row, colours, onUpdate, onDelete, allTitles }: SortableCustomRowProps) {
   const {
     attributes,
     listeners,
@@ -274,21 +273,6 @@ function SortableCustomRow({ row, colours, onUpdate, onDelete, allTitles, onInse
             />
           </td>
         ))}
-      </tr>
-      {/* Insert-after button row */}
-      <tr className="h-0 group/insert">
-        <td colSpan={colours.length + 1} className="p-0">
-          <div className="flex items-center gap-1 opacity-0 group-hover/insert:opacity-100 transition-opacity h-4 px-8">
-            <button
-              onClick={onInsertAfter}
-              className="flex items-center gap-0.5 text-[10px] text-amber-500 hover:text-amber-700"
-              title="Insert row after this one"
-            >
-              <Plus className="w-2.5 h-2.5" />
-              insert
-            </button>
-          </div>
-        </td>
       </tr>
     </>
   );
@@ -342,7 +326,6 @@ function SortableCustomRowList({
             onUpdate={onUpdate}
             onDelete={onDelete}
             allTitles={allTitles}
-            onInsertAfter={() => onAddCustomRow(sectionKey, row.sortOrder)}
           />
         ))}
       </SortableContext>
@@ -1511,10 +1494,31 @@ export default function SpecsTab({}: SpecsTabProps) {
   }
 
   const batchReorderMutation = trpc.specs.batchReorderCustomRows.useMutation({
-    onSuccess: () => { refetchCustomRows(); },
-    onError: () => toast.error("Failed to reorder rows"),
+    onMutate: async ({ orderedIds }) => {
+      if (!selectedStyle) return;
+      // Optimistic update: reorder the cache immediately so the UI doesn't snap back
+      await utils.specCustomRow.getByStyle.cancel({ style: selectedStyle });
+      const prev = utils.specCustomRow.getByStyle.getData({ style: selectedStyle });
+      utils.specCustomRow.getByStyle.setData({ style: selectedStyle }, (old) => {
+        if (!old) return old;
+        // Assign new sortOrder based on orderedIds array position
+        const orderMap = Object.fromEntries(orderedIds.map((id, idx) => [id, idx]));
+        return old
+          .map((r) => (orderMap[r.id] !== undefined ? { ...r, sortOrder: orderMap[r.id] } : r))
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+      });
+      return { prev };
+    },
+    onError: (_err, _input, ctx) => {
+      if (ctx?.prev !== undefined && selectedStyle) {
+        utils.specCustomRow.getByStyle.setData({ style: selectedStyle }, ctx.prev);
+      }
+      toast.error("Failed to reorder rows");
+    },
+    onSettled: () => {
+      if (selectedStyle) utils.specCustomRow.getByStyle.invalidate({ style: selectedStyle });
+    },
   });
-
   function handleReorderCustomRows(_section: string, orderedIds: number[]) {
     if (!selectedStyle) return;
     batchReorderMutation.mutate({ orderedIds });
