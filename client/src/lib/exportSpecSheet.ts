@@ -87,7 +87,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     style,
     last,
     category,
-    season = "AW25",
+    season = "DEV SUMMER 2026",
     colours,
     colourLabels,
     specs,
@@ -324,6 +324,6 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
   const blob = new Blob([buffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
-  const filename = `${style.toUpperCase()}-TONYBIANCO-${season.replace(/\s+/g, "")}.xlsx`;
+  const filename = `${style.toUpperCase()} - TONY BIANCO ${season}.xlsx`;
   saveAs(blob, filename);
 }
