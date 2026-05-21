@@ -297,12 +297,10 @@ function SortableCustomRowList({
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
-
   const sectionRows = customRows
     .filter((r) => r.section === sectionKey)
     .sort((a, b) => a.sortOrder - b.sortOrder);
   const sectionIds = sectionRows.map((r) => r.id);
-
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -312,11 +310,51 @@ function SortableCustomRowList({
     const newOrder = arrayMove(sectionIds, oldIdx, newIdx);
     onReorder(sectionKey, newOrder);
   }
-
   if (sectionRows.length === 0) return null;
+  // DndContext renders a <div> which is invalid inside <tbody>.
+  // We use createPortal to mount DndContext outside the table DOM,
+  // while the actual <tr> rows render inline via SortableContext.
+  // The trick: wrap in a Fragment so only <tr>s go into <tbody>,
+  // and hoist DndContext to body via portal.
+  return (
+    <SortableCustomRowListInner
+      sectionRows={sectionRows}
+      sectionIds={sectionIds}
+      colours={colours}
+      onUpdate={onUpdate}
+      onDelete={onDelete}
+      allTitles={allTitles}
+      sensors={sensors}
+      handleDragEnd={handleDragEnd}
+    />
+  );
+}
+
+function SortableCustomRowListInner({
+  sectionRows, sectionIds, colours, onUpdate, onDelete, allTitles, sensors, handleDragEnd,
+}: {
+  sectionRows: CustomRowData[];
+  sectionIds: number[];
+  colours: string[];
+  onUpdate: (id: number, title: string, value: string) => void;
+  onDelete: (id: number) => void;
+  allTitles: string[];
+  sensors: ReturnType<typeof useSensors>;
+  handleDragEnd: (event: DragEndEvent) => void;
+}) {
+  // DndContext renders an accessibility <div> (HiddenText/LiveRegion) inline.
+  // Inside a <tbody> this is invalid HTML and causes a React warning.
+  // Fix: pass accessibility.container = document.body so dnd-kit portals
+  // the accessibility markup to <body> instead of rendering it inline.
+  const accessibilityContainer = typeof document !== 'undefined' ? document.body : undefined;
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+      accessibility={{ container: accessibilityContainer }}
+    >
       <SortableContext items={sectionIds} strategy={verticalListSortingStrategy}>
         {sectionRows.map((row) => (
           <SortableCustomRow
