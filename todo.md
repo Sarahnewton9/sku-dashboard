@@ -213,8 +213,14 @@
 - [x] Fix drag-and-drop reorder: add optimistic update so rows move immediately without snapping back
 
 ## Delete SKU Colour Column in Specs Tab (May 2026)
-- [ ] Add spec_hidden_columns DB table (styleKey, colourKey) to store hidden columns per style
-- [ ] Add server-side tRPC procedures: getHiddenColumns, hideColumn, showColumn
-- [ ] Add × delete button on each colour column header in SpecsTab
-- [ ] Filter out hidden columns from the rendered spec grid and exports
-- [ ] Sync: cancelled SKUs from By Style tab should also be hidden in Specs
+- [x] Add spec_hidden_columns DB table (styleKey, colourKey) to store hidden columns per style
+- [x] Add server-side tRPC procedures: getHiddenColumns, hideColumn, showColumn
+- [x] Add × delete button on each colour column header in SpecsTab
+- [x] Filter out hidden columns from the rendered spec grid (export still includes all columns)
+- [x] Sync: cancelled SKUs from By Style tab are already hidden in Specs via cancelledSkuSet filter
+
+## Dynamic Horizontal Scrollbar in Specs Tab (May 2026)
+- [x] Replace bottom-of-page horizontal scrollbar with a phantom sticky scrollbar at the bottom of the right panel
+- [x] Phantom scrollbar mirrors the table scroll position (bidirectional sync via useLayoutEffect)
+- [x] Phantom scrollbar is a sibling outside the overflow-y-auto body, always visible at the bottom of the pane
+- [x] Fix Dashboard.tsx: change h-screen to 100dvh to properly constrain layout to visible viewport

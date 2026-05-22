@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
@@ -540,6 +540,7 @@ interface SpecFormProps {
   hiddenColumns: Set<string>; // for showing restore buttons when showHiddenColumns is on
   showHiddenColumns: boolean;
   onShowColumn: (colour: string) => void;
+  tableScrollRef?: React.RefObject<HTMLDivElement | null>; // lifted up for external sticky scrollbar
 }
 
 const STYLE_CATEGORIES = [
@@ -555,6 +556,74 @@ const STYLE_CATEGORIES = [
   "Casual Sandal",
   "Flat Sandal",
 ];
+
+// ─── Sticky Phantom Scrollbar ───────────────────────────────────────────────
+// Renders a thin scrollbar that stays stuck to the bottom of the viewport while
+// the user scrolls the spec grid vertically. Scroll position is kept in sync
+// bidirectionally with the real overflow-x-auto container via event listeners.
+
+interface StickyScrollBarProps {
+  tableScrollRef: React.RefObject<HTMLDivElement | null>;
+}
+
+function StickyScrollBar({ tableScrollRef }: StickyScrollBarProps) {
+  const phantomRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const syncingRef = useRef(false); // prevent feedback loops
+
+  // Keep the phantom inner width equal to the table scroll width
+  useLayoutEffect(() => {
+    const table = tableScrollRef.current;
+    const inner = innerRef.current;
+    if (!table || !inner) return;
+
+    function updateWidth() {
+      if (table && inner) inner.style.width = table.scrollWidth + "px";
+    }
+    updateWidth();
+
+    const ro = new ResizeObserver(updateWidth);
+    ro.observe(table);
+    return () => ro.disconnect();
+  }, [tableScrollRef]);
+
+  // Bidirectional scroll sync
+  useEffect(() => {
+    const table = tableScrollRef.current;
+    const phantom = phantomRef.current;
+    if (!table || !phantom) return;
+
+    function onTableScroll() {
+      if (syncingRef.current) return;
+      syncingRef.current = true;
+      if (phantom) phantom.scrollLeft = table!.scrollLeft;
+      syncingRef.current = false;
+    }
+    function onPhantomScroll() {
+      if (syncingRef.current) return;
+      syncingRef.current = true;
+      if (table) table.scrollLeft = phantom!.scrollLeft;
+      syncingRef.current = false;
+    }
+
+    table.addEventListener("scroll", onTableScroll, { passive: true });
+    phantom.addEventListener("scroll", onPhantomScroll, { passive: true });
+    return () => {
+      table.removeEventListener("scroll", onTableScroll);
+      phantom.removeEventListener("scroll", onPhantomScroll);
+    };
+  }, [tableScrollRef]);
+
+  return (
+    <div
+      ref={phantomRef}
+      className="flex-shrink-0 overflow-x-auto border-t border-border/40 [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-track]:bg-muted/20 [&::-webkit-scrollbar-thumb]:bg-muted-foreground/40 [&::-webkit-scrollbar-thumb]:rounded-full"
+      style={{ scrollbarWidth: "thin" }}
+    >
+      <div ref={innerRef} style={{ height: "1px" }} />
+    </div>
+  );
+}
 
 // ─── Cross-Style Copy Panel ──────────────────────────────────────────────────
 
@@ -691,10 +760,16 @@ function SpecForm({
   onUpsert, onBulkAutoFill, onAddDropdownOption, onDeleteDropdownOption, onMetaChange, onAddSku, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow, onReorderCustomRows,
   dbCategory, onSetCategory, allCustomRowTitles, allStyleEntries,
   onHideColumn, hiddenColumns, showHiddenColumns, onShowColumn,
+  tableScrollRef: externalTableScrollRef,
 }: SpecFormProps) {
   const [showAddSku, setShowAddSku] = useState(false);
   const [newSkuColour, setNewSkuColour] = useState("");
   const [newSkuLeather, setNewSkuLeather] = useState("");
+  // Refs for the sticky phantom scrollbar
+  // Use the externally-lifted ref if provided (so parent can render StickyScrollBar outside the scroll container)
+  const internalTableScrollRef = useRef<HTMLDivElement>(null);
+  const tableScrollRef = externalTableScrollRef ?? internalTableScrollRef;
+  const tableRef = useRef<HTMLTableElement>(null);
   // Unified drag-and-drop state — activeId is a string like "t:upper_1" or "c:42"
   const [activeId, setActiveId] = useState<string | null>(null);
   // Local row order override (optimistic, updated on drag)
@@ -1018,8 +1093,8 @@ function SpecForm({
         }}
         onDragCancel={() => setActiveId(null)}
       >
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs border-collapse">
+      <div ref={tableScrollRef} className="overflow-x-auto [&::-webkit-scrollbar]:hidden">
+        <table ref={tableRef} className="w-full text-xs border-collapse">
           <thead>
             <tr className="bg-muted/50">
               <th className="text-left px-3 py-2 font-medium text-muted-foreground w-40 border-b">Colour</th>
@@ -1316,6 +1391,8 @@ export default function SpecsTab({}: SpecsTabProps) {
   const [importSaving, setImportSaving] = useState(false);
   const [importOverwrite, setImportOverwrite] = useState(true);
   const importFileRef = React.useRef<HTMLInputElement>(null);
+  // Lifted ref for the spec table's horizontal scroll container — shared with StickyScrollBar
+  const specTableScrollRef = useRef<HTMLDivElement>(null);
 
   // ── Bulk import state ────────────────────────────────────────────────────
   const [isDragOver, setIsDragOver] = useState(false);
@@ -2160,7 +2237,7 @@ export default function SpecsTab({}: SpecsTabProps) {
       </div>
 
       {/* Right: spec form */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-hidden flex flex-col">
         {!selectedEntry ? (
           <div className="flex flex-col items-center justify-center h-full text-center gap-3">
             <FileSpreadsheet className="w-12 h-12 text-muted-foreground/40" />
@@ -2172,7 +2249,9 @@ export default function SpecsTab({}: SpecsTabProps) {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="flex flex-col h-full overflow-hidden">
+            {/* Sticky top: Import/Export buttons + import banner */}
+            <div className="flex-shrink-0 p-6 pb-2 space-y-4">
             {/* Import/Export buttons */}
             <div className="flex justify-between items-center gap-2">
               {/* Image upload + Import buttons */}
@@ -2329,8 +2408,12 @@ export default function SpecsTab({}: SpecsTabProps) {
                 </div>
               </div>
             )}
+            </div>{/* end sticky header */}
 
+            {/* Scrollable spec grid body */}
+            <div className="flex-1 overflow-y-auto px-6 pb-6">
             <SpecForm
+              tableScrollRef={specTableScrollRef}
               entry={selectedEntry}
               toeCapsPerColour={selectedEntry.toeCapsPerColour}
               specMeta={specMeta}
@@ -2364,6 +2447,9 @@ export default function SpecsTab({}: SpecsTabProps) {
                 }
               }}
             />
+            </div>{/* end scrollable body */}
+            {/* Sticky phantom scrollbar — always visible at the bottom of the pane */}
+            {selectedEntry && <StickyScrollBar tableScrollRef={specTableScrollRef} />}
           </div>
         )}
       </div>

@@ -180,7 +180,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex overflow-hidden bg-background" style={{ height: '100dvh' }}>
       {/* ── Sidebar ── */}
       <aside className="w-60 flex-shrink-0 flex flex-col h-full overflow-y-auto"
         style={{ background: "var(--sidebar)", borderRight: "1px solid var(--sidebar-border)" }}>
