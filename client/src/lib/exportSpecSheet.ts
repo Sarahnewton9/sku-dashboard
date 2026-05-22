@@ -306,7 +306,9 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
 
       for (let ci = 0; ci < block.colours.length; ci++) {
         const valueCell = ws.getCell(currentRow, 2 + ci);
-        valueCell.value = getValue(row, block.colours[ci]);
+        // Use the full label (e.g. "BLACK CAPRI") as the spec lookup key to match how values are stored
+        const colourKey = block.labels[ci] ?? block.colours[ci];
+        valueCell.value = getValue(row, colourKey);
         valueCell.font = arialRegular8();
         valueCell.alignment = { vertical: "top", wrapText: true };
         valueCell.border = {

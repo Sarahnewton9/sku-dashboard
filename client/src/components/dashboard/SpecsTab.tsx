@@ -270,18 +270,20 @@ function UnifiedTemplateRow({
         </div>
       </td>
       {colours.map((colour, colIdx) => {
-        const val = specs[colour]?.[comp.key] ?? "";
+        // Use the full colourLabel (e.g. "BLACK CAPRI") as the unique key for DB storage
+        // This prevents conflicts when multiple SKUs share the same raw colour name
+        const colourKey = colourLabels[colIdx] ?? colour;
+        const val = specs[colourKey]?.[comp.key] ?? "";
         const savedOpts = allDropdownOptions[comp.key] ?? [];
         const isUpper1 = comp.key === "upper_1";
-        const upper1AutoValue = colourLabels[colIdx] ?? colour;
-        const upper1EffectiveVal = isUpper1 && !val ? upper1AutoValue : val;
+        const upper1EffectiveVal = isUpper1 && !val ? colourKey : val;
         return (
-          <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
+          <td key={`${colourKey}-${colIdx}`} className="px-2 py-1 align-middle">
             <FreeTypeCell
               component={comp}
               value={upper1EffectiveVal}
               savedOptions={savedOpts}
-              onSave={(v) => onUpsert(colour, comp.key, v)}
+              onSave={(v) => onUpsert(colourKey, comp.key, v)}
               onAddOption={(v) => onAddDropdownOption(comp.key, v)}
               onDeleteOption={isUpper1 ? undefined : (v) => onDeleteDropdownOption(comp.key, v)}
               overrideOptions={isUpper1 ? allColourLeatherOptions : undefined}
@@ -362,16 +364,15 @@ interface ColourCopyPanelProps {
 }
 
 function ColourCopyPanel({ colours, colourLabels, onCopy }: ColourCopyPanelProps) {
+  // Use full colour labels as the copy keys (e.g. "BLACK CAPRI" not "BLACK")
+  const labels = colourLabels.length === colours.length ? colourLabels : colours;
   const [source, setSource] = useState<string | null>(null);
   const [targets, setTargets] = useState<Set<string>>(new Set());
 
-  // Build a map from raw colour → display label for quick lookup
-  const labelMap = Object.fromEntries(colours.map((c, i) => [c, colourLabels[i] ?? c]));
-
-  function toggleTarget(colour: string) {
+  function toggleTarget(label: string) {
     setTargets((prev) => {
       const next = new Set(prev);
-      if (next.has(colour)) next.delete(colour); else next.add(colour);
+      if (next.has(label)) next.delete(label); else next.add(label);
       return next;
     });
   }
@@ -391,25 +392,25 @@ function ColourCopyPanel({ colours, colourLabels, onCopy }: ColourCopyPanelProps
           <SelectValue placeholder="Select colour…" />
         </SelectTrigger>
         <SelectContent>
-          {colours.map((c) => (
-            <SelectItem key={c} value={c} className="text-xs">{labelMap[c]}</SelectItem>
+          {labels.map((label) => (
+            <SelectItem key={label} value={label} className="text-xs">{label}</SelectItem>
           ))}
         </SelectContent>
       </Select>
       {source && (
         <>
           <span className="text-muted-foreground">to:</span>
-          {colours.filter((c) => c !== source).map((c) => (
+          {labels.filter((label) => label !== source).map((label) => (
             <button
-              key={c}
-              onClick={() => toggleTarget(c)}
+              key={label}
+              onClick={() => toggleTarget(label)}
               className={`px-2 py-1 rounded border text-xs transition-colors ${
-                targets.has(c)
+                targets.has(label)
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-background border-border hover:bg-muted"
               }`}
             >
-              {labelMap[c]}
+              {label}
             </button>
           ))}
           <Button
@@ -650,7 +651,7 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
     { enabled: !!sourceStyle }
   );
 
-  // Build a colour → component → value map from raw specs
+  // Build a colour → component → value map from raw specs (keyed by full colour label)
   const sourceSpecsMap = useMemo(() => {
     const map: Record<string, Record<string, string>> = {};
     for (const row of sourceSpecsRaw as any[]) {
@@ -715,9 +716,11 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
                 <SelectValue placeholder="Select colour…" />
               </SelectTrigger>
               <SelectContent>
-                {sourceEntry.colours.map((c, i) => (
-                  <SelectItem key={c} value={c} className="text-xs">{sourceEntry.colourLabels[i] ?? c}</SelectItem>
-                ))}
+                {sourceEntry.colours.map((c, i) => {
+                  // Use the full label as the value so sourceSpecsMap lookup works correctly
+                  const label = sourceEntry.colourLabels[i] ?? c;
+                  return <SelectItem key={label} value={label} className="text-xs">{label}</SelectItem>;
+                })}
               </SelectContent>
             </Select>
           </>
@@ -726,19 +729,23 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
       {sourceColour && (
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-muted-foreground whitespace-nowrap">Copy into:</span>
-          {currentColours.map((c, i) => (
-            <button
-              key={c}
-              onClick={() => toggleTarget(c)}
-              className={`px-2 py-1 rounded border text-xs transition-colors ${
-                targets.has(c)
-                  ? "bg-amber-600 text-white border-amber-600"
-                  : "bg-background border-border hover:bg-muted"
-              }`}
-            >
-              {currentColourLabels[i] ?? c}
-            </button>
-          ))}
+          {currentColours.map((c, i) => {
+            // Use full label as the target key
+            const label = currentColourLabels[i] ?? c;
+            return (
+              <button
+                key={label}
+                onClick={() => toggleTarget(label)}
+                className={`px-2 py-1 rounded border text-xs transition-colors ${
+                  targets.has(label)
+                    ? "bg-amber-600 text-white border-amber-600"
+                    : "bg-background border-border hover:bg-muted"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       )}
       {targets.size > 0 && (
@@ -875,22 +882,23 @@ function SpecForm({
   useEffect(() => {
     const rows: Array<{ style: string; colour: string; component: string; value: string }> = [];
     entry.colours.forEach((colour, colIdx) => {
-      const key = `${entry.style}:${colour}`;
+      // Use the full colourLabel as the unique key (e.g. "BLACK CAPRI" not "BLACK")
+      const colourKey = entry.colourLabels[colIdx] ?? colour;
+      const key = `${entry.style}:${colourKey}`;
       if (autoFillDoneRef.current.has(key)) return;
       autoFillDoneRef.current.add(key);
       // Auto-fill upper_1
-      const existing = specs[colour]?.["upper_1"];
+      const existing = specs[colourKey]?.["upper_1"];
       if (!existing) {
-        const label = entry.colourLabels[colIdx] ?? colour;
-        rows.push({ style: entry.style, colour, component: "upper_1", value: label });
+        rows.push({ style: entry.style, colour: colourKey, component: "upper_1", value: colourKey });
       }
       // Auto-fill toe cap if this style has a toe cap component and the cell is empty
       const toeCapValue = toeCapsPerColour[colour];
       if (toeCapValue) {
         const toeCapKey = `${entry.style.toLowerCase()}_toe_cap`;
-        const existingToeCap = specs[colour]?.[toeCapKey];
+        const existingToeCap = specs[colourKey]?.[toeCapKey];
         if (!existingToeCap) {
-          rows.push({ style: entry.style, colour, component: toeCapKey, value: toeCapValue });
+          rows.push({ style: entry.style, colour: colourKey, component: toeCapKey, value: toeCapValue });
         }
       }
     });
@@ -900,10 +908,11 @@ function SpecForm({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entry.style, entry.colours.join(",")]);
 
-  // Count filled cells
+  // Count filled cells (use colourLabels as the key to match how values are stored)
   const totalCells = template.length * entry.colours.length;
-  const filledCells = entry.colours.reduce((sum, colour) => {
-    return sum + template.filter((c) => !!(specs[colour]?.[c.key])).length;
+  const filledCells = entry.colours.reduce((sum, colour, colIdx) => {
+    const colourKey = entry.colourLabels[colIdx] ?? colour;
+    return sum + template.filter((c) => !!(specs[colourKey]?.[c.key])).length;
   }, 0);
   const pct = totalCells > 0 ? Math.round((filledCells / totalCells) * 100) : 0;
 
