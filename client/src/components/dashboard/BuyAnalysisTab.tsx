@@ -7,6 +7,7 @@ import { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
+import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { BarChart3, ChevronDown, Package, Check, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { displayColour, displayLeather } from "@/lib/utils";
 
@@ -24,6 +25,12 @@ export default function BuyAnalysisTab() {
   const [lastFilter, setLastFilter] = useState<string>("All");
 
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
+  const { cancelledSet: cancelledStyleSet } = useCancelledStyles();
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+  const cancelledSkuSet = useMemo(
+    () => new Set((cancelledSkusRaw as any[]).map((r: any) => `${r.style}|${r.colour}|${r.leather}`)),
+    [cancelledSkusRaw]
+  );
 
   const { data: allSessions = [] } = trpc.buy.getSessions.useQuery();
   const { data: activeSession } = trpc.buy.getActive.useQuery();
@@ -95,15 +102,17 @@ export default function BuyAnalysisTab() {
   const totalUSA = useMemo(() => boughtItems.reduce((s, i) => s + i.usaQty, 0), [boughtItems]);
   const totalPairs = totalAU + totalUSA;
 
-  // Not yet bought — NEW SKUs only with zero total across ALL sessions
+  // Not yet bought — NEW SKUs only with zero total across ALL sessions, excluding cancelled styles/SKUs
   const notBoughtSkus = useMemo(() => {
     const allQtys = allSessionQtys as Record<string, { total: number }>;
     return allRangeSkus.filter((sku) => {
       if (!sku.is_new) return false; // only show new SKUs
+      if (cancelledStyleSet.has(sku.style)) return false; // exclude cancelled styles
       const key = `${sku.style}|${sku.colour}|${sku.leather}`;
+      if (cancelledSkuSet.has(key)) return false; // exclude cancelled SKUs
       return !allQtys[key] || allQtys[key].total === 0;
     });
-  }, [allRangeSkus, allSessionQtys]);
+  }, [allRangeSkus, allSessionQtys, cancelledStyleSet, cancelledSkuSet]);
 
   // By category
   const byCategory = useMemo(() => {
