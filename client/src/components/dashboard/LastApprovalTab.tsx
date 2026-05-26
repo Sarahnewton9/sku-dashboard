@@ -746,19 +746,34 @@ export default function LastApprovalTab() {
                       <span>Sz {label}</span>
                     </button>
                   ))}
-                  {/* Proceed with Samples */}
-                  <button
-                    onClick={() => handleProceedToggle(lastName, proceed)}
-                    title={proceed ? "Proceed with Samples — click to uncheck" : "Mark as Proceed with Samples"}
-                    className="flex items-center gap-1 px-2 py-1 rounded-md border text-xs font-medium transition-all hover:opacity-80"
-                    style={proceed
-                      ? { background: "oklch(0.88 0.10 250)", color: "oklch(0.30 0.14 250)", borderColor: "oklch(0.65 0.16 250)" }
-                      : { background: "var(--muted)", color: "var(--muted-foreground)", borderColor: "var(--border)" }
-                    }
-                  >
-                    {proceed && <CheckCircle2 className="w-3 h-3" />}
-                    <span>Proceed</span>
-                  </button>
+                  {/* Proceed with Samples — only enabled when all 3 sizes are approved */}
+                  {(() => {
+                    const allSizesApproved = size65 && size7 && size95;
+                    return (
+                      <button
+                        onClick={() => allSizesApproved ? handleProceedToggle(lastName, proceed) : undefined}
+                        title={
+                          !allSizesApproved
+                            ? "Approve all 3 sizes first to enable Proceed with Samples"
+                            : proceed
+                            ? "Proceed with Samples — click to uncheck"
+                            : "All sizes approved — click to proceed with samples"
+                        }
+                        disabled={!allSizesApproved}
+                        className="flex items-center gap-1 px-2 py-1 rounded-md border text-xs font-medium transition-all"
+                        style={
+                          !allSizesApproved
+                            ? { background: "var(--muted)", color: "oklch(0.70 0 0 / 0.4)", borderColor: "var(--border)", cursor: "not-allowed", opacity: 0.5 }
+                            : proceed
+                            ? { background: "oklch(0.92 0.08 155)", color: "oklch(0.35 0.14 155)", borderColor: "oklch(0.72 0.14 155)", cursor: "pointer" }
+                            : { background: "oklch(0.92 0.08 155)", color: "oklch(0.35 0.14 155)", borderColor: "oklch(0.72 0.14 155)", cursor: "pointer", opacity: 0.75 }
+                        }
+                      >
+                        {proceed && <CheckCircle2 className="w-3 h-3" />}
+                        <span>Proceed</span>
+                      </button>
+                    );
+                  })()}
                 </div>
 
                 {/* Style count */}
