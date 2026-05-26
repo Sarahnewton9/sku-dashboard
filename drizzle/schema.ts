@@ -142,6 +142,12 @@ export const lastApprovals = mysqlTable("last_approvals", {
   lastName: varchar("lastName", { length: 128 }).notNull().unique(),
   status: mysqlEnum("status", ["approved", "waiting_revised"]).default("waiting_revised").notNull(),
   notes: text("notes"),
+  // Per-size approval checkboxes
+  size65Approved: boolean("size65Approved").default(false).notNull(),
+  size7Approved: boolean("size7Approved").default(false).notNull(),
+  size95Approved: boolean("size95Approved").default(false).notNull(),
+  // Proceed with samples sign-off
+  proceedWithSamples: boolean("proceedWithSamples").default(false).notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 

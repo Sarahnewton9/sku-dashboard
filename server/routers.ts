@@ -501,9 +501,21 @@ export const appRouter = router({
         lastName: z.string(),
         status: z.enum(["approved", "waiting_revised"]),
         notes: z.string().nullable().optional(),
+        size65Approved: z.boolean().optional(),
+        size7Approved: z.boolean().optional(),
+        size95Approved: z.boolean().optional(),
+        proceedWithSamples: z.boolean().optional(),
       }))
       .mutation(async ({ input }) => {
-        await upsertLastApproval(input.lastName, input.status, input.notes ?? null);
+        await upsertLastApproval(
+          input.lastName,
+          input.status,
+          input.notes ?? null,
+          input.size65Approved,
+          input.size7Approved,
+          input.size95Approved,
+          input.proceedWithSamples,
+        );
         return { success: true };
       }),
 

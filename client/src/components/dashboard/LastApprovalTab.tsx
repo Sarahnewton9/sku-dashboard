@@ -292,6 +292,8 @@ export default function LastApprovalTab() {
 
   // Optimistic local state so the UI responds instantly without waiting for refetch
   const [localOverrides, setLocalOverrides] = useState<Record<string, "approved" | "waiting_revised">>({});
+  // Per-size and proceed-with-samples local optimistic overrides
+  const [localSizeOverrides, setLocalSizeOverrides] = useState<Record<string, { size65?: boolean; size7?: boolean; size95?: boolean; proceed?: boolean }>>({});
   const [expandedLast, setExpandedLast] = useState<string | null>(null);
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   // Per-last draft store: keyed by lastName — survives navigation between lasts
@@ -310,20 +312,44 @@ export default function LastApprovalTab() {
 
   // Build a map of lastName → approval record (with local optimistic overrides applied)
   const approvalMap = useMemo(() => {
-    const map: Record<string, { status: "approved" | "waiting_revised"; notes: string | null }> = {};
+    const map: Record<string, {
+      status: "approved" | "waiting_revised";
+      notes: string | null;
+      size65Approved: boolean;
+      size7Approved: boolean;
+      size95Approved: boolean;
+      proceedWithSamples: boolean;
+    }> = {};
     for (const a of approvals ?? []) {
-      map[a.lastName] = { status: a.status, notes: a.notes ?? null };
+      map[a.lastName] = {
+        status: a.status,
+        notes: a.notes ?? null,
+        size65Approved: (a as any).size65Approved ?? false,
+        size7Approved: (a as any).size7Approved ?? false,
+        size95Approved: (a as any).size95Approved ?? false,
+        proceedWithSamples: (a as any).proceedWithSamples ?? false,
+      };
     }
-    // Apply local overrides on top
+    // Apply local status overrides on top
     for (const [lastName, status] of Object.entries(localOverrides)) {
       if (map[lastName]) {
         map[lastName] = { ...map[lastName], status };
       } else {
-        map[lastName] = { status, notes: null };
+        map[lastName] = { status, notes: null, size65Approved: false, size7Approved: false, size95Approved: false, proceedWithSamples: false };
       }
     }
+    // Apply local size/proceed overrides on top
+    for (const [lastName, overrides] of Object.entries(localSizeOverrides)) {
+      if (!map[lastName]) {
+        map[lastName] = { status: "waiting_revised", notes: null, size65Approved: false, size7Approved: false, size95Approved: false, proceedWithSamples: false };
+      }
+      if (overrides.size65 !== undefined) map[lastName].size65Approved = overrides.size65;
+      if (overrides.size7 !== undefined) map[lastName].size7Approved = overrides.size7;
+      if (overrides.size95 !== undefined) map[lastName].size95Approved = overrides.size95;
+      if (overrides.proceed !== undefined) map[lastName].proceedWithSamples = overrides.proceed;
+    }
     return map;
-  }, [approvals, localOverrides]);
+  }, [approvals, localOverrides, localSizeOverrides]);
 
   // Track which lasts have been locally deleted (optimistic, synced with DB)
   const [localDeletedLasts, setLocalDeletedLasts] = useState<Set<string>>(new Set());
@@ -363,6 +389,25 @@ export default function LastApprovalTab() {
           setLocalOverrides((prev) => ({ ...prev, [lastName]: current }));
         },
       }
+    );
+  };
+
+  const handleSizeToggle = (lastName: string, field: "size65" | "size7" | "size95", current: boolean) => {
+    const next = !current;
+    setLocalSizeOverrides((prev) => ({ ...prev, [lastName]: { ...prev[lastName], [field]: next } }));
+    const fieldMap = { size65: "size65Approved", size7: "size7Approved", size95: "size95Approved" } as const;
+    upsert.mutate(
+      { lastName, status: approvalMap[lastName]?.status ?? "waiting_revised", notes: approvalMap[lastName]?.notes ?? null, [fieldMap[field]]: next },
+      { onError: () => setLocalSizeOverrides((prev) => ({ ...prev, [lastName]: { ...prev[lastName], [field]: current } })) }
+    );
+  };
+
+  const handleProceedToggle = (lastName: string, current: boolean) => {
+    const next = !current;
+    setLocalSizeOverrides((prev) => ({ ...prev, [lastName]: { ...prev[lastName], proceed: next } }));
+    upsert.mutate(
+      { lastName, status: approvalMap[lastName]?.status ?? "waiting_revised", notes: approvalMap[lastName]?.notes ?? null, proceedWithSamples: next },
+      { onError: () => setLocalSizeOverrides((prev) => ({ ...prev, [lastName]: { ...prev[lastName], proceed: current } })) }
     );
   };
 
@@ -627,6 +672,10 @@ export default function LastApprovalTab() {
           const approval = approvalMap[lastName];
           const status = approval?.status ?? "waiting_revised";
           const notes = approval?.notes ?? null;
+          const size65 = approval?.size65Approved ?? false;
+          const size7 = approval?.size7Approved ?? false;
+          const size95 = approval?.size95Approved ?? false;
+          const proceed = approval?.proceedWithSamples ?? false;
           const styles = lastToStyles[lastName] ?? [];
           const isExpanded = expandedLast === lastName;
           const isEditingThisNotes = editingNotes === lastName;
@@ -674,6 +723,42 @@ export default function LastApprovalTab() {
                   {notes && !isExpanded && (
                     <p className="text-xs text-muted-foreground mt-0.5 truncate">{notes}</p>
                   )}
+                </div>
+
+                {/* Size approval checkboxes */}
+                <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                  {([
+                    { label: "6.5", field: "size65" as const, checked: size65 },
+                    { label: "7",   field: "size7"  as const, checked: size7  },
+                    { label: "9.5", field: "size95" as const, checked: size95 },
+                  ]).map(({ label, field, checked }) => (
+                    <button
+                      key={field}
+                      onClick={() => handleSizeToggle(lastName, field, checked)}
+                      title={`Size ${label} ${checked ? "approved — click to uncheck" : "not yet approved"}`}
+                      className="flex items-center gap-1 px-2 py-1 rounded-md border text-xs font-medium transition-all hover:opacity-80"
+                      style={checked
+                        ? { background: "oklch(0.92 0.08 155)", color: "oklch(0.35 0.14 155)", borderColor: "oklch(0.72 0.14 155)" }
+                        : { background: "var(--muted)", color: "var(--muted-foreground)", borderColor: "var(--border)" }
+                      }
+                    >
+                      {checked && <CheckCircle2 className="w-3 h-3" />}
+                      <span>Sz {label}</span>
+                    </button>
+                  ))}
+                  {/* Proceed with Samples */}
+                  <button
+                    onClick={() => handleProceedToggle(lastName, proceed)}
+                    title={proceed ? "Proceed with Samples — click to uncheck" : "Mark as Proceed with Samples"}
+                    className="flex items-center gap-1 px-2 py-1 rounded-md border text-xs font-medium transition-all hover:opacity-80"
+                    style={proceed
+                      ? { background: "oklch(0.88 0.10 250)", color: "oklch(0.30 0.14 250)", borderColor: "oklch(0.65 0.16 250)" }
+                      : { background: "var(--muted)", color: "var(--muted-foreground)", borderColor: "var(--border)" }
+                    }
+                  >
+                    {proceed && <CheckCircle2 className="w-3 h-3" />}
+                    <span>Proceed</span>
+                  </button>
                 </div>
 
                 {/* Style count */}

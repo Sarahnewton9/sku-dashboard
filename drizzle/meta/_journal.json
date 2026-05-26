@@ -211,6 +211,13 @@
       "when": 1779406255573,
       "tag": "0029_young_captain_flint",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "5",
+      "when": 1779762714826,
+      "tag": "0030_amazing_wilson_fisk",
+      "breakpoints": true
     }
   ]
 }

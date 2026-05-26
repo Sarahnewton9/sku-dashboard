@@ -435,12 +435,30 @@ export async function getAllLastApprovals() {
   return db.select().from(lastApprovals);
 }
 
-export async function upsertLastApproval(lastName: string, status: "approved" | "waiting_revised", notes?: string | null) {
+export async function upsertLastApproval(
+  lastName: string,
+  status: "approved" | "waiting_revised",
+  notes?: string | null,
+  size65Approved?: boolean,
+  size7Approved?: boolean,
+  size95Approved?: boolean,
+  proceedWithSamples?: boolean,
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const values: Record<string, unknown> = { lastName, status, notes: notes ?? null };
+  if (size65Approved !== undefined) values.size65Approved = size65Approved;
+  if (size7Approved !== undefined) values.size7Approved = size7Approved;
+  if (size95Approved !== undefined) values.size95Approved = size95Approved;
+  if (proceedWithSamples !== undefined) values.proceedWithSamples = proceedWithSamples;
   await db.insert(lastApprovals)
-    .values({ lastName, status, notes: notes ?? null })
-    .onDuplicateKeyUpdate({ set: { status, notes: notes ?? null } });
+    .values({ lastName, status, notes: notes ?? null,
+      size65Approved: size65Approved ?? false,
+      size7Approved: size7Approved ?? false,
+      size95Approved: size95Approved ?? false,
+      proceedWithSamples: proceedWithSamples ?? false,
+    })
+    .onDuplicateKeyUpdate({ set: values as any });
 }
 
 // ─── Deleted Lasts ───────────────────────────────────────────────────────────
