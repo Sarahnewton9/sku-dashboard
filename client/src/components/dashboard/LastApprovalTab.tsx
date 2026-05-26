@@ -5,6 +5,7 @@ import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { CheckCircle2, Clock, ChevronDown, ChevronRight, Upload, X, AlertTriangle, Trash2, Plus, Image as ImageIcon } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
+import confetti from "canvas-confetti";
 
 // Brand new lasts this season — manually confirmed list
 const ALL_LASTS = [
@@ -382,6 +383,27 @@ export default function LastApprovalTab() {
   const handleToggle = (lastName: string, current: "approved" | "waiting_revised") => {
     const next = current === "approved" ? "waiting_revised" : "approved";
     setLocalOverrides((prev) => ({ ...prev, [lastName]: next }));
+    if (next === "approved") {
+      // Subtle celebration — two quick bursts from the sides
+      confetti({
+        particleCount: 60,
+        spread: 55,
+        origin: { x: 0.35, y: 0.55 },
+        colors: ["#4ade80", "#86efac", "#bbf7d0", "#ffffff", "#fde68a"],
+        scalar: 0.85,
+        gravity: 1.2,
+        drift: 0.5,
+      });
+      confetti({
+        particleCount: 40,
+        spread: 45,
+        origin: { x: 0.65, y: 0.55 },
+        colors: ["#4ade80", "#86efac", "#bbf7d0", "#ffffff", "#fde68a"],
+        scalar: 0.85,
+        gravity: 1.2,
+        drift: -0.5,
+      });
+    }
     upsert.mutate(
       { lastName, status: next, notes: approvalMap[lastName]?.notes ?? null },
       {
