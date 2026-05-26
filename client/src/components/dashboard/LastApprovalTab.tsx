@@ -801,6 +801,34 @@ export default function LastApprovalTab() {
                 </div>
               </div>
 
+              {/* Size approval progress bar */}
+              {(() => {
+                const approvedCount = [size65, size7, size95].filter(Boolean).length;
+                const pct = Math.round((approvedCount / 3) * 100);
+                const barColor = approvedCount === 3
+                  ? "oklch(0.65 0.18 155)"  // full green
+                  : approvedCount === 2
+                  ? "oklch(0.70 0.16 180)"  // teal
+                  : approvedCount === 1
+                  ? "oklch(0.72 0.16 65)"   // amber
+                  : "var(--muted)";
+                return (
+                  <div className="px-4 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${pct}%`, background: barColor }}
+                        />
+                      </div>
+                      <span className="text-[10px] font-medium flex-shrink-0" style={{ color: "var(--muted-foreground)" }}>
+                        {approvedCount}/3 sizes
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Expanded section */}
               {isExpanded && (
                 <div className="px-4 pb-4 border-t" style={{ borderColor: "var(--border)" }}>
