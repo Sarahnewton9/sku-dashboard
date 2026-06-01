@@ -26,9 +26,20 @@ const ALL_LASTS = [
   "TIANA",
   "TILDA",
   "VIVA",
+  "OASIS",
 ];
 
 const ALL_LASTS_UPPER = new Set(ALL_LASTS.map((l) => l.toUpperCase()));
+
+// Short descriptor shown under each last name
+const LAST_DESCRIPTIONS: Record<string, string> = {
+  OASIS: "Casual Wedge",
+};
+
+// Reference photos for each last (shown in expanded card)
+const LAST_PHOTOS: Record<string, string> = {
+  OASIS: "/manus-storage/oasis-last_7e2d7a84.png",
+};
 
 // Static STYLE_IMAGE_MAP fallback (used when no DB override)
 const STYLE_IMAGE_MAP: Record<string, string> = {};
@@ -738,6 +749,11 @@ export default function LastApprovalTab() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-foreground">{lastName}</span>
+                    {LAST_DESCRIPTIONS[lastName] && (
+                      <span className="text-xs px-1.5 py-0.5 rounded-md font-medium" style={{ background: "oklch(0.94 0.04 260)", color: "oklch(0.40 0.14 260)" }}>
+                        {LAST_DESCRIPTIONS[lastName]}
+                      </span>
+                    )}
                     <span className="text-xs text-muted-foreground">
                       {lastNewSkuCount[lastName] ?? 0} new SKU{(lastNewSkuCount[lastName] ?? 0) !== 1 ? "s" : ""}
                     </span>
@@ -854,6 +870,20 @@ export default function LastApprovalTab() {
               {/* Expanded section */}
               {isExpanded && (
                 <div className="px-4 pb-4 border-t" style={{ borderColor: "var(--border)" }}>
+                  {/* Last reference photo */}
+                  {LAST_PHOTOS[lastName] && (
+                    <div className="mt-3 mb-3 flex items-start gap-4">
+                      <div className="flex-shrink-0">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">Last Reference</p>
+                        <img
+                          src={LAST_PHOTOS[lastName]}
+                          alt={`${lastName} last reference`}
+                          className="w-32 h-24 object-contain rounded-lg border"
+                          style={{ borderColor: "var(--border)", background: "var(--muted)" }}
+                        />
+                      </div>
+                    </div>
+                  )}
                   {/* Styles on this last — with images */}
                   <div className="mt-3 mb-3">
                     <div className="flex items-center justify-between mb-2">
