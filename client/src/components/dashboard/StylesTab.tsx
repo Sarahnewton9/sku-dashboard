@@ -914,10 +914,10 @@ export default function StylesTab() {
                             <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{style.existingSKUs}</td>
                             <td className="px-4 py-3">
                               <div className="flex flex-wrap gap-1 max-w-48">
-                                {style.leathers.slice(0, 4).map((l) => (
+                                {[...new Set(style.leathers)].slice(0, 4).map((l) => (
                                   <span key={l} className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>{l}</span>
                                 ))}
-                                {style.leathers.length > 4 && <span className="text-xs text-muted-foreground">+{style.leathers.length - 4}</span>}
+                                {[...new Set(style.leathers)].length > 4 && <span className="text-xs text-muted-foreground">+{[...new Set(style.leathers)].length - 4}</span>}
                               </div>
                             </td>
                             {/* Style-level Size 11 — badge only when true, click to toggle */}
