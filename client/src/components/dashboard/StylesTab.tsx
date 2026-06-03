@@ -1197,69 +1197,63 @@ export default function StylesTab() {
                                             </div>
                                           )}
                                         </div>
-                                        {/* Buy Qty — session input */}
+                                        {/* Buy Qty — session input (always visible, disabled when no active session) */}
                                         <div className="flex items-center gap-1.5">
-                                            {!isSessionLocked && selectedSession ? (
+                                          {(() => {
+                                            const canEdit = !isSessionLocked && !!selectedSession;
+                                            return (
                                               <>
                                                 <div className="flex flex-col items-center gap-0.5">
-                                                  <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground leading-none">AU</span>
+                                                  <span className="text-[9px] font-semibold uppercase tracking-wide leading-none" style={{ color: canEdit ? "var(--muted-foreground)" : "var(--muted-foreground)", opacity: canEdit ? 1 : 0.5 }}>AU</span>
                                                   <input
                                                     type="number" min={0}
+                                                    disabled={!canEdit}
                                                     defaultValue={sessionAuQty || ""}
                                                     key={`au-${selectedSessionId}-${skuKey2}-${sessionAuQty}`}
                                                     onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, 'au', e.target.value)}
                                                     onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, 'au')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
-                                                    className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-right"
+                                                    className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
                                                     style={{ borderColor: sessionAuQty > 0 ? "oklch(0.72 0.16 65)" : "var(--border)" }}
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
                                                 </div>
                                                 <div className="flex flex-col items-center gap-0.5">
-                                                  <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground leading-none">USA</span>
+                                                  <span className="text-[9px] font-semibold uppercase tracking-wide leading-none" style={{ color: "var(--muted-foreground)", opacity: canEdit ? 1 : 0.5 }}>USA</span>
                                                   <input
                                                     type="number" min={0}
+                                                    disabled={!canEdit}
                                                     defaultValue={sessionUsaQty || ""}
                                                     key={`usa-${selectedSessionId}-${skuKey2}-${sessionUsaQty}`}
                                                     onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, 'usa', e.target.value)}
                                                     onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, 'usa')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
-                                                    className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-blue-400/40 text-right"
+                                                    className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-blue-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
                                                     style={{ borderColor: sessionUsaQty > 0 ? "oklch(0.65 0.14 240)" : "var(--border)" }}
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
                                                 </div>
                                                 <div className="flex flex-col items-center gap-0.5">
-                                                  <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground leading-none">NYC</span>
+                                                  <span className="text-[9px] font-semibold uppercase tracking-wide leading-none" style={{ color: "var(--muted-foreground)", opacity: canEdit ? 1 : 0.5 }}>NYC</span>
                                                   <input
                                                     type="number" min={0}
+                                                    disabled={!canEdit}
                                                     defaultValue={sessionNycQty || ""}
                                                     key={`nyc-${selectedSessionId}-${skuKey2}-${sessionNycQty}`}
                                                     onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, 'nyc', e.target.value)}
                                                     onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, 'nyc')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
-                                                    className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-purple-400/40 text-right"
+                                                    className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-purple-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
                                                     style={{ borderColor: sessionNycQty > 0 ? "oklch(0.55 0.18 300)" : "var(--border)" }}
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
                                                 </div>
                                               </>
-                                            ) : (
-                                              <div className="flex flex-col gap-0.5">
-                                                {allTotal > 0 ? (
-                                                  <>
-                                                    <span className="text-xs font-mono" style={{ color: "oklch(0.50 0.14 55)" }}>AU: {allTotalAu}</span>
-                                                    <span className="text-xs font-mono" style={{ color: "oklch(0.45 0.14 240)" }}>USA: {allTotalUsa}</span>
-                                                    {allTotalNyc > 0 && <span className="text-xs font-mono" style={{ color: "oklch(0.45 0.16 300)" }}>NYC: {allTotalNyc}</span>}
-                                                  </>
-                                                ) : (
-                                                  <span className="text-xs text-muted-foreground">—</span>
-                                                )}
-                                              </div>
-                                            )}
+                                            );
+                                          })()}
                                         </div>
                                         {/* Detail button */}
                                         <button
