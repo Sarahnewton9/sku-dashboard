@@ -56,8 +56,13 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
   const handleSampleToggle = useCallback(() => {
     if (!sku) return;
     const current = meta?.sampleStatus ?? "waiting";
-    const next = current === "waiting" ? "received" : "waiting";
-    updateMutation.mutate({ style: sku.style, colour: sku.colour, leather: sku.leather, sampleStatus: next as "waiting" | "received" });
+    const cycle: Record<string, "waiting" | "fitting_sample" | "received"> = {
+      waiting: "fitting_sample",
+      fitting_sample: "received",
+      received: "waiting",
+    };
+    const next = cycle[current] ?? "fitting_sample";
+    updateMutation.mutate({ style: sku.style, colour: sku.colour, leather: sku.leather, sampleStatus: next });
   }, [sku, meta, updateMutation]);
 
   const handleOrderQty = useCallback((val: string) => {
@@ -143,14 +148,14 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
                 disabled={updateMutation.isPending}
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all"
                 style={{
-                  background: sampleStatus === "received" ? "oklch(0.94 0.08 155)" : "oklch(0.96 0.04 65)",
-                  color: sampleStatus === "received" ? "oklch(0.40 0.14 155)" : "oklch(0.50 0.14 55)",
+                  background: sampleStatus === "received" ? "oklch(0.94 0.08 155)" : sampleStatus === "fitting_sample" ? "oklch(0.96 0.10 65)" : "oklch(0.96 0.04 65)",
+                  color: sampleStatus === "received" ? "oklch(0.40 0.14 155)" : sampleStatus === "fitting_sample" ? "oklch(0.45 0.16 55)" : "oklch(0.50 0.14 55)",
                 }}
               >
                 {sampleStatus === "received"
                   ? <CheckCircle className="w-4 h-4 flex-shrink-0" />
                   : <Clock className="w-4 h-4 flex-shrink-0" />}
-                {sampleStatus === "received" ? "Received" : "Waiting"}
+                {sampleStatus === "received" ? "Received" : sampleStatus === "fitting_sample" ? "Fitting Sample" : "Waiting"}
               </button>
               <p className="text-xs text-muted-foreground mt-2">Click to toggle</p>
             </div>

@@ -33,7 +33,7 @@ export const skuMeta = mysqlTable("sku_meta", {
   style: varchar("style", { length: 64 }).notNull(),
   colour: varchar("colour", { length: 64 }).notNull(),
   leather: varchar("leather", { length: 64 }).notNull().default(""),
-  sampleStatus: mysqlEnum("sampleStatus", ["waiting", "received"]).default("waiting").notNull(),
+  sampleStatus: mysqlEnum("sampleStatus", ["waiting", "fitting_sample", "received"]).default("waiting").notNull(),
   orderQty: int("orderQty").default(0),
   isSize11: boolean("isSize11").default(false).notNull(),
   costPrice: float("costPrice"),

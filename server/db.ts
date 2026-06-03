@@ -108,7 +108,7 @@ export async function getSkuMeta(style: string, colour: string, leather: string)
 
 export async function upsertSkuMeta(data: {
   style: string; colour: string; leather: string;
-  sampleStatus?: "waiting" | "received";
+  sampleStatus?: "waiting" | "fitting_sample" | "received";
   orderQty?: number;
   isSize11?: boolean;
   costPrice?: number | null;

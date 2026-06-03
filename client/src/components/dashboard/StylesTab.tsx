@@ -304,7 +304,12 @@ export default function StylesTab() {
   });
 
   function handleSampleToggle(style: string, colour: string, leather: string, currentStatus: string | null | undefined) {
-    const newStatus = currentStatus === "received" ? "waiting" : "received";
+    const cycle: Record<string, "waiting" | "fitting_sample" | "received"> = {
+      waiting: "fitting_sample",
+      fitting_sample: "received",
+      received: "waiting",
+    };
+    const newStatus = cycle[currentStatus ?? "waiting"] ?? "fitting_sample";
     updateSampleStatusMutation.mutate({ style, colour, leather: leather ?? "", sampleStatus: newStatus });
   }
 
@@ -617,7 +622,8 @@ export default function StylesTab() {
     if (newSkus.length === 0) return 'none';
     const receivedCount = newSkus.filter((sku) => {
       const key = `${sku.style}|${sku.colour}|${sku.leather}`;
-      return skuMetaMap[key]?.sampleStatus === 'received';
+      const s = skuMetaMap[key]?.sampleStatus;
+      return s === 'received' || s === 'fitting_sample';
     }).length;
     if (receivedCount === 0) return 'none';
     if (receivedCount === newSkus.length) return 'all';
@@ -1156,14 +1162,21 @@ export default function StylesTab() {
                                           <span className="text-xs text-center" onClick={(e) => e.stopPropagation()}>
                                             <button
                                               onClick={(e) => { e.stopPropagation(); handleSampleToggle(sku.style, sku.colour, sku.leather, dbMeta?.sampleStatus); }}
-                                              title={dbMeta?.sampleStatus === "received" ? "Sample received — click to mark as waiting" : "Mark sample as received"}
+                                              title={
+                                                dbMeta?.sampleStatus === "received" ? "Sample received — click to reset to waiting" :
+                                                dbMeta?.sampleStatus === "fitting_sample" ? "Fitting sample — click to mark as received" :
+                                                "Mark as fitting sample"
+                                              }
                                               className="px-1.5 py-0.5 rounded text-xs font-medium transition-colors"
-                                              style={dbMeta?.sampleStatus === "received"
-                                                ? { background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)", border: "1px solid oklch(0.80 0.12 155)" }
+                                              style={
+                                                dbMeta?.sampleStatus === "received"
+                                                  ? { background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)", border: "1px solid oklch(0.80 0.12 155)" }
+                                                : dbMeta?.sampleStatus === "fitting_sample"
+                                                  ? { background: "oklch(0.96 0.10 65)", color: "oklch(0.45 0.16 55)", border: "1px solid oklch(0.82 0.14 65)" }
                                                 : { background: "var(--muted)", color: "var(--muted-foreground)", border: "1px solid var(--border)" }
                                               }
                                             >
-                                              {dbMeta?.sampleStatus === "received" ? "✓ Rcvd" : "Rcvd?"}
+                                              {dbMeta?.sampleStatus === "received" ? "✓ Rcvd" : dbMeta?.sampleStatus === "fitting_sample" ? "Fit Spl" : "Rcvd?"}
                                             </button>
                                           </span>
                                         )}

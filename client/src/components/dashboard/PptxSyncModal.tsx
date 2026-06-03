@@ -246,7 +246,7 @@ export default function PptxSyncModal({ onClose, onApplied }: Props) {
         style: r.style,
         colour: r.colour,
         leather: r.leather,
-        sampleStatus: (r.sampleStatus === "received" ? "received" : "waiting") as "received" | "waiting",
+        sampleStatus: (r.sampleStatus === "received" ? "received" : r.sampleStatus === "fitting_sample" ? "fitting_sample" : "waiting") as "received" | "fitting_sample" | "waiting",
       })),
     });
   }
@@ -567,6 +567,7 @@ function EditableTableRow({
                 onChange={(e) => onUpdate({ sampleStatus: e.target.value })}
               >
                 <option value="waiting">Waiting (not received)</option>
+                <option value="fitting_sample">Fitting Sample</option>
                 <option value="received">Received</option>
               </select>
             </>
@@ -603,7 +604,7 @@ function EditableTableRow({
         </span>
         {row.action === "add_new" && (
           <span className="text-xs text-muted-foreground">
-            {row.sampleStatus === "received" ? "✓ rcvd" : "waiting"}
+            {row.sampleStatus === "received" ? "✓ rcvd" : row.sampleStatus === "fitting_sample" ? "fit spl" : "waiting"}
           </span>
         )}
       </span>

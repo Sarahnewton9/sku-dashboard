@@ -365,7 +365,7 @@ export default function ExportPanel({ onClose }: Props) {
             Leather: sku.leather,
             Status: sku.is_new ? "New" : "Existing",
             "Size 11": meta?.isSize11 ? "Yes" : "No",
-            "Sample Status": meta?.sampleStatus === "received" ? "Received" : "Waiting",
+            "Sample Status": meta?.sampleStatus === "received" ? "Received" : meta?.sampleStatus === "fitting_sample" ? "Fitting Sample" : "Waiting",
             "Fit Rating": (() => {
               // Prefer style-level fit rating (set in Fittings tab) over per-SKU fit rating
               const rawRating = styleMetaMap[sku.style]?.fitRating || meta?.fitRating;
@@ -378,7 +378,7 @@ export default function ExportPanel({ onClose }: Props) {
             RRP: styleMetaMap[sku.style]?.rrp != null ? styleMetaMap[sku.style].rrp : "",
           };
         })
-        .filter((r: any) => r["Fitting Notes"] || r["Fit Rating"] || r["Sample Status"] === "received");
+        .filter((r: any) => r["Fitting Notes"] || r["Fit Rating"] || r["Sample Status"] === "received" || r["Sample Status"] === "Fitting Sample");
 
       if (rows.length === 0) {
         toast.info("No fitting notes or sample data to export yet.");
@@ -501,7 +501,7 @@ export default function ExportPanel({ onClose }: Props) {
           Leather: sku.leather,
           Status: sku.is_new ? "New" : "Existing",
           "Size 11": meta?.isSize11 ? "Yes" : "No",
-          "Sample Status": meta?.sampleStatus === "received" ? "Received" : "Waiting",
+          "Sample Status": meta?.sampleStatus === "received" ? "Received" : meta?.sampleStatus === "fitting_sample" ? "Fitting Sample" : "Waiting",
           "Order Qty": meta?.orderQty ?? 0,
           "Cost Price": meta?.costPrice != null ? meta.costPrice : "",
           RRP: styleMetaMap[sku.style]?.rrp != null ? styleMetaMap[sku.style].rrp : "",

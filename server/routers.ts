@@ -68,7 +68,7 @@ export const appRouter = router({
         style: z.string(),
         colour: z.string(),
         leather: z.string().default(""),
-        sampleStatus: z.enum(["waiting", "received"]).optional(),
+        sampleStatus: z.enum(["waiting", "fitting_sample", "received"]).optional(),
         orderQty: z.number().int().min(0).optional(),
         isSize11: z.boolean().optional(),
         costPrice: z.number().nullable().optional(),
@@ -1115,7 +1115,7 @@ export const appRouter = router({
           style: z.string(),
           colour: z.string(),
           leather: z.string(),
-          sampleStatus: z.enum(['received', 'waiting']).default('waiting'),
+          sampleStatus: z.enum(['received', 'waiting', 'fitting_sample']).default('waiting'),
         })).optional(),
       }))
       .mutation(async ({ input }) => {

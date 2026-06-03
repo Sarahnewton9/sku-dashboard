@@ -210,6 +210,7 @@ export default function SummaryCards() {
       if (!newSkuKeys.has(key)) continue; // skip carry-over SKUs
       trackedNewKeys.add(key);
       if (m.sampleStatus === "received") received++;
+      else if (m.sampleStatus === "fitting_sample") received++; // count fitting samples as received for progress
       else explicitlyWaiting++;
     }
     // New SKUs not yet in DB are implicitly "waiting"
@@ -224,10 +225,10 @@ export default function SummaryCards() {
     const waitingSkus: string[] = [];
 
     // Build a set of SKU keys that are in the DB with a status
-    const skuStatusMap: Record<string, "waiting" | "received"> = {};
+    const skuStatusMap: Record<string, "waiting" | "fitting_sample" | "received"> = {};
     for (const m of skuMetaList) {
       const key = `${m.style}|${m.colour}|${m.leather}`;
-      skuStatusMap[key] = m.sampleStatus as "waiting" | "received";
+      skuStatusMap[key] = m.sampleStatus as "waiting" | "fitting_sample" | "received";
     }
 
     for (const sku of mergedRawSkus) {
@@ -238,6 +239,8 @@ export default function SummaryCards() {
       const label = `${sku.style} — ${sku.colour} ${sku.leather}`;
       if (skuStatusMap[key] === "received") {
         receivedSkus.push(label);
+      } else if (skuStatusMap[key] === "fitting_sample") {
+        receivedSkus.push(`${label} (fitting)`);
       } else {
         waitingSkus.push(label);
       }

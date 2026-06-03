@@ -1,0 +1,1 @@
+ALTER TABLE `sku_meta` MODIFY COLUMN `sampleStatus` enum('waiting','fitting_sample','received') NOT NULL DEFAULT 'waiting';
