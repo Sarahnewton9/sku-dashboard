@@ -91,7 +91,7 @@ function Lightbox({ src, onClose, sampleDate, sampleType }: { src: string; onClo
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  const sampleTypeColor = sampleType === "Proto" ? "text-orange-300" : sampleType === "Revised" ? "text-blue-300" : sampleType === "Salesman Sample" ? "text-green-300" : "text-slate-300";
+  const sampleTypeColor = sampleType === "Proto" ? "text-orange-300" : sampleType === "Revised" ? "text-blue-300" : sampleType === "Salesman Sample" ? "text-green-300" : sampleType === "Fitting Sample" ? "text-amber-300" : "text-slate-300";
 
   return createPortal(
     <div
@@ -138,6 +138,7 @@ function SessionCard({
   onDeleteImage,
   onUpdateSession,
   onDeleteSession,
+  startInEditMode = false,
 }: {
   session: FittingSession;
   knownModels: string[];
@@ -145,8 +146,9 @@ function SessionCard({
   onDeleteImage: (id: number) => void;
   onUpdateSession: (id: number, fitModel: string, sessionDate: string, notes: string | null, sampleDate: string | null, sampleType: string | null) => void;
   onDeleteSession: (id: number) => void;
+  startInEditMode?: boolean;
 }) {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(startInEditMode);
   const [localModel, setLocalModel] = useState(session.fitModel);
   const [localDate, setLocalDate] = useState(session.sessionDate);
   const [localNotes, setLocalNotes] = useState(session.notes ?? "");
@@ -273,6 +275,7 @@ function SessionCard({
               <option value="">— select —</option>
               <option value="Original">Original</option>
               <option value="Proto">Proto</option>
+              <option value="Fitting Sample">Fitting Sample</option>
               <option value="Revised">Revised</option>
               <option value="Salesman Sample">Salesman Sample</option>
             </select>
@@ -283,6 +286,7 @@ function SessionCard({
                   session.sampleType === "Original" ? "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400" :
                   session.sampleType === "Proto" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
                   session.sampleType === "Revised" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                  session.sampleType === "Fitting Sample" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
                   "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                 }`}>{session.sampleType}</span>
               ) : <span className="text-muted-foreground/50">—</span>}
@@ -339,6 +343,7 @@ function SessionCard({
                         session.sampleType === "Original" ? "text-slate-300" :
                         session.sampleType === "Proto" ? "text-orange-300" :
                         session.sampleType === "Revised" ? "text-blue-300" :
+                        session.sampleType === "Fitting Sample" ? "text-amber-300" :
                         "text-green-300"
                       }`}>{session.sampleType}</span>
                     )}
@@ -400,6 +405,9 @@ function StyleFitRow({
   onApprove,
   onUndoApproval,
   imageOverrides,
+  newlyCreatedSessionId,
+  onClearNewSession,
+  onModelUsed,
 }: {
   entry: StyleEntry;
   styleMeta: Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; sizeRecommendation?: string | null }>;
@@ -415,10 +423,20 @@ function StyleFitRow({
   onApprove: (style: string) => void;
   onUndoApproval: (style: string) => void;
   imageOverrides: Record<string, string>;
+  newlyCreatedSessionId?: number | null;
+  onClearNewSession?: () => void;
+  onModelUsed?: (model: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [localFit, setLocalFit] = useState<string | null | undefined>(undefined);
   const [localSizeRec, setLocalSizeRec] = useState<string | null | undefined>(undefined);
+
+  // Auto-expand when a new session is created for this style
+  useEffect(() => {
+    if (newlyCreatedSessionId != null && sessions.some((s) => s.id === newlyCreatedSessionId)) {
+      setExpanded(true);
+    }
+  }, [newlyCreatedSessionId, sessions]);
 
   const meta = styleMeta[entry.style];
   const fitRating = localFit !== undefined ? localFit : (meta?.fitRating ?? null);
@@ -570,8 +588,14 @@ function StyleFitRow({
                   knownModels={knownModels}
                   onUploadImage={onUploadImage}
                   onDeleteImage={onDeleteImage}
-                  onUpdateSession={onUpdateSession}
+                  onUpdateSession={(id, fitModel, sessionDate, notes, sampleDate, sampleType) => {
+                    // Persist the model name for next session
+                    if (fitModel.trim() && onModelUsed) onModelUsed(fitModel.trim().toUpperCase());
+                    onUpdateSession(id, fitModel, sessionDate, notes, sampleDate, sampleType);
+                    if (id === newlyCreatedSessionId && onClearNewSession) onClearNewSession();
+                  }}
                   onDeleteSession={onDeleteSession}
+                  startInEditMode={session.id === newlyCreatedSessionId}
                 />
               ))}
             </div>
@@ -1557,6 +1581,12 @@ export function FittingTab() {
   const [newSessionStyle, setNewSessionStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [approvalFilter, setApprovalFilter] = useState<"all" | "waiting_revised" | "waiting_to_fit" | "approved">("waiting_to_fit");
+  // Track the most recently created session ID so it opens in edit mode automatically
+  const [newlyCreatedSessionId, setNewlyCreatedSessionId] = useState<number | null>(null);
+  // Remember the last used fit model across sessions (persisted in localStorage)
+  const lastUsedModelRef = useRef<string>(
+    typeof window !== "undefined" ? (localStorage.getItem("fitting_last_model") ?? "") : ""
+  );
 
   // Live merged styles (includes custom SKUs from DB)
   const { mergedStyles } = useCustomSkus();
@@ -1721,13 +1751,19 @@ export function FittingTab() {
   }, [updateFit, styleMetaList]);
 
   const handleCreateSession = useCallback((style: string) => {
-    setNewSessionStyle(style);
-  }, []);
-
-  const handleConfirmCreateSession = useCallback((fitModel: string, sessionDate: string) => {
-    if (!newSessionStyle) return;
-    createSession.mutate({ style: newSessionStyle, fitModel, sessionDate });
-  }, [createSession, newSessionStyle]);
+    // Immediately create the session with today's date and the last used model — no dialog needed
+    const today = new Date().toISOString().split("T")[0];
+    const model = lastUsedModelRef.current || "";
+    createSession.mutate(
+      { style, fitModel: model, sessionDate: today },
+      {
+        onSuccess: (result: any) => {
+          if (result?.id) setNewlyCreatedSessionId(result.id);
+          refetchSessions();
+        },
+      }
+    );
+  }, [createSession, refetchSessions]);
 
   // ── Fit Report Export ────────────────────────────────────────────────────────────────────────────────
   const handleExportFitReport = useCallback(() => {
@@ -1879,16 +1915,6 @@ export function FittingTab() {
 
   return (
     <div className="space-y-6">
-      {/* New Session Dialog */}
-      {newSessionStyle && (
-        <NewSessionDialog
-          style={newSessionStyle}
-          knownModels={knownModels}
-          onConfirm={handleConfirmCreateSession}
-          onClose={() => setNewSessionStyle(null)}
-        />
-      )}
-
       {/* Export Dialog */}
       {exportOpen && (
         <ExportDialog
@@ -1997,6 +2023,12 @@ export function FittingTab() {
                 onApprove={handleApprove}
                 onUndoApproval={handleUndoApproval}
                 onRefreshSessions={refetchSessions}
+                newlyCreatedSessionId={newlyCreatedSessionId}
+                onClearNewSession={() => setNewlyCreatedSessionId(null)}
+                onModelUsed={(model) => {
+                  lastUsedModelRef.current = model;
+                  localStorage.setItem("fitting_last_model", model);
+                }}
               />
             ))}
           </div>
@@ -2046,6 +2078,9 @@ function StyleFitRowWithSessions({
   onApprove,
   onUndoApproval,
   onRefreshSessions,
+  newlyCreatedSessionId,
+  onClearNewSession,
+  onModelUsed,
 }: {
   entry: StyleEntry;
   styleMeta: Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; sizeRecommendation?: string | null }>;
@@ -2058,6 +2093,9 @@ function StyleFitRowWithSessions({
   onApprove: (style: string) => void;
   onUndoApproval: (style: string) => void;
   onRefreshSessions: () => void;
+  newlyCreatedSessionId?: number | null;
+  onClearNewSession?: () => void;
+  onModelUsed?: (model: string) => void;
 }) {
   const sessions: FittingSession[] = preloadedSessions.map((s) => ({
     id: s.id,
@@ -2116,6 +2154,9 @@ function StyleFitRowWithSessions({
       onDeleteSession={handleDeleteSession}
       onApprove={onApprove}
       onUndoApproval={onUndoApproval}
+      newlyCreatedSessionId={newlyCreatedSessionId}
+      onClearNewSession={onClearNewSession}
+      onModelUsed={onModelUsed}
     />
   );
 }
