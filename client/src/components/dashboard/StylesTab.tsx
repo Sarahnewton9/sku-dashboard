@@ -372,10 +372,10 @@ export default function StylesTab() {
 
   // Buy session item lookup — uses selected session items, or falls back to most recent session for read-only display
   const sessionItemMap = useMemo(() => {
-    const map: Record<string, { auQty: number; usaQty: number }> = {};
+    const map: Record<string, { auQty: number; usaQty: number; nycQty: number }> = {};
     for (const item of displayItems) {
       const key = `${item.style}|${item.colour}|${item.leather}` as string;
-      map[key] = { auQty: (item as any).auQty ?? 0, usaQty: (item as any).usaQty ?? 0 };
+      map[key] = { auQty: (item as any).auQty ?? 0, usaQty: (item as any).usaQty ?? 0, nycQty: (item as any).nycQty ?? 0 };
     }
     return map;
   }, [displayItems]);
@@ -429,7 +429,7 @@ export default function StylesTab() {
     const current = sessionItemMap[baseKey] ?? { auQty: 0, usaQty: 0, nycQty: 0 };
     const auQty = field === 'au' ? newVal : current.auQty;
     const usaQty = field === 'usa' ? newVal : current.usaQty;
-    const nycQty = field === 'nyc' ? newVal : ((current as any).nycQty ?? 0);
+    const nycQty = field === 'nyc' ? newVal : current.nycQty;
     upsertItemMutation.mutate(
       { sessionId: selectedSessionId, style, colour, leather, auQty, usaQty, nycQty },
       { onSuccess: () => { refetchItems(); delete pendingQty.current[fieldKey]; } }
@@ -1130,7 +1130,7 @@ export default function StylesTab() {
                                     const sessionQtyObj = sessionItemMap[skuKey2] ?? { auQty: 0, usaQty: 0, nycQty: 0 };
                                     const sessionAuQty = sessionQtyObj.auQty;
                                     const sessionUsaQty = sessionQtyObj.usaQty;
-                                    const sessionNycQty = (sessionQtyObj as any).nycQty ?? 0;
+                                    const sessionNycQty = sessionQtyObj.nycQty;
                                     const sessionTotalQty = sessionAuQty + sessionUsaQty + sessionNycQty;
                                     // All-session combined totals
                                     const allQtyData = (allSessionQtys as Record<string, { totalAu: number; totalUsa: number; totalNyc: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number }> }>)[skuKey2];
