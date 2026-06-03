@@ -980,7 +980,7 @@ export default function StylesTab() {
                                 <div className="flex flex-col items-end gap-0.5">
                                   <span className="text-sm font-bold tabular-nums" style={{ color: "oklch(0.45 0.16 55)" }}>{allSessionsTotal.total}</span>
                                   <span className="text-xs tabular-nums text-muted-foreground">
-                                    AU {allSessionsTotal.au} · USA {allSessionsTotal.usa}{allSessionsTotal.nyc > 0 ? ` · NYC ${allSessionsTotal.nyc}` : ""}
+                                    AU {allSessionsTotal.au} · USA {allSessionsTotal.usa} · NYC {allSessionsTotal.nyc}
                                   </span>
                                 </div>
                               ) : (
