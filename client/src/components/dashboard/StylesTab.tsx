@@ -1189,6 +1189,12 @@ export default function StylesTab() {
                                             <div className="flex flex-col items-center gap-0.5" title={allQtyData?.sessions.map((s) => `${s.sessionName}: AU ${s.au} / USA ${s.usa}${s.nyc ? ` / NYC ${s.nyc}` : ''}`).join('\n')}>
                                               <span className="text-[9px] font-semibold uppercase tracking-wide leading-none" style={{ color: "oklch(0.55 0.14 55)" }}>Total</span>
                                               <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded" style={{ background: "oklch(0.94 0.08 65)", color: "oklch(0.45 0.14 55)" }}>{allTotal}</span>
+                                              <span className="text-[9px] tabular-nums text-muted-foreground leading-none mt-0.5">
+                                                AU {allTotalAu} · USA {allTotalUsa}
+                                              </span>
+                                              {allTotalNyc > 0 && (
+                                                <span className="text-[9px] tabular-nums leading-none" style={{ color: "oklch(0.45 0.16 300)" }}>NYC {allTotalNyc}</span>
+                                              )}
                                             </div>
                                           ) : (
                                             <div className="flex flex-col items-center gap-0.5">
