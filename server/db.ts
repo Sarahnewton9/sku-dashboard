@@ -688,7 +688,7 @@ export async function getSpecCountsForAllStyles(): Promise<{ style: string; fill
 }
 
 // ─── Fitting Sessions ─────────────────────────────────────────────────────────
-export async function createFittingSession(data: { style: string; fitModel: string; sessionDate: string; notes?: string; sampleDate?: string | null; sampleType?: string | null }): Promise<number> {
+export async function createFittingSession(data: { style: string; fitModel: string; sessionDate: string; notes?: string; sampleDate?: string | null; sampleType?: string | null; sampleSize?: string | null }): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(fittingSessions).values({
@@ -698,11 +698,12 @@ export async function createFittingSession(data: { style: string; fitModel: stri
     notes: data.notes ?? null,
     sampleDate: data.sampleDate ?? null,
     sampleType: data.sampleType ?? null,
+    sampleSize: data.sampleSize ?? null,
   });
   return (result[0] as { insertId: number }).insertId;
 }
 
-export async function updateFittingSession(data: { id: number; fitModel?: string; sessionDate?: string; notes?: string | null; sampleDate?: string | null; sampleType?: string | null }): Promise<void> {
+export async function updateFittingSession(data: { id: number; fitModel?: string; sessionDate?: string; notes?: string | null; sampleDate?: string | null; sampleType?: string | null; sampleSize?: string | null }): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const updateSet: Record<string, unknown> = {};
@@ -711,6 +712,7 @@ export async function updateFittingSession(data: { id: number; fitModel?: string
   if (data.notes !== undefined) updateSet.notes = data.notes;
   if (data.sampleDate !== undefined) updateSet.sampleDate = data.sampleDate;
   if (data.sampleType !== undefined) updateSet.sampleType = data.sampleType;
+  if (data.sampleSize !== undefined) updateSet.sampleSize = data.sampleSize;
   if (Object.keys(updateSet).length === 0) return;
   await db.update(fittingSessions).set(updateSet).where(eq(fittingSessions.id, data.id));
 }

@@ -232,6 +232,13 @@
       "when": 1780460768042,
       "tag": "0032_old_blacklash",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "5",
+      "when": 1780530339824,
+      "tag": "0033_supreme_iron_monger",
+      "breakpoints": true
     }
   ]
 }

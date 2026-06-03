@@ -1,0 +1,1 @@
+ALTER TABLE `fitting_sessions` ADD `sampleSize` varchar(32);

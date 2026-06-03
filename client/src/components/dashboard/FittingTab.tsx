@@ -57,6 +57,7 @@ interface FittingSession {
   notes?: string | null;
   sampleDate?: string | null;
   sampleType?: string | null;
+  sampleSize?: string | null;
   images: Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string }>;
 }
 
@@ -144,7 +145,7 @@ function SessionCard({
   knownModels: string[];
   onUploadImage: (sessionId: number, style: string, file: File) => void;
   onDeleteImage: (id: number) => void;
-  onUpdateSession: (id: number, fitModel: string, sessionDate: string, notes: string | null, sampleDate: string | null, sampleType: string | null) => void;
+  onUpdateSession: (id: number, fitModel: string, sessionDate: string, notes: string | null, sampleDate: string | null, sampleType: string | null, sampleSize: string | null) => void;
   onDeleteSession: (id: number) => void;
   startInEditMode?: boolean;
 }) {
@@ -154,6 +155,7 @@ function SessionCard({
   const [localNotes, setLocalNotes] = useState(session.notes ?? "");
   const [localSampleDate, setLocalSampleDate] = useState(session.sampleDate ?? "");
   const [localSampleType, setLocalSampleType] = useState(session.sampleType ?? "");
+  const [localSampleSize, setLocalSampleSize] = useState(session.sampleSize ?? "");
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -166,11 +168,12 @@ function SessionCard({
       setLocalNotes(session.notes ?? "");
       setLocalSampleDate(session.sampleDate ?? "");
       setLocalSampleType(session.sampleType ?? "");
+      setLocalSampleSize(session.sampleSize ?? "");
     }
-  }, [session.fitModel, session.sessionDate, session.notes, session.sampleDate, session.sampleType, editing]);
+  }, [session.fitModel, session.sessionDate, session.notes, session.sampleDate, session.sampleType, session.sampleSize, editing]);
 
   const handleSave = () => {
-    onUpdateSession(session.id, localModel, localDate, localNotes || null, localSampleDate || null, localSampleType || null);
+    onUpdateSession(session.id, localModel, localDate, localNotes || null, localSampleDate || null, localSampleType || null, (localSampleType === "Fitting Sample" && localSampleSize) ? localSampleSize : null);
     setEditing(false);
   };
 
@@ -293,6 +296,25 @@ function SessionCard({
             </span>
           )}
         </div>
+        {/* Fitting size — only visible when Fitting Sample is selected */}
+        {(editing ? localSampleType === "Fitting Sample" : session.sampleType === "Fitting Sample") && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground font-medium">Fitting size:</span>
+            {editing ? (
+              <input
+                type="text"
+                value={localSampleSize}
+                onChange={(e) => setLocalSampleSize(e.target.value)}
+                placeholder="e.g. 37"
+                className="border border-border rounded px-2 py-0.5 text-xs bg-background w-20"
+              />
+            ) : (
+              <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                {session.sampleSize || <span className="text-muted-foreground/50">—</span>}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Session notes */}
@@ -418,7 +440,7 @@ function StyleFitRow({
   onCreateSession: (style: string) => void;
   onUploadImage: (sessionId: number, style: string, file: File) => void;
   onDeleteImage: (id: number) => void;
-  onUpdateSession: (id: number, fitModel: string, sessionDate: string, notes: string | null, sampleDate: string | null, sampleType: string | null) => void;
+  onUpdateSession: (id: number, fitModel: string, sessionDate: string, notes: string | null, sampleDate: string | null, sampleType: string | null, sampleSize: string | null) => void;
   onDeleteSession: (id: number) => void;
   onApprove: (style: string) => void;
   onUndoApproval: (style: string) => void;
@@ -588,10 +610,10 @@ function StyleFitRow({
                   knownModels={knownModels}
                   onUploadImage={onUploadImage}
                   onDeleteImage={onDeleteImage}
-                  onUpdateSession={(id, fitModel, sessionDate, notes, sampleDate, sampleType) => {
+                  onUpdateSession={(id, fitModel, sessionDate, notes, sampleDate, sampleType, sampleSize) => {
                     // Persist the model name for next session
                     if (fitModel.trim() && onModelUsed) onModelUsed(fitModel.trim().toUpperCase());
-                    onUpdateSession(id, fitModel, sessionDate, notes, sampleDate, sampleType);
+                    onUpdateSession(id, fitModel, sessionDate, notes, sampleDate, sampleType, sampleSize);
                     if (id === newlyCreatedSessionId && onClearNewSession) onClearNewSession();
                   }}
                   onDeleteSession={onDeleteSession}
@@ -2085,7 +2107,7 @@ function StyleFitRowWithSessions({
   entry: StyleEntry;
   styleMeta: Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; sizeRecommendation?: string | null }>;
   imageOverrides: Record<string, string>;
-  preloadedSessions: Array<{ id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; sampleDate?: string | null; sampleType?: string | null; createdAt: Date; images: Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string; createdAt: Date }> }>;
+  preloadedSessions: Array<{ id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; sampleDate?: string | null; sampleType?: string | null; sampleSize?: string | null; createdAt: Date; images: Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string; createdAt: Date }> }>;
   knownModels: string[];
   onFitUpdate: (style: string, fitRating: string | null, notes: string | null) => void;
   onSizeRecommendationUpdate: (style: string, sizeRecommendation: string | null, currentFitRating?: string | null) => void;
@@ -2105,6 +2127,7 @@ function StyleFitRowWithSessions({
     notes: s.notes,
     sampleDate: s.sampleDate ?? null,
     sampleType: s.sampleType ?? null,
+    sampleSize: s.sampleSize ?? null,
     images: ((s.images ?? []) as unknown) as Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string }>,
   }));
 
@@ -2130,8 +2153,8 @@ function StyleFitRowWithSessions({
     deleteImage.mutate({ id });
   }, [deleteImage]);
 
-  const handleUpdateSession = useCallback((id: number, fitModel: string, sessionDate: string, notes: string | null, sampleDate: string | null, sampleType: string | null) => {
-    updateSession.mutate({ id, fitModel, sessionDate, notes, sampleDate, sampleType });
+  const handleUpdateSession = useCallback((id: number, fitModel: string, sessionDate: string, notes: string | null, sampleDate: string | null, sampleType: string | null, sampleSize: string | null) => {
+    updateSession.mutate({ id, fitModel, sessionDate, notes, sampleDate, sampleType, sampleSize });
   }, [updateSession]);
 
   const handleDeleteSession = useCallback((id: number) => {
