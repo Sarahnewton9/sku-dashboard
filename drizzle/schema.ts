@@ -128,6 +128,7 @@ export const buySessionItems = mysqlTable("buy_session_items", {
   qty: int("qty").default(0).notNull(),       // legacy — kept for backwards compat
   auQty: int("auQty").default(0).notNull(),   // AU buy quantity
   usaQty: int("usaQty").default(0).notNull(), // USA buy quantity
+  nycQty: int("nycQty").default(0).notNull(), // NYC buy quantity
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 

@@ -421,19 +421,19 @@ export default function ExportPanel({ onClose }: Props) {
         // Fetch items for this session
         const items = await fetch(`/api/trpc/buy.getItems?batch=1&input=${encodeURIComponent(JSON.stringify({ "0": { json: { sessionId: session.id } } }))}`);
         const itemsJson = await items.json();
-        const sessionItems: Array<{ style: string; colour: string; leather: string; auQty: number; usaQty: number }> =
+        const sessionItems: Array<{ style: string; colour: string; leather: string; auQty: number; usaQty: number; nycQty: number }> =
           itemsJson?.[0]?.result?.data?.json ?? [];
 
-        const itemMap: Record<string, { auQty: number; usaQty: number }> = {};
+        const itemMap: Record<string, { auQty: number; usaQty: number; nycQty: number }> = {};
         for (const item of sessionItems) {
-          itemMap[`${item.style}|${item.colour}|${item.leather}`] = { auQty: item.auQty ?? 0, usaQty: item.usaQty ?? 0 };
+          itemMap[`${item.style}|${item.colour}|${item.leather}`] = { auQty: item.auQty ?? 0, usaQty: item.usaQty ?? 0, nycQty: item.nycQty ?? 0 };
         }
 
         const rows = allSkus
           .map((sku) => {
             const key = `${sku.style}|${sku.colour}|${sku.leather}`;
             const item = itemMap[key];
-            if (!item || (item.auQty === 0 && item.usaQty === 0)) return null;
+            if (!item || (item.auQty === 0 && item.usaQty === 0 && item.nycQty === 0)) return null;
             const skuKey = `${sku.style}|${sku.colour}|${sku.leather}`;
             const skuMeta = skuMetaMap[skuKey];
             return {
@@ -444,13 +444,14 @@ export default function ExportPanel({ onClose }: Props) {
               "Size 11": skuMeta?.isSize11 ? "Yes" : "No",
               "AU Units": item.auQty,
               "USA Units": item.usaQty,
+              "NYC Units": item.nycQty,
             };
           })
-          .filter(Boolean) as Array<{ Category: string; Style: string; Colour: string; Leather: string; "Size 11": string; "AU Units": number; "USA Units": number }>;
+          .filter(Boolean) as Array<{ Category: string; Style: string; Colour: string; Leather: string; "Size 11": string; "AU Units": number; "USA Units": number; "NYC Units": number }>;
 
         if (rows.length > 0) {
           const ws = XLSX.utils.json_to_sheet(rows);
-          ws["!cols"] = [{ wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 12 }, { wch: 12 }];
+          ws["!cols"] = [{ wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
           const sheetName = session.name.slice(0, 31); // Excel sheet name limit
           XLSX.utils.book_append_sheet(wb, ws, sheetName);
           totalRows += rows.length;
@@ -458,7 +459,7 @@ export default function ExportPanel({ onClose }: Props) {
       }
 
       if (totalRows === 0) {
-        toast.info("No buy quantities set yet. Add AU/USA quantities in the By Style tab.");
+        toast.info("No buy quantities set yet. Add AU/USA/NYC quantities in the By Style tab.");
         return;
       }
 

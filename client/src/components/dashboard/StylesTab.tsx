@@ -407,7 +407,7 @@ export default function StylesTab() {
     refetchActive();
   }
 
-  function handleQtyChange(style: string, colour: string, leather: string, field: 'au' | 'usa', val: string) {
+  function handleQtyChange(style: string, colour: string, leather: string, field: 'au' | 'usa' | 'nyc', val: string) {
     const key = `${style}|${colour}|${leather}|${field}`;
     if (val === '' || val === null) {
       // Empty field — store 0 so blur handler saves it as 0
@@ -420,17 +420,18 @@ export default function StylesTab() {
     }
   }
 
-  function handleQtyBlur(style: string, colour: string, leather: string, field: 'au' | 'usa') {
+  function handleQtyBlur(style: string, colour: string, leather: string, field: 'au' | 'usa' | 'nyc') {
     if (!selectedSessionId || isSessionLocked) return;
     const baseKey = `${style}|${colour}|${leather}`;
     const fieldKey = `${baseKey}|${field}`;
     const newVal = pendingQty.current[fieldKey];
     if (newVal === undefined) return;
-    const current = sessionItemMap[baseKey] ?? { auQty: 0, usaQty: 0 };
+    const current = sessionItemMap[baseKey] ?? { auQty: 0, usaQty: 0, nycQty: 0 };
     const auQty = field === 'au' ? newVal : current.auQty;
     const usaQty = field === 'usa' ? newVal : current.usaQty;
+    const nycQty = field === 'nyc' ? newVal : ((current as any).nycQty ?? 0);
     upsertItemMutation.mutate(
-      { sessionId: selectedSessionId, style, colour, leather, auQty, usaQty },
+      { sessionId: selectedSessionId, style, colour, leather, auQty, usaQty, nycQty },
       { onSuccess: () => { refetchItems(); delete pendingQty.current[fieldKey]; } }
     );
   }
@@ -580,30 +581,30 @@ export default function StylesTab() {
       .filter((s) => s.style === styleName && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`));
   }
 
-  // All-sessions buy total for a style (AU + USA combined, across every session)
-  const allQtysTyped = allSessionQtys as Record<string, { totalAu: number; totalUsa: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number }> }>;
-  function getStyleAllSessionsTotal(styleName: string): { au: number; usa: number; total: number } {
-    let au = 0; let usa = 0;
+  // All-sessions buy total for a style (AU + USA + NYC combined, across every session)
+  const allQtysTyped = allSessionQtys as Record<string, { totalAu: number; totalUsa: number; totalNyc: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number }> }>;
+  function getStyleAllSessionsTotal(styleName: string): { au: number; usa: number; nyc: number; total: number } {
+    let au = 0; let usa = 0; let nyc = 0;
     for (const sku of getSkusForStyle(styleName)) {
       const key = `${sku.style}|${sku.colour}|${sku.leather}`;
       const d = allQtysTyped[key];
-      if (d) { au += d.totalAu; usa += d.totalUsa; }
+      if (d) { au += d.totalAu; usa += d.totalUsa; nyc += d.totalNyc ?? 0; }
     }
-    return { au, usa, total: au + usa };
+    return { au, usa, nyc, total: au + usa + nyc };
   }
   // Legacy: session buy total for a style (current selected session only)
   function getStyleSessionTotal(styleName: string) {
     return getSkusForStyle(styleName).reduce((sum, sku) => {
       const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
       const item = sessionItemMap[key];
-      return sum + (item ? item.auQty + item.usaQty : 0);
+      return sum + (item ? item.auQty + item.usaQty + (item.nycQty ?? 0) : 0);
     }, 0);
   }
   // Grand totals across all sessions
   const grandTotals = useMemo(() => {
-    let au = 0; let usa = 0;
-    for (const d of Object.values(allQtysTyped)) { au += d.totalAu; usa += d.totalUsa; }
-    return { au, usa, total: au + usa };
+    let au = 0; let usa = 0; let nyc = 0;
+    for (const d of Object.values(allQtysTyped)) { au += d.totalAu; usa += d.totalUsa; nyc += d.totalNyc ?? 0; }
+    return { au, usa, nyc, total: au + usa + nyc };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allSessionQtys]);
 
@@ -979,7 +980,7 @@ export default function StylesTab() {
                                 <div className="flex flex-col items-end gap-0.5">
                                   <span className="text-sm font-bold tabular-nums" style={{ color: "oklch(0.45 0.16 55)" }}>{allSessionsTotal.total}</span>
                                   <span className="text-xs tabular-nums text-muted-foreground">
-                                    AU {allSessionsTotal.au} · USA {allSessionsTotal.usa}
+                                    AU {allSessionsTotal.au} · USA {allSessionsTotal.usa}{allSessionsTotal.nyc > 0 ? ` · NYC ${allSessionsTotal.nyc}` : ""}
                                   </span>
                                 </div>
                               ) : (
@@ -1126,14 +1127,16 @@ export default function StylesTab() {
                                   const renderRow = (sku: typeof allSkus[0], isNew: boolean) => {
                                     const skuKey2 = `${sku.style}|${sku.colour}|${sku.leather}`;
                                     const dbMeta = skuMetaMap[skuKey2];
-                                    const sessionQtyObj = sessionItemMap[skuKey2] ?? { auQty: 0, usaQty: 0 };
+                                    const sessionQtyObj = sessionItemMap[skuKey2] ?? { auQty: 0, usaQty: 0, nycQty: 0 };
                                     const sessionAuQty = sessionQtyObj.auQty;
                                     const sessionUsaQty = sessionQtyObj.usaQty;
-                                    const sessionTotalQty = sessionAuQty + sessionUsaQty;
+                                    const sessionNycQty = (sessionQtyObj as any).nycQty ?? 0;
+                                    const sessionTotalQty = sessionAuQty + sessionUsaQty + sessionNycQty;
                                     // All-session combined totals
-                                    const allQtyData = (allSessionQtys as Record<string, { totalAu: number; totalUsa: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number }> }>)[skuKey2];
+                                    const allQtyData = (allSessionQtys as Record<string, { totalAu: number; totalUsa: number; totalNyc: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number }> }>)[skuKey2];
                                     const allTotalAu = allQtyData?.totalAu ?? 0;
                                     const allTotalUsa = allQtyData?.totalUsa ?? 0;
+                                    const allTotalNyc = allQtyData?.totalNyc ?? 0;
                                     const allTotal = allQtyData?.total ?? 0;
                                     return (
                                       <div
@@ -1183,7 +1186,7 @@ export default function StylesTab() {
                                         {/* All-session total bought badge */}
                                         <div className="flex items-center gap-1.5">
                                           {allTotal > 0 ? (
-                                            <div className="flex flex-col items-center gap-0.5" title={allQtyData?.sessions.map((s) => `${s.sessionName}: AU ${s.au} / USA ${s.usa}`).join('\n')}>
+                                            <div className="flex flex-col items-center gap-0.5" title={allQtyData?.sessions.map((s) => `${s.sessionName}: AU ${s.au} / USA ${s.usa}${s.nyc ? ` / NYC ${s.nyc}` : ''}`).join('\n')}>
                                               <span className="text-[9px] font-semibold uppercase tracking-wide leading-none" style={{ color: "oklch(0.55 0.14 55)" }}>Total</span>
                                               <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded" style={{ background: "oklch(0.94 0.08 65)", color: "oklch(0.45 0.14 55)" }}>{allTotal}</span>
                                             </div>
@@ -1228,6 +1231,21 @@ export default function StylesTab() {
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
                                                 </div>
+                                                <div className="flex flex-col items-center gap-0.5">
+                                                  <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground leading-none">NYC</span>
+                                                  <input
+                                                    type="number" min={0}
+                                                    defaultValue={sessionNycQty || ""}
+                                                    key={`nyc-${selectedSessionId}-${skuKey2}-${sessionNycQty}`}
+                                                    onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, 'nyc', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, 'nyc')}
+                                                    onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
+                                                    placeholder="0"
+                                                    className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-purple-400/40 text-right"
+                                                    style={{ borderColor: sessionNycQty > 0 ? "oklch(0.55 0.18 300)" : "var(--border)" }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                  />
+                                                </div>
                                               </>
                                             ) : (
                                               <div className="flex flex-col gap-0.5">
@@ -1235,6 +1253,7 @@ export default function StylesTab() {
                                                   <>
                                                     <span className="text-xs font-mono" style={{ color: "oklch(0.50 0.14 55)" }}>AU: {allTotalAu}</span>
                                                     <span className="text-xs font-mono" style={{ color: "oklch(0.45 0.14 240)" }}>USA: {allTotalUsa}</span>
+                                                    {allTotalNyc > 0 && <span className="text-xs font-mono" style={{ color: "oklch(0.45 0.16 300)" }}>NYC: {allTotalNyc}</span>}
                                                   </>
                                                 ) : (
                                                   <span className="text-xs text-muted-foreground">—</span>

@@ -176,13 +176,13 @@ export default function BuySessionsPanel() {
 
     type RowData = {
       category: string; last: string; size11: string;
-      style: string; colourDesc: string; auQty: number; usaQty: number;
+      style: string; colourDesc: string; auQty: number; usaQty: number; nycQty: number;
     };
 
-    const allItems = items as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number }>;
+    const allItems = items as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number; nycQty?: number }>;
 
     const rows: RowData[] = allItems
-      .filter((item) => ((item.auQty ?? 0) + (item.usaQty ?? 0)) > 0 && !cancelledStyleSet.has(item.style))
+      .filter((item) => ((item.auQty ?? 0) + (item.usaQty ?? 0) + (item.nycQty ?? 0)) > 0 && !cancelledStyleSet.has(item.style))
       .map((item) => {
         const styleInfo = styleInfoMap[item.style];
         const colourDesc = displayColourLeather(item.colour, item.leather, item.style);
@@ -194,6 +194,7 @@ export default function BuySessionsPanel() {
           colourDesc,
           auQty: item.auQty ?? 0,
           usaQty: item.usaQty ?? 0,
+          nycQty: item.nycQty ?? 0,
         };
       });
 
@@ -211,26 +212,27 @@ export default function BuySessionsPanel() {
       return a.colourDesc.localeCompare(b.colourDesc);
     });
 
-    // Determine if any USA quantities exist — add USA column only if needed
+    // Determine which optional market columns to include
     const hasUsa = rows.some((r) => r.usaQty > 0);
+    const hasNyc = rows.some((r) => r.nycQty > 0);
 
     // Filename uses session name
     const fileName = `${sessionName} BUY.xlsx`;
 
     // ── Layout ────────────────────────────────────────────────────────────────────
-    // Columns: CATEGORY | LAST | SIZE 11 | STYLE | COLOUR | AU QTY [| USA QTY]
+    // Columns: CATEGORY | LAST | SIZE 11 | STYLE | COLOUR | AU QTY [| USA QTY] [| NYC QTY]
     // Row 1: Title merged across all columns
     // Row 2: Empty spacer
     // Row 3: Bold header row
     // Rows 4+: Data rows (plain white)
     // Last row: TOTAL
 
-    const COLS = hasUsa ? 7 : 6;
+    const COLS = 6 + (hasUsa ? 1 : 0) + (hasNyc ? 1 : 0);
     const sheetRows: (string | number)[][] = [];
     const rowTypes: string[] = [];
 
     const emptyRow = Array(COLS).fill("") as string[];
-    const titleText = "TONY BIANCO \u2014 SUMMER 26 BUY SHEET";
+    const titleText = "TONY BIANCO — SUMMER 26 BUY SHEET";
 
     // Title
     sheetRows.push([titleText, ...Array(COLS - 1).fill("") as string[]]);
@@ -241,6 +243,7 @@ export default function BuySessionsPanel() {
     // Header
     const headerRow = ["CATEGORY", "LAST", "SIZE 11", "STYLE", "COLOUR", "AU QTY"];
     if (hasUsa) headerRow.push("USA QTY");
+    if (hasNyc) headerRow.push("NYC QTY");
     sheetRows.push(headerRow);
     rowTypes.push("header");
 
@@ -248,6 +251,7 @@ export default function BuySessionsPanel() {
     for (const r of rows) {
       const dataRow: (string | number)[] = [r.category, r.last, r.size11, r.style, r.colourDesc, r.auQty];
       if (hasUsa) dataRow.push(r.usaQty > 0 ? r.usaQty : "");
+      if (hasNyc) dataRow.push(r.nycQty > 0 ? r.nycQty : "");
       sheetRows.push(dataRow);
       rowTypes.push("data");
     }
@@ -255,22 +259,26 @@ export default function BuySessionsPanel() {
     // Total row
     const totalAu = rows.reduce((s, r) => s + r.auQty, 0);
     const totalUsa = rows.reduce((s, r) => s + r.usaQty, 0);
+    const totalNyc = rows.reduce((s, r) => s + r.nycQty, 0);
     const totalRow: (string | number)[] = ["TOTAL", "", "", "", " ", totalAu];
     if (hasUsa) totalRow.push(totalUsa);
+    if (hasNyc) totalRow.push(totalNyc);
     sheetRows.push(totalRow);
     rowTypes.push("total");
 
     const ws = XLSX.utils.aoa_to_sheet(sheetRows);
 
     // Column widths
+    const qtyColWidths: { wch: number }[] = [{ wch: 10.875 }]; // AU QTY always
+    if (hasUsa) qtyColWidths.push({ wch: 10.875 }); // USA QTY
+    if (hasNyc) qtyColWidths.push({ wch: 10.875 }); // NYC QTY
     ws["!cols"] = [
       { wch: 20.875 }, // CATEGORY
       { wch: 14.875 }, // LAST
       { wch: 9.875  }, // SIZE 11
       { wch: 12.875 }, // STYLE
       { wch: 23.875 }, // COLOUR
-      { wch: 10.875 }, // AU QTY
-      ...(hasUsa ? [{ wch: 10.875 }] : []), // USA QTY (conditional)
+      ...qtyColWidths,
     ];
 
     // Row heights
@@ -289,7 +297,7 @@ export default function BuySessionsPanel() {
     const darkFill = { patternType: "solid", fgColor: { rgb: "1A1A1A" } };
     const whiteFont = { name: "Calibri", sz: 12, bold: true, color: { rgb: "FFFFFF" } };
     const plainFont = { name: "Calibri", sz: 12, bold: false };
-    const qtyColIndices = hasUsa ? [5, 6] : [5];
+    const qtyColIndices = [5, ...(hasUsa ? [6] : []), ...(hasNyc ? [hasUsa ? 7 : 6] : [])];
 
     // Apply styles
     for (let R = 0; R < sheetRows.length; R++) {
@@ -433,7 +441,7 @@ export default function BuySessionsPanel() {
   }
 
   const selectedSession = allSessions.find((s) => s.id === selectedSessionId);
-  const selectedTotal = (sessionItems as Array<{ auQty?: number; usaQty?: number; qty?: number }>).reduce((sum, item) => sum + (item.auQty ?? 0) + (item.usaQty ?? 0), 0);
+  const selectedTotal = (sessionItems as Array<{ auQty?: number; usaQty?: number; nycQty?: number; qty?: number }>).reduce((sum, item) => sum + (item.auQty ?? 0) + (item.usaQty ?? 0) + (item.nycQty ?? 0), 0);
 
   return (
     <div className="space-y-6">
@@ -632,7 +640,7 @@ export default function BuySessionsPanel() {
                   <div className="mt-4 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        SKUs in this session ({(sessionItems as Array<{ auQty?: number; usaQty?: number }>).filter((i) => ((i.auQty ?? 0) + (i.usaQty ?? 0)) > 0).length} with qty)
+                        SKUs in this session ({(sessionItems as Array<{ auQty?: number; usaQty?: number; nycQty?: number }>).filter((i) => ((i.auQty ?? 0) + (i.usaQty ?? 0) + (i.nycQty ?? 0)) > 0).length} with qty)
                       </span>
                       <span className="text-sm font-bold" style={{ color: "oklch(0.50 0.14 55)" }}>
                         {selectedTotal} total pairs
@@ -647,11 +655,12 @@ export default function BuySessionsPanel() {
                             <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wide">Leather</th>
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">AU</th>
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">USA</th>
+                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">NYC</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {(sessionItems as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number }>)
-                            .filter((i) => ((i.auQty ?? 0) + (i.usaQty ?? 0)) > 0)
+                          {(sessionItems as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number; nycQty?: number }>)
+                            .filter((i) => ((i.auQty ?? 0) + (i.usaQty ?? 0) + (i.nycQty ?? 0)) > 0)
                             .sort((a, b) => a.style.localeCompare(b.style))
                             .map((item) => {
                               return (
@@ -662,6 +671,7 @@ export default function BuySessionsPanel() {
                                   <td className="px-3 py-2 text-muted-foreground">{displayLeather(item.leather || "", item.style) || "—"}</td>
                                   <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{item.auQty ?? 0}</td>
                                   <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.15 240)" }}>{item.usaQty ?? 0}</td>
+                                  <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.55 0.18 300)" }}>{item.nycQty ?? 0}</td>
                                 </tr>
                               );
                             })}
@@ -674,6 +684,9 @@ export default function BuySessionsPanel() {
                             </td>
                             <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.15 240)" }}>
                               {(sessionItems as Array<{ usaQty?: number }>).reduce((s, i) => s + (i.usaQty ?? 0), 0)}
+                            </td>
+                            <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.55 0.18 300)" }}>
+                              {(sessionItems as Array<{ nycQty?: number }>).reduce((s, i) => s + (i.nycQty ?? 0), 0)}
                             </td>
                           </tr>
                         </tfoot>

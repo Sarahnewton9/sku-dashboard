@@ -298,18 +298,20 @@ export async function getBuySessionItems(sessionId: number) {
     .where(eq(buySessionItems.sessionId, sessionId));
 }
 
-export async function getSessionTotals(): Promise<Record<number, { au: number; usa: number; total: number }>> {
+export async function getSessionTotals(): Promise<Record<number, { au: number; usa: number; nyc: number; total: number }>> {
   const db = await getDb();
   if (!db) return {};
   const rows = await db.select().from(buySessionItems);
-  const totals: Record<number, { au: number; usa: number; total: number }> = {};
+  const totals: Record<number, { au: number; usa: number; nyc: number; total: number }> = {};
   for (const row of rows) {
     const au = row.auQty ?? 0;
     const usa = row.usaQty ?? 0;
-    if (!totals[row.sessionId]) totals[row.sessionId] = { au: 0, usa: 0, total: 0 };
+    const nyc = row.nycQty ?? 0;
+    if (!totals[row.sessionId]) totals[row.sessionId] = { au: 0, usa: 0, nyc: 0, total: 0 };
     totals[row.sessionId].au += au;
     totals[row.sessionId].usa += usa;
-    totals[row.sessionId].total += au + usa;
+    totals[row.sessionId].nyc += nyc;
+    totals[row.sessionId].total += au + usa + nyc;
   }
   return totals;
 }
@@ -322,8 +324,9 @@ export async function getSessionTotals(): Promise<Record<number, { au: number; u
 export async function getAllSessionQtys(): Promise<Record<string, {
   totalAu: number;
   totalUsa: number;
+  totalNyc: number;
   total: number;
-  sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number }>;
+  sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number }>;
 }>> {
   const db = await getDb();
   if (!db) return {};
@@ -333,24 +336,26 @@ export async function getAllSessionQtys(): Promise<Record<string, {
   ]);
   const sessionMap: Record<number, string> = {};
   for (const s of sessions) sessionMap[s.id] = s.name;
-  const result: Record<string, { totalAu: number; totalUsa: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number }> }> = {};
+  const result: Record<string, { totalAu: number; totalUsa: number; totalNyc: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number }> }> = {};
   for (const row of items) {
     const au = row.auQty ?? 0;
     const usa = row.usaQty ?? 0;
-    if (au === 0 && usa === 0) continue;
+    const nyc = row.nycQty ?? 0;
+    if (au === 0 && usa === 0 && nyc === 0) continue;
     const key = `${row.style}|${row.colour}|${row.leather}`;
-    if (!result[key]) result[key] = { totalAu: 0, totalUsa: 0, total: 0, sessions: [] };
+    if (!result[key]) result[key] = { totalAu: 0, totalUsa: 0, totalNyc: 0, total: 0, sessions: [] };
     result[key].totalAu += au;
     result[key].totalUsa += usa;
-    result[key].total += au + usa;
-    result[key].sessions.push({ sessionId: row.sessionId, sessionName: sessionMap[row.sessionId] ?? `Session ${row.sessionId}`, au, usa });
+    result[key].totalNyc += nyc;
+    result[key].total += au + usa + nyc;
+    result[key].sessions.push({ sessionId: row.sessionId, sessionName: sessionMap[row.sessionId] ?? `Session ${row.sessionId}`, au, usa, nyc });
   }
   return result;
 }
 
 export async function upsertBuySessionItem(
   sessionId: number, style: string, colour: string, leather: string,
-  auQty: number, usaQty: number
+  auQty: number, usaQty: number, nycQty: number = 0
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -362,13 +367,13 @@ export async function upsertBuySessionItem(
       eq(buySessionItems.leather, leather)
     ))
     .limit(1);
-  const qty = auQty + usaQty; // keep legacy qty in sync
+  const qty = auQty + usaQty + nycQty; // keep legacy qty in sync
   if (existing.length > 0) {
     await db.update(buySessionItems)
-      .set({ auQty, usaQty, qty })
+      .set({ auQty, usaQty, nycQty, qty })
       .where(eq(buySessionItems.id, existing[0].id));
   } else {
-    await db.insert(buySessionItems).values({ sessionId, style, colour, leather, auQty, usaQty, qty });
+    await db.insert(buySessionItems).values({ sessionId, style, colour, leather, auQty, usaQty, nycQty, qty });
   }
 }
 

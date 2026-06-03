@@ -1,0 +1,1 @@
+ALTER TABLE `buy_session_items` ADD `nycQty` int DEFAULT 0 NOT NULL;
