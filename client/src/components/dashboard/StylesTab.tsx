@@ -510,12 +510,28 @@ export default function StylesTab() {
   const stylesWithCategories = useMemo(() => {
     return mergedStyles
       .filter((s) => !cancelledSet.has(s.style))
-      .map((s) => ({
-        ...s,
-        category: getCategory(s.style, s.category),
-        trendFlag: getTrendFlag(s.style),
-      }));
-  }, [mergedStyles, cancelledSet, getCategory, getTrendFlag]);
+      .map((s) => {
+        // Recompute leathers and colours excluding cancelled SKUs so the header reflects live state
+        const activeSkus = (mergedRawSkus as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)
+          .filter((r) => r.style === s.style && !cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`));
+        const activeLeathers = Array.from(new Set(activeSkus.map((r) => r.leather).filter(Boolean))) as string[];
+        const activeColours = Array.from(new Set(activeSkus.map((r) => r.colour).filter(Boolean))) as string[];
+        const activeTotal = activeSkus.length;
+        const activeNew = activeSkus.filter((r) => r.is_new).length;
+        return {
+          ...s,
+          leathers: activeLeathers.length > 0 ? activeLeathers : (s.leathers as string[]),
+          colours: activeColours.length > 0 ? activeColours : (s.colours as string[]),
+          totalSKUs: activeTotal,
+          newSKUs: activeNew,
+          existingSKUs: activeTotal - activeNew,
+          hasNew: activeNew > 0,
+          isAllNew: activeNew === activeTotal && activeTotal > 0,
+          category: getCategory(s.style, s.category),
+          trendFlag: getTrendFlag(s.style),
+        };
+      });
+  }, [mergedStyles, mergedRawSkus, cancelledSet, cancelledSkuSet, getCategory, getTrendFlag]);
 
   // Build category list dynamically from resolved categories (case-insensitive, sorted)
   const availableCategories = useMemo(() => {
