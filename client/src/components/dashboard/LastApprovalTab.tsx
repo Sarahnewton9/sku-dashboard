@@ -315,7 +315,13 @@ export default function LastApprovalTab() {
   // Custom lasts from DB
   const { data: customLastsFromDb = [], refetch: refetchCustomLasts } = trpc.customLast.getAll.useQuery();
   const customLasts = customLastsFromDb;
-  const addCustomLastMutation = trpc.customLast.add.useMutation({ onSuccess: () => refetchCustomLasts() });
+  const addCustomLastMutation = trpc.customLast.add.useMutation({
+    onSuccess: (_, variables) => {
+      // Remove from local deleted set so it reappears immediately
+      setLocalDeletedLasts((prev) => { const next = new Set(prev); next.delete(variables.lastName.toUpperCase().trim()); return next; });
+      refetchCustomLasts();
+    }
+  });
   const deleteCustomLastMutation = trpc.customLast.delete.useMutation({ onSuccess: () => refetchCustomLasts() });
   // Add Last dialog state
   const [addLastDialogOpen, setAddLastDialogOpen] = useState(false);

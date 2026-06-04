@@ -1078,14 +1078,17 @@ export default function StylesTab() {
                                             placeholder="Colour (e.g. DOVE)"
                                             value={draft.colour}
                                             onChange={(e) => setAddColourDraft((prev) => ({ ...prev, [style.style]: { ...prev[style.style], colour: e.target.value.toUpperCase() } }))}
+                                            onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter" && draft.colour.trim()) addCustomSkuMutation.mutate({ style: style.style, colour: draft.colour.trim(), leather: draft.leather.trim() }); if (e.key === "Escape") setAddColourDraft((prev) => { const n = { ...prev }; delete n[style.style]; return n; }); }}
                                             className="flex-1 px-2 py-1 rounded border text-xs bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
                                             onClick={(e) => e.stopPropagation()}
+                                            autoFocus
                                           />
                                           <input
                                             type="text"
                                             placeholder="Leather (e.g. NAPPA)"
                                             value={draft.leather}
                                             onChange={(e) => setAddColourDraft((prev) => ({ ...prev, [style.style]: { ...prev[style.style], leather: e.target.value.toUpperCase() } }))}
+                                            onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter" && draft.colour.trim()) addCustomSkuMutation.mutate({ style: style.style, colour: draft.colour.trim(), leather: draft.leather.trim() }); if (e.key === "Escape") setAddColourDraft((prev) => { const n = { ...prev }; delete n[style.style]; return n; }); }}
                                             className="flex-1 px-2 py-1 rounded border text-xs bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
                                             onClick={(e) => e.stopPropagation()}
                                           />

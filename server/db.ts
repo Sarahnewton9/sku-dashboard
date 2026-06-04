@@ -1130,7 +1130,11 @@ export async function getCustomLasts(): Promise<string[]> {
 export async function addCustomLast(lastName: string): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(customLasts).values({ lastName: lastName.toUpperCase().trim() }).onDuplicateKeyUpdate({ set: { lastName: lastName.toUpperCase().trim() } });
+  const name = lastName.toUpperCase().trim();
+  // Insert (or upsert) the custom last
+  await db.insert(customLasts).values({ lastName: name }).onDuplicateKeyUpdate({ set: { lastName: name } });
+  // Also remove from deleted_lasts so re-adding a previously deleted last works
+  await db.delete(deletedLasts).where(eq(deletedLasts.lastName, name));
 }
 
 export async function deleteCustomLast(lastName: string): Promise<void> {
