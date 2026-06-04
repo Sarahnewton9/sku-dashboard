@@ -152,14 +152,21 @@ export default function StylesTab() {
     const file = e.target.files?.[0];
     if (!file || !imageUploadTarget) return;
     e.target.value = "";
-    setUploadingImage(imageUploadTarget);
+    uploadImageFile(imageUploadTarget, file);
+  }
+
+  function uploadImageFile(styleName: string, file: File) {
+    setUploadingImage(styleName);
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = (reader.result as string).split(",")[1];
-      uploadImageMutation.mutate({ style: imageUploadTarget, imageBase64: base64, mimeType: file.type });
+      uploadImageMutation.mutate({ style: styleName, imageBase64: base64, mimeType: file.type });
     };
     reader.readAsDataURL(file);
   }
+
+  // Track which style thumbnail is being dragged over
+  const [imageDragOver, setImageDragOver] = useState<string | null>(null);
 
   // Track which styles have DB image overrides (to show revert option)
   const { data: imageOverridesList = [] } = trpc.styleImage.getAll.useQuery();
@@ -864,16 +871,26 @@ export default function StylesTab() {
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-3">
                                 <div
-                                  className="relative w-16 h-10 rounded flex-shrink-0 overflow-hidden group/img cursor-pointer"
+                                  className={`relative w-16 h-10 rounded flex-shrink-0 overflow-hidden group/img cursor-pointer transition-all ${
+                                    imageDragOver === style.style ? "ring-2 ring-purple-400 ring-offset-1 scale-105" : ""
+                                  }`}
                                   style={{ background: "var(--muted)" }}
                                   onClick={(e) => handleImageUploadClick(style.style, e)}
-                                  title={imageOverridesSet.has(style.style.toUpperCase()) ? "Click to replace image (right-click to revert)" : "Click to upload image"}
+                                  title="Click or drag & drop to replace image (right-click to revert)"
                                   onContextMenu={(e) => {
-                                    if (!imageOverridesSet.has(style.style.toUpperCase())) return;
                                     e.preventDefault();
                                     e.stopPropagation();
                                     setImageUploadTarget(style.style);
                                     revertImageMutation.mutate({ style: style.style });
+                                  }}
+                                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setImageDragOver(style.style); }}
+                                  onDragLeave={(e) => { e.stopPropagation(); setImageDragOver(null); }}
+                                  onDrop={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setImageDragOver(null);
+                                    const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith("image/"));
+                                    if (file) uploadImageFile(style.style, file);
                                   }}
                                 >
                                   {style.imageUrl ? (

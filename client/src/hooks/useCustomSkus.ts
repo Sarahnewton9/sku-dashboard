@@ -47,6 +47,19 @@ export function useCustomSkus() {
     staleTime: 30_000,
   });
 
+  // Fetch website images scraped from tonybianco.com.au (used as fallback when no manual override)
+  const { data: websiteImages = [] } = trpc.style.getImages.useQuery(undefined, {
+    staleTime: 120_000,
+  });
+
+  const websiteImageMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const o of websiteImages as Array<{ style: string; websiteImageUrl: string | null }>) {
+      if (o.websiteImageUrl) map[o.style.toUpperCase()] = o.websiteImageUrl;
+    }
+    return map;
+  }, [websiteImages]);
+
   const imageOverrideMap = useMemo(() => {
     const map: Record<string, string> = {};
     for (const o of imageOverrides as Array<{ style: string; imageUrl: string }>) {
@@ -123,7 +136,8 @@ export function useCustomSkus() {
     // Static styles enriched with custom SKUs
     const staticStyles = skuData.styles.map((s) => {
       const extra = extras[s.style] ?? [];
-      const overrideUrl = imageOverrideMap[s.style.toUpperCase()];
+      // Priority: manual upload override > Tony Bianco website image > static CDN URL
+      const overrideUrl = imageOverrideMap[s.style.toUpperCase()] ?? websiteImageMap[s.style.toUpperCase()];
 
       // Re-compute new SKU counts for static SKUs of this style using overrides
       const staticNewCount = (skuData.rawSkus as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)
@@ -155,7 +169,8 @@ export function useCustomSkus() {
     const syntheticStyles = (customStyleRows as Array<{ id: number; style: string; lastName: string; category: string | null; createdAt: Date }>)
       .filter((cs) => !staticStyleNames.has(cs.style.toUpperCase()))
       .map((cs) => {
-        const overrideUrl = imageOverrideMap[cs.style.toUpperCase()];
+        // Priority: manual upload override > Tony Bianco website image
+        const overrideUrl = imageOverrideMap[cs.style.toUpperCase()] ?? websiteImageMap[cs.style.toUpperCase()];
         // Custom SKUs for this style
         const extra = extras[cs.style] ?? [];
         const customNewCount = extra.filter((e) => e.isNew).length;
@@ -177,7 +192,7 @@ export function useCustomSkus() {
       });
 
     return [...staticStyles, ...syntheticStyles];
-  }, [customSkus, customStyleRows, imageOverrideMap, skuNewOverrideMap]);
+  }, [customSkus, customStyleRows, imageOverrideMap, websiteImageMap, skuNewOverrideMap]);
 
   return {
     customSkus: customSkus as CustomSkuRow[],
