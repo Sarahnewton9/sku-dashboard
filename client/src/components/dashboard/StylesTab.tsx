@@ -1625,6 +1625,7 @@ export default function StylesTab() {
                 type="text"
                 value={newStyleName}
                 onChange={(e) => setNewStyleName(e.target.value.toUpperCase())}
+                onKeyDown={(e) => { if (e.key === "Enter" && newStyleName.trim() && newStyleLast) handleAddStyleSubmit(); if (e.key === "Escape") setShowAddStyleModal(false); }}
                 placeholder="e.g. CORFU"
                 className="px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-400/40"
                 style={{ borderColor: "var(--border)" }}

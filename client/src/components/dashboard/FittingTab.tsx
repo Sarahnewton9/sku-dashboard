@@ -208,6 +208,7 @@ function SessionCard({
             <FitModelInput
               value={localModel}
               onChange={setLocalModel}
+              onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
               knownModels={knownModels}
               placeholder="Fit model name"
               className="w-40"
@@ -307,6 +308,7 @@ function SessionCard({
                 type="text"
                 value={localSampleSize}
                 onChange={(e) => setLocalSampleSize(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
                 placeholder="e.g. 37"
                 className="border border-border rounded px-2 py-0.5 text-xs bg-background w-20"
               />
@@ -325,7 +327,8 @@ function SessionCard({
           <Textarea
             value={localNotes}
             onChange={(e) => setLocalNotes(e.target.value)}
-            placeholder="Session notes (fit observations, adjustments needed...)"
+            onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSave(); } }}
+            placeholder="Session notes — Ctrl+Enter to save"
             className="text-sm min-h-[60px] resize-none"
           />
         </div>
@@ -660,6 +663,7 @@ function StyleFitRow({
 function FitModelInput({
   value,
   onChange,
+  onKeyDown,
   knownModels,
   placeholder = "e.g. SARAH",
   className = "",
@@ -667,6 +671,7 @@ function FitModelInput({
 }: {
   value: string;
   onChange: (v: string) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   knownModels: string[];
   placeholder?: string;
   className?: string;
@@ -697,6 +702,7 @@ function FitModelInput({
         value={value}
         onChange={(e) => { onChange(e.target.value.toUpperCase()); setOpen(true); }}
         onFocus={() => setOpen(true)}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
         autoFocus={autoFocus}
         className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
