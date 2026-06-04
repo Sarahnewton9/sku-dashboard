@@ -1687,7 +1687,7 @@ export default function StylesTab() {
               >
                 {newStyleImagePreview ? (
                   <>
-                    <img src={newStyleImagePreview} alt="Preview" className="h-20 w-20 object-cover rounded-lg" />
+                    <img src={newStyleImagePreview} alt="Preview" className="w-full max-h-48 object-contain rounded-lg" style={{ display: 'block' }} />
                     <span className="text-xs text-muted-foreground">{newStyleImageFile?.name}</span>
                     <button
                       className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-red-100 transition-colors"
