@@ -1607,7 +1607,7 @@ export function FittingTab() {
   const [exportOpen, setExportOpen] = useState(false);
   const [newSessionStyle, setNewSessionStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [approvalFilter, setApprovalFilter] = useState<"all" | "waiting_revised" | "waiting_to_fit" | "approved">("waiting_to_fit");
+  const [approvalFilter, setApprovalFilter] = useState<"all" | "waiting_revised" | "waiting_to_fit" | "approved">("all");
   // Track the most recently created session ID so it opens in edit mode automatically
   const [newlyCreatedSessionId, setNewlyCreatedSessionId] = useState<number | null>(null);
   // Remember the last used fit model across sessions (persisted in localStorage)
