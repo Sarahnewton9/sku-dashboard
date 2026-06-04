@@ -92,7 +92,7 @@ function Lightbox({ src, onClose, sampleDate, sampleType }: { src: string; onClo
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  const sampleTypeColor = sampleType === "Proto" ? "text-orange-300" : sampleType === "Revised" ? "text-blue-300" : sampleType === "Salesman Sample" ? "text-green-300" : sampleType === "Fitting Sample" ? "text-amber-300" : "text-slate-300";
+  const sampleTypeColor = sampleType === "Proto" ? "text-orange-300" : sampleType === "Revised Pattern" ? "text-blue-300" : sampleType === "Revised Last" ? "text-indigo-300" : sampleType === "Salesman Sample" ? "text-green-300" : sampleType === "Fitting Sample" ? "text-amber-300" : "text-slate-300";
 
   return createPortal(
     <div
@@ -279,7 +279,8 @@ function SessionCard({
               <option value="Original">Original</option>
               <option value="Proto">Proto</option>
               <option value="Fitting Sample">Fitting Sample</option>
-              <option value="Revised">Revised</option>
+              <option value="Revised Pattern">Revised Pattern</option>
+              <option value="Revised Last">Revised Last</option>
               <option value="Salesman Sample">Salesman Sample</option>
             </select>
           ) : (
@@ -288,7 +289,8 @@ function SessionCard({
                 <span className={`px-1.5 py-0.5 rounded-full font-medium ${
                   session.sampleType === "Original" ? "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400" :
                   session.sampleType === "Proto" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
-                  session.sampleType === "Revised" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                  session.sampleType === "Revised Pattern" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                  session.sampleType === "Revised Last" ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" :
                   session.sampleType === "Fitting Sample" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
                   "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                 }`}>{session.sampleType}</span>
@@ -364,7 +366,8 @@ function SessionCard({
                       <span className={`text-[7px] font-bold leading-tight ${
                         session.sampleType === "Original" ? "text-slate-300" :
                         session.sampleType === "Proto" ? "text-orange-300" :
-                        session.sampleType === "Revised" ? "text-blue-300" :
+                        session.sampleType === "Revised Pattern" ? "text-blue-300" :
+                        session.sampleType === "Revised Last" ? "text-indigo-300" :
                         session.sampleType === "Fitting Sample" ? "text-amber-300" :
                         "text-green-300"
                       }`}>{session.sampleType}</span>
@@ -877,7 +880,8 @@ function ExportDialog({
       const SAMPLE_COLOURS: Record<string, { bg: string; fg: string }> = {
         "Original":        { bg: "EFF6FF", fg: "1D4ED8" },
         "Proto":           { bg: "FFF7ED", fg: "C2410C" },
-        "Revised":         { bg: "DBEAFE", fg: "1E40AF" },
+        "Revised Pattern":  { bg: "DBEAFE", fg: "1E40AF" },
+        "Revised Last":    { bg: "E0E7FF", fg: "3730A3" },
         "Salesman Sample": { bg: "F0FDF4", fg: "15803D" },
       };
 
@@ -1497,7 +1501,8 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
                                                       <span className={`text-[9px] font-semibold leading-tight px-1 rounded ${
                                         (sess as any).sampleType === "Original" ? "bg-slate-500 text-white" :
                                         (sess as any).sampleType === "Proto" ? "bg-orange-500 text-white" :
-                                        (sess as any).sampleType === "Revised" ? "bg-blue-500 text-white" :
+                                        (sess as any).sampleType === "Revised Pattern" ? "bg-blue-500 text-white" :
+                                        (sess as any).sampleType === "Revised Last" ? "bg-indigo-500 text-white" :
                                         "bg-green-500 text-white"
                                                       }`}>{(sess as any).sampleType}</span>
                                                     )}
