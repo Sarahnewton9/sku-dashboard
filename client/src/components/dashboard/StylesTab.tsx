@@ -8,6 +8,7 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { skuData } from "@/lib/skuData";
+import { ALL_LASTS } from "@shared/const";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
@@ -207,10 +208,14 @@ export default function StylesTab() {
   });
   // Custom lasts from DB
   const { data: customLastsData = [] } = trpc.customLast.getAll.useQuery();
-  // All unique lasts from skuData + custom lasts (for the Add Style dropdown)
+  // All unique lasts: ALL_LASTS (shared canonical list) + skuData lasts + custom DB lasts — deduplicated
   const allKnownLasts = useMemo(() => {
     const s = new Set<string>();
+    // Always include the canonical list (same as LastApprovalTab)
+    for (const l of ALL_LASTS) s.add(l);
+    // Also include any lasts that appear in skuData but aren't in ALL_LASTS
     for (const style of skuData.styles) { if (style.last) s.add(style.last); }
+    // And any custom lasts added via the Last Approval tab
     for (const l of customLastsData) s.add(l);
     return Array.from(s).sort();
   }, [customLastsData]);

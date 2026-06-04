@@ -6,28 +6,7 @@ import { CheckCircle2, Clock, ChevronDown, ChevronRight, Upload, X, AlertTriangl
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
-
-// Brand new lasts this season — manually confirmed list
-const ALL_LASTS = [
-  "BILLIE",
-  "DAZIE",
-  "EMBER",
-  "ENVY",
-  "FINCH",
-  "HARLEY",
-  "JAYDE",
-  "LUCY",
-  "MATISSE",
-  "MISTY",
-  "PIXIE",
-  "ROXIE",
-  "SALLY",
-  "SIA",
-  "TIANA",
-  "TILDA",
-  "VIVA",
-  "OASIS",
-];
+import { ALL_LASTS } from "@shared/const";
 
 const ALL_LASTS_UPPER = new Set(ALL_LASTS.map((l) => l.toUpperCase()));
 
