@@ -511,3 +511,15 @@ export const specHiddenColumns = mysqlTable("spec_hidden_columns", {
 }));
 export type SpecHiddenColumn = typeof specHiddenColumns.$inferSelect;
 export type InsertSpecHiddenColumn = typeof specHiddenColumns.$inferInsert;
+
+/**
+ * Custom lasts — lasts added by the user that are not in the static ALL_LASTS list.
+ * These appear in the Last Approval tab alongside the hardcoded lasts.
+ */
+export const customLasts = mysqlTable("custom_lasts", {
+  id: int("id").autoincrement().primaryKey(),
+  lastName: varchar("last_name", { length: 128 }).notNull().unique(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CustomLast = typeof customLasts.$inferSelect;
+export type InsertCustomLast = typeof customLasts.$inferInsert;

@@ -312,7 +312,14 @@ export default function LastApprovalTab() {
   const [notesDrafts, setNotesDrafts] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState<"all" | "approved" | "waiting_revised">("all");
   const [deletingLast, setDeletingLast] = useState<string | null>(null);
-  const [customLasts, setCustomLasts] = useState<string[]>([]);
+  // Custom lasts from DB
+  const { data: customLastsFromDb = [], refetch: refetchCustomLasts } = trpc.customLast.getAll.useQuery();
+  const customLasts = customLastsFromDb;
+  const addCustomLastMutation = trpc.customLast.add.useMutation({ onSuccess: () => refetchCustomLasts() });
+  const deleteCustomLastMutation = trpc.customLast.delete.useMutation({ onSuccess: () => refetchCustomLasts() });
+  // Add Last dialog state
+  const [addLastDialogOpen, setAddLastDialogOpen] = useState(false);
+  const [newLastName, setNewLastName] = useState("");
   // Track which last has the "Add Style" form open
   const [addingStyleToLast, setAddingStyleToLast] = useState<string | null>(null);
 
@@ -598,7 +605,16 @@ export default function LastApprovalTab() {
         </div>
 
         {/* Import button */}
-        <div className="flex-shrink-0 pt-1">
+        <div className="flex-shrink-0 pt-1 flex flex-col gap-2">
+          {/* Add Last button */}
+          <button
+            onClick={() => { setNewLastName(""); setAddLastDialogOpen(true); }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors hover:bg-muted/50"
+            style={{ borderColor: "oklch(0.72 0.14 250)", background: "oklch(0.97 0.03 250)", color: "oklch(0.40 0.14 250)" }}
+          >
+            <Plus className="w-4 h-4" />
+            Add Last
+          </button>
           <input
             ref={fileInputRef}
             type="file"
@@ -614,11 +630,61 @@ export default function LastApprovalTab() {
             <Upload className="w-4 h-4" />
             Import Notes
           </button>
-          <p className="text-xs text-muted-foreground mt-1.5 max-w-[140px] text-right">
+          <p className="text-xs text-muted-foreground max-w-[140px] text-right">
             Excel with Last + Notes columns
           </p>
         </div>
       </div>
+
+      {/* Add Last dialog */}
+      {addLastDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setAddLastDialogOpen(false)}>
+          <div
+            className="bg-card border border-border rounded-xl p-6 w-full max-w-sm shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-base font-semibold text-foreground mb-1">Add New Last</h3>
+            <p className="text-xs text-muted-foreground mb-4">Enter the last name (e.g. MIAMI). It will appear in the Last Approval tab.</p>
+            <input
+              type="text"
+              value={newLastName}
+              onChange={(e) => setNewLastName(e.target.value.toUpperCase())}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newLastName.trim()) {
+                  addCustomLastMutation.mutate({ lastName: newLastName.trim() });
+                  setAddLastDialogOpen(false);
+                  toast.success(`Last "${newLastName.trim()}" added`);
+                }
+                if (e.key === "Escape") setAddLastDialogOpen(false);
+              }}
+              placeholder="LAST NAME"
+              autoFocus
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground mb-4 uppercase"
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setAddLastDialogOpen(false)}
+                className="px-4 py-2 rounded-lg text-sm border border-border text-muted-foreground hover:bg-muted/50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!newLastName.trim()) return;
+                  addCustomLastMutation.mutate({ lastName: newLastName.trim() });
+                  setAddLastDialogOpen(false);
+                  toast.success(`Last "${newLastName.trim()}" added`);
+                }}
+                disabled={!newLastName.trim() || addCustomLastMutation.isPending}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50"
+                style={{ background: "oklch(0.50 0.14 250)" }}
+              >
+                Add Last
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Import error */}
       {importError && (

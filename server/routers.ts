@@ -39,6 +39,7 @@ import {
   getAllCustomStyles, addCustomStyle, deleteCustomStyle,
   getSpecRowOrder, upsertSpecRowOrder,
   getSpecHiddenColumns, hideSpecColumn, showSpecColumn,
+  getCustomLasts, addCustomLast, deleteCustomLast,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -857,6 +858,25 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await deleteCustomStyle(input.id);
+        return { success: true };
+      }),
+  }),
+
+  customLast: router({
+    getAll: publicProcedure
+      .query(async () => getCustomLasts()),
+
+    add: publicProcedure
+      .input(z.object({ lastName: z.string().min(1).max(128) }))
+      .mutation(async ({ input }) => {
+        await addCustomLast(input.lastName);
+        return { success: true };
+      }),
+
+    delete: publicProcedure
+      .input(z.object({ lastName: z.string() }))
+      .mutation(async ({ input }) => {
+        await deleteCustomLast(input.lastName);
         return { success: true };
       }),
   }),
