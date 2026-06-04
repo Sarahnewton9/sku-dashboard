@@ -205,12 +205,15 @@ export default function StylesTab() {
       toast.error(`Failed to add style: ${err.message}`);
     },
   });
-  // All unique lasts from skuData (for the Add Style dropdown)
+  // Custom lasts from DB
+  const { data: customLastsData = [] } = trpc.customLast.getAll.useQuery();
+  // All unique lasts from skuData + custom lasts (for the Add Style dropdown)
   const allKnownLasts = useMemo(() => {
     const s = new Set<string>();
     for (const style of skuData.styles) { if (style.last) s.add(style.last); }
+    for (const l of customLastsData) s.add(l);
     return Array.from(s).sort();
-  }, []);
+  }, [customLastsData]);
   // Add Style drag-and-drop handlers
   function handleAddStyleDrop(e: React.DragEvent) {
     e.preventDefault();
