@@ -387,7 +387,14 @@ export default function LastApprovalTab() {
   }, [deletedLastsFromDb, localDeletedLasts]);
 
   const visibleLasts = useMemo(() => {
-    return [...ALL_LASTS, ...customLasts].filter((l) => !deletedLastsSet.has(l));
+    // Deduplicate: ALL_LASTS takes precedence; custom lasts only added if not already present
+    const seen = new Set<string>();
+    const merged: string[] = [];
+    for (const l of [...ALL_LASTS, ...customLasts]) {
+      const key = l.toUpperCase();
+      if (!seen.has(key)) { seen.add(key); merged.push(l); }
+    }
+    return merged.filter((l) => !deletedLastsSet.has(l));
   }, [customLasts, deletedLastsSet]);
 
   const filteredLasts = useMemo(() => {
