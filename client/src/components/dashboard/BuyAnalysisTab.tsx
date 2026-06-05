@@ -13,7 +13,7 @@ import { displayColour, displayLeather } from "@/lib/utils";
 
 type SortField = "style" | "colour" | "leather" | "category" | "last" | "au" | "usa" | "nyc" | "total";
 type SortDir = "asc" | "desc";
-type ViewTab = "summary" | "sku-table" | "not-bought";
+type ViewTab = "summary" | "sku-table" | "not-bought" | "pairs-breakdown";
 
 export default function BuyAnalysisTab() {
   const [selectedSessionIds, setSelectedSessionIds] = useState<number[]>([]);
@@ -23,6 +23,7 @@ export default function BuyAnalysisTab() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const [lastFilter, setLastFilter] = useState<string>("All");
+  const [expandedStyles, setExpandedStyles] = useState<Set<string>>(new Set());
 
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
   const { cancelledSet: cancelledStyleSet } = useCancelledStyles();
@@ -177,6 +178,48 @@ export default function BuyAnalysisTab() {
       .map(([combo, v]) => ({ combo, au: v.au, usa: v.usa, nyc: v.nyc, total: v.au + v.usa + v.nyc }))
       .sort((a, b) => b.total - a.total);
   }, [boughtItems, rawSkuMap]);
+
+  // By style with colour breakdown — for Pairs Breakdown tab
+  const byStyleWithColours = useMemo(() => {
+    const styleMap: Record<string, { au: number; usa: number; nyc: number; colours: Record<string, { au: number; usa: number; nyc: number }> }> = {};
+    for (const item of boughtItems) {
+      if (!styleMap[item.style]) styleMap[item.style] = { au: 0, usa: 0, nyc: 0, colours: {} };
+      styleMap[item.style].au += item.auQty;
+      styleMap[item.style].usa += item.usaQty;
+      styleMap[item.style].nyc += item.nycQty;
+      const colKey = displayColour(item.colour, item.leather);
+      if (!styleMap[item.style].colours[colKey]) styleMap[item.style].colours[colKey] = { au: 0, usa: 0, nyc: 0 };
+      styleMap[item.style].colours[colKey].au += item.auQty;
+      styleMap[item.style].colours[colKey].usa += item.usaQty;
+      styleMap[item.style].colours[colKey].nyc += item.nycQty;
+    }
+    return Object.entries(styleMap)
+      .map(([style, v]) => ({
+        style,
+        au: v.au, usa: v.usa, nyc: v.nyc,
+        total: v.au + v.usa + v.nyc,
+        category: styleInfoMap[style]?.category ?? "Unknown",
+        colours: Object.entries(v.colours)
+          .map(([colour, cv]) => ({ colour, au: cv.au, usa: cv.usa, nyc: cv.nyc, total: cv.au + cv.usa + cv.nyc }))
+          .sort((a, b) => b.total - a.total),
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [boughtItems, styleInfoMap]);
+
+  // Top colours overall — across all styles
+  const byColourOverall = useMemo(() => {
+    const map: Record<string, { au: number; usa: number; nyc: number }> = {};
+    for (const item of boughtItems) {
+      const colKey = displayColour(item.colour, item.leather);
+      if (!map[colKey]) map[colKey] = { au: 0, usa: 0, nyc: 0 };
+      map[colKey].au += item.auQty;
+      map[colKey].usa += item.usaQty;
+      map[colKey].nyc += item.nycQty;
+    }
+    return Object.entries(map)
+      .map(([colour, v]) => ({ colour, au: v.au, usa: v.usa, nyc: v.nyc, total: v.au + v.usa + v.nyc }))
+      .sort((a, b) => b.total - a.total);
+  }, [boughtItems]);
 
   const newPairs = useMemo(() =>
     boughtItems.filter((i) => rawSkuMap[`${i.style}|${i.colour}|${i.leather}`]).reduce((s, i) => s + i.auQty + i.usaQty + i.nycQty, 0),
@@ -362,6 +405,7 @@ export default function BuyAnalysisTab() {
       <div className="flex items-center gap-2 flex-wrap">
         {([
           { id: "summary", label: "Summary" },
+          { id: "pairs-breakdown", label: "Pairs Breakdown" },
           { id: "sku-table", label: `SKU Breakdown${boughtItems.length > 0 ? ` (${boughtItems.length})` : ""}` },
           { id: "not-bought", label: `Not Yet Bought (${notBoughtRows.length})` },
         ] as Array<{ id: ViewTab; label: string }>).map((tab) => (
@@ -484,6 +528,121 @@ export default function BuyAnalysisTab() {
                 </div>
               </div>
             </>
+          )}
+        </>
+      )}
+
+      {/* ─── PAIRS BREAKDOWN TAB ─── */}
+      {viewTab === "pairs-breakdown" && (
+        <>
+          {selectedSessionIds.length === 0 ? (
+            <div className="rounded-xl border p-12 text-center" style={{ borderColor: "var(--border)", borderStyle: "dashed" }}>
+              <Package className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-sm font-medium text-foreground">No session selected</p>
+              <p className="text-xs text-muted-foreground mt-1">Select one or more buy sessions above to view the pairs breakdown.</p>
+            </div>
+          ) : boughtItems.length === 0 ? (
+            <div className="rounded-xl border p-12 text-center" style={{ borderColor: "var(--border)", borderStyle: "dashed" }}>
+              <Package className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-sm font-medium text-foreground">No quantities entered yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Enter quantities in the By Style tab to see the pairs breakdown.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Top colours overall */}
+              <div className="rounded-xl border p-5" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                <h3 className="text-sm font-bold text-foreground mb-1">Top Colours — All Styles Combined</h3>
+                <p className="text-xs text-muted-foreground mb-4">Total pairs per colour across every style · Amber = AU · Blue = USA · Purple = NYC</p>
+                <div className="space-y-2">
+                  {byColourOverall.map(({ colour, au, usa, nyc }) => (
+                    <BarRow key={colour} label={colour} au={au} usa={usa} nyc={nyc} max={totalPairs} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Styles ranked by pairs with expandable colour breakdown */}
+              <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                <div className="px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+                  <h3 className="text-sm font-bold text-foreground">Styles Ranked by Pairs — Click to See Colour Breakdown</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Sorted highest to lowest total pairs · click any row to expand colour split</p>
+                </div>
+                {/* Table header */}
+                <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-0 text-xs font-semibold text-muted-foreground uppercase tracking-wide px-5 py-2.5 border-b" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                  <span>Style</span>
+                  <span className="text-right w-20">AU</span>
+                  <span className="text-right w-20">USA</span>
+                  <span className="text-right w-20">NYC</span>
+                  <span className="text-right w-20">Total</span>
+                  <span className="text-right w-16">% of buy</span>
+                </div>
+                <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+                  {byStyleWithColours.map(({ style, au, usa, nyc, total, category, colours }) => {
+                    const isExpanded = expandedStyles.has(style);
+                    const pct = totalPairs > 0 ? ((total / totalPairs) * 100).toFixed(1) : "0.0";
+                    return (
+                      <div key={style}>
+                        {/* Style row */}
+                        <button
+                          className="w-full grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-0 px-5 py-3 text-left hover:bg-muted/40 transition-colors items-center"
+                          onClick={() => setExpandedStyles((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(style)) next.delete(style); else next.add(style);
+                            return next;
+                          })}
+                        >
+                          <div className="flex items-center gap-2">
+                            <ChevronDown
+                              className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 transition-transform"
+                              style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(-90deg)" }}
+                            />
+                            <span className="text-sm font-semibold text-foreground">{style}</span>
+                            <span className="text-xs text-muted-foreground hidden sm:inline">{category}</span>
+                          </div>
+                          <span className="text-sm tabular-nums text-right w-20" style={{ color: "#f59e0b" }}>{au > 0 ? au.toLocaleString() : "—"}</span>
+                          <span className="text-sm tabular-nums text-right w-20" style={{ color: "oklch(0.60 0.14 200)" }}>{usa > 0 ? usa.toLocaleString() : "—"}</span>
+                          <span className="text-sm tabular-nums text-right w-20" style={{ color: "oklch(0.55 0.18 300)" }}>{nyc > 0 ? nyc.toLocaleString() : "—"}</span>
+                          <span className="text-sm tabular-nums font-bold text-right w-20 text-foreground">{total.toLocaleString()}</span>
+                          <span className="text-xs tabular-nums text-right w-16 text-muted-foreground">{pct}%</span>
+                        </button>
+                        {/* Expanded colour rows */}
+                        {isExpanded && (
+                          <div className="border-t" style={{ borderColor: "var(--border)", background: "oklch(0.98 0.01 65 / 0.4)" }}>
+                            {/* Colour sub-header */}
+                            <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-0 px-8 py-1.5 text-xs font-medium text-muted-foreground border-b" style={{ borderColor: "var(--border)" }}>
+                              <span>Colour</span>
+                              <span className="text-right w-20">AU</span>
+                              <span className="text-right w-20">USA</span>
+                              <span className="text-right w-20">NYC</span>
+                              <span className="text-right w-20">Total</span>
+                              <span className="text-right w-16">% of style</span>
+                            </div>
+                            {colours.map(({ colour, au: cAu, usa: cUsa, nyc: cNyc, total: cTotal }) => {
+                              const colPct = total > 0 ? ((cTotal / total) * 100).toFixed(1) : "0.0";
+                              const barWidth = total > 0 ? (cTotal / total) * 100 : 0;
+                              return (
+                                <div key={colour} className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-0 px-8 py-2.5 items-center border-b last:border-0" style={{ borderColor: "var(--border)" }}>
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-sm text-foreground font-medium">{colour}</span>
+                                    <div className="flex-1 h-1.5 rounded-full overflow-hidden max-w-24" style={{ background: "var(--muted)" }}>
+                                      <div className="h-full rounded-full" style={{ width: `${barWidth}%`, background: "oklch(0.55 0.14 55)" }} />
+                                    </div>
+                                  </div>
+                                  <span className="text-sm tabular-nums text-right w-20" style={{ color: "#f59e0b" }}>{cAu > 0 ? cAu.toLocaleString() : "—"}</span>
+                                  <span className="text-sm tabular-nums text-right w-20" style={{ color: "oklch(0.60 0.14 200)" }}>{cUsa > 0 ? cUsa.toLocaleString() : "—"}</span>
+                                  <span className="text-sm tabular-nums text-right w-20" style={{ color: "oklch(0.55 0.18 300)" }}>{cNyc > 0 ? cNyc.toLocaleString() : "—"}</span>
+                                  <span className="text-sm tabular-nums font-semibold text-right w-20 text-foreground">{cTotal.toLocaleString()}</span>
+                                  <span className="text-xs tabular-nums text-right w-16 text-muted-foreground">{colPct}%</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           )}
         </>
       )}
