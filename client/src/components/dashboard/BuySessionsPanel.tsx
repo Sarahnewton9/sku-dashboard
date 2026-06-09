@@ -179,10 +179,16 @@ export default function BuySessionsPanel() {
       style: string; colourDesc: string; auQty: number; usaQty: number; nycQty: number;
     };
 
-    const allItems = items as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number; nycQty?: number }>;
+    const allItems = items as Array<{ style: string; colour: string; leather: string; qty?: number; auQty?: number; usaQty?: number; nycQty?: number }>;
 
     const rows: RowData[] = allItems
-      .filter((item) => ((item.auQty ?? 0) + (item.usaQty ?? 0) + (item.nycQty ?? 0)) > 0 && !cancelledStyleSet.has(item.style))
+      .filter((item) => {
+        // Use qty (legacy) as fallback for auQty so old sessions still export correctly
+        const au = (item.auQty ?? 0) || (item.qty ?? 0);
+        const usa = item.usaQty ?? 0;
+        const nyc = item.nycQty ?? 0;
+        return (au + usa + nyc) > 0 && !cancelledStyleSet.has(item.style);
+      })
       .map((item) => {
         const styleInfo = styleInfoMap[item.style];
         const colourDesc = displayColourLeather(item.colour, item.leather, item.style);
@@ -192,7 +198,7 @@ export default function BuySessionsPanel() {
           size11: styleSize11Map[item.style] ? "Y" : "",
           style: item.style,
           colourDesc,
-          auQty: item.auQty ?? 0,
+          auQty: (item.auQty ?? 0) || (item.qty ?? 0),
           usaQty: item.usaQty ?? 0,
           nycQty: item.nycQty ?? 0,
         };

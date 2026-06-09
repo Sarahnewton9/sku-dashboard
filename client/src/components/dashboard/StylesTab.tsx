@@ -390,7 +390,9 @@ export default function StylesTab() {
     const map: Record<string, { auQty: number; usaQty: number; nycQty: number }> = {};
     for (const item of displayItems) {
       const key = `${item.style}|${item.colour}|${item.leather}` as string;
-      map[key] = { auQty: (item as any).auQty ?? 0, usaQty: (item as any).usaQty ?? 0, nycQty: (item as any).nycQty ?? 0 };
+      // Use legacy qty as fallback for auQty so old sessions display correctly
+      const legacyQty = (item as any).qty ?? 0;
+      map[key] = { auQty: (item as any).auQty || legacyQty, usaQty: (item as any).usaQty ?? 0, nycQty: (item as any).nycQty ?? 0 };
     }
     return map;
   }, [displayItems]);
