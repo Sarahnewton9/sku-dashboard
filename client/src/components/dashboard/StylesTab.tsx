@@ -56,7 +56,7 @@ export default function StylesTab() {
   const utils = trpc.useUtils();
 
   // Heel heights from DB (for Dress Shoe, Dress Sandal, Wedge categories)
-  const { data: heelHeightData = [] } = trpc.heelHeight.getAll.useQuery();
+  const { data: heelHeightData = [] } = trpc.heelHeight.getAll.useQuery(undefined, { staleTime: 300_000 });
   const heelHeightMap = useMemo(() => {
     const map = new Map<string, number>();
     for (const row of heelHeightData as Array<{ lastName: string; heelHeightCm: number }>) {
@@ -81,7 +81,7 @@ export default function StylesTab() {
   });
 
   // Cancelled SKUs
-  const { data: cancelledSkuList = [], refetch: refetchCancelledSkus } = trpc.cancelledSku.list.useQuery();
+  const { data: cancelledSkuList = [], refetch: refetchCancelledSkus } = trpc.cancelledSku.list.useQuery(undefined, { staleTime: 30_000 });
   const [cancelledSkuSectionOpen, setCancelledSkuSectionOpen] = useState(false);
 
   const cancelledSkuSet = useMemo(() => {
@@ -103,12 +103,12 @@ export default function StylesTab() {
   });
 
   // Fetch all SKU meta from DB
-  const { data: skuMetaList = [], refetch: refetchSkuMeta } = trpc.sku.getAll.useQuery();
-  const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery();
+  const { data: skuMetaList = [], refetch: refetchSkuMeta } = trpc.sku.getAll.useQuery(undefined, { staleTime: 30_000 });
+  const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery(undefined, { staleTime: 30_000 });
 
 
   // Fitting images for approved styles
-  const { data: allFitImages = [], refetch: refetchFitImages } = trpc.styleFitting.getAll.useQuery();
+  const { data: allFitImages = [], refetch: refetchFitImages } = trpc.styleFitting.getAll.useQuery(undefined, { staleTime: 60_000 });
 
   // Undo approval mutation
   const undoApprovalMutation = trpc.styleFitting.updateFit.useMutation({
@@ -169,7 +169,7 @@ export default function StylesTab() {
   const [imageDragOver, setImageDragOver] = useState<string | null>(null);
 
   // Track which styles have DB image overrides (to show revert option)
-  const { data: imageOverridesList = [] } = trpc.styleImage.getAll.useQuery();
+  const { data: imageOverridesList = [] } = trpc.styleImage.getAll.useQuery(undefined, { staleTime: 120_000 });
   const imageOverridesSet = useMemo(() => {
     const s = new Set<string>();
     for (const o of imageOverridesList as Array<{ style: string }>) s.add(o.style.toUpperCase());
@@ -214,7 +214,7 @@ export default function StylesTab() {
     },
   });
   // Custom lasts from DB
-  const { data: customLastsData = [] } = trpc.customLast.getAll.useQuery();
+  const { data: customLastsData = [] } = trpc.customLast.getAll.useQuery(undefined, { staleTime: 300_000 });
   // All unique lasts: ALL_LASTS (shared canonical list) + skuData lasts + custom DB lasts — deduplicated
   const allKnownLasts = useMemo(() => {
     const s = new Set<string>();
@@ -282,11 +282,11 @@ export default function StylesTab() {
   });
 
   // All-session combined buy quantities (persistent, always visible)
-  const { data: allSessionQtys = {} } = trpc.buy.getAllSessionQtys.useQuery();
+  const { data: allSessionQtys = {} } = trpc.buy.getAllSessionQtys.useQuery(undefined, { staleTime: 10_000 });
 
   // Buy sessions
-  const { data: allSessions = [], refetch: refetchSessions } = trpc.buy.getSessions.useQuery();
-  const { data: activeSession, refetch: refetchActive } = trpc.buy.getActive.useQuery();
+  const { data: allSessions = [], refetch: refetchSessions } = trpc.buy.getSessions.useQuery(undefined, { staleTime: 30_000 });
+  const { data: activeSession, refetch: refetchActive } = trpc.buy.getActive.useQuery(undefined, { staleTime: 30_000 });
   const { data: sessionItems = [], refetch: refetchItems } = trpc.buy.getItems.useQuery(
     { sessionId: selectedSessionId ?? 0 },
     { enabled: selectedSessionId !== null }
@@ -957,10 +957,10 @@ export default function StylesTab() {
                             <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{style.existingSKUs}</td>
                             <td className="px-4 py-3">
                               <div className="flex flex-wrap gap-1 max-w-48">
-                                {[...new Set(style.leathers)].slice(0, 4).map((l) => (
+                                {style.leathers.slice(0, 4).map((l) => (
                                   <span key={l} className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>{l}</span>
                                 ))}
-                                {[...new Set(style.leathers)].length > 4 && <span className="text-xs text-muted-foreground">+{[...new Set(style.leathers)].length - 4}</span>}
+                                {style.leathers.length > 4 && <span className="text-xs text-muted-foreground">+{style.leathers.length - 4}</span>}
                               </div>
                             </td>
                             {/* Style-level Size 11 — badge only when true, click to toggle */}
@@ -1061,11 +1061,12 @@ export default function StylesTab() {
                                     <div className="mb-3 flex items-start gap-3">
                                       <a href={`https://tonybianco.com.au/search?q=${encodeURIComponent(style.style.toLowerCase())}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
                                         <img
-                                          src={imgUrl}
-                                          alt={style.style}
-                                          className="w-20 h-20 object-contain rounded-lg border bg-white"
-                                          style={{ borderColor: "oklch(0.85 0.04 65)" }}
-                                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          src={imgUrl}
+                          alt={style.style}
+                          className="w-20 h-20 object-contain rounded-lg border bg-white"
+                          style={{ borderColor: "oklch(0.85 0.04 65)" }}
+                          loading="lazy"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                         />
                                       </a>
                                     </div>

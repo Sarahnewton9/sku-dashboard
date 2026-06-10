@@ -1205,7 +1205,7 @@ function ExportDialog({
 
 function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
   const utils = trpc.useUtils();
-  const { data: groups = [], refetch } = trpc.fittingGroup.getAll.useQuery();
+  const { data: groups = [], refetch } = trpc.fittingGroup.getAll.useQuery(undefined, { staleTime: 30_000 });
   const createGroup = trpc.fittingGroup.create.useMutation({ onSuccess: () => refetch() });
   const updateGroup = trpc.fittingGroup.update.useMutation({ onSuccess: () => refetch() });
   const deleteGroup = trpc.fittingGroup.delete.useMutation({ onSuccess: () => refetch() });
@@ -1228,9 +1228,9 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
   const [openStyleKey, setOpenStyleKey] = useState<string | null>(null); // "groupId:style"
   const [groupLightbox, setGroupLightbox] = useState<{ src: string; sampleDate?: string | null; sampleType?: string | null } | null>(null);
 
-  const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
-  const { data: imageOverrideList = [] } = trpc.styleImage.getAll.useQuery();
-  const { data: allSessionsRaw = [] } = trpc.fittingSession.getAll.useQuery();
+  const { data: styleMetaList = [] } = trpc.style.getAll.useQuery(undefined, { staleTime: 30_000 });
+  const { data: imageOverrideList = [] } = trpc.styleImage.getAll.useQuery(undefined, { staleTime: 120_000 });
+  const { data: allSessionsRaw = [] } = trpc.fittingSession.getAll.useQuery(undefined, { staleTime: 15_000 });
 
   const styleMeta = useMemo(() => styleMetaList.reduce<Record<string, any>>((acc, m) => { acc[m.style] = m; return acc; }, {}), [styleMetaList]);
   const imageOverrides = useMemo(() => imageOverrideList.reduce<Record<string, string>>((acc, o) => { acc[o.style] = o.imageUrl; return acc; }, {}), [imageOverrideList]);
@@ -1637,12 +1637,12 @@ export function FittingTab() {
   const { mergedStyles } = useCustomSkus();
 
   // ── Cancelled styles + cancelled SKUs ─────────────────────────────────────
-  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery(undefined, { staleTime: 30_000 });
   const cancelledStyleSet = useMemo(
     () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),
     [cancelledStylesRaw]
   );
-  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery(undefined, { staleTime: 30_000 });
   const cancelledSkuSet = useMemo(
     () => new Set((cancelledSkusRaw as any[]).map((r: any) => `${r.style}|${r.colour}` as string)),
     [cancelledSkusRaw]
@@ -1675,8 +1675,8 @@ export function FittingTab() {
   }, [mergedStyles, cancelledStyleSet]);
 
   // Data queries
-  const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery();
-  const { data: imageOverrideList = [] } = trpc.styleImage.getAll.useQuery();
+  const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery(undefined, { staleTime: 30_000 });
+  const { data: imageOverrideList = [] } = trpc.styleImage.getAll.useQuery(undefined, { staleTime: 120_000 });
 
   const styleMeta = styleMetaList.reduce<Record<string, { fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; sizeRecommendation?: string | null }>>(
     (acc, m) => { acc[m.style] = m; return acc; }, {}
@@ -1687,7 +1687,7 @@ export function FittingTab() {
   );
 
   // ── Bulk session fetch (single query for all styles) ────────────────────────
-  const { data: allSessionsRaw = [], refetch: refetchSessions } = trpc.fittingSession.getAll.useQuery();
+  const { data: allSessionsRaw = [], refetch: refetchSessions } = trpc.fittingSession.getAll.useQuery(undefined, { staleTime: 15_000 });
 
   // Build a map: style -> sessions[] so each row can look up its sessions instantly
   const sessionsByStyle = useMemo(() => {
