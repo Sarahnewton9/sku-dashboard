@@ -160,13 +160,14 @@ function SessionCard({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
-  // When a new session opens in edit mode, scroll the notes textarea into view and focus it
+  // When a new session opens in edit mode, scroll the card into view then focus notes
   useEffect(() => {
-    if (startInEditMode && notesRef.current) {
+    if (startInEditMode && cardRef.current) {
       setTimeout(() => {
-        notesRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-        notesRef.current?.focus();
+        cardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        setTimeout(() => notesRef.current?.focus(), 200);
       }, 150);
     }
   }, [startInEditMode]);
@@ -208,7 +209,7 @@ function SessionCard({
   };
 
   return (
-    <div className="border border-border rounded-lg bg-card overflow-hidden">
+    <div ref={cardRef} className="border border-border rounded-lg bg-card overflow-hidden">
       {lightboxSrc && <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} sampleDate={session.sampleDate} sampleType={session.sampleType} />}
 
       {/* Session header */}
@@ -621,7 +622,13 @@ function StyleFitRow({
               </p>
             )}
             <div className="space-y-3">
-              {sessions.map((session) => (
+              {[...sessions].sort((a, b) => {
+                // Sort chronologically: oldest first, then by id as tiebreaker
+                const dateA = a.sessionDate ?? "";
+                const dateB = b.sessionDate ?? "";
+                if (dateA !== dateB) return dateA.localeCompare(dateB);
+                return a.id - b.id;
+              }).map((session) => (
                 <SessionCard
                   key={session.id}
                   session={session}
