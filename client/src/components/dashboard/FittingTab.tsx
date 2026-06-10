@@ -159,6 +159,17 @@ function SessionCard({
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const notesRef = useRef<HTMLTextAreaElement>(null);
+
+  // When a new session opens in edit mode, scroll the notes textarea into view and focus it
+  useEffect(() => {
+    if (startInEditMode && notesRef.current) {
+      setTimeout(() => {
+        notesRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        notesRef.current?.focus();
+      }, 150);
+    }
+  }, [startInEditMode]);
 
   // Sync local state when session prop updates (e.g. after save + server refresh)
   useEffect(() => {
@@ -325,6 +336,7 @@ function SessionCard({
       {editing ? (
         <div className="px-4 pt-2">
           <Textarea
+            ref={notesRef}
             value={localNotes}
             onChange={(e) => setLocalNotes(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSave(); } }}
