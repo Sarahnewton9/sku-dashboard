@@ -31,6 +31,11 @@ export default function StylesTab() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [sampleFilter, setSampleFilter] = useState("All");
+  const [lastFilter, setLastFilter] = useState("All");
+  const [leatherFilter, setLeatherFilter] = useState("All");
+  const [size11Filter, setSize11Filter] = useState(false);
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("style");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [selectedSku, setSelectedSku] = useState<SkuPanelData | null>(null);
@@ -544,6 +549,15 @@ export default function StylesTab() {
     return ["All", ...Array.from(cats).sort()];
   }, [stylesWithCategories]);
 
+  // Available leathers for filter dropdown
+  const availableLeathers = useMemo(() => {
+    const s = new Set<string>();
+    for (const style of stylesWithCategories) {
+      for (const l of style.leathers) s.add(l);
+    }
+    return ["All", ...Array.from(s).sort()];
+  }, [stylesWithCategories]);
+
   // Filter styles (uses stylesWithCategories which includes custom SKUs and category overrides)
   const filtered = useMemo(() => {
     let data = stylesWithCategories;
@@ -561,7 +575,6 @@ export default function StylesTab() {
     }
 
     if (categoryFilter !== "All") {
-      // Case-insensitive comparison since getCategory returns UPPERCASE
       data = data.filter((s) => s.category.toUpperCase() === categoryFilter.toUpperCase());
     }
 
@@ -573,8 +586,30 @@ export default function StylesTab() {
       data = data.filter((s) => !s.hasNew);
     }
 
+    if (lastFilter !== "All") {
+      data = data.filter((s) => s.last === lastFilter);
+    }
+
+    if (leatherFilter !== "All") {
+      data = data.filter((s) => s.leathers.includes(leatherFilter));
+    }
+
+    if (size11Filter) {
+      data = data.filter((s) => getStyleSize11(s.style));
+    }
+
+    if (sampleFilter === "No sample received") {
+      data = data.filter((s) => s.hasNew && getStyleSampleStatus(s.style) === 'none');
+    } else if (sampleFilter === "Some received") {
+      data = data.filter((s) => getStyleSampleStatus(s.style) === 'some');
+    } else if (sampleFilter === "All received") {
+      data = data.filter((s) => s.hasNew && getStyleSampleStatus(s.style) === 'all');
+    } else if (sampleFilter === "Fit approved") {
+      data = data.filter((s) => styleMetaMap[s.style]?.fitApproved === true);
+    }
+
     return data;
-  }, [search, categoryFilter, statusFilter, stylesWithCategories]);
+  }, [search, categoryFilter, statusFilter, sampleFilter, lastFilter, leatherFilter, size11Filter, stylesWithCategories, skuMetaMap, styleMetaMap]);
 
   // Group by last, sorted alphabetically by last, then by style within each last
   const groupedByLast = useMemo(() => {
@@ -720,39 +755,130 @@ export default function StylesTab() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search styles, leathers, colours…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-3 items-center">
+          <div className="relative flex-1 min-w-48">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search styles, leathers, colours…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+              style={{ borderColor: "var(--border)" }}
+            />
+          </div>
+
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-3 py-2 text-sm rounded-lg border bg-card text-foreground focus:outline-none"
             style={{ borderColor: "var(--border)" }}
-          />
+          >
+            {availableCategories.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 text-sm rounded-lg border bg-card text-foreground focus:outline-none"
+            style={{ borderColor: "var(--border)" }}
+          >
+            {STATUS_FILTERS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+
+          <button
+            onClick={() => setShowMoreFilters((v) => !v)}
+            className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors ${
+              showMoreFilters || sampleFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter
+                ? "bg-amber-50 border-amber-400 text-amber-700"
+                : "bg-card hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700"
+            }`}
+            style={{ borderColor: showMoreFilters || sampleFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter ? undefined : "var(--border)" }}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            Filters
+            {(sampleFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter) && (
+              <span className="ml-1 bg-amber-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                {[sampleFilter !== "All", lastFilter !== "All", leatherFilter !== "All", size11Filter].filter(Boolean).length}
+              </span>
+            )}
+          </button>
+
+          {(sampleFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter) && (
+            <button
+              onClick={() => { setSampleFilter("All"); setLastFilter("All"); setLeatherFilter("All"); setSize11Filter(false); }}
+              className="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+            >
+              <X className="w-3 h-3" /> Clear filters
+            </button>
+          )}
+
+          <span className="text-sm text-muted-foreground">{totalFilteredStyles} of {skuData.styles.length} styles</span>
         </div>
 
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-3 py-2 text-sm rounded-lg border bg-card text-foreground focus:outline-none"
-          style={{ borderColor: "var(--border)" }}
-        >
-          {availableCategories.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+        {/* Expanded filter panel */}
+        {showMoreFilters && (
+          <div className="flex flex-wrap gap-4 items-end p-3 rounded-lg border bg-card/50" style={{ borderColor: "var(--border)" }}>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Sample Status</label>
+              <select
+                value={sampleFilter}
+                onChange={(e) => setSampleFilter(e.target.value)}
+                className="px-3 py-1.5 text-sm rounded-lg border bg-card text-foreground focus:outline-none min-w-44"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <option value="All">All</option>
+                <option value="No sample received">No sample received</option>
+                <option value="Some received">Some received</option>
+                <option value="All received">All received</option>
+                <option value="Fit approved">Fit approved</option>
+              </select>
+            </div>
 
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 text-sm rounded-lg border bg-card text-foreground focus:outline-none"
-          style={{ borderColor: "var(--border)" }}
-        >
-          {STATUS_FILTERS.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Last</label>
+              <select
+                value={lastFilter}
+                onChange={(e) => setLastFilter(e.target.value)}
+                className="px-3 py-1.5 text-sm rounded-lg border bg-card text-foreground focus:outline-none min-w-36"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <option value="All">All lasts</option>
+                {allKnownLasts.map((l) => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
 
-        <span className="text-sm text-muted-foreground">{totalFilteredStyles} of {skuData.styles.length} styles</span>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Leather</label>
+              <select
+                value={leatherFilter}
+                onChange={(e) => setLeatherFilter(e.target.value)}
+                className="px-3 py-1.5 text-sm rounded-lg border bg-card text-foreground focus:outline-none min-w-36"
+                style={{ borderColor: "var(--border)" }}
+              >
+                {availableLeathers.map((l) => <option key={l} value={l}>{l === "All" ? "All leathers" : l}</option>)}
+              </select>
+            </div>
 
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Size 11</label>
+              <button
+                onClick={() => setSize11Filter((v) => !v)}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                  size11Filter ? "bg-purple-100 border-purple-400 text-purple-700" : "bg-card text-foreground hover:bg-purple-50"
+                }`}
+                style={{ borderColor: size11Filter ? undefined : "var(--border)" }}
+              >
+                {size11Filter ? "SZ11 only ✓" : "SZ11 only"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Action toolbar */}
+      <div className="flex flex-wrap gap-3 items-center">
         <button
           onClick={() => setShowImport(true)}
           className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700"
@@ -779,6 +905,7 @@ export default function StylesTab() {
           <Download className="w-4 h-4" />
           Export Excel
         </button>
+
         <button
           onClick={() => setShowAddStyleModal(true)}
           className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-purple-50 hover:border-purple-400 hover:text-purple-700"
@@ -787,6 +914,7 @@ export default function StylesTab() {
           <Plus className="w-4 h-4" />
           Add Style
         </button>
+
         <button
           onClick={handleFetchSize11}
           disabled={isFetchingSize11}
