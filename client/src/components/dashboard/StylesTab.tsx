@@ -32,6 +32,7 @@ export default function StylesTab() {
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [sampleFilter, setSampleFilter] = useState("All");
+  const [fittingFilter, setFittingFilter] = useState("All");
   const [lastFilter, setLastFilter] = useState("All");
   const [leatherFilter, setLeatherFilter] = useState("All");
   const [size11Filter, setSize11Filter] = useState(false);
@@ -114,6 +115,11 @@ export default function StylesTab() {
 
   // Fitting images for approved styles
   const { data: allFitImages = [], refetch: refetchFitImages } = trpc.styleFitting.getAll.useQuery(undefined, { staleTime: 60_000 });
+
+  // All fitting sessions — used for the Fitting Status filter
+  const { data: allFittingSessions = [] } = trpc.fittingSession.getAll.useQuery(undefined, { staleTime: 30_000 });
+  // Set of style names that have at least one fitting session
+  const fittedStylesSet = useMemo(() => new Set(allFittingSessions.map((s) => s.style)), [allFittingSessions]);
 
   // Undo approval mutation
   const undoApprovalMutation = trpc.styleFitting.updateFit.useMutation({
@@ -602,12 +608,18 @@ export default function StylesTab() {
       data = data.filter((s) => getStyleSampleStatus(s.style) === 'some');
     } else if (sampleFilter === "All received") {
       data = data.filter((s) => s.hasNew && getStyleSampleStatus(s.style) === 'all');
-    } else if (sampleFilter === "Fit approved") {
+    }
+
+    if (fittingFilter === "Not fitted yet") {
+      data = data.filter((s) => !fittedStylesSet.has(s.style));
+    } else if (fittingFilter === "Fitted (has sessions)") {
+      data = data.filter((s) => fittedStylesSet.has(s.style) && !styleMetaMap[s.style]?.fitApproved);
+    } else if (fittingFilter === "Fit approved") {
       data = data.filter((s) => styleMetaMap[s.style]?.fitApproved === true);
     }
 
     return data;
-  }, [search, categoryFilter, statusFilter, sampleFilter, lastFilter, leatherFilter, size11Filter, stylesWithCategories, skuMetaMap, styleMetaMap]);
+  }, [search, categoryFilter, statusFilter, sampleFilter, fittingFilter, lastFilter, leatherFilter, size11Filter, stylesWithCategories, skuMetaMap, styleMetaMap, fittedStylesSet]);
 
   // Group by last, sorted alphabetically by last, then by style within each last
   const groupedByLast = useMemo(() => {
@@ -788,24 +800,24 @@ export default function StylesTab() {
           <button
             onClick={() => setShowMoreFilters((v) => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors ${
-              showMoreFilters || sampleFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter
+              showMoreFilters || sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter
                 ? "bg-amber-50 border-amber-400 text-amber-700"
                 : "bg-card hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700"
             }`}
-            style={{ borderColor: showMoreFilters || sampleFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter ? undefined : "var(--border)" }}
+            style={{ borderColor: showMoreFilters || sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter ? undefined : "var(--border)" }}
           >
             <SlidersHorizontal className="w-4 h-4" />
             Filters
-            {(sampleFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter) && (
+            {(sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter) && (
               <span className="ml-1 bg-amber-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                {[sampleFilter !== "All", lastFilter !== "All", leatherFilter !== "All", size11Filter].filter(Boolean).length}
+                {[sampleFilter !== "All", fittingFilter !== "All", lastFilter !== "All", leatherFilter !== "All", size11Filter].filter(Boolean).length}
               </span>
             )}
           </button>
 
-          {(sampleFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter) && (
+          {(sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter) && (
             <button
-              onClick={() => { setSampleFilter("All"); setLastFilter("All"); setLeatherFilter("All"); setSize11Filter(false); }}
+              onClick={() => { setSampleFilter("All"); setFittingFilter("All"); setLastFilter("All"); setLeatherFilter("All"); setSize11Filter(false); }}
               className="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
             >
               <X className="w-3 h-3" /> Clear filters
@@ -830,6 +842,20 @@ export default function StylesTab() {
                 <option value="No sample received">No sample received</option>
                 <option value="Some received">Some received</option>
                 <option value="All received">All received</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Fitting Status</label>
+              <select
+                value={fittingFilter}
+                onChange={(e) => setFittingFilter(e.target.value)}
+                className="px-3 py-1.5 text-sm rounded-lg border bg-card text-foreground focus:outline-none min-w-44"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <option value="All">All</option>
+                <option value="Not fitted yet">Not fitted yet</option>
+                <option value="Fitted (has sessions)">Fitted (has sessions)</option>
                 <option value="Fit approved">Fit approved</option>
               </select>
             </div>
