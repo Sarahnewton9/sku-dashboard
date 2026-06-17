@@ -324,12 +324,10 @@ export default function StylesTab() {
   });
 
   function handleSampleToggle(style: string, colour: string, leather: string, currentStatus: string | null | undefined) {
-    const cycle: Record<string, "waiting" | "fitting_sample" | "received"> = {
-      waiting: "fitting_sample",
-      fitting_sample: "received",
-      received: "waiting",
-    };
-    const newStatus = cycle[currentStatus ?? "waiting"] ?? "fitting_sample";
+    // Simple two-state toggle: waiting ↔ received
+    // fitting_sample is set only via the Fittings tab, not here
+    const newStatus: "waiting" | "received" =
+      (currentStatus === "received") ? "waiting" : "received";
     updateSampleStatusMutation.mutate({ style, colour, leather: leather ?? "", sampleStatus: newStatus });
   }
 
@@ -1340,11 +1338,11 @@ export default function StylesTab() {
                                           <span className="text-xs text-center" onClick={(e) => e.stopPropagation()}>
                                             <button
                                               onClick={(e) => { e.stopPropagation(); handleSampleToggle(sku.style, sku.colour, sku.leather, dbMeta?.sampleStatus); }}
-                                              title={
-                                                dbMeta?.sampleStatus === "received" ? "Sample received — click to reset to waiting" :
-                                                dbMeta?.sampleStatus === "fitting_sample" ? "Fitting sample — click to mark as received" :
-                                                "Mark as fitting sample"
-                                              }
+                              title={
+                                dbMeta?.sampleStatus === "received" ? "Sample received — click to reset to waiting" :
+                                dbMeta?.sampleStatus === "fitting_sample" ? "Fitting sample received (set via Fittings tab)" :
+                                "Mark sample as received"
+                              }
                                               className="px-1.5 py-0.5 rounded text-xs font-medium transition-colors"
                                               style={
                                                 dbMeta?.sampleStatus === "received"

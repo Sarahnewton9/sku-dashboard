@@ -224,3 +224,8 @@
 - [x] Phantom scrollbar mirrors the table scroll position (bidirectional sync via useLayoutEffect)
 - [x] Phantom scrollbar is a sibling outside the overflow-y-auto body, always visible at the bottom of the pane
 - [x] Fix Dashboard.tsx: change h-screen to 100dvh to properly constrain layout to visible viewport
+
+## By Style Filter Panel (Jun 2026)
+- [x] Add filter panel with Sample Status, Last, Leather, Size 11 filters
+- [x] Filters button with active count badge; Clear filters button when any filter active
+- [x] Action toolbar buttons (Import, Import Invoice, Export Excel, Add Style, Sync Size 11) made visible
