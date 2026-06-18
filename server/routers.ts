@@ -30,7 +30,7 @@ import {
   upsertStyleWebsiteImage,
   getAllStyleWebsiteImages,
   createFittingGroup, getAllFittingGroups, updateFittingGroup, deleteFittingGroup, addStyleToFittingGroup, removeStyleFromFittingGroup,
-  getSpecCustomRowsForStyle, upsertSpecCustomRow, deleteSpecCustomRow, upsertCustomRowForColour,
+  getSpecCustomRowsForStyle, upsertSpecCustomRow, deleteSpecCustomRow, deleteSpecCustomRowGroup, upsertCustomRowForColour,
   getLatestPptxImport, listPptxImports,
   getAllLastHeelHeights, upsertLastHeelHeight,
   getChangesReport,
@@ -1683,6 +1683,12 @@ If the request is unclear or is a question, use no_action.`;
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await deleteSpecCustomRow(input.id);
+        return { success: true };
+      }),
+    deleteGroup: publicProcedure
+      .input(z.object({ style: z.string(), section: z.string(), title: z.string() }))
+      .mutation(async ({ input }) => {
+        await deleteSpecCustomRowGroup(input.style, input.section, input.title);
         return { success: true };
       }),
     batchReorderCustomRows: publicProcedure

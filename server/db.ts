@@ -984,6 +984,22 @@ export async function deleteSpecCustomRow(id: number): Promise<void> {
 }
 
 /**
+ * Delete ALL custom rows for a given style+section+title group.
+ * This handles both __all__ rows and per-colour exploded rows.
+ */
+export async function deleteSpecCustomRowGroup(style: string, section: string, title: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(specCustomRows).where(
+    and(
+      eq(specCustomRows.style, style),
+      eq(specCustomRows.section, section),
+      eq(specCustomRows.title, title),
+    )
+  );
+}
+
+/**
  * Upsert a custom row value for a specific colour.
  *
  * If the row is currently stored as `__all__` (single shared value), this
@@ -1008,7 +1024,7 @@ export async function upsertCustomRowForColour(data: {
   currentSharedValue: string;
   /** All colours for this style (used to create per-colour rows) */
   allColours: string[];
-}): Promise<SpecCustomRow[]> {
+}): Promise<{ rows: SpecCustomRow[]; newRepId: number | null; wasExploded: boolean }> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -1059,7 +1075,7 @@ export async function upsertCustomRowForColour(data: {
   }
 
   // Return all rows for this style+section+title
-  return db.select().from(specCustomRows)
+  const newRows = await db.select().from(specCustomRows)
     .where(
       and(
         eq(specCustomRows.style, data.style),
@@ -1067,6 +1083,9 @@ export async function upsertCustomRowForColour(data: {
         eq(specCustomRows.title, data.title),
       )
     );
+  // Also return the new representative id (lowest id) so the client can update rowKeys
+  const newRepId = newRows.length > 0 ? Math.min(...newRows.map((r) => r.id)) : null;
+  return { rows: newRows, newRepId, wasExploded: hasAllRow };
 }
 
 // ─── PPTX Import Log ────────────────────────────────────────────────────────────────────────────

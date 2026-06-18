@@ -408,7 +408,7 @@ interface UnifiedCustomRowProps {
   /** Called when the title or value of the __all__ row changes (still-shared row). */
   onUpdate: (id: number, title: string, value: string) => void;
   /** Called when a specific colour cell is edited. Triggers explosion of __all__ into per-colour rows. */
-  onUpdateForColour: (representativeId: number, title: string, colour: string, newValue: string, currentSharedValue: string) => void;
+  onUpdateForColour: (representativeId: number, title: string, colour: string, newValue: string, currentSharedValue: string, section: string, sortOrder: number) => void;
   onDelete: (id: number) => void;
   allTitles: string[];
   isActive?: boolean;
@@ -476,13 +476,13 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForCol
               options={opts}
               onSave={(v) => {
                 if (isAllRow) {
-                  onUpdateForColour(row.id, row.title, colour, v, sharedValue);
+                  onUpdateForColour(row.id, row.title, colour, v, sharedValue, row.section, row.sortOrder);
                 } else {
                   const colourRow = rowGroup.get(colour);
                   if (colourRow) {
                     onUpdate(colourRow.id, colourRow.title, v);
                   } else {
-                    onUpdateForColour(row.id, row.title, colour, v, "");
+                    onUpdateForColour(row.id, row.title, colour, v, "", row.section, row.sortOrder);
                   }
                 }
               }}
@@ -587,12 +587,16 @@ interface CustomRowTitleInputProps {
 }
 
 function CustomRowTitleInput({ id, initialTitle, value, onUpdate, onDelete, allTitles }: CustomRowTitleInputProps) {
-  const [localTitle, setLocalTitle] = useState(initialTitle);
+  // Helper: convert stored title to proper case for display (e.g. "BUCKLE" → "Buckle")
+  function toProperCase(s: string) {
+    return s.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  }
+  const [localTitle, setLocalTitle] = useState(toProperCase(initialTitle));
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
   // Sync if the DB title changes from outside (e.g. on first load)
-  useEffect(() => { setLocalTitle(initialTitle); }, [initialTitle]);
+  useEffect(() => { setLocalTitle(toProperCase(initialTitle)); }, [initialTitle]);
 
   const suggestions = allTitles
     .filter((t) => t && t.toLowerCase().includes(localTitle.toLowerCase()) && t !== localTitle)
@@ -672,7 +676,7 @@ interface SpecFormProps {
   onAddSku: (colour: string, leather: string) => void;
   onAddCustomRow: (section: string, afterSortOrder?: number) => void;
   onUpdateCustomRow: (id: number, title: string, value: string) => void;
-  onUpdateCustomRowForColour: (representativeId: number, title: string, colour: string, newValue: string, currentSharedValue: string) => void;
+  onUpdateCustomRowForColour: (representativeId: number, title: string, colour: string, newValue: string, currentSharedValue: string, section: string, sortOrder: number) => void;
   onDeleteCustomRow: (id: number) => void;
   onReorderCustomRows: (section: string, orderedIds: number[]) => void;
   dbCategory: string | null;
@@ -1932,13 +1936,14 @@ export default function SpecsTab({}: SpecsTabProps) {
       utils.specCustomRow.getByStyle.invalidate({ style: newRow.style });
     },
   });
-  const deleteCustomRowMutation = trpc.specCustomRow.delete.useMutation({
-    onMutate: async ({ id }) => {
+  const deleteGroupMutation = trpc.specCustomRow.deleteGroup.useMutation({
+    onMutate: async ({ style, section, title }) => {
       if (!selectedStyle) return;
       await utils.specCustomRow.getByStyle.cancel({ style: selectedStyle });
       const prev = utils.specCustomRow.getByStyle.getData({ style: selectedStyle });
+      // Optimistically remove ALL rows for this style+section+title group
       utils.specCustomRow.getByStyle.setData({ style: selectedStyle }, (old) =>
-        old ? old.filter((r) => r.id !== id) : old
+        old ? old.filter((r) => !(r.style === style && r.section === section && r.title === title)) : old
       );
       return { prev };
     },
@@ -1997,32 +2002,64 @@ export default function SpecsTab({}: SpecsTabProps) {
   }
 
   function handleDeleteCustomRow(id: number) {
-    deleteCustomRowMutation.mutate({ id });
+    if (!selectedStyle) return;
+    // Find the representative row to get its section and title
+    const repRow = rawCustomRows.find((r: any) => r.id === id) as any;
+    if (!repRow) return;
+    // Delete ALL rows for this style+section+title group (handles both __all__ and per-colour rows)
+    deleteGroupMutation.mutate({ style: selectedStyle, section: repRow.section, title: repRow.title });
   }
 
   const upsertForColourMutation = trpc.specCustomRow.upsertForColour.useMutation({
+    onSuccess: (result, vars) => {
+      // If the __all__ row was exploded into per-colour rows, the old row id is gone.
+      // Update the saved rowKeys to replace the old c:{allRowId} with c:{newRepId} so the
+      // export can still find the custom row.
+      if (result.wasExploded && result.newRepId !== null && result.newRepId !== vars.allRowId && selectedStyle) {
+        const oldKey = `c:${vars.allRowId}`;
+        const newKey = `c:${result.newRepId}`;
+        // Update localRowKeys in SpecForm — but upsertForColourMutation is in the outer SpecsTab.
+        // We update the DB rowKeys directly here.
+        const currentKeys = exportRowOrderData?.rowKeys ?? null;
+        if (currentKeys && currentKeys.includes(oldKey)) {
+          const updatedKeys = currentKeys.map((k) => k === oldKey ? newKey : k);
+          upsertRowOrderForColourExplosion({ style: selectedStyle, rowKeys: updatedKeys });
+        }
+      }
+    },
     onSettled: () => {
       if (selectedStyle) utils.specCustomRow.getByStyle.invalidate({ style: selectedStyle });
     },
     onError: () => toast.error("Failed to save spec value"),
   });
 
+  // Separate mutation to update rowKeys after a colour explosion (used by upsertForColourMutation)
+  const upsertRowOrderForColourExplosionMutation = trpc.specRowOrder.upsert.useMutation({
+    onSettled: (_data, _err, vars) => {
+      utils.specRowOrder.get.invalidate({ style: vars.style });
+    },
+  });
+  function upsertRowOrderForColourExplosion(args: { style: string; rowKeys: string[] }) {
+    upsertRowOrderForColourExplosionMutation.mutate(args);
+  }
+
   function handleUpdateCustomRowForColour(
     representativeId: number,
     title: string,
     colour: string,
     newValue: string,
-    currentSharedValue: string
+    currentSharedValue: string,
+    section: string,
+    sortOrder: number
   ) {
     if (!selectedStyle) return;
-    const repRow = rawCustomRows.find((r: any) => r.id === representativeId) as any;
-    if (!repRow) return;
+    // Use section and sortOrder passed directly from the component (avoids rawCustomRows timing issues)
     upsertForColourMutation.mutate({
       allRowId: representativeId,
       style: selectedStyle,
-      section: repRow.section,
+      section,
       title,
-      sortOrder: repRow.sortOrder,
+      sortOrder,
       targetColour: colour,
       newValue,
       currentSharedValue,

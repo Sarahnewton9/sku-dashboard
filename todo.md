@@ -243,6 +243,12 @@
 - [ ] Update exportSpecSheet to read per-colour custom row values (by colour key, not __all__)
 
 ## Spec Issues Round 2 (Jun 2026)
-- [ ] Custom row options not persisting — new typed values should be saved as dropdown options for reuse; add delete-option button
-- [ ] Drag-reorder not saving for export — rowKeys not being saved after drag, export uses wrong order
-- [ ] Export column widths too narrow — set explicit column widths in ExcelJS
+- [x] Custom row options not persisting — new typed values should be saved as dropdown options for reuse; add delete-option button
+- [x] Drag-reorder not saving for export — rowKeys not being saved after drag, export uses wrong order
+- [x] Export column widths too narrow — set explicit column widths in ExcelJS
+
+## Spec Critical Bugs (Jun 2026 - custom rows)
+- [ ] Spec row labels on left always proper-cased (e.g. "Upper 1" not "UPPER 1")
+- [ ] Custom row value not copying across all colours on first entry (__all__ explosion broken)
+- [ ] Custom rows not appearing in export
+- [ ] Delete custom row only clears cell values instead of removing the entire row
