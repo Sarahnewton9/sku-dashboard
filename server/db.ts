@@ -983,6 +983,92 @@ export async function deleteSpecCustomRow(id: number): Promise<void> {
   await db.delete(specCustomRows).where(eq(specCustomRows.id, id));
 }
 
+/**
+ * Upsert a custom row value for a specific colour.
+ *
+ * If the row is currently stored as `__all__` (single shared value), this
+ * function "explodes" it into individual per-colour rows (one per colour in
+ * `allColours`), then updates the target colour's row with the new value.
+ *
+ * If per-colour rows already exist for this title, it simply upserts the
+ * specific colour's row.
+ */
+export async function upsertCustomRowForColour(data: {
+  /** The __all__ row id (used to delete it when exploding) */
+  allRowId: number;
+  style: string;
+  section: string;
+  title: string;
+  sortOrder: number;
+  /** The colour being edited */
+  targetColour: string;
+  /** New value for targetColour */
+  newValue: string;
+  /** Current shared value (used to seed all other colours when exploding) */
+  currentSharedValue: string;
+  /** All colours for this style (used to create per-colour rows) */
+  allColours: string[];
+}): Promise<SpecCustomRow[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Check if per-colour rows already exist for this style+section+title
+  const existing = await db.select().from(specCustomRows)
+    .where(
+      and(
+        eq(specCustomRows.style, data.style),
+        eq(specCustomRows.section, data.section),
+        eq(specCustomRows.title, data.title),
+      )
+    );
+
+  const hasAllRow = existing.some((r) => r.colour === "__all__");
+
+  if (hasAllRow) {
+    // Explode: delete the __all__ row and insert per-colour rows
+    await db.delete(specCustomRows).where(eq(specCustomRows.id, data.allRowId));
+    for (const colour of data.allColours) {
+      const value = colour === data.targetColour ? data.newValue : data.currentSharedValue;
+      await db.insert(specCustomRows).values({
+        style: data.style,
+        colour,
+        section: data.section,
+        title: data.title,
+        value,
+        sortOrder: data.sortOrder,
+      });
+    }
+  } else {
+    // Per-colour rows already exist — upsert the target colour's row
+    const targetRow = existing.find((r) => r.colour === data.targetColour);
+    if (targetRow) {
+      await db.update(specCustomRows)
+        .set({ value: data.newValue })
+        .where(eq(specCustomRows.id, targetRow.id));
+    } else {
+      // Colour row doesn't exist yet (e.g. new colour added after rows were created)
+      await db.insert(specCustomRows).values({
+        style: data.style,
+        colour: data.targetColour,
+        section: data.section,
+        title: data.title,
+        value: data.newValue,
+        sortOrder: data.sortOrder,
+      });
+    }
+  }
+
+  // Return all rows for this style+section+title
+  return db.select().from(specCustomRows)
+    .where(
+      and(
+        eq(specCustomRows.style, data.style),
+        eq(specCustomRows.section, data.section),
+        eq(specCustomRows.title, data.title),
+      )
+    );
+}
+
 // ─── PPTX Import Log ────────────────────────────────────────────────────────────────────────────
 
 export async function recordPptxImport(fileKey: string, fileName: string): Promise<number> {

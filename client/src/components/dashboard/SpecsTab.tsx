@@ -305,20 +305,29 @@ function UnifiedTemplateRow({
 // ─── Unified Custom Row (sortable custom row) ───────────────────────────────────────────────
 interface UnifiedCustomRowProps {
   id: string;
+  /** The representative row (used for title, id, section, sortOrder). Either the __all__ row or the first per-colour row. */
   row: CustomRowData;
+  /** Map of colour key → per-colour row. If the row is __all__, this map has one entry with key "__all__". */
+  rowGroup: Map<string, CustomRowData>;
   colours: string[];
+  /** Called when the title or value of the __all__ row changes (still-shared row). */
   onUpdate: (id: number, title: string, value: string) => void;
+  /** Called when a specific colour cell is edited. Triggers explosion of __all__ into per-colour rows. */
+  onUpdateForColour: (representativeId: number, title: string, colour: string, newValue: string, currentSharedValue: string) => void;
   onDelete: (id: number) => void;
   allTitles: string[];
   isActive?: boolean;
 }
-function UnifiedCustomRow({ id, row, colours, onUpdate, onDelete, allTitles, isActive }: UnifiedCustomRowProps) {
+function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForColour, onDelete, allTitles, isActive }: UnifiedCustomRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({ id });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.15 : 1,
   };
+  const isAllRow = row.colour === "__all__";
+  // Shared value (used for seeding other colours when exploding __all__)
+  const sharedValue = isAllRow ? (row.value ?? "") : "";
   return (
     <tr
       ref={setNodeRef}
@@ -343,21 +352,45 @@ function UnifiedCustomRow({ id, row, colours, onUpdate, onDelete, allTitles, isA
           <CustomRowTitleInput
             id={row.id}
             initialTitle={row.title}
-            value={row.value ?? ""}
+            value={isAllRow ? (row.value ?? "") : ""}
             onUpdate={onUpdate}
             onDelete={onDelete}
             allTitles={allTitles}
           />
         </div>
       </td>
-      {colours.map((colour, colIdx) => (
-        <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
-          <TextCell
-            value={row.colour === "__all__" || row.colour === colour ? (row.value ?? "") : ""}
-            onSave={(v) => onUpdate(row.id, row.title, v)}
-          />
-        </td>
-      ))}
+      {colours.map((colour, colIdx) => {
+        // Get the value for this specific colour
+        let cellValue: string;
+        if (isAllRow) {
+          cellValue = row.value ?? "";
+        } else {
+          const colourRow = rowGroup.get(colour);
+          cellValue = colourRow ? (colourRow.value ?? "") : "";
+        }
+        return (
+          <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
+            <TextCell
+              value={cellValue}
+              onSave={(v) => {
+                if (isAllRow) {
+                  // First edit on an __all__ row: explode into per-colour rows
+                  onUpdateForColour(row.id, row.title, colour, v, sharedValue);
+                } else {
+                  // Already per-colour: update this colour's row
+                  const colourRow = rowGroup.get(colour);
+                  if (colourRow) {
+                    onUpdate(colourRow.id, colourRow.title, v);
+                  } else {
+                    // Fallback: use representative row id (shouldn't normally happen)
+                    onUpdateForColour(row.id, row.title, colour, v, "");
+                  }
+                }
+              }}
+            />
+          </td>
+        );
+      })}
     </tr>
   );
 }
@@ -538,6 +571,7 @@ interface SpecFormProps {
   onAddSku: (colour: string, leather: string) => void;
   onAddCustomRow: (section: string, afterSortOrder?: number) => void;
   onUpdateCustomRow: (id: number, title: string, value: string) => void;
+  onUpdateCustomRowForColour: (representativeId: number, title: string, colour: string, newValue: string, currentSharedValue: string) => void;
   onDeleteCustomRow: (id: number) => void;
   onReorderCustomRows: (section: string, orderedIds: number[]) => void;
   dbCategory: string | null;
@@ -767,11 +801,11 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
 // ─── Unified Row type for drag-and-drop ──────────────────────────────────────
 type UnifiedRow =
   | { kind: "template"; id: string; comp: SpecComponent }
-  | { kind: "custom"; id: string; row: CustomRowData };
+  | { kind: "custom"; id: string; row: CustomRowData; rowGroup: Map<string, CustomRowData> };
 
 function SpecForm({
   entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allColourLeatherOptions, imageOverride, customRows,
-  onUpsert, onBulkAutoFill, onAddDropdownOption, onDeleteDropdownOption, onMetaChange, onAddSku, onAddCustomRow, onUpdateCustomRow, onDeleteCustomRow, onReorderCustomRows,
+  onUpsert, onBulkAutoFill, onAddDropdownOption, onDeleteDropdownOption, onMetaChange, onAddSku, onAddCustomRow, onUpdateCustomRow, onUpdateCustomRowForColour, onDeleteCustomRow, onReorderCustomRows,
   dbCategory, onSetCategory, allCustomRowTitles, allStyleEntries,
   onHideColumn, hiddenColumns, showHiddenColumns, onShowColumn,
   tableScrollRef: externalTableScrollRef,
@@ -808,6 +842,30 @@ function SpecForm({
     () => allCustomRowsSorted.map((r) => r.id),
     [allCustomRowsSorted]
   );
+
+  // Group per-colour rows by title so they render as a single table row.
+  // Key: title → Map<colour, row>. The representative row is the first one seen (lowest id).
+  const customRowGroups = useMemo(() => {
+    const groups = new Map<string, { rep: CustomRowData; colourMap: Map<string, CustomRowData> }>();
+    for (const r of allCustomRowsSorted) {
+      const key = r.title;
+      if (!groups.has(key)) {
+        groups.set(key, { rep: r, colourMap: new Map([[r.colour, r]]) });
+      } else {
+        groups.get(key)!.colourMap.set(r.colour, r);
+      }
+    }
+    return groups;
+  }, [allCustomRowsSorted]);
+
+  // For unifiedRows: use the representative row's id as the canonical key (c:{rep.id})
+  const customRepMap = useMemo(() => {
+    const m = new Map<string, { rep: CustomRowData; colourMap: Map<string, CustomRowData> }>();
+    for (const [, group] of Array.from(customRowGroups)) {
+      m.set(`c:${group.rep.id}`, group);
+    }
+    return m;
+  }, [customRowGroups]);
   const hasBuckle = specMeta?.hasBuckle ?? false;
   const dressShoeSubType = specMeta?.dressShoeSubType ?? null;
   const notes = specMeta?.notes ?? "";
@@ -832,7 +890,6 @@ function SpecForm({
   // Order: saved rowKeys from server (or local override), falling back to template order + custom rows at end
   const unifiedRows = useMemo((): UnifiedRow[] => {
     const templateMap = new Map(template.map((c) => [`t:${c.key}`, c]));
-    const customMap = new Map(allCustomRowsSorted.map((r) => [`c:${r.id}`, r]));
     const savedKeys = localRowKeys ?? rowOrderData?.rowKeys ?? null;
     if (savedKeys && savedKeys.length > 0) {
       // Use saved order, adding any new rows not in saved order at the end
@@ -843,8 +900,9 @@ function SpecForm({
         if (key.startsWith("t:") && templateMap.has(key)) {
           result.push({ kind: "template", id: key, comp: templateMap.get(key)! });
           usedKeys.add(key);
-        } else if (key.startsWith("c:") && customMap.has(key)) {
-          result.push({ kind: "custom", id: key, row: customMap.get(key)! });
+        } else if (key.startsWith("c:") && customRepMap.has(key)) {
+          const group = customRepMap.get(key)!;
+          result.push({ kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap });
           usedKeys.add(key);
         }
       }
@@ -852,19 +910,19 @@ function SpecForm({
       for (const [key, comp] of Array.from(templateMap)) {
         if (!usedKeys.has(key)) result.push({ kind: "template", id: key, comp });
       }
-      // Add any custom rows not in saved order (newly added custom rows)
-      for (const [key, row] of Array.from(customMap)) {
-        if (!usedKeys.has(key)) result.push({ kind: "custom", id: key, row });
+      // Add any custom rows not in saved order (newly added custom rows — use rep key)
+      for (const [key, group] of Array.from(customRepMap)) {
+        if (!usedKeys.has(key)) result.push({ kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap });
       }
       return result;
     }
-    // Default: template rows in template order, then custom rows
+    // Default: template rows in template order, then custom rows (one row per title group)
     const result: UnifiedRow[] = [
       ...template.map((c): UnifiedRow => ({ kind: "template", id: `t:${c.key}`, comp: c })),
-      ...allCustomRowsSorted.map((r): UnifiedRow => ({ kind: "custom", id: `c:${r.id}`, row: r })),
+      ...Array.from(customRepMap).map(([key, group]): UnifiedRow => ({ kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap })),
     ];
     return result;
-  }, [template, allCustomRowsSorted, rowOrderData, localRowKeys]);
+  }, [template, customRepMap, rowOrderData, localRowKeys]);
 
   const unifiedRowIds = useMemo(() => unifiedRows.map((r) => r.id), [unifiedRows]);
   const activeRow = activeId ? unifiedRows.find((r) => r.id === activeId) ?? null : null;
@@ -1176,8 +1234,10 @@ function SpecForm({
                       key={uRow.id}
                       id={uRow.id}
                       row={row}
+                      rowGroup={uRow.rowGroup}
                       colours={entry.colours}
                       onUpdate={onUpdateCustomRow}
+                      onUpdateForColour={onUpdateCustomRowForColour}
                       onDelete={onDeleteCustomRow}
                       allTitles={allCustomRowTitles}
                       isActive={activeId === uRow.id}
@@ -1831,6 +1891,36 @@ export default function SpecsTab({}: SpecsTabProps) {
     deleteCustomRowMutation.mutate({ id });
   }
 
+  const upsertForColourMutation = trpc.specCustomRow.upsertForColour.useMutation({
+    onSettled: () => {
+      if (selectedStyle) utils.specCustomRow.getByStyle.invalidate({ style: selectedStyle });
+    },
+    onError: () => toast.error("Failed to save spec value"),
+  });
+
+  function handleUpdateCustomRowForColour(
+    representativeId: number,
+    title: string,
+    colour: string,
+    newValue: string,
+    currentSharedValue: string
+  ) {
+    if (!selectedStyle) return;
+    const repRow = rawCustomRows.find((r: any) => r.id === representativeId) as any;
+    if (!repRow) return;
+    upsertForColourMutation.mutate({
+      allRowId: representativeId,
+      style: selectedStyle,
+      section: repRow.section,
+      title,
+      sortOrder: repRow.sortOrder,
+      targetColour: colour,
+      newValue,
+      currentSharedValue,
+      allColours: selectedEntry?.colours ?? [],
+    });
+  }
+
   const batchReorderMutation = trpc.specCustomRow.batchReorderCustomRows.useMutation({
     onMutate: async ({ orderedIds }) => {
       if (!selectedStyle) return;
@@ -2477,6 +2567,7 @@ export default function SpecsTab({}: SpecsTabProps) {
               onMetaChange={handleMetaChange}
               onAddCustomRow={handleAddCustomRow}
               onUpdateCustomRow={handleUpdateCustomRow}
+              onUpdateCustomRowForColour={handleUpdateCustomRowForColour}
               onDeleteCustomRow={handleDeleteCustomRow}
               onReorderCustomRows={handleReorderCustomRows}
               dbCategory={dbCategory}

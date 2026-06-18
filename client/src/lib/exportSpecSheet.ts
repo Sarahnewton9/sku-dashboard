@@ -105,13 +105,22 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     rowKeys,
   } = params;
 
-  // Build custom rows lookup: id → {title, section, valuesByColour}
+  // Build custom rows lookup: repId → {title, section, valuesByColour}
+  // Per-colour rows share the same title but have different ids. We group them by title,
+  // using the lowest id as the representative (canonical) id so rowKeys lookups work.
   const customRowById = new Map<number, { title: string; section: string; valuesByColour: Record<string, string> }>();
+  // Also build a title → repId map so per-colour rows can find their group
+  const titleToRepId = new Map<string, number>();
   for (const cr of customRows) {
-    if (!customRowById.has(cr.id)) {
-      customRowById.set(cr.id, { title: cr.title, section: cr.section, valuesByColour: {} });
+    const existingRepId = titleToRepId.get(cr.title);
+    if (existingRepId === undefined) {
+      // First row for this title — use its id as the representative
+      titleToRepId.set(cr.title, cr.id);
+      customRowById.set(cr.id, { title: cr.title, section: cr.section, valuesByColour: { [cr.colour]: cr.value ?? "" } });
+    } else {
+      // Subsequent per-colour row — merge into the representative's valuesByColour
+      customRowById.get(existingRepId)!.valuesByColour[cr.colour] = cr.value ?? "";
     }
-    customRowById.get(cr.id)!.valuesByColour[cr.colour] = cr.value ?? "";
   }
 
   const template = getTemplateForCategory(category, { hasBuckle, dressShoeSubType, style });

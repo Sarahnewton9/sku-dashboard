@@ -30,7 +30,7 @@ import {
   upsertStyleWebsiteImage,
   getAllStyleWebsiteImages,
   createFittingGroup, getAllFittingGroups, updateFittingGroup, deleteFittingGroup, addStyleToFittingGroup, removeStyleFromFittingGroup,
-  getSpecCustomRowsForStyle, upsertSpecCustomRow, deleteSpecCustomRow,
+  getSpecCustomRowsForStyle, upsertSpecCustomRow, deleteSpecCustomRow, upsertCustomRowForColour,
   getLatestPptxImport, listPptxImports,
   getAllLastHeelHeights, upsertLastHeelHeight,
   getChangesReport,
@@ -1691,6 +1691,20 @@ If the request is unclear or is a question, use no_action.`;
         await batchReorderCustomRows(input.orderedIds);
         return { success: true };
       }),
+
+    upsertForColour: publicProcedure
+      .input(z.object({
+        allRowId: z.number(),
+        style: z.string(),
+        section: z.string(),
+        title: z.string(),
+        sortOrder: z.number().default(0),
+        targetColour: z.string(),
+        newValue: z.string(),
+        currentSharedValue: z.string(),
+        allColours: z.array(z.string()),
+      }))
+      .mutation(async ({ input }) => upsertCustomRowForColour(input)),
   }),
   // ─── Spec Hidden Columns (hide individual colour columns per style) ───────────
   specHiddenColumns: router({

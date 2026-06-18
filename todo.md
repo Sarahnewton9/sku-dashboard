@@ -234,3 +234,10 @@
 - [x] Fix spec values not saving when selecting dropdown option or typing free text
 - [x] Fix spec export order — export must follow the on-screen unified row order (drag-drop + saved rowKeys)
 - [x] Fix spec export — deleted rows must be excluded from export (currently still appear)
+
+## Per-Colour Custom Row Editing (Jun 2026)
+- [ ] Add upsertCustomRowForColour DB helper: explode __all__ row into per-colour rows, then update specific colour
+- [ ] Add specCustomRow.upsertForColour tRPC procedure
+- [ ] Update UnifiedCustomRow to pass colour key to onUpdate per cell
+- [ ] Update handleUpdateCustomRow to call upsertForColour with colour key
+- [ ] Update exportSpecSheet to read per-colour custom row values (by colour key, not __all__)
