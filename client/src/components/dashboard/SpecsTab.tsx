@@ -85,6 +85,9 @@ function FreeTypeCell({ component, value, savedOptions, onSave, onAddOption, onD
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  // Prevent double-commit: when a suggestion is clicked, handleSelect commits immediately;
+  // the subsequent blur must not commit again with the stale draft.
+  const committedRef = useRef(false);
 
   useEffect(() => { setDraft(value); }, [value]);
 
@@ -100,12 +103,13 @@ function FreeTypeCell({ component, value, savedOptions, onSave, onAddOption, onD
   }
 
   function handleSelect(opt: string) {
+    committedRef.current = true;
     commit(opt);
     inputRef.current?.blur();
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") { commit(draft); inputRef.current?.blur(); }
+    if (e.key === "Enter") { committedRef.current = true; commit(draft); inputRef.current?.blur(); }
     if (e.key === "Escape") { setDraft(value); setShowSuggestions(false); inputRef.current?.blur(); }
   }
 
@@ -113,7 +117,10 @@ function FreeTypeCell({ component, value, savedOptions, onSave, onAddOption, onD
     // Delay so clicks on suggestions register first
     setTimeout(() => {
       if (!containerRef.current?.contains(document.activeElement)) {
-        commit(draft);
+        if (!committedRef.current) {
+          commit(draft);
+        }
+        committedRef.current = false;
         setShowSuggestions(false);
       }
     }, 150);
@@ -1698,6 +1705,12 @@ export default function SpecsTab({}: SpecsTabProps) {
     { enabled: !!selectedStyle }
   );
 
+  // ── Row order (for export — mirrors what SpecForm uses internally) ────────
+  const { data: exportRowOrderData } = trpc.specRowOrder.get.useQuery(
+    { style: selectedStyle! },
+    { enabled: !!selectedStyle }
+  );
+
   // All known custom row titles (for autocomplete) — derived from current style's rows
   const allCustomRowTitles = useMemo(() => {
     const titles = new Set<string>();
@@ -2359,6 +2372,8 @@ export default function SpecsTab({}: SpecsTabProps) {
                       dressShoeSubType: specMeta?.dressShoeSubType ?? null,
                       imageUrl: imageOverrides[selectedEntry.style] ?? selectedEntry.imageUrl,
                       customRows: rawCustomRows as any[],
+                      // Pass saved row order so export respects on-screen order and omits deleted rows
+                      rowKeys: exportRowOrderData?.rowKeys ?? null,
                     });
                     toast.success(`Exported ${selectedEntry.style} spec sheet`);
                   }}

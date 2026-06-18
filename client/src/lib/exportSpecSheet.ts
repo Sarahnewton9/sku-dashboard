@@ -15,6 +15,11 @@
  * - After last component row: second block header (COMPONENTS / COLOUR 8…14) if needed
  * - Single column per colour (not merged pairs)
  * - Image in top-right area (rows 1-8)
+ *
+ * Row order and deleted rows:
+ * - If rowKeys is provided, the export respects the saved on-screen order.
+ * - Template rows whose key is absent from rowKeys were deleted by the user and are omitted.
+ * - Custom rows are included in the order they appear in rowKeys (c:<id> entries).
  */
 
 import ExcelJS from "exceljs";
@@ -43,6 +48,8 @@ interface ExportSpecSheetParams {
   dressShoeSubType?: "court" | "sling" | null;
   imageUrl?: string;
   customRows?: CustomRow[];
+  /** Saved row order from spec_row_order.rowKeys — used to preserve on-screen order and omit deleted rows */
+  rowKeys?: string[] | null;
 }
 
 async function fetchImageAsBase64(
@@ -95,22 +102,121 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     dressShoeSubType = null,
     imageUrl,
     customRows = [],
+    rowKeys,
   } = params;
 
-  // Build custom rows lookup: section → [{title, valuesByColour}]
-  const customRowsBySection: Record<string, Array<{ title: string; valuesByColour: Record<string, string> }>> = {};
+  // Build custom rows lookup: id → {title, section, valuesByColour}
+  const customRowById = new Map<number, { title: string; section: string; valuesByColour: Record<string, string> }>();
   for (const cr of customRows) {
-    if (!customRowsBySection[cr.section]) customRowsBySection[cr.section] = [];
-    const existing = customRowsBySection[cr.section].find((r) => r.title === cr.title);
-    if (existing) {
-      existing.valuesByColour[cr.colour] = cr.value ?? "";
-    } else {
-      customRowsBySection[cr.section].push({ title: cr.title, valuesByColour: { [cr.colour]: cr.value ?? "" } });
+    if (!customRowById.has(cr.id)) {
+      customRowById.set(cr.id, { title: cr.title, section: cr.section, valuesByColour: {} });
     }
+    customRowById.get(cr.id)!.valuesByColour[cr.colour] = cr.value ?? "";
   }
 
   const template = getTemplateForCategory(category, { hasBuckle, dressShoeSubType, style });
   const today = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" });
+
+  // ── Build ordered component rows ──────────────────────────────────────────
+  // type for a single renderable row
+  type CompRow = { label: string; key: string | null; isSpacer: boolean };
+
+  let componentRows: CompRow[];
+
+  if (rowKeys && rowKeys.length > 0) {
+    // Respect the saved on-screen order.
+    // Template keys absent from rowKeys were deleted by the user — omit them.
+    // Custom rows are included in the order they appear in rowKeys.
+    const templateMap = new Map(template.map((c) => [`t:${c.key}`, c]));
+
+    // Build the ordered list from rowKeys, skipping deleted entries
+    const orderedRows: CompRow[] = [];
+    let prevSection: string | null = null;
+
+    for (const key of rowKeys) {
+      if (key.startsWith("deleted:")) continue;
+
+      if (key.startsWith("t:")) {
+        const comp = templateMap.get(key);
+        if (!comp) continue; // unknown key, skip
+        // Insert a spacer when the section changes
+        if (prevSection !== null && comp.section !== prevSection) {
+          orderedRows.push({ label: "", key: null, isSpacer: true });
+        }
+        orderedRows.push({ label: comp.label.toUpperCase(), key: comp.key, isSpacer: false });
+        prevSection = comp.section;
+      } else if (key.startsWith("c:")) {
+        const id = parseInt(key.slice(2), 10);
+        const cr = customRowById.get(id);
+        if (!cr) continue; // custom row no longer exists
+        // Insert a spacer when the section changes
+        if (prevSection !== null && cr.section !== prevSection) {
+          orderedRows.push({ label: "", key: null, isSpacer: true });
+        }
+        orderedRows.push({ label: cr.title.toUpperCase(), key: `__custom__${id}`, isSpacer: false });
+        prevSection = cr.section;
+      }
+    }
+
+    // Append any template rows NOT in rowKeys (added to template after order was last saved)
+    const usedTemplateKeys = new Set(
+      rowKeys.filter((k) => k.startsWith("t:")).map((k) => k)
+    );
+    for (const comp of template) {
+      if (!usedTemplateKeys.has(`t:${comp.key}`)) {
+        if (prevSection !== null && comp.section !== prevSection) {
+          orderedRows.push({ label: "", key: null, isSpacer: true });
+        }
+        orderedRows.push({ label: comp.label.toUpperCase(), key: comp.key, isSpacer: false });
+        prevSection = comp.section;
+      }
+    }
+
+    componentRows = orderedRows;
+  } else {
+    // No saved order — fall back to default template order + custom rows grouped by section
+    const customRowsBySection: Record<string, Array<{ id: number; title: string; valuesByColour: Record<string, string> }>> = {};
+    for (const [id, cr] of Array.from(customRowById)) {
+      if (!customRowsBySection[cr.section]) customRowsBySection[cr.section] = [];
+      customRowsBySection[cr.section].push({ id, title: cr.title, valuesByColour: cr.valuesByColour });
+    }
+
+    const sectionMap: Record<string, typeof template> = {};
+    for (const comp of template) {
+      if (!sectionMap[comp.section]) sectionMap[comp.section] = [];
+      sectionMap[comp.section].push(comp);
+    }
+    const sectionEntries = Object.entries(sectionMap);
+
+    componentRows = [];
+    for (let si = 0; si < sectionEntries.length; si++) {
+      const [sectionName, components] = sectionEntries[si];
+      for (const comp of components) {
+        componentRows.push({ label: comp.label.toUpperCase(), key: comp.key, isSpacer: false });
+      }
+      for (const cr of (customRowsBySection[sectionName] ?? [])) {
+        componentRows.push({ label: cr.title.toUpperCase(), key: `__custom__${cr.id}`, isSpacer: false });
+      }
+      if (si < sectionEntries.length - 1) {
+        componentRows.push({ label: "", key: null, isSpacer: true });
+      }
+    }
+  }
+
+  // Helper to get value for a component row + colour
+  function getValue(row: CompRow, colour: string): string {
+    if (row.isSpacer || !row.key) return "";
+    if (row.key.startsWith("__custom__")) {
+      const idStr = row.key.replace("__custom__", "");
+      const id = parseInt(idStr, 10);
+      if (!isNaN(id)) {
+        const cr = customRowById.get(id);
+        if (cr) return cr.valuesByColour[colour] ?? cr.valuesByColour["__all__"] ?? "";
+      }
+      return "";
+    }
+    return specs[colour]?.[row.key] ?? "";
+  }
 
   // Split colours into blocks of 7
   const blocks: Array<{ colours: string[]; labels: string[]; offset: number }> = [];
@@ -131,47 +237,6 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
   if (imageUrl) {
     const imgData = await fetchImageAsBase64(imageUrl);
     if (imgData) imageId = wb.addImage({ base64: imgData.base64, extension: imgData.extension });
-  }
-
-  // Build component rows list (template + custom rows per section, interleaved)
-  // We'll write them in section order with blank spacers between sections
-  const sectionMap: Record<string, typeof template> = {};
-  for (const comp of template) {
-    if (!sectionMap[comp.section]) sectionMap[comp.section] = [];
-    sectionMap[comp.section].push(comp);
-  }
-  const sectionEntries = Object.entries(sectionMap);
-
-  // Build a flat ordered list of component rows to render
-  type CompRow = { label: string; key: string | null; isSpacer: boolean };
-  const componentRows: CompRow[] = [];
-  for (let si = 0; si < sectionEntries.length; si++) {
-    const [sectionName, components] = sectionEntries[si];
-    for (const comp of components) {
-      componentRows.push({ label: comp.label.toUpperCase(), key: comp.key, isSpacer: false });
-    }
-    // Custom rows for this section
-    for (const cr of (customRowsBySection[sectionName] ?? [])) {
-      componentRows.push({ label: cr.title.toUpperCase(), key: `__custom__${cr.title}`, isSpacer: false });
-    }
-    // Blank spacer between sections (not after last)
-    if (si < sectionEntries.length - 1) {
-      componentRows.push({ label: "", key: null, isSpacer: true });
-    }
-  }
-
-  // Helper to get value for a component row + colour
-  function getValue(row: CompRow, colour: string): string {
-    if (row.isSpacer || !row.key) return "";
-    if (row.key.startsWith("__custom__")) {
-      const title = row.key.replace("__custom__", "");
-      for (const sectionRows of Object.values(customRowsBySection)) {
-        const found = sectionRows.find((r) => r.title === title);
-        if (found) return found.valuesByColour[colour] ?? found.valuesByColour["__all__"] ?? "";
-      }
-      return "";
-    }
-    return specs[colour]?.[row.key] ?? "";
   }
 
   // One worksheet — all blocks stacked vertically

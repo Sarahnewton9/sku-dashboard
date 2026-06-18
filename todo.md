@@ -229,3 +229,8 @@
 - [x] Add filter panel with Sample Status, Last, Leather, Size 11 filters
 - [x] Filters button with active count badge; Clear filters button when any filter active
 - [x] Action toolbar buttons (Import, Import Invoice, Export Excel, Add Style, Sync Size 11) made visible
+
+## Spec Bugs (Jun 2026)
+- [ ] Fix spec values not saving when selecting dropdown option or typing free text
+- [ ] Fix spec export order — export must follow the on-screen unified row order (drag-drop + saved rowKeys)
+- [ ] Fix spec export — deleted rows must be excluded from export (currently still appear)
