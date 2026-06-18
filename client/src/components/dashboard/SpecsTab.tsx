@@ -1488,22 +1488,45 @@ export default function SpecsTab({}: SpecsTabProps) {
     return set;
   }, [cancelledSkusRaw]);
 
+  // Build a map: style → colourKey (as used in SpecsTab, e.g. "BLACK SPECKLE") → isCancelled
+  // This is needed because SpecsTab uses compound colour keys ("BLACK SPECKLE") for multi-leather styles,
+  // but cancelledSkuSet stores raw style|colour|leather ("DONTE|BLACK|SPECKLE").
+  const cancelledColourKeySet = useMemo(() => {
+    // Build style → colour → Set<leather> from mergedRawSkus (same logic as NEW_COLOURS_PER_STYLE)
+    const leatherCount: Record<string, Record<string, Set<string>>> = {};
+    for (const sku of mergedRawSkus as any[]) {
+      const style = sku.style as string;
+      const colour = sku.colour as string;
+      const leather = (sku.leather as string) ?? "";
+      if (!leatherCount[style]) leatherCount[style] = {};
+      if (!leatherCount[style][colour]) leatherCount[style][colour] = new Set();
+      leatherCount[style][colour].add(leather);
+    }
+    // Now build a set of "style|colourKey" strings for cancelled SKUs
+    const set = new Set<string>();
+    for (const row of cancelledSkusRaw as any[]) {
+      const style = row.style as string;
+      const colour = row.colour as string;
+      const leather = (row.leather as string) ?? "";
+      const isMultiLeather = (leatherCount[style]?.[colour]?.size ?? 0) > 1;
+      const colourKey = isMultiLeather && leather ? `${colour} ${leather}` : colour;
+      set.add(`${style}|${colourKey}`);
+    }
+    return set;
+  }, [cancelledSkusRaw, mergedRawSkus]);
+
   // Filter cancelled styles + cancelled SKUs from the base list
   // (custom SKUs are already merged into baseStyleList via mergedRawSkus)
   const styleList = useMemo(() => {
     return baseStyleList
       .filter((s) => !cancelledSet.has(s.style))
       .map((s) => {
-        // Filter out individually cancelled colours
+        // Filter out individually cancelled colours using compound-key-aware lookup
         const filteredColours: string[] = [];
         const filteredLabels: string[] = [];
         for (let i = 0; i < s.colours.length; i++) {
-          const colour = s.colours[i];
-          const leather = COLOUR_LEATHER_MAP[s.style]?.[colour]
-            ? COLOUR_LEATHER_MAP[s.style][colour].replace(colour, "").trim()
-            : "";
-          const key = `${s.style}|${colour}|${leather}`;
-          if (!cancelledSkuSet.has(key)) {
+          const colour = s.colours[i]; // may be compound key like "BLACK SPECKLE"
+          if (!cancelledColourKeySet.has(`${s.style}|${colour}`)) {
             filteredColours.push(colour);
             filteredLabels.push(s.colourLabels[i]);
           }
@@ -1521,7 +1544,7 @@ export default function SpecsTab({}: SpecsTabProps) {
         };
       })
       .filter((s) => s.colours.length > 0);
-  }, [baseStyleList, cancelledSet, cancelledSkuSet, COLOUR_LEATHER_MAP]);
+  }, [baseStyleList, cancelledSet, cancelledColourKeySet]);
 
   const filtered = styleList.filter((s) => {
     const q = search.toLowerCase();
