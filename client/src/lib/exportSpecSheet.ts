@@ -84,9 +84,9 @@ function arialBold8(): Partial<ExcelJS.Font> { return { name: "Arial", bold: tru
 function arialRegular8(): Partial<ExcelJS.Font> { return { name: "Arial", bold: false, size: 8 }; }
 
 const COLOURS_PER_BLOCK = 7;
-// A4 landscape ~113 char-units wide. Label col 30 + 7 × 12 = 114. Fits perfectly.
-const LABEL_COL_WIDTH = 30;
-const COLOUR_COL_WIDTH = 12;
+// A4 landscape: label col 36 + 7 × 20 = 176 char-units. Wider columns so values aren't cramped.
+const LABEL_COL_WIDTH = 36;
+const COLOUR_COL_WIDTH = 20;
 const GREY_FILL: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9D9D9" } };
 
 export async function exportSpecSheet(params: ExportSpecSheetParams) {

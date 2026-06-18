@@ -241,3 +241,8 @@
 - [ ] Update UnifiedCustomRow to pass colour key to onUpdate per cell
 - [ ] Update handleUpdateCustomRow to call upsertForColour with colour key
 - [ ] Update exportSpecSheet to read per-colour custom row values (by colour key, not __all__)
+
+## Spec Issues Round 2 (Jun 2026)
+- [ ] Custom row options not persisting — new typed values should be saved as dropdown options for reuse; add delete-option button
+- [ ] Drag-reorder not saving for export — rowKeys not being saved after drag, export uses wrong order
+- [ ] Export column widths too narrow — set explicit column widths in ExcelJS

@@ -178,6 +178,101 @@ function FreeTypeCell({ component, value, savedOptions, onSave, onAddOption, onD
   );
 }
 
+// ─── Custom Free Type Cell (for custom rows — no SpecComponent dependency) ──────
+interface CustomFreeTypeCellProps {
+  value: string;
+  options: string[];
+  onSave: (val: string) => void;
+  onAddOption: (val: string) => void;
+  onDeleteOption: (val: string) => void;
+}
+function CustomFreeTypeCell({ value, options, onSave, onAddOption, onDeleteOption }: CustomFreeTypeCellProps) {
+  const allOptions = Array.from(new Set(options)).filter(Boolean).sort((a, b) => a.localeCompare(b));
+  const [draft, setDraft] = useState(value);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const committedRef = useRef(false);
+
+  useEffect(() => { setDraft(value); }, [value]);
+
+  const filtered = draft.trim()
+    ? allOptions.filter((o) => o.toLowerCase().includes(draft.toLowerCase()))
+    : allOptions;
+
+  function commit(val: string) {
+    const trimmed = val.trim();
+    onSave(trimmed);
+    setDraft(trimmed);
+    setShowSuggestions(false);
+  }
+
+  function handleSelect(opt: string) {
+    committedRef.current = true;
+    commit(opt);
+    inputRef.current?.blur();
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") { committedRef.current = true; commit(draft); inputRef.current?.blur(); }
+    if (e.key === "Escape") { setDraft(value); setShowSuggestions(false); inputRef.current?.blur(); }
+  }
+
+  function handleBlur() {
+    setTimeout(() => {
+      if (!containerRef.current?.contains(document.activeElement)) {
+        if (!committedRef.current) commit(draft);
+        committedRef.current = false;
+        setShowSuggestions(false);
+      }
+    }, 150);
+  }
+
+  return (
+    <div ref={containerRef} className="relative min-w-[140px] w-full">
+      <input
+        ref={inputRef}
+        type="text"
+        value={draft}
+        onChange={(e) => { setDraft(e.target.value); setShowSuggestions(true); }}
+        onFocus={() => setShowSuggestions(true)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        placeholder="— type —"
+        className="h-8 w-full px-2 text-xs rounded border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
+      />
+      {showSuggestions && (filtered.length > 0 || (draft.trim() && !allOptions.some((o) => o.toLowerCase() === draft.trim().toLowerCase()))) && (
+        <div className="absolute z-50 top-full left-0 mt-0.5 w-64 max-h-52 overflow-y-auto bg-popover border border-border rounded shadow-md">
+          {filtered.map((opt) => (
+            <div
+              key={opt}
+              className="flex items-center justify-between px-2 py-1.5 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer group/opt"
+              onMouseDown={(e) => { e.preventDefault(); handleSelect(opt); }}
+            >
+              <span className="flex-1 truncate">{opt}</span>
+              <button
+                className="ml-1 p-0.5 rounded opacity-0 group-hover/opt:opacity-100 hover:bg-destructive/20 hover:text-destructive text-muted-foreground flex-shrink-0"
+                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteOption(opt); }}
+                title="Remove suggestion"
+              >
+                <X className="w-2.5 h-2.5" />
+              </button>
+            </div>
+          ))}
+          {draft.trim() && !allOptions.some((o) => o.toLowerCase() === draft.trim().toLowerCase()) && (
+            <div
+              className="px-2 py-1.5 text-xs text-blue-600 font-medium hover:bg-accent cursor-pointer border-t border-border"
+              onMouseDown={(e) => { e.preventDefault(); onAddOption(draft.trim()); commit(draft.trim()); }}
+            >
+              + Save "{draft.trim()}" as suggestion
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Text Cell ────────────────────────────────────────────────────────────────
 
 interface TextCellProps {
@@ -317,8 +412,12 @@ interface UnifiedCustomRowProps {
   onDelete: (id: number) => void;
   allTitles: string[];
   isActive?: boolean;
+  /** Dropdown options keyed by "custom:TITLE" for option persistence */
+  allDropdownOptions: Record<string, string[]>;
+  onAddDropdownOption: (key: string, value: string) => void;
+  onDeleteDropdownOption: (key: string, value: string) => void;
 }
-function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForColour, onDelete, allTitles, isActive }: UnifiedCustomRowProps) {
+function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForColour, onDelete, allTitles, isActive, allDropdownOptions, onAddDropdownOption, onDeleteDropdownOption }: UnifiedCustomRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({ id });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -368,25 +467,27 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForCol
           const colourRow = rowGroup.get(colour);
           cellValue = colourRow ? (colourRow.value ?? "") : "";
         }
+        const optKey = `custom:${row.title}`;
+        const opts = allDropdownOptions[optKey] ?? [];
         return (
           <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
-            <TextCell
+            <CustomFreeTypeCell
               value={cellValue}
+              options={opts}
               onSave={(v) => {
                 if (isAllRow) {
-                  // First edit on an __all__ row: explode into per-colour rows
                   onUpdateForColour(row.id, row.title, colour, v, sharedValue);
                 } else {
-                  // Already per-colour: update this colour's row
                   const colourRow = rowGroup.get(colour);
                   if (colourRow) {
                     onUpdate(colourRow.id, colourRow.title, v);
                   } else {
-                    // Fallback: use representative row id (shouldn't normally happen)
                     onUpdateForColour(row.id, row.title, colour, v, "");
                   }
                 }
               }}
+              onAddOption={(val) => onAddDropdownOption(optKey, val)}
+              onDeleteOption={(val) => onDeleteDropdownOption(optKey, val)}
             />
           </td>
         );
@@ -831,7 +932,12 @@ function SpecForm({
     { style: entry.style },
     { enabled: !!entry.style }
   );
-  const upsertRowOrderMutation = trpc.specRowOrder.upsert.useMutation();
+  const specRowOrderUtils = trpc.useUtils();
+  const upsertRowOrderMutation = trpc.specRowOrder.upsert.useMutation({
+    onSettled: (_data, _err, vars) => {
+      specRowOrderUtils.specRowOrder.get.invalidate({ style: vars.style });
+    },
+  });
 
   // Pre-compute sorted custom rows
   const allCustomRowsSorted = useMemo(
@@ -1241,6 +1347,9 @@ function SpecForm({
                       onDelete={onDeleteCustomRow}
                       allTitles={allCustomRowTitles}
                       isActive={activeId === uRow.id}
+                      allDropdownOptions={allDropdownOptions}
+                      onAddDropdownOption={onAddDropdownOption}
+                      onDeleteDropdownOption={onDeleteDropdownOption}
                     />
                   );
                 }
