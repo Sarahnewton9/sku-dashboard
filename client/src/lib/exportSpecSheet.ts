@@ -158,19 +158,9 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
       }
     }
 
-    // Append any template rows NOT in rowKeys (added to template after order was last saved)
-    const usedTemplateKeys = new Set(
-      rowKeys.filter((k) => k.startsWith("t:")).map((k) => k)
-    );
-    for (const comp of template) {
-      if (!usedTemplateKeys.has(`t:${comp.key}`)) {
-        if (prevSection !== null && comp.section !== prevSection) {
-          orderedRows.push({ label: "", key: null, isSpacer: true });
-        }
-        orderedRows.push({ label: comp.label.toUpperCase(), key: comp.key, isSpacer: false });
-        prevSection = comp.section;
-      }
-    }
+    // NOTE: Template rows absent from rowKeys were deleted by the user — do NOT re-add them.
+    // (The on-screen unifiedRows logic also has a fallback for brand-new template rows added
+    //  after the order was last saved, but for export purposes we treat absent = deleted.)
 
     componentRows = orderedRows;
   } else {

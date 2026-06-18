@@ -231,6 +231,6 @@
 - [x] Action toolbar buttons (Import, Import Invoice, Export Excel, Add Style, Sync Size 11) made visible
 
 ## Spec Bugs (Jun 2026)
-- [ ] Fix spec values not saving when selecting dropdown option or typing free text
-- [ ] Fix spec export order — export must follow the on-screen unified row order (drag-drop + saved rowKeys)
-- [ ] Fix spec export — deleted rows must be excluded from export (currently still appear)
+- [x] Fix spec values not saving when selecting dropdown option or typing free text
+- [x] Fix spec export order — export must follow the on-screen unified row order (drag-drop + saved rowKeys)
+- [x] Fix spec export — deleted rows must be excluded from export (currently still appear)
