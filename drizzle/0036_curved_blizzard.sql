@@ -1,0 +1,1 @@
+ALTER TABLE `style_spec_meta` ADD `specStatus` enum('not_started','in_progress','complete') DEFAULT 'not_started' NOT NULL;

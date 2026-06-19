@@ -1270,3 +1270,69 @@ export async function resetSpecColour(style: string, colour: string): Promise<vo
     .set({ value: "" })
     .where(and(eq(specCustomRows.style, style), eq(specCustomRows.colour, colour)));
 }
+
+// ─── Spec Status ──────────────────────────────────────────────────────────────
+/**
+ * Sets the specStatus for a style in style_spec_meta.
+ * Creates the row if it doesn't exist yet.
+ */
+export async function setSpecStatus(
+  style: string,
+  status: "not_started" | "in_progress" | "complete"
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .insert(styleSpecMeta)
+    .values({ style, specStatus: status })
+    .onDuplicateKeyUpdate({ set: { specStatus: status } });
+}
+
+/**
+ * Checks whether every (style, colour, component) cell is filled for the given style.
+ * Uses the saved rowKeys to determine which template components are expected,
+ * and checks all non-cancelled colour columns.
+ * Returns true only if every cell has a non-empty value.
+ */
+export async function checkAllSpecsFilled(
+  style: string,
+  colours: string[],
+  rowKeys: string[]
+): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  if (colours.length === 0 || rowKeys.length === 0) return false;
+
+  // Only check template rows (custom rows are optional)
+  const templateComponents = rowKeys
+    .filter((k) => k.startsWith("template:"))
+    .map((k) => k.replace("template:", ""));
+
+  if (templateComponents.length === 0) return false;
+
+  // Count filled cells for this style
+  const rows = await db
+    .select({
+      colour: styleSpecs.colour,
+      component: styleSpecs.component,
+      value: styleSpecs.value,
+    })
+    .from(styleSpecs)
+    .where(
+      and(
+        eq(styleSpecs.style, style),
+        sql`${styleSpecs.value} IS NOT NULL AND ${styleSpecs.value} != ''`
+      )
+    );
+
+  const filledSet = new Set(rows.map((r) => `${r.colour}::${r.component}`));
+
+  for (const colour of colours) {
+    for (const component of templateComponents) {
+      if (!filledSet.has(`${colour}::${component}`)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}

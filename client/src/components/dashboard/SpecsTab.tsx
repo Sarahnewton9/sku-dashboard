@@ -14,6 +14,9 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import {
@@ -1957,6 +1960,18 @@ export default function SpecsTab({}: SpecsTabProps) {
     if (!selectedStyle) return;
     resetColourMutation.mutate({ style: selectedStyle, colour });
   }
+  // ─── Spec Status ──────────────────────────────────────────────────────────
+  const setStatusMutation = trpc.specs.setStatus.useMutation({
+    onSuccess: (_data, { style }) => {
+      refetchMeta();
+      refetchAllSpecMeta();
+    },
+    onError: () => toast.error("Failed to update spec status"),
+  });
+  function handleSetStatus(status: "not_started" | "in_progress" | "complete") {
+    if (!selectedStyle) return;
+    setStatusMutation.mutate({ style: selectedStyle, status });
+  }
 
   // Filter hidden columns from selectedEntry (unless showHiddenColumns is on)
   const selectedEntry = useMemo(() => {
@@ -1994,6 +2009,11 @@ export default function SpecsTab({}: SpecsTabProps) {
   // Spec counts for all styles (for sidebar completion dots)
   const { data: specCounts = [] } = trpc.specs.getCounts.useQuery();
   const specCountMap = Object.fromEntries(specCounts.map((r) => [r.style, r.filledCount]));
+  // Spec status for all styles (for sidebar status badges)
+  const { data: allSpecMeta = [], refetch: refetchAllSpecMeta } = trpc.specs.getAllMeta.useQuery();
+  const specStatusMap = Object.fromEntries(
+    allSpecMeta.map((m) => [m.style, (m as any).specStatus as "not_started" | "in_progress" | "complete"])
+  );
 
   // ── Derived data ──────────────────────────────────────────────────────────
   // specs: colour → component → value
@@ -2019,6 +2039,7 @@ export default function SpecsTab({}: SpecsTabProps) {
         hasBuckle: rawMeta.hasBuckle ?? false,
         dressShoeSubType: rawMeta.dressShoeSubType as "court" | "sling" | null ?? null,
         notes: rawMeta.notes ?? null,
+        specStatus: ((rawMeta as any).specStatus ?? "not_started") as "not_started" | "in_progress" | "complete",
       }
     : null;
 
@@ -2374,8 +2395,19 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   function handleUpsert(colour: string, component: string, value: string) {
     if (!selectedStyle) return;
-    // No onSuccess refetch needed — optimistic update handles the UI immediately
-    upsertMutation.mutate({ style: selectedStyle, colour, component, value });
+    // Pass colours + rowKeys so server can auto-check completion status
+    const colours = selectedEntry?.colours ?? [];
+    const rowKeys = exportRowOrderData?.rowKeys ?? [];
+    upsertMutation.mutate(
+      { style: selectedStyle, colour, component, value, colours, rowKeys },
+      {
+        onSettled: () => {
+          // Refresh status after save (server may have auto-promoted to complete)
+          refetchMeta();
+          refetchAllSpecMeta();
+        },
+      }
+    );
   }
   // Batch auto-fill: sends all auto-fill rows in a single bulk upsert to avoid 502s from simultaneous mutations
   function handleBulkAutoFill(rows: Array<{ style: string; colour: string; component: string; value: string }>) {
@@ -2616,12 +2648,18 @@ export default function SpecsTab({}: SpecsTabProps) {
         </div>
         <div className="flex-1 overflow-y-auto">
           {(() => {
-            const inProgress = filtered.filter((e) => getCompletionPct(e) < 100);
-            const completed = filtered.filter((e) => getCompletionPct(e) >= 100);
+            const notStarted = filtered.filter((e) => (specStatusMap[e.style] ?? "not_started") === "not_started");
+            const inProgress = filtered.filter((e) => (specStatusMap[e.style] ?? "not_started") === "in_progress");
+            const completed = filtered.filter((e) => (specStatusMap[e.style] ?? "not_started") === "complete");
 
             function StyleRow({ entry }: { entry: StyleEntry }) {
               const isSelected = selectedStyle === entry.style;
-              const pct = getCompletionPct(entry);
+              const status = specStatusMap[entry.style] ?? "not_started";
+              const statusBadge = status === "complete"
+                ? <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 flex-shrink-0">Done</span>
+                : status === "in_progress"
+                ? <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 flex-shrink-0">In Progress</span>
+                : null;
               return (
                 <button
                   key={entry.style}
@@ -2643,16 +2681,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                       {entry.isAllNew && (
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" title="New pattern" />
                       )}
-                      {pct > 0 && (
-                        <div className="flex items-center gap-1">
-                          <div className="w-10 h-1 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all"
-                              style={{ width: `${pct}%`, background: pct >= 100 ? 'oklch(0.65 0.15 145)' : 'oklch(0.70 0.15 55)' }}
-                            />
-                          </div>
-                        </div>
-                      )}
+                      {statusBadge}
                     </div>
                   </div>
                 </button>
@@ -2661,31 +2690,40 @@ export default function SpecsTab({}: SpecsTabProps) {
 
             return (
               <>
-                {/* In Progress section */}
+                                {/* In Progress section */}
                 {inProgress.length > 0 && (
                   <>
-                    <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide bg-muted/30 border-b flex items-center justify-between">
-                      <span>In Progress</span>
-                      <span className="text-muted-foreground font-normal">{inProgress.length}</span>
+                    <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide bg-amber-50 dark:bg-amber-950/20 border-b flex items-center justify-between">
+                      <span className="text-amber-700 dark:text-amber-400">In Progress</span>
+                      <span className="text-amber-600 dark:text-amber-500 font-normal">{inProgress.length}</span>
                     </div>
                     {inProgress.map((entry) => <StyleRow key={entry.style} entry={entry} />)}
                   </>
                 )}
-
-                {/* Completed section */}
+                {/* Not Started section */}
+                {notStarted.length > 0 && (
+                  <>
+                    <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide bg-muted/30 border-b flex items-center justify-between">
+                      <span>Not Started</span>
+                      <span className="text-muted-foreground font-normal">{notStarted.length}</span>
+                    </div>
+                    {notStarted.map((entry) => <StyleRow key={entry.style} entry={entry} />)}
+                  </>
+                )}
+                {/* Complete section */}
                 {completed.length > 0 && (
                   <>
                     <button
-                      className="w-full px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide bg-muted/30 border-b flex items-center justify-between hover:bg-muted/50 transition-colors"
+                      className="w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide bg-green-50 dark:bg-green-950/20 border-b flex items-center justify-between hover:bg-green-100 dark:hover:bg-green-950/30 transition-colors"
                       onClick={() => setCompletedCollapsed((v) => !v)}
                     >
-                      <span className="flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3 text-green-500" />
-                        Completed
+                      <span className="flex items-center gap-1 text-green-700 dark:text-green-400">
+                        <CheckCircle className="w-3 h-3" />
+                        Complete
                       </span>
                       <span className="flex items-center gap-1">
-                        <span className="text-muted-foreground font-normal">{completed.length}</span>
-                        <ChevronDown className={`w-3 h-3 transition-transform ${completedCollapsed ? "" : "rotate-180"}`} />
+                        <span className="text-green-600 dark:text-green-500 font-normal">{completed.length}</span>
+                        <ChevronDown className={`w-3 h-3 transition-transform text-green-600 dark:text-green-500 ${completedCollapsed ? "" : "rotate-180"}`} />
                       </span>
                     </button>
                     {!completedCollapsed && completed.map((entry) => <StyleRow key={entry.style} entry={entry} />)}
@@ -2802,6 +2840,54 @@ export default function SpecsTab({}: SpecsTabProps) {
                   Export to Excel
                 </Button>
               </div>
+            </div>
+            {/* Spec status badge + manual override */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-medium">Spec Status:</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors cursor-pointer hover:opacity-80 ${
+                      (specMeta?.specStatus ?? "not_started") === "complete"
+                        ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
+                        : (specMeta?.specStatus ?? "not_started") === "in_progress"
+                        ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800"
+                        : "bg-muted text-muted-foreground border-border"
+                    }`}
+                  >
+                    {(specMeta?.specStatus ?? "not_started") === "complete" && <CheckCircle className="w-3 h-3" />}
+                    {(specMeta?.specStatus ?? "not_started") === "complete"
+                      ? "Complete"
+                      : (specMeta?.specStatus ?? "not_started") === "in_progress"
+                      ? "In Progress"
+                      : "Not Started"}
+                    <ChevronDown className="w-3 h-3 opacity-60" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-44">
+                  <DropdownMenuItem
+                    onClick={() => handleSetStatus("not_started")}
+                    className="text-xs gap-2"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-muted-foreground/40 flex-shrink-0" />
+                    Not Started
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleSetStatus("in_progress")}
+                    className="text-xs gap-2"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
+                    In Progress
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleSetStatus("complete")}
+                    className="text-xs gap-2"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                    Complete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             {/* Import preview banner */}
             {importParsed && (

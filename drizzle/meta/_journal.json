@@ -253,6 +253,13 @@
       "when": 1781834907843,
       "tag": "0035_pale_veda",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "5",
+      "when": 1781845119040,
+      "tag": "0036_curved_blizzard",
+      "breakpoints": true
     }
   ]
 }

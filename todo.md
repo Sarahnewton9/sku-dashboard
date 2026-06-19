@@ -259,10 +259,6 @@
 - [x] Add specValues.resetColour tRPC procedure
 - [x] Add Reset button (with confirm popover) to each colour column header in SpecsTab
 - [x] After reset, invalidate rawCustomRows and spec values queries
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
 
 ## Spec Export Fix - All Colour Values (Jun 2026)
 - [x] Fix spec export only showing first two colour values for custom rows — was using filtered (hidden-columns-excluded) colour list for explosion; now uses full unfiltered list
@@ -284,14 +280,20 @@
 - [x] Add specValues.resetColour tRPC procedure
 - [x] Add Reset button (with confirm popover) to each colour column header in SpecsTab
 - [x] After reset, invalidate rawCustomRows and spec values queries
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
 
 ## Manage Saved Dropdown Options (Jun 2026)
-- [ ] Add specDropdownOptions.update tRPC procedure (rename a saved option value)
-- [ ] Add specDropdownOptions.delete tRPC procedure (remove a saved option by id)
-- [ ] Add "Manage options" gear/settings icon in the dropdown suggestion list
-- [ ] Build ManageOptionsPanel: list all saved options for a row with inline edit (pencil) and delete (trash) per item
-- [ ] After edit/delete, invalidate specDropdownOptions query and refresh open dropdown list
->>>>>>> Stashed changes
+- [x] Add specDropdownOptions.update tRPC procedure (rename a saved option value)
+- [x] Add specDropdownOptions.delete tRPC procedure (remove a saved option by id)
+- [x] Add "Manage options" gear/settings icon in the dropdown suggestion list
+- [x] Build ManageOptionsPanel: list all saved options for a row with inline edit (pencil) and delete (trash) per item
+- [x] After edit/delete, invalidate specDropdownOptions query and refresh open dropdown list
+
+## Spec Status System (Not Started / In Progress / Complete) (Jun 2026)
+- [x] Add specStatus column to spec_meta table (enum: not_started, in_progress, complete), default not_started
+- [x] Run pnpm db:push to apply migration
+- [x] Add setSpecStatus tRPC procedure (manual override)
+- [x] Include status in specMeta query response
+- [x] Replace progress bar in style list with status badge (grey/amber/green)
+- [x] Add status badge + manual toggle dropdown to spec sheet header
+- [x] Auto-complete logic: after every upsert, check if all cells filled → promote to complete; if any cell cleared → demote to in_progress
+- [x] Manual override always available (can set back to not_started or in_progress)

@@ -233,6 +233,8 @@ export const styleSpecMeta = mysqlTable("style_spec_meta", {
   hasBuckle: boolean("hasBuckle").default(false).notNull(),
   dressShoeSubType: mysqlEnum("dressShoeSubType", ["court", "sling"]),
   notes: text("notes"),
+  /** Spec completion status — manually overridable, auto-promoted to complete when all cells filled */
+  specStatus: mysqlEnum("specStatus", ["not_started", "in_progress", "complete"]).default("not_started").notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 

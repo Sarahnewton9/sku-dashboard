@@ -40,6 +40,7 @@ import {
   getSpecRowOrder, upsertSpecRowOrder,
   getSpecHiddenColumns, hideSpecColumn, showSpecColumn,
   getCustomLasts, addCustomLast, deleteCustomLast, resetSpecColour,
+  setSpecStatus, checkAllSpecsFilled,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -666,9 +667,31 @@ export const appRouter = router({
         colour: z.string(),
         component: z.string(),
         value: z.string().nullable(),
+        // Optional: pass current colours + rowKeys for auto-complete check
+        colours: z.array(z.string()).optional(),
+        rowKeys: z.array(z.string()).optional(),
       }))
       .mutation(async ({ input }) => {
         await upsertStyleSpec(input.style, input.colour, input.component, input.value);
+        // Auto-complete logic: check if all cells are now filled
+        if (input.colours && input.colours.length > 0 && input.rowKeys && input.rowKeys.length > 0) {
+          const allFilled = await checkAllSpecsFilled(input.style, input.colours, input.rowKeys);
+          if (allFilled) {
+            await setSpecStatus(input.style, "complete");
+          } else if (input.value && input.value.trim() !== "") {
+            // A value was set but not all filled — promote to in_progress if not already complete
+            const meta = await getStyleSpecMeta(input.style);
+            if (!meta || meta.specStatus === "not_started") {
+              await setSpecStatus(input.style, "in_progress");
+            }
+          } else {
+            // A value was cleared — demote from complete to in_progress
+            const meta = await getStyleSpecMeta(input.style);
+            if (meta && meta.specStatus === "complete") {
+              await setSpecStatus(input.style, "in_progress");
+            }
+          }
+        }
         return { success: true };
       }),
 
@@ -750,6 +773,16 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Manual status override
+    setStatus: publicProcedure
+      .input(z.object({
+        style: z.string(),
+        status: z.enum(["not_started", "in_progress", "complete"]),
+      }))
+      .mutation(async ({ input }) => {
+        await setSpecStatus(input.style, input.status);
+        return { success: true };
+      }),
     // Reset all spec values (template rows + custom rows) for a specific colour column
     resetColour: publicProcedure
       .input(z.object({
