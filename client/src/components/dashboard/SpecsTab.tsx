@@ -108,6 +108,9 @@ function FreeTypeCell({ component, value, savedOptions, savedOptionIds, onSave, 
     ? allOptions.filter((o) => o.toLowerCase().includes(draft.toLowerCase()))
     : allOptions;
 
+  // Keep dropdown open when draft is a new value not in options (so Save-as-suggestion always shows)
+  const isNewValue = draft.trim() !== "" && !allOptions.some((o) => o.toLowerCase() === draft.trim().toLowerCase());
+
   function commit(val: string) {
     const trimmed = val.trim();
     onSave(trimmed);
@@ -153,7 +156,7 @@ function FreeTypeCell({ component, value, savedOptions, savedOptionIds, onSave, 
         className="w-full px-2 py-1.5 text-xs rounded border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground resize-none overflow-hidden min-h-[32px]"
         style={{ lineHeight: "1.4" }}
       />
-      {showSuggestions && filtered.length > 0 && (
+      {showSuggestions && (filtered.length > 0 || isNewValue) && (
         <div className="absolute z-50 top-full left-0 mt-0.5 w-64 max-h-52 overflow-y-auto bg-popover border border-border rounded shadow-md">
           {filtered.map((opt) => {
             const isSaved = savedOptions.includes(opt);
