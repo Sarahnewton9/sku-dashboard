@@ -107,14 +107,16 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
 
   // Build custom rows lookup: repId → {title, section, valuesByColour}
   // Per-colour rows share the same title but have different ids. We group them by title,
-  // using the lowest id as the representative (canonical) id so rowKeys lookups work.
+  // using the LOWEST id as the representative (canonical) id so rowKeys lookups work.
+  // Sort by id ascending first so the lowest id is always picked as representative.
+  const sortedCustomRows = [...customRows].sort((a, b) => a.id - b.id);
   const customRowById = new Map<number, { title: string; section: string; valuesByColour: Record<string, string> }>();
-  // Also build a title → repId map so per-colour rows can find their group
+  // Also build a title → repId map for fallback lookups when rowKeys has stale ids
   const titleToRepId = new Map<string, number>();
-  for (const cr of customRows) {
+  for (const cr of sortedCustomRows) {
     const existingRepId = titleToRepId.get(cr.title);
     if (existingRepId === undefined) {
-      // First row for this title — use its id as the representative
+      // First row for this title (lowest id) — use its id as the representative
       titleToRepId.set(cr.title, cr.id);
       customRowById.set(cr.id, { title: cr.title, section: cr.section, valuesByColour: { [cr.colour]: cr.value ?? "" } });
     } else {
@@ -156,20 +158,41 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
         prevSection = comp.section;
       } else if (key.startsWith("c:")) {
         const id = parseInt(key.slice(2), 10);
-        const cr = customRowById.get(id);
-        if (!cr) continue; // custom row no longer exists
+        let cr = customRowById.get(id);
+        let repId = id;
+        if (!cr) {
+          // Stale id: after __all__ explosion the old id was deleted and new per-colour ids
+          // were assigned. The rowKeys entry still has the old id. We can't match by id,
+          // so skip it — the fallback (no-rowKeys path) will include all custom rows.
+          // To avoid duplicates, we simply skip stale ids here and rely on the fact that
+          // the client-side upsertForColourMutation updates rowKeys after explosion.
+          continue;
+        }
         // Insert a spacer when the section changes
         if (prevSection !== null && cr.section !== prevSection) {
           orderedRows.push({ label: "", key: null, isSpacer: true });
         }
-        orderedRows.push({ label: cr.title.toUpperCase(), key: `__custom__${id}`, isSpacer: false });
+        orderedRows.push({ label: cr.title.toUpperCase(), key: `__custom__${repId}`, isSpacer: false });
         prevSection = cr.section;
       }
     }
 
+    // Append any custom row groups that weren't placed by rowKeys.
+    // This handles stale ids (after __all__ explosion) where the old c:{id} in rowKeys
+    // no longer exists in the DB. We track which repIds were placed and append the rest.
+    const placedRepIds = new Set(
+      orderedRows
+        .filter((r) => r.key?.startsWith("__custom__"))
+        .map((r) => parseInt(r.key!.slice("__custom__".length), 10))
+    );
+    for (const [repId, cr] of Array.from(customRowById)) {
+      if (!placedRepIds.has(repId)) {
+        orderedRows.push({ label: cr.title.toUpperCase(), key: `__custom__${repId}`, isSpacer: false });
+      }
+    }
+
     // NOTE: Template rows absent from rowKeys were deleted by the user — do NOT re-add them.
-    // (The on-screen unifiedRows logic also has a fallback for brand-new template rows added
-    //  after the order was last saved, but for export purposes we treat absent = deleted.)
+    // (Custom rows not in rowKeys are treated as newly added and appended above.)
 
     componentRows = orderedRows;
   } else {

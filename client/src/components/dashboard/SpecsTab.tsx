@@ -190,21 +190,28 @@ function CustomFreeTypeCell({ value, options, onSave, onAddOption, onDeleteOptio
   const allOptions = Array.from(new Set(options)).filter(Boolean).sort((a, b) => a.localeCompare(b));
   const [draft, setDraft] = useState(value);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  // Track whether the user is actively typing (vs just focused with existing value)
+  const [isTyping, setIsTyping] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const committedRef = useRef(false);
 
   useEffect(() => { setDraft(value); }, [value]);
 
-  const filtered = draft.trim()
+  // When typing, filter options by the draft. On initial focus (not typing), show all options.
+  const filtered = isTyping && draft.trim()
     ? allOptions.filter((o) => o.toLowerCase().includes(draft.toLowerCase()))
     : allOptions;
+
+  // The "Save as suggestion" row should show whenever the draft is a new value (not in options)
+  const isNewValue = draft.trim() !== "" && !allOptions.some((o) => o.toLowerCase() === draft.trim().toLowerCase());
 
   function commit(val: string) {
     const trimmed = val.trim();
     onSave(trimmed);
     setDraft(trimmed);
     setShowSuggestions(false);
+    setIsTyping(false);
   }
 
   function handleSelect(opt: string) {
@@ -215,7 +222,7 @@ function CustomFreeTypeCell({ value, options, onSave, onAddOption, onDeleteOptio
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") { committedRef.current = true; commit(draft); inputRef.current?.blur(); }
-    if (e.key === "Escape") { setDraft(value); setShowSuggestions(false); inputRef.current?.blur(); }
+    if (e.key === "Escape") { setDraft(value); setShowSuggestions(false); setIsTyping(false); inputRef.current?.blur(); }
   }
 
   function handleBlur() {
@@ -224,9 +231,13 @@ function CustomFreeTypeCell({ value, options, onSave, onAddOption, onDeleteOptio
         if (!committedRef.current) commit(draft);
         committedRef.current = false;
         setShowSuggestions(false);
+        setIsTyping(false);
       }
     }, 150);
   }
+
+  // The dropdown shows if there are options to display OR if the draft is a new value to save
+  const shouldShowDropdown = showSuggestions && (filtered.length > 0 || isNewValue);
 
   return (
     <div ref={containerRef} className="relative min-w-[140px] w-full">
@@ -234,14 +245,14 @@ function CustomFreeTypeCell({ value, options, onSave, onAddOption, onDeleteOptio
         ref={inputRef}
         type="text"
         value={draft}
-        onChange={(e) => { setDraft(e.target.value); setShowSuggestions(true); }}
-        onFocus={() => setShowSuggestions(true)}
+        onChange={(e) => { setDraft(e.target.value); setIsTyping(true); setShowSuggestions(true); }}
+        onFocus={() => { setIsTyping(false); setShowSuggestions(true); }}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder="— type —"
         className="h-8 w-full px-2 text-xs rounded border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
       />
-      {showSuggestions && (filtered.length > 0 || (draft.trim() && !allOptions.some((o) => o.toLowerCase() === draft.trim().toLowerCase()))) && (
+      {shouldShowDropdown && (
         <div className="absolute z-50 top-full left-0 mt-0.5 w-64 max-h-52 overflow-y-auto bg-popover border border-border rounded shadow-md">
           {filtered.map((opt) => (
             <div
@@ -259,7 +270,8 @@ function CustomFreeTypeCell({ value, options, onSave, onAddOption, onDeleteOptio
               </button>
             </div>
           ))}
-          {draft.trim() && !allOptions.some((o) => o.toLowerCase() === draft.trim().toLowerCase()) && (
+          {/* Always show Save-as-option when the draft is a new value, regardless of filtered length */}
+          {isNewValue && (
             <div
               className="px-2 py-1.5 text-xs text-blue-600 font-medium hover:bg-accent cursor-pointer border-t border-border"
               onMouseDown={(e) => { e.preventDefault(); onAddOption(draft.trim()); commit(draft.trim()); }}
