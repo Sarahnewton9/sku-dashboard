@@ -635,6 +635,12 @@ export async function deleteDropdownOptionByValue(component: string, value: stri
   );
 }
 
+export async function updateDropdownOption(id: number, value: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(specDropdownOptions).set({ value }).where(eq(specDropdownOptions.id, id));
+}
+
 // ─── Style Spec Meta (buckle, sub-type, notes) ────────────────────────────────
 
 export async function getStyleSpecMeta(style: string) {

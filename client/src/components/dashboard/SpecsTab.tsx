@@ -17,7 +17,7 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import {
-  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2, X, ArrowRight, RefreshCw, GripVertical, RotateCcw,
+  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2, X, ArrowRight, RefreshCw, GripVertical, RotateCcw, Pencil,
 } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent, DragOverlay,
@@ -68,14 +68,16 @@ interface FreeTypeCellProps {
   component: SpecComponent;
   value: string;
   savedOptions: string[];
+  savedOptionIds?: Record<string, number>; // value -> id mapping for edit
   onSave: (val: string) => void;
   onAddOption: (val: string) => void;
   onDeleteOption?: (val: string) => void;
+  onEditOption?: (id: number, newValue: string) => void;
   /** If provided, overrides the default option list (used for upper_1) */
   overrideOptions?: string[];
 }
 
-function FreeTypeCell({ component, value, savedOptions, onSave, onAddOption, onDeleteOption, overrideOptions }: FreeTypeCellProps) {
+function FreeTypeCell({ component, value, savedOptions, savedOptionIds, onSave, onAddOption, onDeleteOption, onEditOption, overrideOptions }: FreeTypeCellProps) {
   const defaults = overrideOptions ?? DEFAULT_DROPDOWN_OPTIONS[component.key] ?? [];
   const allOptions = Array.from(new Set([...defaults, ...savedOptions]))
     .filter(Boolean)
@@ -83,6 +85,8 @@ function FreeTypeCell({ component, value, savedOptions, onSave, onAddOption, onD
 
   const [draft, setDraft] = useState(value);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [editingOpt, setEditingOpt] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   // Prevent double-commit: when a suggestion is clicked, handleSelect commits immediately;
@@ -148,28 +152,72 @@ function FreeTypeCell({ component, value, savedOptions, onSave, onAddOption, onD
       />
       {showSuggestions && filtered.length > 0 && (
         <div className="absolute z-50 top-full left-0 mt-0.5 w-64 max-h-52 overflow-y-auto bg-popover border border-border rounded shadow-md">
-          {filtered.map((opt) => (
-            <div
-              key={opt}
-              className="flex items-center justify-between px-2 py-1.5 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer group/opt"
-              onMouseDown={(e) => { e.preventDefault(); handleSelect(opt); }}
-            >
-              <span className="flex-1 break-words whitespace-pre-wrap">{opt}</span>
-              {onDeleteOption && savedOptions.includes(opt) && (
-                <button
-                  className="ml-1 p-0.5 rounded opacity-0 group-hover/opt:opacity-100 hover:bg-destructive/20 hover:text-destructive text-muted-foreground flex-shrink-0"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onDeleteOption(opt);
-                  }}
-                  title="Remove suggestion"
-                >
-                  <X className="w-2.5 h-2.5" />
-                </button>
-              )}
-            </div>
-          ))}
+          {filtered.map((opt) => {
+            const isSaved = savedOptions.includes(opt);
+            const optId = savedOptionIds?.[opt];
+            if (editingOpt === opt) {
+              return (
+                <div key={opt} className="flex items-center gap-1 px-2 py-1" onMouseDown={(e) => e.preventDefault()}>
+                  <input
+                    autoFocus
+                    className="flex-1 text-xs border border-input rounded px-1.5 py-0.5 bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                    value={editDraft}
+                    onChange={(e) => setEditDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && editDraft.trim() && optId !== undefined) {
+                        onEditOption?.(optId, editDraft.trim());
+                        setEditingOpt(null);
+                      }
+                      if (e.key === "Escape") setEditingOpt(null);
+                    }}
+                  />
+                  <button
+                    className="p-0.5 rounded text-xs text-green-600 hover:bg-green-50 flex-shrink-0"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      if (editDraft.trim() && optId !== undefined) {
+                        onEditOption?.(optId, editDraft.trim());
+                      }
+                      setEditingOpt(null);
+                    }}
+                    title="Save"
+                  ><Check className="w-3 h-3" /></button>
+                  <button
+                    className="p-0.5 rounded text-xs text-muted-foreground hover:bg-accent flex-shrink-0"
+                    onMouseDown={(e) => { e.preventDefault(); setEditingOpt(null); }}
+                    title="Cancel"
+                  ><X className="w-3 h-3" /></button>
+                </div>
+              );
+            }
+            return (
+              <div
+                key={opt}
+                className="flex items-center justify-between px-2 py-1.5 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer group/opt"
+                onMouseDown={(e) => { e.preventDefault(); handleSelect(opt); }}
+              >
+                <span className="flex-1 break-words whitespace-pre-wrap">{opt}</span>
+                {isSaved && (
+                  <span className="flex items-center gap-0.5 opacity-0 group-hover/opt:opacity-100 flex-shrink-0">
+                    {onEditOption && optId !== undefined && (
+                      <button
+                        className="p-0.5 rounded hover:bg-accent text-muted-foreground"
+                        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setEditingOpt(opt); setEditDraft(opt); }}
+                        title="Edit suggestion"
+                      ><Pencil className="w-2.5 h-2.5" /></button>
+                    )}
+                    {onDeleteOption && (
+                      <button
+                        className="p-0.5 rounded hover:bg-destructive/20 hover:text-destructive text-muted-foreground"
+                        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteOption(opt); }}
+                        title="Remove suggestion"
+                      ><X className="w-2.5 h-2.5" /></button>
+                    )}
+                  </span>
+                )}
+              </div>
+            );
+          })}
           {/* Save as suggestion if typed value is new */}
           {draft.trim() && !allOptions.some((o) => o.toLowerCase() === draft.trim().toLowerCase()) && (
             <div
@@ -189,17 +237,21 @@ function FreeTypeCell({ component, value, savedOptions, onSave, onAddOption, onD
 interface CustomFreeTypeCellProps {
   value: string;
   options: string[];
+  optionIds?: Record<string, number>;
   onSave: (val: string) => void;
   onAddOption: (val: string) => void;
   onDeleteOption: (val: string) => void;
+  onEditOption?: (id: number, newValue: string) => void;
 }
-function CustomFreeTypeCell({ value, options, onSave, onAddOption, onDeleteOption }: CustomFreeTypeCellProps) {
+function CustomFreeTypeCell({ value, options, optionIds, onSave, onAddOption, onDeleteOption, onEditOption }: CustomFreeTypeCellProps) {
   const allOptions = Array.from(new Set(options)).filter(Boolean).sort((a, b) => a.localeCompare(b));
 
   const [draft, setDraft] = useState(value);
   const [showSuggestions, setShowSuggestions] = useState(false);
   // Track whether the user is actively typing (vs just focused with existing value)
   const [isTyping, setIsTyping] = useState(false);
+  const [editingOpt, setEditingOpt] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const committedRef = useRef(false);
@@ -269,22 +321,65 @@ function CustomFreeTypeCell({ value, options, onSave, onAddOption, onDeleteOptio
       />
       {shouldShowDropdown && (
         <div className="absolute z-50 top-full left-0 mt-0.5 w-64 max-h-52 overflow-y-auto bg-popover border border-border rounded shadow-md">
-          {filtered.map((opt) => (
-            <div
-              key={opt}
-              className="flex items-center justify-between px-2 py-1.5 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer group/opt"
-              onMouseDown={(e) => { e.preventDefault(); handleSelect(opt); }}
-            >
-              <span className="flex-1 break-words whitespace-pre-wrap">{opt}</span>
-              <button
-                className="ml-1 p-0.5 rounded opacity-0 group-hover/opt:opacity-100 hover:bg-destructive/20 hover:text-destructive text-muted-foreground flex-shrink-0"
-                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteOption(opt); }}
-                title="Remove suggestion"
+          {filtered.map((opt) => {
+            const optId = optionIds?.[opt];
+            if (editingOpt === opt) {
+              return (
+                <div key={opt} className="flex items-center gap-1 px-2 py-1" onMouseDown={(e) => e.preventDefault()}>
+                  <input
+                    autoFocus
+                    className="flex-1 text-xs border border-input rounded px-1.5 py-0.5 bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                    value={editDraft}
+                    onChange={(e) => setEditDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && editDraft.trim() && optId !== undefined) {
+                        onEditOption?.(optId, editDraft.trim());
+                        setEditingOpt(null);
+                      }
+                      if (e.key === "Escape") setEditingOpt(null);
+                    }}
+                  />
+                  <button
+                    className="p-0.5 rounded text-xs text-green-600 hover:bg-green-50 flex-shrink-0"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      if (editDraft.trim() && optId !== undefined) onEditOption?.(optId, editDraft.trim());
+                      setEditingOpt(null);
+                    }}
+                    title="Save"
+                  ><Check className="w-3 h-3" /></button>
+                  <button
+                    className="p-0.5 rounded text-xs text-muted-foreground hover:bg-accent flex-shrink-0"
+                    onMouseDown={(e) => { e.preventDefault(); setEditingOpt(null); }}
+                    title="Cancel"
+                  ><X className="w-3 h-3" /></button>
+                </div>
+              );
+            }
+            return (
+              <div
+                key={opt}
+                className="flex items-center justify-between px-2 py-1.5 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer group/opt"
+                onMouseDown={(e) => { e.preventDefault(); handleSelect(opt); }}
               >
-                <X className="w-2.5 h-2.5" />
-              </button>
-            </div>
-          ))}
+                <span className="flex-1 break-words whitespace-pre-wrap">{opt}</span>
+                <span className="flex items-center gap-0.5 opacity-0 group-hover/opt:opacity-100 flex-shrink-0">
+                  {onEditOption && optId !== undefined && (
+                    <button
+                      className="p-0.5 rounded hover:bg-accent text-muted-foreground"
+                      onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setEditingOpt(opt); setEditDraft(opt); }}
+                      title="Edit suggestion"
+                    ><Pencil className="w-2.5 h-2.5" /></button>
+                  )}
+                  <button
+                    className="p-0.5 rounded hover:bg-destructive/20 hover:text-destructive text-muted-foreground"
+                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteOption(opt); }}
+                    title="Remove suggestion"
+                  ><X className="w-2.5 h-2.5" /></button>
+                </span>
+              </div>
+            );
+          })}
           {/* Always show Save-as-option when the draft is a new value, regardless of filtered length */}
           {isNewValue && (
             <div
@@ -349,16 +444,18 @@ interface UnifiedTemplateRowProps {
   colourLabels: string[];
   specs: Record<string, Record<string, string>>;
   allDropdownOptions: Record<string, string[]>;
+  allDropdownOptionIds?: Record<string, Record<string, number>>;
   allColourLeatherOptions: string[];
   onUpsert: (colour: string, key: string, value: string) => void;
   onAddDropdownOption: (key: string, value: string) => void;
   onDeleteDropdownOption: (key: string, value: string) => void;
+  onEditDropdownOption?: (id: number, newValue: string) => void;
   isActive?: boolean;
   onDelete: (id: string) => void;
 }
 function UnifiedTemplateRow({
-  id, comp, colours, colourLabels, specs, allDropdownOptions, allColourLeatherOptions,
-  onUpsert, onAddDropdownOption, onDeleteDropdownOption, isActive, onDelete,
+  id, comp, colours, colourLabels, specs, allDropdownOptions, allDropdownOptionIds, allColourLeatherOptions,
+  onUpsert, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption, isActive, onDelete,
 }: UnifiedTemplateRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({ id });
   const style: React.CSSProperties = {
@@ -404,6 +501,7 @@ function UnifiedTemplateRow({
         const colourKey = colourLabels[colIdx] ?? colour;
         const val = specs[colourKey]?.[comp.key] ?? "";
         const savedOpts = allDropdownOptions[comp.key] ?? [];
+        const savedOptIds = allDropdownOptionIds?.[comp.key] ?? {};
         const isUpper1 = comp.key === "upper_1";
         const upper1EffectiveVal = isUpper1 && !val ? colourKey : val;
         return (
@@ -412,9 +510,11 @@ function UnifiedTemplateRow({
               component={comp}
               value={upper1EffectiveVal}
               savedOptions={savedOpts}
+              savedOptionIds={savedOptIds}
               onSave={(v) => onUpsert(colourKey, comp.key, v)}
               onAddOption={(v) => onAddDropdownOption(comp.key, v)}
               onDeleteOption={isUpper1 ? undefined : (v) => onDeleteDropdownOption(comp.key, v)}
+              onEditOption={isUpper1 ? undefined : onEditDropdownOption}
               overrideOptions={isUpper1 ? allColourLeatherOptions : undefined}
             />
           </td>
@@ -441,10 +541,12 @@ interface UnifiedCustomRowProps {
   isActive?: boolean;
   /** Dropdown options keyed by "custom:TITLE" for option persistence */
   allDropdownOptions: Record<string, string[]>;
+  allDropdownOptionIds?: Record<string, Record<string, number>>;
   onAddDropdownOption: (key: string, value: string) => void;
   onDeleteDropdownOption: (key: string, value: string) => void;
+  onEditDropdownOption?: (id: number, newValue: string) => void;
 }
-function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForColour, onDelete, allTitles, isActive, allDropdownOptions, onAddDropdownOption, onDeleteDropdownOption }: UnifiedCustomRowProps) {
+function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForColour, onDelete, allTitles, isActive, allDropdownOptions, allDropdownOptionIds, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption }: UnifiedCustomRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({ id });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -496,11 +598,13 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForCol
         }
         const optKey = `custom:${row.title}`;
         const opts = allDropdownOptions[optKey] ?? [];
+        const optIds = allDropdownOptionIds?.[optKey] ?? {};
         return (
           <td key={`${colour}-${colIdx}`} className="px-2 py-1 align-middle">
             <CustomFreeTypeCell
               value={cellValue}
               options={opts}
+              optionIds={optIds}
               onSave={(v) => {
                 if (isAllRow) {
                   onUpdateForColour(row.id, row.title, colour, v, sharedValue, row.section, row.sortOrder);
@@ -515,6 +619,7 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForCol
               }}
               onAddOption={(val) => onAddDropdownOption(optKey, val)}
               onDeleteOption={(val) => onDeleteDropdownOption(optKey, val)}
+              onEditOption={onEditDropdownOption}
             />
           </td>
         );
@@ -692,6 +797,7 @@ interface SpecFormProps {
   specMeta: { hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null } | null;
   specs: Record<string, Record<string, string>>; // colour → component → value
   allDropdownOptions: Record<string, string[]>;
+  allDropdownOptionIds: Record<string, Record<string, number>>;
   allColourLeatherOptions: string[];
   imageOverride?: string;
   customRows: CustomRowData[];
@@ -699,6 +805,7 @@ interface SpecFormProps {
   onBulkAutoFill: (rows: Array<{ style: string; colour: string; component: string; value: string }>) => void;
   onAddDropdownOption: (component: string, value: string) => void;
   onDeleteDropdownOption: (component: string, value: string) => void;
+  onEditDropdownOption: (id: number, newValue: string) => void;
   onMetaChange: (meta: Partial<{ hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null }>) => void;
   onAddSku: (colour: string, leather: string) => void;
   onAddCustomRow: (section: string, afterSortOrder?: number) => void;
@@ -937,8 +1044,8 @@ type UnifiedRow =
   | { kind: "custom"; id: string; row: CustomRowData; rowGroup: Map<string, CustomRowData> };
 
 function SpecForm({
-  entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allColourLeatherOptions, imageOverride, customRows,
-  onUpsert, onBulkAutoFill, onAddDropdownOption, onDeleteDropdownOption, onMetaChange, onAddSku, onAddCustomRow, onUpdateCustomRow, onUpdateCustomRowForColour, onDeleteCustomRow, onReorderCustomRows,
+  entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allDropdownOptionIds, allColourLeatherOptions, imageOverride, customRows,
+  onUpsert, onBulkAutoFill, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption, onMetaChange, onAddSku, onAddCustomRow, onUpdateCustomRow, onUpdateCustomRowForColour, onDeleteCustomRow, onReorderCustomRows,
   dbCategory, onSetCategory, allCustomRowTitles, allStyleEntries,
   onHideColumn, hiddenColumns, showHiddenColumns, onShowColumn, onResetColour,
   tableScrollRef: externalTableScrollRef,
@@ -1365,10 +1472,12 @@ function SpecForm({
                       colourLabels={entry.colourLabels}
                       specs={specs}
                       allDropdownOptions={allDropdownOptions}
+                      allDropdownOptionIds={allDropdownOptionIds}
                       allColourLeatherOptions={allColourLeatherOptions}
                       onUpsert={onUpsert}
                       onAddDropdownOption={onAddDropdownOption}
                       onDeleteDropdownOption={onDeleteDropdownOption}
+                      onEditDropdownOption={onEditDropdownOption}
                       isActive={activeId === uRow.id}
                       onDelete={(id) => {
                         // Hide this template row by saving order with it removed
@@ -1393,8 +1502,10 @@ function SpecForm({
                       allTitles={allCustomRowTitles}
                       isActive={activeId === uRow.id}
                       allDropdownOptions={allDropdownOptions}
+                      allDropdownOptionIds={allDropdownOptionIds}
                       onAddDropdownOption={onAddDropdownOption}
                       onDeleteDropdownOption={onDeleteDropdownOption}
+                      onEditDropdownOption={onEditDropdownOption}
                     />
                   );
                 }
@@ -1894,9 +2005,13 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   // allDropdownOptions: component → string[]
   const allDropdownOptions: Record<string, string[]> = {};
+  // allDropdownOptionIds: component → { value: id } for edit support
+  const allDropdownOptionIds: Record<string, Record<string, number>> = {};
   for (const opt of rawDropdownOptions) {
     if (!allDropdownOptions[opt.component]) allDropdownOptions[opt.component] = [];
     allDropdownOptions[opt.component].push(opt.value);
+    if (!allDropdownOptionIds[opt.component]) allDropdownOptionIds[opt.component] = {};
+    allDropdownOptionIds[opt.component][opt.value] = opt.id;
   }
 
   const specMeta = rawMeta
@@ -2244,6 +2359,11 @@ export default function SpecsTab({}: SpecsTabProps) {
     onError: () => toast.error("Failed to remove dropdown option"),
   });
 
+  const updateDropdownMutation = trpc.specs.updateDropdownOption.useMutation({
+    onSuccess: () => refetchDropdowns(),
+    onError: () => toast.error("Failed to update dropdown option"),
+  });
+
   const upsertMetaMutation = trpc.specs.upsertMeta.useMutation({
     onSuccess: () => refetchMeta(),
     onError: () => toast.error("Failed to save style settings"),
@@ -2276,6 +2396,10 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   function handleDeleteDropdownOption(component: string, value: string) {
     deleteDropdownMutation.mutate({ component, value });
+  }
+
+  function handleEditDropdownOption(id: number, newValue: string) {
+    updateDropdownMutation.mutate({ id, value: newValue });
   }
 
   function handleMetaChange(patch: Partial<{ hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null }>) {
@@ -2762,6 +2886,7 @@ export default function SpecsTab({}: SpecsTabProps) {
               specMeta={specMeta}
               specs={specs}
               allDropdownOptions={allDropdownOptions}
+              allDropdownOptionIds={allDropdownOptionIds}
               allColourLeatherOptions={ALL_COLOUR_LEATHER_OPTIONS}
               imageOverride={imageOverrides[selectedEntry.style]}
               customRows={rawCustomRows as any[]}
@@ -2769,6 +2894,7 @@ export default function SpecsTab({}: SpecsTabProps) {
               onBulkAutoFill={handleBulkAutoFill}
               onAddDropdownOption={handleAddDropdownOption}
               onDeleteDropdownOption={handleDeleteDropdownOption}
+              onEditDropdownOption={handleEditDropdownOption}
               onAddSku={handleAddSku}
               onMetaChange={handleMetaChange}
               onAddCustomRow={handleAddCustomRow}

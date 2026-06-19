@@ -259,6 +259,10 @@
 - [x] Add specValues.resetColour tRPC procedure
 - [x] Add Reset button (with confirm popover) to each colour column header in SpecsTab
 - [x] After reset, invalidate rawCustomRows and spec values queries
+<<<<<<< Updated upstream
+=======
+=======
+>>>>>>> Stashed changes
 
 ## Spec Export Fix - All Colour Values (Jun 2026)
 - [x] Fix spec export only showing first two colour values for custom rows — was using filtered (hidden-columns-excluded) colour list for explosion; now uses full unfiltered list
@@ -280,3 +284,14 @@
 - [x] Add specValues.resetColour tRPC procedure
 - [x] Add Reset button (with confirm popover) to each colour column header in SpecsTab
 - [x] After reset, invalidate rawCustomRows and spec values queries
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+
+## Manage Saved Dropdown Options (Jun 2026)
+- [ ] Add specDropdownOptions.update tRPC procedure (rename a saved option value)
+- [ ] Add specDropdownOptions.delete tRPC procedure (remove a saved option by id)
+- [ ] Add "Manage options" gear/settings icon in the dropdown suggestion list
+- [ ] Build ManageOptionsPanel: list all saved options for a row with inline edit (pencil) and delete (trash) per item
+- [ ] After edit/delete, invalidate specDropdownOptions query and refresh open dropdown list
+>>>>>>> Stashed changes

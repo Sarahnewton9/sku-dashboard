@@ -14,7 +14,7 @@ import {
   getAllLastApprovals, upsertLastApproval, getDeletedLasts, deleteLast, restoreDeletedLast,
   getAllSeasonImports, createSeasonImport, getSeasonSkuData, deleteSeasonImport,
   getSpecsForStyle, upsertStyleSpec, deleteStyleSpecs, bulkUpsertStyleSpecs,
-  getAllDropdownOptions, getDropdownOptions, addDropdownOption, deleteDropdownOption, deleteDropdownOptionByValue,
+  getAllDropdownOptions, getDropdownOptions, addDropdownOption, deleteDropdownOption, deleteDropdownOptionByValue, updateDropdownOption,
   getStyleSpecMeta, getAllStyleSpecMeta, upsertStyleSpecMeta,
   getSpecCountsForAllStyles,
   createFittingSession, updateFittingSession, deleteFittingSession, getFittingSessionsForStyle, getAllFittingSessions,
@@ -718,6 +718,13 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await deleteDropdownOption(input.id);
+        return { success: true };
+      }),
+
+    updateDropdownOption: publicProcedure
+      .input(z.object({ id: z.number(), value: z.string().min(1) }))
+      .mutation(async ({ input }) => {
+        await updateDropdownOption(input.id, input.value);
         return { success: true };
       }),
 
