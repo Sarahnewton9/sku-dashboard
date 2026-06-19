@@ -94,7 +94,6 @@ export const SPEC_TEMPLATES: Record<ShoeCategory, SpecComponent[]> = {
     { key: "topline",        label: "Topline",        type: "dropdown", section: "upper" },
     { key: "bow",            label: "Bow",            type: "dropdown", section: "upper" },
     { key: "sock",           label: "Sock",           type: "dropdown", section: "construction" },
-    { key: "sock_logo",      label: "Sock Logo",      type: "dropdown", section: "construction" },
     { key: "heel_counter",   label: "Heel Counter",   type: "dropdown", section: "construction" },
     { key: "insole_name",    label: "Insole Name",    type: "text",     section: "construction" },
     ...SOLE_BASE,
@@ -105,7 +104,6 @@ export const SPEC_TEMPLATES: Record<ShoeCategory, SpecComponent[]> = {
   "Loafer": [
     ...UPPER_BASE,
     { key: "sock",           label: "Sock",           type: "dropdown", section: "construction" },
-    { key: "sock_logo",      label: "Sock Logo",      type: "dropdown", section: "construction" },
     { key: "heel_counter",   label: "Heel Counter",   type: "dropdown", section: "construction" },
     { key: "insole_name",    label: "Insole Name",    type: "text",     section: "construction" },
     ...SOLE_BASE,
@@ -188,7 +186,6 @@ export const SPEC_TEMPLATES: Record<ShoeCategory, SpecComponent[]> = {
     ...UPPER_BASE,
     { key: "topline",        label: "Topline",        type: "dropdown", section: "upper" },
     { key: "sock",           label: "Sock",           type: "dropdown", section: "construction" },
-    { key: "sock_logo",      label: "Sock Logo",      type: "dropdown", section: "construction" },
     { key: "heel_counter",   label: "Heel Counter",   type: "dropdown", section: "construction" },
     { key: "insole_name",    label: "Insole Name",    type: "text",     section: "construction" },
     ...SOLE_BASE,
@@ -234,11 +231,10 @@ export const STYLE_COMPONENT_OVERRIDES: Record<string, StyleOverride> = {
     remove: ["insole_name", "sole_edge"],
   },
 
-  // KAILA – Add Inking, Sock Logo, Platform Cover. Remove Foot Bed Cover and Add Insole Cover.
+  // KAILA – Add Inking, Platform Cover, Insole Cover. Remove Foot Bed Cover.
   "KAILA": {
     add: [
       { key: "kaila_inking",         label: "Inking",         type: "dropdown", section: "components" },
-      { key: "kaila_sock_logo",      label: "Sock Logo",      type: "dropdown", section: "components" },
       { key: "kaila_platform_cover", label: "Platform Cover", type: "dropdown", section: "components" },
       { key: "kaila_insole_cover",   label: "Insole Cover",   type: "dropdown", section: "components" },
     ],
