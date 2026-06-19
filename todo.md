@@ -301,3 +301,7 @@
 ## Specs Tab Bug Fixes (Jun 2026)
 - [x] Fix: add "Restore cancelled colours" panel in Specs tab so deleted colours can be re-added without knowing the name
 - [x] Fix: duplicate colour key bug (e.g. XENA BLACK TUSCON appearing twice) — deduplicate colour iteration in NEW_COLOURS_PER_STYLE so each colour is only processed once even when it appears with multiple leathers in custom_skus
+
+## Bulk Spec Status Update (Jun 2026)
+- [x] Add bulkSetSpecStatus DB helper and tRPC procedure
+- [x] Add checkbox selection UI to style list + bulk action toolbar (Complete / In Progress / Not Started)

@@ -40,7 +40,7 @@ import {
   getSpecRowOrder, upsertSpecRowOrder,
   getSpecHiddenColumns, hideSpecColumn, showSpecColumn,
   getCustomLasts, addCustomLast, deleteCustomLast, resetSpecColour,
-  setSpecStatus, checkAllSpecsFilled,
+  setSpecStatus, checkAllSpecsFilled, bulkSetSpecStatus,
   recordPptxImport,
 } from "./db";
 import { storagePut } from "./storage";
@@ -782,6 +782,15 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         await setSpecStatus(input.style, input.status);
+        return { success: true };
+      }),
+    bulkSetStatus: publicProcedure
+      .input(z.object({
+        styles: z.array(z.string()),
+        status: z.enum(["not_started", "in_progress", "complete"]),
+      }))
+      .mutation(async ({ input }) => {
+        await bulkSetSpecStatus(input.styles, input.status);
         return { success: true };
       }),
     // Reset all spec values (template rows + custom rows) for a specific colour column

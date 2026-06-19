@@ -1337,3 +1337,19 @@ export async function checkAllSpecsFilled(
   }
   return true;
 }
+
+/** Bulk update specStatus for multiple styles at once */
+export async function bulkSetSpecStatus(
+  styles: string[],
+  status: "not_started" | "in_progress" | "complete"
+): Promise<void> {
+  if (styles.length === 0) return;
+  const db = await getDb();
+  if (!db) return;
+  for (const style of styles) {
+    await db
+      .insert(styleSpecMeta)
+      .values({ style, specStatus: status })
+      .onDuplicateKeyUpdate({ set: { specStatus: status } });
+  }
+}

@@ -4,6 +4,7 @@ import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { displayColourLeather } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -1998,6 +1999,43 @@ export default function SpecsTab({}: SpecsTabProps) {
     restoreCancelledSkuMutation.mutate({ style, colour, leather });
   }
   // ─── Spec Status ──────────────────────────────────────────────────────────
+  // ─── Bulk Status ─────────────────────────────────────────────────────────────
+  const [selectedStyles, setSelectedStyles] = useState<Set<string>>(new Set());
+  const [bulkSelectMode, setBulkSelectMode] = useState(false);
+
+  const bulkSetStatusMutation = trpc.specs.bulkSetStatus.useMutation({
+    onSuccess: (_data, { styles, status }) => {
+      refetchAllSpecMeta();
+      setSelectedStyles(new Set());
+      setBulkSelectMode(false);
+      const label = status === "complete" ? "Complete" : status === "in_progress" ? "In Progress" : "Not Started";
+      toast.success(`Marked ${styles.length} style${styles.length === 1 ? "" : "s"} as ${label}`);
+    },
+    onError: () => toast.error("Failed to update spec status"),
+  });
+
+  function handleBulkSetStatus(status: "not_started" | "in_progress" | "complete") {
+    if (selectedStyles.size === 0) return;
+    bulkSetStatusMutation.mutate({ styles: Array.from(selectedStyles), status });
+  }
+
+  function toggleStyleSelection(style: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    setSelectedStyles((prev) => {
+      const next = new Set(prev);
+      if (next.has(style)) next.delete(style); else next.add(style);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedStyles.size === filtered.length) {
+      setSelectedStyles(new Set());
+    } else {
+      setSelectedStyles(new Set(filtered.map((e) => e.style)));
+    }
+  }
+
   const setStatusMutation = trpc.specs.setStatus.useMutation({
     onSuccess: (_data, { style }) => {
       refetchMeta();
@@ -2657,9 +2695,46 @@ export default function SpecsTab({}: SpecsTabProps) {
               className="pl-8 h-8 text-xs"
             />
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            {filtered.length} of {styleList.length} styles
-          </p>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs text-muted-foreground">
+              {filtered.length} of {styleList.length} styles
+            </p>
+            <button
+              className="text-xs text-primary hover:underline"
+              onClick={() => { setBulkSelectMode((v) => !v); setSelectedStyles(new Set()); }}
+            >
+              {bulkSelectMode ? "Cancel" : "Select"}
+            </button>
+          </div>
+          {/* Bulk action toolbar */}
+          {bulkSelectMode && selectedStyles.size > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1 items-center">
+              <span className="text-xs text-muted-foreground mr-1">{selectedStyles.size} selected:</span>
+              <button
+                className="text-xs px-2 py-1 rounded bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/60 font-medium"
+                onClick={() => handleBulkSetStatus("complete")}
+                disabled={bulkSetStatusMutation.isPending}
+              >✓ Complete</button>
+              <button
+                className="text-xs px-2 py-1 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/60 font-medium"
+                onClick={() => handleBulkSetStatus("in_progress")}
+                disabled={bulkSetStatusMutation.isPending}
+              >In Progress</button>
+              <button
+                className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground hover:bg-muted/80 font-medium"
+                onClick={() => handleBulkSetStatus("not_started")}
+                disabled={bulkSetStatusMutation.isPending}
+              >Not Started</button>
+            </div>
+          )}
+          {bulkSelectMode && (
+            <button
+              className="mt-1 text-xs text-muted-foreground hover:text-foreground"
+              onClick={toggleSelectAll}
+            >
+              {selectedStyles.size === filtered.length ? "Deselect all" : "Select all"}
+            </button>
+          )}
           {/* Drag-and-drop folder zone */}
           <input
             ref={bulkFileRef}
@@ -2700,6 +2775,7 @@ export default function SpecsTab({}: SpecsTabProps) {
 
             function StyleRow({ entry }: { entry: StyleEntry }) {
               const isSelected = selectedStyle === entry.style;
+              const isBulkChecked = selectedStyles.has(entry.style);
               const status = specStatusMap[entry.style] ?? "not_started";
               const statusBadge = status === "complete"
                 ? <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 flex-shrink-0">Done</span>
@@ -2709,13 +2785,21 @@ export default function SpecsTab({}: SpecsTabProps) {
               return (
                 <button
                   key={entry.style}
-                  onClick={() => setSelectedStyle(entry.style)}
+                  onClick={() => bulkSelectMode ? toggleStyleSelection(entry.style, { stopPropagation: () => {} } as React.MouseEvent) : setSelectedStyle(entry.style)}
                   className={`w-full text-left px-3 py-2.5 border-b transition-colors hover:bg-muted/50 ${
-                    isSelected ? "bg-primary/10 border-l-2 border-l-primary" : ""
-                  }`}
+                    isSelected && !bulkSelectMode ? "bg-primary/10 border-l-2 border-l-primary" : ""
+                  } ${isBulkChecked ? "bg-primary/5" : ""}`}
                 >
                   <div className="flex items-center gap-2">
-                    {(entry.imageUrl || imageOverrides[entry.style]) && (
+                    {bulkSelectMode && (
+                      <Checkbox
+                        checked={isBulkChecked}
+                        onCheckedChange={() => toggleStyleSelection(entry.style, { stopPropagation: () => {} } as React.MouseEvent)}
+                        className="flex-shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    )}
+                    {!bulkSelectMode && (entry.imageUrl || imageOverrides[entry.style]) && (
                       <img src={imageOverrides[entry.style] ?? entry.imageUrl} alt={entry.style} className="w-8 h-8 object-cover rounded flex-shrink-0" />
                     )}
                     <div className="min-w-0 flex-1">
@@ -2724,10 +2808,10 @@ export default function SpecsTab({}: SpecsTabProps) {
                       <div className="text-xs text-muted-foreground">{entry.colours.length} colours</div>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      {entry.isAllNew && (
+                      {!bulkSelectMode && entry.isAllNew && (
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" title="New pattern" />
                       )}
-                      {statusBadge}
+                      {!bulkSelectMode && statusBadge}
                     </div>
                   </div>
                 </button>
