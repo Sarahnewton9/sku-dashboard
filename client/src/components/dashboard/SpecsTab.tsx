@@ -83,13 +83,19 @@ function FreeTypeCell({ component, value, savedOptions, onSave, onAddOption, onD
 
   const [draft, setDraft] = useState(value);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   // Prevent double-commit: when a suggestion is clicked, handleSelect commits immediately;
   // the subsequent blur must not commit again with the stale draft.
   const committedRef = useRef(false);
 
   useEffect(() => { setDraft(value); }, [value]);
+
+  // Auto-resize textarea height to fit content
+  useEffect(() => {
+    const el = inputRef.current;
+    if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; }
+  }, [draft]);
 
   const filtered = draft.trim()
     ? allOptions.filter((o) => o.toLowerCase().includes(draft.toLowerCase()))
@@ -108,12 +114,12 @@ function FreeTypeCell({ component, value, savedOptions, onSave, onAddOption, onD
     inputRef.current?.blur();
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") { committedRef.current = true; commit(draft); inputRef.current?.blur(); }
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); committedRef.current = true; commit(draft); inputRef.current?.blur(); }
     if (e.key === "Escape") { setDraft(value); setShowSuggestions(false); inputRef.current?.blur(); }
   }
 
-  function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
+  function handleBlur(e: React.FocusEvent<HTMLTextAreaElement>) {
     // Delay so clicks on suggestions register first
     setTimeout(() => {
       if (!containerRef.current?.contains(document.activeElement)) {
@@ -128,16 +134,17 @@ function FreeTypeCell({ component, value, savedOptions, onSave, onAddOption, onD
 
   return (
     <div ref={containerRef} className="relative min-w-[140px] w-full">
-      <input
+      <textarea
         ref={inputRef}
-        type="text"
         value={draft}
+        rows={1}
         onChange={(e) => { setDraft(e.target.value); setShowSuggestions(true); }}
         onFocus={() => setShowSuggestions(true)}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder="— type —"
-        className="h-8 w-full px-2 text-xs rounded border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
+        className="w-full px-2 py-1.5 text-xs rounded border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground resize-none overflow-hidden min-h-[32px]"
+        style={{ lineHeight: "1.4" }}
       />
       {showSuggestions && filtered.length > 0 && (
         <div className="absolute z-50 top-full left-0 mt-0.5 w-64 max-h-52 overflow-y-auto bg-popover border border-border rounded shadow-md">
@@ -188,15 +195,22 @@ interface CustomFreeTypeCellProps {
 }
 function CustomFreeTypeCell({ value, options, onSave, onAddOption, onDeleteOption }: CustomFreeTypeCellProps) {
   const allOptions = Array.from(new Set(options)).filter(Boolean).sort((a, b) => a.localeCompare(b));
+
   const [draft, setDraft] = useState(value);
   const [showSuggestions, setShowSuggestions] = useState(false);
   // Track whether the user is actively typing (vs just focused with existing value)
   const [isTyping, setIsTyping] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const committedRef = useRef(false);
 
   useEffect(() => { setDraft(value); }, [value]);
+
+  // Auto-resize textarea height to fit content
+  useEffect(() => {
+    const el = inputRef.current;
+    if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; }
+  }, [draft]);
 
   // When typing, filter options by the draft. On initial focus (not typing), show all options.
   const filtered = isTyping && draft.trim()
@@ -220,8 +234,8 @@ function CustomFreeTypeCell({ value, options, onSave, onAddOption, onDeleteOptio
     inputRef.current?.blur();
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") { committedRef.current = true; commit(draft); inputRef.current?.blur(); }
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); committedRef.current = true; commit(draft); inputRef.current?.blur(); }
     if (e.key === "Escape") { setDraft(value); setShowSuggestions(false); setIsTyping(false); inputRef.current?.blur(); }
   }
 
@@ -241,16 +255,17 @@ function CustomFreeTypeCell({ value, options, onSave, onAddOption, onDeleteOptio
 
   return (
     <div ref={containerRef} className="relative min-w-[140px] w-full">
-      <input
+      <textarea
         ref={inputRef}
-        type="text"
         value={draft}
+        rows={1}
         onChange={(e) => { setDraft(e.target.value); setIsTyping(true); setShowSuggestions(true); }}
         onFocus={() => { setIsTyping(false); setShowSuggestions(true); }}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder="— type —"
-        className="h-8 w-full px-2 text-xs rounded border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
+        className="w-full px-2 py-1.5 text-xs rounded border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground resize-none overflow-hidden min-h-[32px]"
+        style={{ lineHeight: "1.4" }}
       />
       {shouldShowDropdown && (
         <div className="absolute z-50 top-full left-0 mt-0.5 w-64 max-h-52 overflow-y-auto bg-popover border border-border rounded shadow-md">
@@ -699,6 +714,7 @@ interface SpecFormProps {
   hiddenColumns: Set<string>; // for showing restore buttons when showHiddenColumns is on
   showHiddenColumns: boolean;
   onShowColumn: (colour: string) => void;
+  onResetColour: (colour: string) => void;
   tableScrollRef?: React.RefObject<HTMLDivElement | null>; // lifted up for external sticky scrollbar
 }
 
@@ -924,7 +940,7 @@ function SpecForm({
   entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allColourLeatherOptions, imageOverride, customRows,
   onUpsert, onBulkAutoFill, onAddDropdownOption, onDeleteDropdownOption, onMetaChange, onAddSku, onAddCustomRow, onUpdateCustomRow, onUpdateCustomRowForColour, onDeleteCustomRow, onReorderCustomRows,
   dbCategory, onSetCategory, allCustomRowTitles, allStyleEntries,
-  onHideColumn, hiddenColumns, showHiddenColumns, onShowColumn,
+  onHideColumn, hiddenColumns, showHiddenColumns, onShowColumn, onResetColour,
   tableScrollRef: externalTableScrollRef,
 }: SpecFormProps) {
   const [showAddSku, setShowAddSku] = useState(false);
@@ -1308,14 +1324,27 @@ function SpecForm({
                         Restore
                       </button>
                     ) : (
-                      // Hide button — only visible on hover
-                      <button
-                        onClick={() => onHideColumn(colour)}
-                        title={`Hide ${colour} column`}
-                        className="flex-shrink-0 opacity-0 group-hover/col:opacity-100 text-muted-foreground hover:text-red-500 transition-all p-0.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
+                      // Reset + Hide buttons — only visible on hover
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover/col:opacity-100 transition-all">
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Reset all spec values for ${colour}? This cannot be undone.`)) {
+                              onResetColour(colour);
+                            }
+                          }}
+                          title={`Reset all values for ${colour}`}
+                          className="flex-shrink-0 text-muted-foreground hover:text-amber-600 transition-all p-0.5 rounded hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => onHideColumn(colour)}
+                          title={`Hide ${colour} column`}
+                          className="flex-shrink-0 text-muted-foreground hover:text-red-500 transition-all p-0.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </th>

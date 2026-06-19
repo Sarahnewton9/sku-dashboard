@@ -252,3 +252,13 @@
 - [x] Custom row value not copying across all colours on first entry (__all__ explosion broken)
 - [x] Custom rows not appearing in export
 - [x] Delete custom row only clears cell values instead of removing the entire row
+<<<<<<< Updated upstream
+=======
+
+## Reset Colour Column in Specs (Jun 2026)
+
+- [ ] Add resetColourColumn DB helper: clears all spec_values for a style+colour, and clears all per-colour custom row values for that colour (set value to '')
+- [ ] Add specValues.resetColour tRPC procedure
+- [ ] Add Reset button (with confirm popover) to each colour column header in SpecsTab
+- [ ] After reset, invalidate rawCustomRows and spec values queries
+>>>>>>> Stashed changes

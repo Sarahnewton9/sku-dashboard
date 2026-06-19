@@ -40,6 +40,7 @@ import {
   getSpecRowOrder, upsertSpecRowOrder,
   getSpecHiddenColumns, hideSpecColumn, showSpecColumn,
   getCustomLasts, addCustomLast, deleteCustomLast,
+  resetSpecColour,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -731,7 +732,7 @@ export const appRouter = router({
     getCounts: publicProcedure
       .query(async () => getSpecCountsForAllStyles()),
 
-    upsertMeta: publicProcedure
+        upsertMeta: publicProcedure
       .input(z.object({
         style: z.string(),
         hasBuckle: z.boolean().optional(),
@@ -742,6 +743,7 @@ export const appRouter = router({
         await upsertStyleSpecMeta(input);
         return { success: true };
       }),
+<<<<<<< Updated upstream
     // Reset all spec values for a specific colour column
     resetColour: publicProcedure
       .input(z.object({ style: z.string(), colour: z.string() }))
@@ -750,7 +752,20 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+=======
+>>>>>>> Stashed changes
 
+    // Reset all spec values (template rows + custom rows) for a specific colour column
+    resetColour: publicProcedure
+      .input(z.object({
+        style: z.string(),
+        colour: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        await resetSpecColour(input.style, input.colour);
+        return { success: true };
+      }),
+  }),
   fittingSession: router({
     getAll: publicProcedure
       .query(async () => getAllFittingSessions()),
