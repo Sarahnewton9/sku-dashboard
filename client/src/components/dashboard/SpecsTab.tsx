@@ -1198,11 +1198,24 @@ function SpecForm({
   function handleCopyFrom(sourceColour: string, targetColours: string[]) {
     const sourceValues = specs[sourceColour] ?? {};
     for (const colour of targetColours) {
+      // Copy template rows
       for (const comp of template) {
         // Never copy Upper 1 — each colour has its own upper material
         if (comp.key === "upper_1") continue;
         const val = sourceValues[comp.key];
         if (val) onUpsert(colour, comp.key, val);
+      }
+      // Copy custom (manually added) rows
+      for (const [, group] of Array.from(customRowGroups)) {
+        const { rep, colourMap } = group;
+        // Get the value for the source colour, falling back to the shared __all__ value
+        const sourceRow = colourMap.get(sourceColour) ?? colourMap.get("__all__");
+        const sourceVal = sourceRow?.value ?? null;
+        if (!sourceVal) continue; // nothing to copy
+        // Current shared value (used by server to decide whether to explode __all__ row)
+        const sharedRow = colourMap.get("__all__");
+        const currentSharedValue = sharedRow?.value ?? "";
+        onUpdateCustomRowForColour(rep.id, rep.title, colour, sourceVal, currentSharedValue, rep.section, rep.sortOrder);
       }
     }
     toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s) (Upper 1 kept per-colour)`);
