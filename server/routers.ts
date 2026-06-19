@@ -742,6 +742,13 @@ export const appRouter = router({
         await upsertStyleSpecMeta(input);
         return { success: true };
       }),
+    // Reset all spec values for a specific colour column
+    resetColour: publicProcedure
+      .input(z.object({ style: z.string(), colour: z.string() }))
+      .mutation(async ({ input }) => {
+        await resetSpecColour(input.style, input.colour);
+        return { success: true };
+      }),
   }),
 
   fittingSession: router({

@@ -17,7 +17,7 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import {
-  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2, X, ArrowRight, RefreshCw, GripVertical,
+  ChevronDown, ChevronRight, Search, CheckCircle, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2, X, ArrowRight, RefreshCw, GripVertical, RotateCcw,
 } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent, DragOverlay,
@@ -1802,6 +1802,22 @@ export default function SpecsTab({}: SpecsTabProps) {
     showColumnMutation.mutate({ style: selectedStyle, colour });
   }
 
+  // ─── Reset Colour Column ──────────────────────────────────────────────────
+  const resetColourMutation = trpc.specs.resetColour.useMutation({
+    onSuccess: (_data, { style, colour }) => {
+      toast.success(`Cleared all values for ${colour}`);
+      // Invalidate both spec values and custom rows
+      utils.specs.getForStyle.invalidate({ style });
+      utils.specCustomRow.getByStyle.invalidate({ style });
+    },
+    onError: () => toast.error("Failed to reset column"),
+  });
+
+  function handleResetColour(colour: string) {
+    if (!selectedStyle) return;
+    resetColourMutation.mutate({ style: selectedStyle, colour });
+  }
+
   // Filter hidden columns from selectedEntry (unless showHiddenColumns is on)
   const selectedEntry = useMemo(() => {
     if (!selectedEntryRaw) return null;
@@ -2745,6 +2761,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                   handleShowColumn(colour);
                 }
               }}
+              onResetColour={handleResetColour}
             />
             </div>{/* end scrollable body */}
             {/* Sticky phantom scrollbar — always visible at the bottom of the pane */}

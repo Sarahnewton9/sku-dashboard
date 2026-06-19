@@ -1247,3 +1247,15 @@ export async function deleteCustomLast(lastName: string): Promise<void> {
   if (!db) throw new Error("Database not available");
   await db.delete(customLasts).where(eq(customLasts.lastName, lastName));
 }
+
+// ─── Reset Spec Colour Column ──────────────────────────────────────────────────
+
+export async function resetSpecColour(style: string, colour: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(styleSpecs)
+    .where(and(eq(styleSpecs.style, style), eq(styleSpecs.colour, colour)));
+  await db.update(specCustomRows)
+    .set({ value: "" })
+    .where(and(eq(specCustomRows.style, style), eq(specCustomRows.colour, colour)));
+}
