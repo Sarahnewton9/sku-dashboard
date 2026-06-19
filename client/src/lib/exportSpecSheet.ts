@@ -225,15 +225,23 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     }
   }
 
-  // Helper to get value for a component row + colour
-  function getValue(row: CompRow, colour: string): string {
+  // Helper to get value for a component row + colour.
+  // For custom rows, the DB stores values keyed by the raw compound colour key (e.g. "GOLD"),
+  // but the export passes the colourLabel (e.g. "GOLD NAPPA") as `colour`. We try both.
+  function getValue(row: CompRow, colour: string, rawColour?: string): string {
     if (row.isSpacer || !row.key) return "";
     if (row.key.startsWith("__custom__")) {
       const idStr = row.key.replace("__custom__", "");
       const id = parseInt(idStr, 10);
       if (!isNaN(id)) {
         const cr = customRowById.get(id);
-        if (cr) return cr.valuesByColour[colour] ?? cr.valuesByColour["__all__"] ?? "";
+        if (cr) {
+          // Try colourLabel first, then rawColour, then __all__
+          return cr.valuesByColour[colour]
+            ?? (rawColour ? cr.valuesByColour[rawColour] : undefined)
+            ?? cr.valuesByColour["__all__"]
+            ?? "";
+        }
       }
       return "";
     }
@@ -393,9 +401,12 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
 
       for (let ci = 0; ci < block.colours.length; ci++) {
         const valueCell = ws.getCell(currentRow, 2 + ci);
-        // Use the full label (e.g. "BLACK CAPRI") as the spec lookup key to match how values are stored
+        // Use the full label (e.g. "BLACK CAPRI") as the spec lookup key to match how values are stored.
+        // Also pass the raw compound key (e.g. "GOLD") as a fallback for custom rows which store
+        // values keyed by the raw colour, not the label.
         const colourKey = block.labels[ci] ?? block.colours[ci];
-        valueCell.value = getValue(row, colourKey);
+        const rawColour = block.colours[ci];
+        valueCell.value = getValue(row, colourKey, rawColour);
         valueCell.font = arialRegular8();
         valueCell.alignment = { vertical: "top", wrapText: true };
         valueCell.border = {
