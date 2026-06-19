@@ -1353,3 +1353,61 @@ export async function bulkSetSpecStatus(
       .onDuplicateKeyUpdate({ set: { specStatus: status } });
   }
 }
+
+/**
+ * Copy custom rows from a source style/colour to one or more target colours in a target style.
+ * For each custom row in sourceRows:
+ *   - If the target style already has a row with the same section+title, update it.
+ *   - Otherwise, insert a new __all__ row (shared across all colours) with the source value.
+ * This is used by the cross-style copy panel.
+ */
+export async function bulkCopyCustomRows(data: {
+  targetStyle: string;
+  targetColours: string[];
+  /** Each item represents one custom row group from the source style */
+  rows: Array<{
+    section: string;
+    title: string;
+    value: string;
+    sortOrder: number;
+  }>;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  for (const row of data.rows) {
+    if (!row.value) continue;
+
+    // Check if target style already has rows for this section+title
+    const existing = await db.select().from(specCustomRows).where(
+      and(
+        eq(specCustomRows.style, data.targetStyle),
+        eq(specCustomRows.section, row.section),
+        eq(specCustomRows.title, row.title),
+      )
+    );
+
+    if (existing.length === 0) {
+      // No rows yet — insert a single __all__ row with the source value
+      await db.insert(specCustomRows).values({
+        style: data.targetStyle,
+        colour: "__all__",
+        section: row.section,
+        title: row.title,
+        value: row.value,
+        sortOrder: row.sortOrder,
+      });
+    } else {
+      // Rows exist — update all of them (both __all__ and per-colour) to the source value
+      await db.update(specCustomRows)
+        .set({ value: row.value })
+        .where(
+          and(
+            eq(specCustomRows.style, data.targetStyle),
+            eq(specCustomRows.section, row.section),
+            eq(specCustomRows.title, row.title),
+          )
+        );
+    }
+  }
+}

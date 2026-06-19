@@ -893,6 +893,7 @@ interface SpecFormProps {
   onShowColumn: (colour: string) => void;
   onResetColour: (colour: string) => void;
   tableScrollRef?: React.RefObject<HTMLDivElement | null>; // lifted up for external sticky scrollbar
+  onBulkCopyCustomRowsFromStyle: (targetColours: string[], rows: Array<{ section: string; title: string; value: string; sortOrder: number }>) => void;
 }
 
 const STYLE_CATEGORIES = [
@@ -1125,6 +1126,7 @@ function SpecForm({
   dbCategory, onSetCategory, allCustomRowTitles, allStyleEntries,
   onHideColumn, hiddenColumns, showHiddenColumns, onShowColumn, onResetColour,
   tableScrollRef: externalTableScrollRef,
+  onBulkCopyCustomRowsFromStyle,
 }: SpecFormProps) {
   const [showAddSku, setShowAddSku] = useState(false);
   const [newSkuColour, setNewSkuColour] = useState("");
@@ -1469,32 +1471,32 @@ function SpecForm({
           allStyleEntries={allStyleEntries}
           template={template}
           onCopy={(sourceColour, targetColours, sourceSpecs, sourceCustomRows) => {
-            // Build a grouped map of custom rows from the source style (title → rep + colourMap)
-            const srcGroups = new Map<string, { rep: CustomRowData; colourMap: Map<string, CustomRowData> }>();
-            for (const r of sourceCustomRows) {
-              if (!srcGroups.has(r.title)) {
-                srcGroups.set(r.title, { rep: r, colourMap: new Map([[r.colour, r]]) });
-              } else {
-                srcGroups.get(r.title)!.colourMap.set(r.colour, r);
-              }
-            }
+            // Copy template rows for each target colour
             for (const colour of targetColours) {
-              // Copy template rows
               for (const comp of template) {
                 // Never copy Upper 1 — each colour has its own upper material
                 if (comp.key === "upper_1") continue;
                 const val = sourceSpecs[comp.key];
                 if (val) onUpsert(colour, comp.key, val);
               }
-              // Copy custom rows from source style
-              for (const [, group] of Array.from(srcGroups)) {
-                const { rep, colourMap } = group;
-                const sourceRow = colourMap.get(sourceColour) ?? colourMap.get("__all__");
-                const sourceVal = sourceRow?.value ?? null;
-                if (!sourceVal) continue;
-                const sharedRow = colourMap.get("__all__");
-                const currentSharedValue = sharedRow?.value ?? "";
-                onUpdateCustomRowForColour(rep.id, rep.title, colour, sourceVal, currentSharedValue, rep.section, rep.sortOrder);
+            }
+            // Copy custom rows from source style using the dedicated bulk procedure
+            // This correctly handles rows that don't exist in the target style yet
+            if (sourceCustomRows.length > 0) {
+              // Build a deduplicated list of rows (one per title, preferring the source colour's value)
+              const seen = new Map<string, { section: string; title: string; value: string; sortOrder: number }>();
+              for (const r of sourceCustomRows) {
+                const val = r.value;
+                if (!val) continue;
+                const key = `${r.section}||${r.title}`;
+                // Prefer the source colour's specific row over the __all__ row
+                if (!seen.has(key) || r.colour === sourceColour) {
+                  seen.set(key, { section: r.section, title: r.title, value: val, sortOrder: r.sortOrder });
+                }
+              }
+              const rowsToCopy = Array.from(seen.values());
+              if (rowsToCopy.length > 0) {
+                onBulkCopyCustomRowsFromStyle(targetColours, rowsToCopy);
               }
             }
             toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s) (Upper 1 kept per-colour)`);
@@ -2394,6 +2396,13 @@ export default function SpecsTab({}: SpecsTabProps) {
     onError: () => toast.error("Failed to save spec value"),
   });
 
+  const bulkCopyFromStyleMutation = trpc.specCustomRow.bulkCopyFromStyle.useMutation({
+    onSettled: () => {
+      if (selectedStyle) utils.specCustomRow.getByStyle.invalidate({ style: selectedStyle });
+    },
+    onError: () => toast.error("Failed to copy custom rows"),
+  });
+
   // Separate mutation to update rowKeys after a colour explosion (used by upsertForColourMutation)
   const upsertRowOrderForColourExplosionMutation = trpc.specRowOrder.upsert.useMutation({
     onSettled: (_data, _err, vars) => {
@@ -3220,6 +3229,10 @@ export default function SpecsTab({}: SpecsTabProps) {
                 }
               }}
               onResetColour={handleResetColour}
+              onBulkCopyCustomRowsFromStyle={(targetColours, rows) => {
+                if (!selectedStyle) return;
+                bulkCopyFromStyleMutation.mutate({ targetStyle: selectedStyle, targetColours, rows });
+              }}
             />
             </div>{/* end scrollable body */}
             {/* Sticky phantom scrollbar — always visible at the bottom of the pane */}

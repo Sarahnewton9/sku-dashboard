@@ -42,6 +42,7 @@ import {
   getCustomLasts, addCustomLast, deleteCustomLast, resetSpecColour,
   setSpecStatus, checkAllSpecsFilled, bulkSetSpecStatus,
   recordPptxImport,
+  bulkCopyCustomRows,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -1874,13 +1875,28 @@ If the request is unclear or is a question, use no_action.`;
         style: z.string(),
         section: z.string(),
         title: z.string(),
-        sortOrder: z.number().default(0),
+        sortOrder: z.number(),
         targetColour: z.string(),
         newValue: z.string(),
         currentSharedValue: z.string(),
         allColours: z.array(z.string()),
       }))
       .mutation(async ({ input }) => upsertCustomRowForColour(input)),
+    bulkCopyFromStyle: publicProcedure
+      .input(z.object({
+        targetStyle: z.string(),
+        targetColours: z.array(z.string()),
+        rows: z.array(z.object({
+          section: z.string(),
+          title: z.string(),
+          value: z.string(),
+          sortOrder: z.number(),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        await bulkCopyCustomRows(input);
+        return { success: true };
+      }),
   }),
   // ─── Spec Hidden Columns (hide individual colour columns per style) ───────────
   specHiddenColumns: router({
