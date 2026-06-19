@@ -2075,7 +2075,10 @@ export default function SpecsTab({}: SpecsTabProps) {
       targetColour: colour,
       newValue,
       currentSharedValue,
-      allColours: selectedEntry?.colours ?? [],
+      // IMPORTANT: use the UNFILTERED colours list so that hidden columns are still included
+      // in the per-colour row explosion. Using selectedEntry.colours (filtered) would omit
+      // hidden colours and cause their values to never be saved.
+      allColours: selectedEntryRaw?.colours ?? selectedEntry?.colours ?? [],
     });
   }
 

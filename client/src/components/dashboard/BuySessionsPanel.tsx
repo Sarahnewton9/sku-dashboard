@@ -8,7 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
-import { Lock, Download, Plus, Clock, CheckCircle, Package, Trash2, Pencil, FileText, X } from "lucide-react";
+import { Lock, Download, Plus, Clock, CheckCircle, Package, Trash2, Pencil, FileText, X, Send } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
@@ -46,6 +46,16 @@ export default function BuySessionsPanel() {
     { since: changesReportSince },
     { enabled: changesReportSessionId !== null }
   );
+  const sendToTeamMutation = trpc.changesReport.sendToTeam.useMutation({
+    onSuccess: (result) => {
+      if (result.method === "smtp") {
+        toast.success("Changes report sent to team via email");
+      } else {
+        toast.success("Changes report sent as notification (no SMTP configured)");
+      }
+    },
+    onError: (err) => toast.error(`Failed to send: ${err.message}`),
+  });
 
   const createMutation = trpc.buy.create.useMutation({
     onSuccess: (session) => {
@@ -740,6 +750,22 @@ export default function BuySessionsPanel() {
                 >
                   <Download className="w-3.5 h-3.5" />
                   Export Excel
+                </button>
+                <button
+                  onClick={() => {
+                    if (!changesData || !changesReportSession) return;
+                    sendToTeamMutation.mutate({
+                      since: changesReportSince,
+                      sessionName: changesReportSession.name ?? "Session",
+                    });
+                  }}
+                  disabled={changesLoading || !changesData || sendToTeamMutation.isPending}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700"
+                  style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+                  title="Send HTML email to fatih, amanda, anthony, alison, sarah.newton @tonybianco.com"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  {sendToTeamMutation.isPending ? "Sending…" : "Send to Team"}
                 </button>
                 <button
                   onClick={() => setChangesReportSessionId(null)}

@@ -47,6 +47,8 @@ import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import nodemailer from "nodemailer";
+import { ENV } from "./_core/env";
 
 export const appRouter = router({
   system: systemRouter,
@@ -1379,6 +1381,106 @@ export const appRouter = router({
     get: publicProcedure
       .input(z.object({ since: z.date() }))
       .query(async ({ input }) => getChangesReport(input.since)),
+
+    sendToTeam: publicProcedure
+      .input(z.object({
+        since: z.date(),
+        sessionName: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const data = await getChangesReport(input.since);
+        const today = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+        // Build HTML email body
+        function tableRows<T extends Record<string, unknown>>(items: T[], cols: Array<{ key: keyof T; label: string; fmt?: (v: unknown) => string }>): string {
+          if (items.length === 0) return `<tr><td colspan="${cols.length}" style="padding:6px 8px;color:#888;">— None —</td></tr>`;
+          return items.map(item =>
+            `<tr>${cols.map(c => `<td style="padding:6px 8px;border-bottom:1px solid #eee;">${c.fmt ? c.fmt(item[c.key]) : String(item[c.key] ?? "—")}</td>`).join("")}</tr>`
+          ).join("");
+        }
+
+        function section(title: string, colour: string, headers: string[], rows: string): string {
+          return `
+            <h3 style="margin:24px 0 8px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${colour};">${title}</h3>
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <thead><tr>${headers.map(h => `<th style="text-align:left;padding:6px 8px;background:#f5e6d3;font-weight:600;">${h}</th>`).join("")}</tr></thead>
+              <tbody>${rows}</tbody>
+            </table>`;
+        }
+
+        const cancelledStyleRows = tableRows(data.cancelledStyles, [
+          { key: "style", label: "Style" },
+          { key: "cancelledAt", label: "Date Cancelled", fmt: v => new Date(v as Date).toLocaleDateString("en-AU") },
+        ]);
+
+        const cancelledSkuRows = tableRows(data.cancelledSkus, [
+          { key: "style", label: "Style" },
+          { key: "colour", label: "Colour" },
+          { key: "leather", label: "Leather" },
+          { key: "cancelledAt", label: "Date Cancelled", fmt: v => new Date(v as Date).toLocaleDateString("en-AU") },
+        ]);
+
+        const newColourRows = tableRows(data.newColours, [
+          { key: "style", label: "Style" },
+          { key: "colour", label: "Colour" },
+          { key: "leather", label: "Leather" },
+          { key: "createdAt", label: "Date Added", fmt: v => new Date(v as Date).toLocaleDateString("en-AU") },
+        ]);
+
+        const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:Arial,sans-serif;font-size:13px;color:#222;max-width:700px;margin:0 auto;padding:24px;">
+  <h1 style="font-size:18px;font-weight:700;margin:0 0 4px;">Tony Bianco — SS26 Changes Report</h1>
+  <p style="margin:0 0 4px;color:#555;font-size:12px;">Session: <strong>${input.sessionName}</strong></p>
+  <p style="margin:0 0 20px;color:#555;font-size:12px;">Generated: ${today}</p>
+  <hr style="border:none;border-top:2px solid #3d2b1f;margin-bottom:20px;">
+  ${section("Cancelled Styles", "#8b1a1a", ["Style", "Date Cancelled"], cancelledStyleRows)}
+  ${section("Cancelled Colours", "#8b1a1a", ["Style", "Colour", "Leather", "Date Cancelled"], cancelledSkuRows)}
+  ${section("New Colours Added", "#1a5c3a", ["Style", "Colour", "Leather", "Date Added"], newColourRows)}
+  <hr style="border:none;border-top:1px solid #eee;margin-top:32px;">
+  <p style="font-size:11px;color:#aaa;margin-top:8px;">Sent from SKU Dashboard · Tony Bianco SS26</p>
+</body>
+</html>`;
+
+        // Send via SMTP if configured, otherwise fall back to owner notification
+        if (ENV.smtpHost && ENV.smtpUser && ENV.smtpPass) {
+          const transporter = nodemailer.createTransport({
+            host: ENV.smtpHost,
+            port: ENV.smtpPort,
+            secure: ENV.smtpPort === 465,
+            auth: { user: ENV.smtpUser, pass: ENV.smtpPass },
+          });
+          const recipients = [
+            "fatih@tonybianco.com",
+            "amanda@tonybianco.com",
+            "anthony@tonybianco.com",
+            "alison@tonybianco.com",
+            "sarah.newton@tonybianco.com",
+          ];
+          await transporter.sendMail({
+            from: ENV.smtpFrom || ENV.smtpUser,
+            to: recipients.join(", "),
+            subject: `SS26 Changes Report — ${input.sessionName} (${today})`,
+            html,
+          });
+          return { success: true, method: "smtp" as const };
+        }
+
+        // Fallback: notify owner via Manus notification (no SMTP configured)
+        const { notifyOwner } = await import("./_core/notification");
+        const textBody = [
+          `Session: ${input.sessionName}`,
+          `Date: ${today}`,
+          "",
+          `CANCELLED STYLES (${data.cancelledStyles.length}): ${data.cancelledStyles.map(s => s.style).join(", ") || "None"}`,
+          `CANCELLED COLOURS (${data.cancelledSkus.length}): ${data.cancelledSkus.map(s => `${s.style} ${s.colour}`).join(", ") || "None"}`,
+          `NEW COLOURS ADDED (${data.newColours.length}): ${data.newColours.map(s => `${s.style} ${s.colour}`).join(", ") || "None"}`,
+        ].join("\n");
+        await notifyOwner({ title: `SS26 Changes Report — ${input.sessionName}`, content: textBody });
+        return { success: true, method: "notification" as const };
+      }),
   }),
 
   // ─── SKU New/Existing Override ────────────────────────────────────────────

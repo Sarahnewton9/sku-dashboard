@@ -143,9 +143,9 @@
 - [x] Include style, colour, leather, category, and date of change in the export
 
 ## Changes Report Email (May 2026)
-- [ ] Add sendChangesReport tRPC procedure that sends formatted HTML email to team (fatih, amanda, anthony, alison, sarah.newton @tonybianco.com)
-- [ ] Add "Send to Team" button to Changes Report modal
-- [ ] Email body: session name, date, three sections (Cancelled Styles, Cancelled Colours, New Colours Added) as HTML tables
+- [x] Add sendChangesReport tRPC procedure that sends formatted HTML email to team (fatih, amanda, anthony, alison, sarah.newton @tonybianco.com)
+- [x] Add "Send to Team" button to Changes Report modal
+- [x] Email body: session name, date, three sections (Cancelled Styles, Cancelled Colours, New Colours Added) as HTML tables
 
 ## Buy Quantity Rollup & Always-Visible (May 2026)
 - [x] Show buy quantities on every SKU row at all times (not gated by active buy session) — shows all-sessions AU/USA totals when no session selected
@@ -236,11 +236,11 @@
 - [x] Fix spec export — deleted rows must be excluded from export (currently still appear)
 
 ## Per-Colour Custom Row Editing (Jun 2026)
-- [ ] Add upsertCustomRowForColour DB helper: explode __all__ row into per-colour rows, then update specific colour
-- [ ] Add specCustomRow.upsertForColour tRPC procedure
-- [ ] Update UnifiedCustomRow to pass colour key to onUpdate per cell
-- [ ] Update handleUpdateCustomRow to call upsertForColour with colour key
-- [ ] Update exportSpecSheet to read per-colour custom row values (by colour key, not __all__)
+- [x] Add upsertCustomRowForColour DB helper: explode __all__ row into per-colour rows, then update specific colour
+- [x] Add specCustomRow.upsertForColour tRPC procedure
+- [x] Update UnifiedCustomRow to pass colour key to onUpdate per cell
+- [x] Update handleUpdateCustomRow to call upsertForColour with colour key
+- [x] Update exportSpecSheet to read per-colour custom row values (by colour key, not __all__)
 
 ## Spec Issues Round 2 (Jun 2026)
 - [x] Custom row options not persisting — new typed values should be saved as dropdown options for reuse; add delete-option button
@@ -248,7 +248,7 @@
 - [x] Export column widths too narrow — set explicit column widths in ExcelJS
 
 ## Spec Critical Bugs (Jun 2026 - custom rows)
-- [ ] Spec row labels on left always proper-cased (e.g. "Upper 1" not "UPPER 1")
-- [ ] Custom row value not copying across all colours on first entry (__all__ explosion broken)
-- [ ] Custom rows not appearing in export
-- [ ] Delete custom row only clears cell values instead of removing the entire row
+- [x] Spec row labels on left always proper-cased (e.g. "Upper 1" not "UPPER 1")
+- [x] Custom row value not copying across all colours on first entry (__all__ explosion broken)
+- [x] Custom rows not appearing in export
+- [x] Delete custom row only clears cell values instead of removing the entire row
