@@ -1250,14 +1250,11 @@ export async function deleteCustomLast(lastName: string): Promise<void> {
 
 // ─── Reset Spec Colour Column ──────────────────────────────────────────────────
 
-<<<<<<< Updated upstream
-=======
 /**
  * Clears all spec values for a specific colour column within a style.
  * Deletes all style_specs rows for style+colour (template rows) and
  * clears the value field of all per-colour custom rows for that colour.
  */
->>>>>>> Stashed changes
 export async function resetSpecColour(style: string, colour: string): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

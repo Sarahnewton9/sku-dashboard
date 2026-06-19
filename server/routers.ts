@@ -747,17 +747,6 @@ export const appRouter = router({
         await upsertStyleSpecMeta(input);
         return { success: true };
       }),
-<<<<<<< Updated upstream
-    // Reset all spec values for a specific colour column
-    resetColour: publicProcedure
-      .input(z.object({ style: z.string(), colour: z.string() }))
-      .mutation(async ({ input }) => {
-        await resetSpecColour(input.style, input.colour);
-        return { success: true };
-      }),
-  }),
-=======
->>>>>>> Stashed changes
 
     // Reset all spec values (template rows + custom rows) for a specific colour column
     resetColour: publicProcedure
@@ -1864,5 +1853,5 @@ If the request is unclear or is a question, use no_action.`;
 });
 // Patch buy.unlock into the existing buy router by re-exporting
 // (We add it inline here since the buy router is defined earlier in this file)
-export type AppRouter = typeof appRouter;;
+export type AppRouter = typeof appRouter;
 
