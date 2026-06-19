@@ -39,12 +39,7 @@ import {
   getAllCustomStyles, addCustomStyle, deleteCustomStyle,
   getSpecRowOrder, upsertSpecRowOrder,
   getSpecHiddenColumns, hideSpecColumn, showSpecColumn,
-<<<<<<< Updated upstream
-  getCustomLasts, addCustomLast, deleteCustomLast,
-  resetSpecColour,
-=======
   getCustomLasts, addCustomLast, deleteCustomLast, resetSpecColour,
->>>>>>> Stashed changes
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
