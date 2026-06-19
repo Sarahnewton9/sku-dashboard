@@ -11,9 +11,7 @@ import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Package, Sparkles, Archive, Layers, Star, RefreshCw, FlaskConical, CheckCircle2 } from "lucide-react";
-
-// Hardcoded list of brand new lasts this season
-const TOTAL_NEW_LASTS = 16;
+import { ALL_LASTS } from "@shared/const";
 
 const CATEGORY_COLOURS: Record<string, string> = {
   "Dress Shoe": "#f59e0b",
@@ -188,8 +186,26 @@ export default function SummaryCards() {
   // Fetch live sample status counts
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
 
-  // Fetch last approval data
+  // Fetch last approval data — same sources as LastApprovalTab
   const { data: lastApprovals = [] } = trpc.lastApproval.getAll.useQuery();
+  const { data: deletedLastsFromDb = [] } = trpc.lastApproval.getDeleted.useQuery();
+  const { data: customLastsFromDb = [] } = trpc.customLast.getAll.useQuery();
+
+  // Build the same visible lasts list as LastApprovalTab does
+  const totalLastsCount = useMemo(() => {
+    const deletedSet = new Set(deletedLastsFromDb);
+    const seen = new Set<string>();
+    let count = 0;
+    for (const l of [...ALL_LASTS, ...customLastsFromDb]) {
+      const key = l.toUpperCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        if (!deletedSet.has(l)) count++;
+      }
+    }
+    return count;
+  }, [deletedLastsFromDb, customLastsFromDb]);
+
   const approvedLastsCount = lastApprovals.filter((a) => a.status === "approved").length;
 
   const sampleCounts = useMemo(() => {
@@ -387,11 +403,11 @@ export default function SummaryCards() {
             </div>
             <div>
               <p className="font-semibold text-foreground text-sm">Last Approvals</p>
-              <p className="text-xs text-muted-foreground">{TOTAL_NEW_LASTS} new lasts this season</p>
+              <p className="text-xs text-muted-foreground">{totalLastsCount} new lasts this season</p>
             </div>
             <div className="ml-auto text-right">
-              <p className="text-2xl font-display font-bold tabular-nums" style={{ color: approvedLastsCount === TOTAL_NEW_LASTS ? "oklch(0.40 0.14 155)" : "oklch(0.45 0.14 55)" }}>
-                {approvedLastsCount}/{TOTAL_NEW_LASTS}
+              <p className="text-2xl font-display font-bold tabular-nums" style={{ color: approvedLastsCount === totalLastsCount ? "oklch(0.40 0.14 155)" : "oklch(0.45 0.14 55)" }}>
+                {approvedLastsCount}/{totalLastsCount}
               </p>
               <p className="text-xs text-muted-foreground">approved</p>
             </div>
@@ -402,8 +418,8 @@ export default function SummaryCards() {
             <div
               className="h-full rounded-full transition-all duration-700"
               style={{
-                width: `${Math.round((approvedLastsCount / TOTAL_NEW_LASTS) * 100)}%`,
-                background: approvedLastsCount === TOTAL_NEW_LASTS
+                width: `${totalLastsCount > 0 ? Math.round((approvedLastsCount / totalLastsCount) * 100) : 0}%`,
+                background: approvedLastsCount === totalLastsCount
                   ? "linear-gradient(90deg, oklch(0.72 0.18 155), oklch(0.60 0.20 155))"
                   : "linear-gradient(90deg, oklch(0.72 0.16 65), oklch(0.60 0.18 55))",
               }}
@@ -427,7 +443,7 @@ export default function SummaryCards() {
             >
               <span className="text-sm font-medium" style={{ color: "oklch(0.45 0.14 55)" }}>Waiting on Revised</span>
               <span className="text-xl font-display font-bold tabular-nums" style={{ color: "oklch(0.45 0.14 55)" }}>
-                <AnimatedNumber value={TOTAL_NEW_LASTS - approvedLastsCount} />
+                <AnimatedNumber value={totalLastsCount - approvedLastsCount} />
               </span>
             </div>
           </div>
