@@ -259,7 +259,6 @@
 - [x] Add specValues.resetColour tRPC procedure
 - [x] Add Reset button (with confirm popover) to each colour column header in SpecsTab
 - [x] After reset, invalidate rawCustomRows and spec values queries
-=======
 
 ## Spec Export Fix - All Colour Values (Jun 2026)
 - [x] Fix spec export only showing first two colour values for custom rows — was using filtered (hidden-columns-excluded) colour list for explosion; now uses full unfiltered list
@@ -274,8 +273,6 @@
 - [x] Expand specDropdownOptions.value DB column from varchar(256) to text (no character limit)
 - [x] Replace single-line input in FreeTypeCell and CustomFreeTypeCell with auto-growing textarea
 - [x] Remove text truncation from dropdown option suggestions so long values display fully
->>>>>>> Stashed changes
-=======
 
 ## Reset Colour Column in Specs (Jun 2026)
 
@@ -283,4 +280,3 @@
 - [x] Add specValues.resetColour tRPC procedure
 - [x] Add Reset button (with confirm popover) to each colour column header in SpecsTab
 - [x] After reset, invalidate rawCustomRows and spec values queries
->>>>>>> Stashed changes
