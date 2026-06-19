@@ -305,3 +305,9 @@
 ## Bulk Spec Status Update (Jun 2026)
 - [x] Add bulkSetSpecStatus DB helper and tRPC procedure
 - [x] Add checkbox selection UI to style list + bulk action toolbar (Complete / In Progress / Not Started)
+
+## Custom Row Bugs (Jun 2026)
+
+- [x] Fix: custom row drops to bottom after being moved — temp id in localRowKeys not swapped for real id after server responds; addCustomRowMutation.onSuccess now calls swapLocalRowKey to update SpecForm's localRowKeys in-place
+- [x] Fix: custom row copy not working across colours — allColours explosion was using raw colour codes (e.g. "BLACK") instead of full colour labels (e.g. "BLACK CAPRI"); fixed to use colourLabels so explosion keys match spec storage keys
+- [x] Fix: upsertForColourMutation explosion now also calls swapLocalRowKey so localRowKeys stays correct after __all__ row is replaced by per-colour rows

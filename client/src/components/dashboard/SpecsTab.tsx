@@ -894,6 +894,8 @@ interface SpecFormProps {
   onResetColour: (colour: string) => void;
   tableScrollRef?: React.RefObject<HTMLDivElement | null>; // lifted up for external sticky scrollbar
   onBulkCopyCustomRowsFromStyle: (targetColours: string[], rows: Array<{ section: string; title: string; value: string; sortOrder: number }>) => void;
+  /** Called once on mount so SpecsTab can register a setter to update localRowKeys inside SpecForm. */
+  onRegisterReplaceRowKey?: (setter: React.Dispatch<React.SetStateAction<string[] | null>>) => void;
 }
 
 const STYLE_CATEGORIES = [
@@ -1127,6 +1129,7 @@ function SpecForm({
   onHideColumn, hiddenColumns, showHiddenColumns, onShowColumn, onResetColour,
   tableScrollRef: externalTableScrollRef,
   onBulkCopyCustomRowsFromStyle,
+  onRegisterReplaceRowKey,
 }: SpecFormProps) {
   const [showAddSku, setShowAddSku] = useState(false);
   const [newSkuColour, setNewSkuColour] = useState("");
@@ -1140,6 +1143,12 @@ function SpecForm({
   const [activeId, setActiveId] = useState<string | null>(null);
   // Local row order override (optimistic, updated on drag)
   const [localRowKeys, setLocalRowKeys] = useState<string[] | null>(null);
+  // Register our localRowKeys setter with the parent on mount so SpecsTab can
+  // swap temp/old row keys for real/new ones without a full re-render cycle.
+  useEffect(() => {
+    onRegisterReplaceRowKey?.(setLocalRowKeys);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const dndSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
@@ -2229,6 +2238,16 @@ export default function SpecsTab({}: SpecsTabProps) {
   }
 
   // ── Custom rows ──────────────────────────────────────────────────────────
+  // Ref to SpecForm's localRowKeys setter — registered via onRegisterReplaceRowKey.
+  // Used to swap temp/old row keys for real/new ones after mutations.
+  const replaceRowKeySetterRef = useRef<React.Dispatch<React.SetStateAction<string[] | null>> | null>(null);
+  function swapLocalRowKey(oldKey: string, newKey: string) {
+    replaceRowKeySetterRef.current?.((prev) => {
+      if (!prev || !prev.includes(oldKey)) return prev;
+      return prev.map((k) => k === oldKey ? newKey : k);
+    });
+  }
+
   const { data: rawCustomRows = [], refetch: refetchCustomRows } = trpc.specCustomRow.getByStyle.useQuery(
     { style: selectedStyle! },
     { enabled: !!selectedStyle }
@@ -2280,16 +2299,28 @@ export default function SpecsTab({}: SpecsTabProps) {
       utils.specCustomRow.getByStyle.invalidate({ style: updated.style });
     },
   });
+  // Track the temp id used in the optimistic update so we can swap it after server responds
+  const pendingAddTempIdRef = useRef<number | null>(null);
   const addCustomRowMutation = trpc.specCustomRow.upsert.useMutation({
     onMutate: async (newRow) => {
       // Optimistic update: immediately add a placeholder row to the cache
       await utils.specCustomRow.getByStyle.cancel({ style: newRow.style });
       const prev = utils.specCustomRow.getByStyle.getData({ style: newRow.style });
+      const tempId = -Date.now();
+      pendingAddTempIdRef.current = tempId;
       utils.specCustomRow.getByStyle.setData({ style: newRow.style }, (old) => [
         ...(old ?? []),
-        { id: -Date.now(), style: newRow.style, colour: newRow.colour ?? "__all__", section: newRow.section, title: newRow.title, value: newRow.value ?? "", sortOrder: newRow.sortOrder ?? 0, createdAt: new Date(), updatedAt: new Date() },
+        { id: tempId, style: newRow.style, colour: newRow.colour ?? "__all__", section: newRow.section, title: newRow.title, value: newRow.value ?? "", sortOrder: newRow.sortOrder ?? 0, createdAt: new Date(), updatedAt: new Date() },
       ]);
-      return { prev };
+      return { prev, tempId };
+    },
+    onSuccess: (realRow, _vars, ctx) => {
+      // Swap the temp key for the real key in SpecForm's localRowKeys so dragged
+      // position is preserved after the server responds with the actual row id.
+      const tempId = ctx?.tempId;
+      if (tempId !== undefined && realRow?.id && realRow.id !== tempId) {
+        swapLocalRowKey(`c:${tempId}`, `c:${realRow.id}`);
+      }
     },
     onError: (_err, newRow, ctx) => {
       if (ctx?.prev !== undefined) utils.specCustomRow.getByStyle.setData({ style: newRow.style }, ctx.prev);
@@ -2381,8 +2412,9 @@ export default function SpecsTab({}: SpecsTabProps) {
       if (result.wasExploded && result.newRepId !== null && result.newRepId !== vars.allRowId && selectedStyle) {
         const oldKey = `c:${vars.allRowId}`;
         const newKey = `c:${result.newRepId}`;
-        // Update localRowKeys in SpecForm — but upsertForColourMutation is in the outer SpecsTab.
-        // We update the DB rowKeys directly here.
+        // 1. Swap in SpecForm's localRowKeys so the row stays in its dragged position
+        swapLocalRowKey(oldKey, newKey);
+        // 2. Also update the persisted DB rowKeys so export and future loads are correct
         const currentKeys = exportRowOrderData?.rowKeys ?? null;
         if (currentKeys && currentKeys.includes(oldKey)) {
           const updatedKeys = currentKeys.map((k) => k === oldKey ? newKey : k);
@@ -2433,10 +2465,12 @@ export default function SpecsTab({}: SpecsTabProps) {
       targetColour: colour,
       newValue,
       currentSharedValue,
-      // IMPORTANT: use the UNFILTERED colours list so that hidden columns are still included
-      // in the per-colour row explosion. Using selectedEntry.colours (filtered) would omit
+      // IMPORTANT: use the UNFILTERED colourLabels list so that hidden columns are still included
+      // in the per-colour row explosion. Using selectedEntry.colourLabels (filtered) would omit
       // hidden colours and cause their values to never be saved.
-      allColours: selectedEntryRaw?.colours ?? selectedEntry?.colours ?? [],
+      // We use colourLabels (e.g. "BLACK CAPRI") not raw colours (e.g. "BLACK") because
+      // spec values are stored keyed by the full colour label.
+      allColours: selectedEntryRaw?.colourLabels ?? selectedEntry?.colourLabels ?? [],
     });
   }
 
@@ -3232,6 +3266,9 @@ export default function SpecsTab({}: SpecsTabProps) {
               onBulkCopyCustomRowsFromStyle={(targetColours, rows) => {
                 if (!selectedStyle) return;
                 bulkCopyFromStyleMutation.mutate({ targetStyle: selectedStyle, targetColours, rows });
+              }}
+              onRegisterReplaceRowKey={(setter) => {
+                replaceRowKeySetterRef.current = setter;
               }}
             />
             </div>{/* end scrollable body */}
