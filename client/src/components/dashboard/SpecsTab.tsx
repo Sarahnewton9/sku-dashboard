@@ -1674,9 +1674,15 @@ export default function SpecsTab({}: SpecsTabProps) {
     for (const s of mergedStyles as typeof skuData.styles) {
       const leathersByColour = colourLeatherMap[s.style];
       if (!leathersByColour) { result[s.style] = []; continue; }
+      // Deduplicate colours first — custom styles can have duplicate colour entries
+      // when the same colour appears with multiple leathers (e.g. XENA BLACK NAPPA + BLACK TUSCON).
+      // The leathersByColour Set already captures all leathers, so we only need to visit each colour once.
       const allColours: string[] = (s as any).colours ?? [];
+      const seenColours = new Set<string>();
       const keys: string[] = [];
       for (const colour of allColours) {
+        if (seenColours.has(colour)) continue; // skip duplicate colour entries
+        seenColours.add(colour);
         const leathers = leathersByColour[colour];
         if (!leathers) continue;
         if (leathers.size > 1) {
@@ -1960,6 +1966,18 @@ export default function SpecsTab({}: SpecsTabProps) {
     if (!selectedStyle) return;
     resetColourMutation.mutate({ style: selectedStyle, colour });
   }
+  // ─── Restore Cancelled Colours ────────────────────────────────────────────
+  const restoreCancelledSkuMutation = trpc.cancelledSku.restore.useMutation({
+    onSuccess: (_data, { colour, leather }) => {
+      const label = leather ? `${colour} ${leather}` : colour;
+      toast.success(`Restored ${label} — it will now appear in the spec sheet`);
+      utils.cancelledSku.list.invalidate();
+    },
+    onError: () => toast.error("Failed to restore colour"),
+  });
+  function handleRestoreCancelledColour(style: string, colour: string, leather: string) {
+    restoreCancelledSkuMutation.mutate({ style, colour, leather });
+  }
   // ─── Spec Status ──────────────────────────────────────────────────────────
   const setStatusMutation = trpc.specs.setStatus.useMutation({
     onSuccess: (_data, { style }) => {
@@ -2085,6 +2103,13 @@ export default function SpecsTab({}: SpecsTabProps) {
     }
     return Array.from(titles).sort();
   }, [rawCustomRows]);
+
+  // Cancelled SKUs for the currently selected style (for restore panel)
+  const cancelledSkusForCurrentStyle = useMemo(() => {
+    if (!selectedStyle) return [];
+    return (cancelledSkusRaw as Array<{ style: string; colour: string; leather: string }>)
+      .filter((r) => r.style === selectedStyle);
+  }, [cancelledSkusRaw, selectedStyle]);
 
    const upsertCustomRowMutation = trpc.specCustomRow.upsert.useMutation({
     onMutate: async (updated) => {
@@ -2889,6 +2914,33 @@ export default function SpecsTab({}: SpecsTabProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            {/* Restore cancelled colours panel */}
+            {cancelledSkusForCurrentStyle.length > 0 && (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 dark:bg-rose-950/30 dark:border-rose-800 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <RotateCcw className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 flex-shrink-0" />
+                  <span className="text-xs font-semibold text-rose-700 dark:text-rose-300">
+                    {cancelledSkusForCurrentStyle.length} cancelled colour{cancelledSkusForCurrentStyle.length !== 1 ? 's' : ''} — click to restore
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {cancelledSkusForCurrentStyle.map((sku) => {
+                    const label = sku.leather ? `${sku.colour} ${sku.leather}` : sku.colour;
+                    return (
+                      <button
+                        key={`${sku.colour}|${sku.leather}`}
+                        onClick={() => handleRestoreCancelledColour(sku.style, sku.colour, sku.leather)}
+                        className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-rose-300 dark:border-rose-700 bg-white dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-800/40 transition-colors"
+                        title={`Restore ${label}`}
+                      >
+                        <RotateCcw className="w-2.5 h-2.5" />
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             {/* Import preview banner */}
             {importParsed && (
               <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 p-4 space-y-3">

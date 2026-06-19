@@ -297,3 +297,7 @@
 - [x] Add status badge + manual toggle dropdown to spec sheet header
 - [x] Auto-complete logic: after every upsert, check if all cells filled → promote to complete; if any cell cleared → demote to in_progress
 - [x] Manual override always available (can set back to not_started or in_progress)
+
+## Specs Tab Bug Fixes (Jun 2026)
+- [x] Fix: add "Restore cancelled colours" panel in Specs tab so deleted colours can be re-added without knowing the name
+- [x] Fix: duplicate colour key bug (e.g. XENA BLACK TUSCON appearing twice) — deduplicate colour iteration in NEW_COLOURS_PER_STYLE so each colour is only processed once even when it appears with multiple leathers in custom_skus

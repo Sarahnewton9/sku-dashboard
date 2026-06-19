@@ -41,6 +41,7 @@ import {
   getSpecHiddenColumns, hideSpecColumn, showSpecColumn,
   getCustomLasts, addCustomLast, deleteCustomLast, resetSpecColour,
   setSpecStatus, checkAllSpecsFilled,
+  recordPptxImport,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
