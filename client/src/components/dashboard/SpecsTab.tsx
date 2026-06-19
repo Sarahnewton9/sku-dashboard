@@ -125,6 +125,14 @@ function FreeTypeCell({ component, value, savedOptions, savedOptionIds, onSave, 
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && e.ctrlKey && isNewValue) {
+      e.preventDefault();
+      onAddOption(draft.trim());
+      committedRef.current = true;
+      commit(draft.trim());
+      inputRef.current?.blur();
+      return;
+    }
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); committedRef.current = true; commit(draft); inputRef.current?.blur(); }
     if (e.key === "Escape") { setDraft(value); setShowSuggestions(false); inputRef.current?.blur(); }
   }
@@ -293,6 +301,14 @@ function CustomFreeTypeCell({ value, options, optionIds, onSave, onAddOption, on
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && e.ctrlKey && isNewValue) {
+      e.preventDefault();
+      onAddOption(draft.trim());
+      committedRef.current = true;
+      commit(draft.trim());
+      inputRef.current?.blur();
+      return;
+    }
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); committedRef.current = true; commit(draft); inputRef.current?.blur(); }
     if (e.key === "Escape") { setDraft(value); setShowSuggestions(false); setIsTyping(false); inputRef.current?.blur(); }
   }
