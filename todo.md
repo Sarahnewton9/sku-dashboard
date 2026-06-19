@@ -253,6 +253,7 @@
 - [x] Custom rows not appearing in export
 - [x] Delete custom row only clears cell values instead of removing the entire row
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
 
 ## Reset Colour Column in Specs (Jun 2026)
@@ -261,4 +262,20 @@
 - [ ] Add specValues.resetColour tRPC procedure
 - [ ] Add Reset button (with confirm popover) to each colour column header in SpecsTab
 - [ ] After reset, invalidate rawCustomRows and spec values queries
+>>>>>>> Stashed changes
+=======
+
+## Spec Export Fix - All Colour Values (Jun 2026)
+- [x] Fix spec export only showing first two colour values for custom rows — was using filtered (hidden-columns-excluded) colour list for explosion; now uses full unfiltered list
+
+## Reset Colour Column in Specs Tab (Jun 2026)
+- [x] Add resetSpecColour DB helper: delete all style_specs rows + clear custom row values for a colour
+- [x] Add specs.resetColour tRPC procedure
+- [x] Add Reset (↺) button to colour column header with confirmation prompt
+- [x] Clicking reset clears all template spec values and custom row values for that colour column
+
+## Unlimited Text in Spec Cells (Jun 2026)
+- [x] Expand specDropdownOptions.value DB column from varchar(256) to text (no character limit)
+- [x] Replace single-line input in FreeTypeCell and CustomFreeTypeCell with auto-growing textarea
+- [x] Remove text truncation from dropdown option suggestions so long values display fully
 >>>>>>> Stashed changes

@@ -1,0 +1,1 @@
+ALTER TABLE `spec_dropdown_options` MODIFY COLUMN `value` text NOT NULL;

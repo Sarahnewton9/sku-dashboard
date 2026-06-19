@@ -154,7 +154,7 @@ function FreeTypeCell({ component, value, savedOptions, onSave, onAddOption, onD
               className="flex items-center justify-between px-2 py-1.5 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer group/opt"
               onMouseDown={(e) => { e.preventDefault(); handleSelect(opt); }}
             >
-              <span className="flex-1 truncate">{opt}</span>
+              <span className="flex-1 break-words whitespace-pre-wrap">{opt}</span>
               {onDeleteOption && savedOptions.includes(opt) && (
                 <button
                   className="ml-1 p-0.5 rounded opacity-0 group-hover/opt:opacity-100 hover:bg-destructive/20 hover:text-destructive text-muted-foreground flex-shrink-0"
@@ -275,7 +275,7 @@ function CustomFreeTypeCell({ value, options, onSave, onAddOption, onDeleteOptio
               className="flex items-center justify-between px-2 py-1.5 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer group/opt"
               onMouseDown={(e) => { e.preventDefault(); handleSelect(opt); }}
             >
-              <span className="flex-1 truncate">{opt}</span>
+              <span className="flex-1 break-words whitespace-pre-wrap">{opt}</span>
               <button
                 className="ml-1 p-0.5 rounded opacity-0 group-hover/opt:opacity-100 hover:bg-destructive/20 hover:text-destructive text-muted-foreground flex-shrink-0"
                 onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteOption(opt); }}

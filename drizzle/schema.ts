@@ -217,7 +217,7 @@ export type InsertStyleSpec = typeof styleSpecs.$inferInsert;
 export const specDropdownOptions = mysqlTable("spec_dropdown_options", {
   id: int("id").autoincrement().primaryKey(),
   component: varchar("component", { length: 128 }).notNull(),
-  value: varchar("value", { length: 256 }).notNull(),
+  value: text("value").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
