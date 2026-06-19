@@ -79,9 +79,11 @@ interface FreeTypeCellProps {
   onEditOption?: (id: number, newValue: string) => void;
   /** If provided, overrides the default option list (used for upper_1) */
   overrideOptions?: string[];
+  /** Used for Tab navigation: "rowId:colIdx" e.g. "upper_1:0" */
+  cellId?: string;
 }
 
-function FreeTypeCell({ component, value, savedOptions, savedOptionIds, onSave, onAddOption, onDeleteOption, onEditOption, overrideOptions }: FreeTypeCellProps) {
+function FreeTypeCell({ component, value, savedOptions, savedOptionIds, onSave, onAddOption, onDeleteOption, onEditOption, overrideOptions, cellId }: FreeTypeCellProps) {
   const defaults = overrideOptions ?? DEFAULT_DROPDOWN_OPTIONS[component.key] ?? [];
   const allOptions = Array.from(new Set([...defaults, ...savedOptions]))
     .filter(Boolean)
@@ -126,6 +128,26 @@ function FreeTypeCell({ component, value, savedOptions, savedOptionIds, onSave, 
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Tab" && !e.shiftKey && cellId) {
+      // Move focus to the next row's cell in the same column
+      const [, colPart] = cellId.split(":");
+      const colIdx = parseInt(colPart ?? "0", 10);
+      const allCells = Array.from(
+        document.querySelectorAll<HTMLTextAreaElement>(`[data-spec-cell]`)
+      ).filter((el) => {
+        const parts = el.getAttribute("data-spec-cell")?.split(":") ?? [];
+        return parseInt(parts[1] ?? "0", 10) === colIdx;
+      });
+      const currentIdx = allCells.indexOf(inputRef.current!);
+      const nextCell = allCells[currentIdx + 1];
+      if (nextCell) {
+        e.preventDefault();
+        committedRef.current = true;
+        commit(draft);
+        nextCell.focus();
+        return;
+      }
+    }
     if (e.key === "Enter" && e.ctrlKey && isNewValue) {
       e.preventDefault();
       onAddOption(draft.trim());
@@ -157,6 +179,7 @@ function FreeTypeCell({ component, value, savedOptions, savedOptionIds, onSave, 
         ref={inputRef}
         value={draft}
         rows={1}
+        data-spec-cell={cellId}
         onChange={(e) => { setDraft(e.target.value); setShowSuggestions(true); }}
         onFocus={() => setShowSuggestions(true)}
         onBlur={handleBlur}
@@ -257,8 +280,10 @@ interface CustomFreeTypeCellProps {
   onAddOption: (val: string) => void;
   onDeleteOption: (val: string) => void;
   onEditOption?: (id: number, newValue: string) => void;
+  /** Used for Tab navigation: "rowId:colIdx" */
+  cellId?: string;
 }
-function CustomFreeTypeCell({ value, options, optionIds, onSave, onAddOption, onDeleteOption, onEditOption }: CustomFreeTypeCellProps) {
+function CustomFreeTypeCell({ value, options, optionIds, onSave, onAddOption, onDeleteOption, onEditOption, cellId }: CustomFreeTypeCellProps) {
   const allOptions = Array.from(new Set(options)).filter(Boolean).sort((a, b) => a.localeCompare(b));
 
   const [draft, setDraft] = useState(value);
@@ -302,6 +327,25 @@ function CustomFreeTypeCell({ value, options, optionIds, onSave, onAddOption, on
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Tab" && !e.shiftKey && cellId) {
+      const [, colPart] = cellId.split(":");
+      const colIdx = parseInt(colPart ?? "0", 10);
+      const allCells = Array.from(
+        document.querySelectorAll<HTMLTextAreaElement>(`[data-spec-cell]`)
+      ).filter((el) => {
+        const parts = el.getAttribute("data-spec-cell")?.split(":") ?? [];
+        return parseInt(parts[1] ?? "0", 10) === colIdx;
+      });
+      const currentIdx = allCells.indexOf(inputRef.current!);
+      const nextCell = allCells[currentIdx + 1];
+      if (nextCell) {
+        e.preventDefault();
+        committedRef.current = true;
+        commit(draft);
+        nextCell.focus();
+        return;
+      }
+    }
     if (e.key === "Enter" && e.ctrlKey && isNewValue) {
       e.preventDefault();
       onAddOption(draft.trim());
@@ -334,6 +378,7 @@ function CustomFreeTypeCell({ value, options, optionIds, onSave, onAddOption, on
         ref={inputRef}
         value={draft}
         rows={1}
+        data-spec-cell={cellId}
         onChange={(e) => { setDraft(e.target.value); setIsTyping(true); setShowSuggestions(true); }}
         onFocus={() => { setIsTyping(false); setShowSuggestions(true); }}
         onBlur={handleBlur}
@@ -539,6 +584,7 @@ function UnifiedTemplateRow({
               onDeleteOption={isUpper1 ? undefined : (v) => onDeleteDropdownOption(comp.key, v)}
               onEditOption={isUpper1 ? undefined : onEditDropdownOption}
               overrideOptions={isUpper1 ? allColourLeatherOptions : undefined}
+              cellId={`${id}:${colIdx}`}
             />
           </td>
         );
@@ -643,6 +689,7 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForCol
               onAddOption={(val) => onAddDropdownOption(optKey, val)}
               onDeleteOption={(val) => onDeleteDropdownOption(optKey, val)}
               onEditOption={onEditDropdownOption}
+              cellId={`${id}:${colIdx}`}
             />
           </td>
         );
@@ -938,7 +985,7 @@ interface CrossStyleCopyPanelProps {
   currentColourLabels: string[];
   allStyleEntries: StyleEntry[];
   template: SpecComponent[];
-  onCopy: (sourceColour: string, targetColours: string[], sourceSpecs: Record<string, string>) => void;
+  onCopy: (sourceColour: string, targetColours: string[], sourceSpecs: Record<string, string>, sourceCustomRows: CustomRowData[]) => void;
 }
 
 function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels, allStyleEntries, template, onCopy }: CrossStyleCopyPanelProps) {
@@ -951,6 +998,12 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
 
   // Fetch specs for the selected source style
   const { data: sourceSpecsRaw = [] } = trpc.specs.getForStyle.useQuery(
+    { style: sourceStyle! },
+    { enabled: !!sourceStyle }
+  );
+
+  // Fetch custom rows for the selected source style
+  const { data: sourceCustomRowsRaw = [] } = trpc.specCustomRow.getByStyle.useQuery(
     { style: sourceStyle! },
     { enabled: !!sourceStyle }
   );
@@ -976,7 +1029,7 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
   function handleCopy() {
     if (!sourceStyle || !sourceColour || targets.size === 0) return;
     const sourceValues = sourceSpecsMap[sourceColour] ?? {};
-    onCopy(sourceColour, Array.from(targets), sourceValues);
+    onCopy(sourceColour, Array.from(targets), sourceValues, sourceCustomRowsRaw as CustomRowData[]);
     setOpen(false);
     setSourceStyle(null);
     setSourceColour(null);
@@ -1415,13 +1468,33 @@ function SpecForm({
           currentColourLabels={entry.colourLabels}
           allStyleEntries={allStyleEntries}
           template={template}
-          onCopy={(sourceColour, targetColours, sourceSpecs) => {
+          onCopy={(sourceColour, targetColours, sourceSpecs, sourceCustomRows) => {
+            // Build a grouped map of custom rows from the source style (title → rep + colourMap)
+            const srcGroups = new Map<string, { rep: CustomRowData; colourMap: Map<string, CustomRowData> }>();
+            for (const r of sourceCustomRows) {
+              if (!srcGroups.has(r.title)) {
+                srcGroups.set(r.title, { rep: r, colourMap: new Map([[r.colour, r]]) });
+              } else {
+                srcGroups.get(r.title)!.colourMap.set(r.colour, r);
+              }
+            }
             for (const colour of targetColours) {
+              // Copy template rows
               for (const comp of template) {
                 // Never copy Upper 1 — each colour has its own upper material
                 if (comp.key === "upper_1") continue;
                 const val = sourceSpecs[comp.key];
                 if (val) onUpsert(colour, comp.key, val);
+              }
+              // Copy custom rows from source style
+              for (const [, group] of Array.from(srcGroups)) {
+                const { rep, colourMap } = group;
+                const sourceRow = colourMap.get(sourceColour) ?? colourMap.get("__all__");
+                const sourceVal = sourceRow?.value ?? null;
+                if (!sourceVal) continue;
+                const sharedRow = colourMap.get("__all__");
+                const currentSharedValue = sharedRow?.value ?? "";
+                onUpdateCustomRowForColour(rep.id, rep.title, colour, sourceVal, currentSharedValue, rep.section, rep.sortOrder);
               }
             }
             toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s) (Upper 1 kept per-colour)`);
