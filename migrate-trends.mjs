@@ -6,6 +6,8 @@ import { readFileSync } from "fs";
 dotenv.config({ path: ".env.local" });
 dotenv.config({ path: ".env" });
 
+// LOAFER styles come from the old trendFlag column (set before the new trends system)
+// They are listed here so re-running this script preserves them
 const TREND_DATA = {
   "ARLA": ["MESH"],
   "BREEZE": ["MESH"],
@@ -33,6 +35,26 @@ const TREND_DATA = {
   "SARAH": ["TOE CAP"],
   "SAVANT": ["TOE CAP"],
   "STASSIE": ["ROSETTE"],
+  // LOAFER styles (from old trendFlag column, preserved here for re-import safety)
+  "CREW": ["LOAFER"],
+  "ERES": ["LOAFER"],
+  "EVIE": ["LOAFER"],
+  "GATSBY": ["LOAFER"],
+  "GEZZA": ["LOAFER"],
+  "GIGI": ["LOAFER"],
+  "GLACIER": ["LOAFER"],
+  "GLORIA": ["LOAFER"],
+  "GOMEZ": ["LOAFER"],
+  "GRAND": ["LOAFER"],
+  "LAMORE": ["LOAFER"],
+  "LIBBY": ["LOAFER"],
+  "LONDON": ["LOAFER"],
+  "LUXURY": ["LOAFER"],
+  "VIN": ["LOAFER"],
+  "VIXEN": ["LOAFER"],
+  "ZAC": ["LOAFER"],
+  "ZEPHYR": ["LOAFER"],
+  "ZOE": ["LOAFER"],
 };
 
 const conn = await createConnection(process.env.DATABASE_URL);

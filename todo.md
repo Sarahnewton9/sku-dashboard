@@ -325,3 +325,11 @@
 - [x] Add Trend filter chips to More Filters panel
 - [x] Update More Filters badge count and Clear filters to include trendFilter
 - [x] Show clickable trend badges on each style row (clicking filters by that trend)
+
+## Trend Filter Improvements (Jun 2026)
+- [x] Add LOAFER styles to migrate-trends.mjs import mapping so re-imports preserve LOAFER
+- [x] Change trendFilter state from single string to string[] array for multi-select
+- [x] Update filtered useMemo to match styles where trends intersect with selected trend array
+- [x] Show style count on each trend chip (e.g. "BALLET (14)")
+- [x] Update filter chips UI to support multi-select toggle (add/remove from array)
+- [x] Update More Filters badge count and Clear filters to work with array

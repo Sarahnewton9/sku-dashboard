@@ -36,7 +36,7 @@ export default function StylesTab() {
   const [lastFilter, setLastFilter] = useState("All");
   const [leatherFilter, setLeatherFilter] = useState("All");
   const [size11Filter, setSize11Filter] = useState(false);
-  const [trendFilter, setTrendFilter] = useState<string | null>(null); // null = no filter
+  const [trendFilters, setTrendFilters] = useState<string[]>([]); // empty = no filter
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("style");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -555,6 +555,16 @@ export default function StylesTab() {
     return ["All", ...Array.from(cats).sort()];
   }, [stylesWithCategories]);
 
+  // Count of styles per trend (across all styles, not just filtered)
+  const trendCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const s of stylesWithCategories) {
+      const trends: string[] = (s as any).trends ?? [];
+      for (const t of trends) counts[t] = (counts[t] ?? 0) + 1;
+    }
+    return counts;
+  }, [stylesWithCategories]);
+
   // Available leathers for filter dropdown
   const availableLeathers = useMemo(() => {
     const s = new Set<string>();
@@ -620,12 +630,15 @@ export default function StylesTab() {
       data = data.filter((s) => styleMetaMap[s.style]?.fitApproved === true);
     }
 
-    if (trendFilter) {
-      data = data.filter((s) => (s as any).trends?.includes(trendFilter));
+    if (trendFilters.length > 0) {
+      data = data.filter((s) => {
+        const styleTrends: string[] = (s as any).trends ?? [];
+        return trendFilters.some((t) => styleTrends.includes(t));
+      });
     }
 
     return data;
-  }, [search, categoryFilter, statusFilter, sampleFilter, fittingFilter, lastFilter, leatherFilter, size11Filter, trendFilter, stylesWithCategories, skuMetaMap, styleMetaMap, fittedStylesSet]);
+  }, [search, categoryFilter, statusFilter, sampleFilter, fittingFilter, lastFilter, leatherFilter, size11Filter, trendFilters, stylesWithCategories, skuMetaMap, styleMetaMap, fittedStylesSet]);
 
   // Group by last, sorted alphabetically by last, then by style within each last
   const groupedByLast = useMemo(() => {
@@ -806,24 +819,24 @@ export default function StylesTab() {
           <button
             onClick={() => setShowMoreFilters((v) => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors ${
-              showMoreFilters || sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilter
+              showMoreFilters || sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilters.length > 0
                 ? "bg-amber-50 border-amber-400 text-amber-700"
                 : "bg-card hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700"
             }`}
-            style={{ borderColor: showMoreFilters || sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilter ? undefined : "var(--border)" }}
+            style={{ borderColor: showMoreFilters || sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilters.length > 0 ? undefined : "var(--border)" }}
           >
             <SlidersHorizontal className="w-4 h-4" />
             Filters
-            {(sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilter) && (
+            {(sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilters.length > 0) && (
               <span className="ml-1 bg-amber-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                {[sampleFilter !== "All", fittingFilter !== "All", lastFilter !== "All", leatherFilter !== "All", size11Filter, !!trendFilter].filter(Boolean).length}
+                {[sampleFilter !== "All", fittingFilter !== "All", lastFilter !== "All", leatherFilter !== "All", size11Filter, trendFilters.length > 0].filter(Boolean).length}
               </span>
             )}
           </button>
 
-          {(sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilter) && (
+          {(sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilters.length > 0) && (
             <button
-              onClick={() => { setSampleFilter("All"); setFittingFilter("All"); setLastFilter("All"); setLeatherFilter("All"); setSize11Filter(false); setTrendFilter(null); }}
+              onClick={() => { setSampleFilter("All"); setFittingFilter("All"); setLastFilter("All"); setLeatherFilter("All"); setSize11Filter(false); setTrendFilters([]); }}
               className="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
             >
               <X className="w-3 h-3" /> Clear filters
@@ -908,20 +921,29 @@ export default function StylesTab() {
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Trend</label>
                 <div className="flex flex-wrap gap-1.5">
-                  {allTrends.map((trend) => (
-                    <button
-                      key={trend}
-                      onClick={() => setTrendFilter(trendFilter === trend ? null : trend)}
-                      className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                        trendFilter === trend
-                          ? "bg-amber-100 border-amber-400 text-amber-800 font-medium"
-                          : "bg-card text-foreground hover:bg-amber-50"
-                      }`}
-                      style={{ borderColor: trendFilter === trend ? undefined : "var(--border)" }}
-                    >
-                      {trend}
-                    </button>
-                  ))}
+                  {allTrends.map((trend) => {
+                    const isActive = trendFilters.includes(trend);
+                    const count = trendCounts[trend] ?? 0;
+                    return (
+                      <button
+                        key={trend}
+                        onClick={() => setTrendFilters((prev) =>
+                          prev.includes(trend) ? prev.filter((t) => t !== trend) : [...prev, trend]
+                        )}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                          isActive
+                            ? "bg-amber-100 border-amber-400 text-amber-800 font-medium"
+                            : "bg-card text-foreground hover:bg-amber-50"
+                        }`}
+                        style={{ borderColor: isActive ? undefined : "var(--border)" }}
+                      >
+                        {trend}
+                        <span className={`text-xs rounded-full px-1.5 py-0.5 ${
+                          isActive ? "bg-amber-200 text-amber-800" : "bg-muted text-muted-foreground"
+                        }`}>{count}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -1124,13 +1146,13 @@ export default function StylesTab() {
                                 {((style as any).trends as string[] | undefined)?.map((t) => (
                                   <button
                                     key={t}
-                                    onClick={(e) => { e.stopPropagation(); setTrendFilter(trendFilter === t ? null : t); }}
+                                    onClick={(e) => { e.stopPropagation(); setTrendFilters((prev) => prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]); }}
                                     title={`Filter by trend: ${t}`}
                                     className="text-xs px-1.5 py-0.5 rounded font-medium transition-colors hover:opacity-80"
                                     style={{
-                                      background: trendFilter === t ? "oklch(0.88 0.10 75)" : "oklch(0.95 0.06 75)",
+                                      background: trendFilters.includes(t) ? "oklch(0.88 0.10 75)" : "oklch(0.95 0.06 75)",
                                       color: "oklch(0.45 0.15 75)",
-                                      border: trendFilter === t ? "1px solid oklch(0.70 0.12 75)" : "1px solid transparent",
+                                      border: trendFilters.includes(t) ? "1px solid oklch(0.70 0.12 75)" : "1px solid transparent",
                                     }}
                                   >
                                     {t}
