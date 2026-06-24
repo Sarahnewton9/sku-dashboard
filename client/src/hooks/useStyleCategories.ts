@@ -28,6 +28,24 @@ export function useStyleCategories() {
     return map;
   }, [trendFlags]);
 
+  // Map of style → trends array (e.g. ["BALLET", "MESH"])
+  const trendsMap = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const row of trendFlags) {
+      const t = (row as any).trends;
+      const arr: string[] = Array.isArray(t) && t.length > 0 ? t : row.trendFlag ? [row.trendFlag] : [];
+      if (arr.length > 0) map.set(row.style.toUpperCase(), arr);
+    }
+    return map;
+  }, [trendFlags]);
+
+  // All unique trend values present in the DB
+  const allTrends = useMemo(() => {
+    const set = new Set<string>();
+    for (const arr of Array.from(trendsMap.values())) for (const t of arr) set.add(t);
+    return Array.from(set).sort();
+  }, [trendsMap]);
+
   /**
    * Returns the resolved category for a style.
    * Falls back to the static category if no override exists.
@@ -43,7 +61,14 @@ export function useStyleCategories() {
     return trendFlagMap.get(style.toUpperCase()) ?? null;
   }
 
+  /**
+   * Returns the full trends array for a style (e.g. ["BALLET", "MESH"]), or [].
+   */
+  function getTrends(style: string): string[] {
+    return trendsMap.get(style.toUpperCase()) ?? [];
+  }
+
   const isReady = subCategories.length > 0 || trendFlags.length > 0;
 
-  return { getCategory, getTrendFlag, subCategoryMap, trendFlagMap, isReady };
+  return { getCategory, getTrendFlag, getTrends, allTrends, subCategoryMap, trendFlagMap, trendsMap, isReady };
 }

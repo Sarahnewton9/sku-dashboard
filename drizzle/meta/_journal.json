@@ -260,6 +260,13 @@
       "when": 1781845119040,
       "tag": "0036_curved_blizzard",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "5",
+      "when": 1782284045554,
+      "tag": "0037_late_skullbuster",
+      "breakpoints": true
     }
   ]
 }

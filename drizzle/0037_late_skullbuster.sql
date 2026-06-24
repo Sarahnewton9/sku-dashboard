@@ -1,0 +1,1 @@
+ALTER TABLE `style_trend_flags` ADD `trends` text DEFAULT ('[]') NOT NULL;

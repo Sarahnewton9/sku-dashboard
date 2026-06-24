@@ -878,7 +878,35 @@ export async function renameBuySession(id: number, name: string): Promise<void> 
 export async function getAllStyleTrendFlags() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(styleTrendFlags);
+  const rows = await db.select().from(styleTrendFlags);
+  // Parse the JSON trends array; fall back to [trendFlag] for legacy rows
+  return rows.map((r) => ({
+    ...r,
+    trends: (() => {
+      try {
+        const parsed = JSON.parse(r.trends ?? "[]");
+        return Array.isArray(parsed) && parsed.length > 0 ? parsed : [r.trendFlag];
+      } catch {
+        return [r.trendFlag];
+      }
+    })(),
+  }));
+}
+
+export async function upsertStyleTrends(style: string, trends: string[]): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const trendFlag = trends[0] ?? "";
+  const trendsJson = JSON.stringify(trends);
+  await db.insert(styleTrendFlags)
+    .values({ style, trendFlag, trends: trendsJson })
+    .onDuplicateKeyUpdate({ set: { trendFlag, trends: trendsJson } });
+}
+
+export async function deleteStyleTrends(style: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(styleTrendFlags).where(eq(styleTrendFlags.style, style));
 }
 
 // ─── Style Website Images (scraped from tonybianco.com.au) ────────────────────

@@ -311,3 +311,17 @@
 - [x] Fix: custom row drops to bottom after being moved — temp id in localRowKeys not swapped for real id after server responds; addCustomRowMutation.onSuccess now calls swapLocalRowKey to update SpecForm's localRowKeys in-place
 - [x] Fix: custom row copy not working across colours — allColours explosion was using raw colour codes (e.g. "BLACK") instead of full colour labels (e.g. "BLACK CAPRI"); fixed to use colourLabels so explosion keys match spec storage keys
 - [x] Fix: upsertForColourMutation explosion now also calls swapLocalRowKey so localRowKeys stays correct after __all__ row is replaced by per-colour rows
+
+## Trend Filter (Jun 2026)
+- [x] Parse trend data from SS26 spreadsheet columns G & H (26 styles, 4 trends: BALLET, MESH, TOE CAP, ROSETTE)
+- [x] Add trends column to style_trend_flags DB table (nullable TEXT, JSON array)
+- [x] Import all 26 style-trend mappings into DB via migration script
+- [x] Update getAllStyleTrendFlags to parse JSON trends array
+- [x] Add upsertStyleTrends and deleteStyleTrends DB helpers
+- [x] Add trendFlag.upsert and trendFlag.delete tRPC procedures
+- [x] Update useStyleCategories hook to expose getTrends() and allTrends
+- [x] Add trendFilter state to StylesTab
+- [x] Wire trendFilter into filtered useMemo
+- [x] Add Trend filter chips to More Filters panel
+- [x] Update More Filters badge count and Clear filters to include trendFilter
+- [x] Show clickable trend badges on each style row (clicking filters by that trend)

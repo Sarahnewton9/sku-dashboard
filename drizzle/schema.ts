@@ -369,7 +369,8 @@ export type InsertStyleSubCategory = typeof styleSubCategories.$inferInsert;
 export const styleTrendFlags = mysqlTable("style_trend_flags", {
   id: int("id").autoincrement().primaryKey(),
   style: varchar("style", { length: 64 }).notNull().unique(),
-  trendFlag: varchar("trendFlag", { length: 64 }).notNull(), // e.g. "Ballet Flat", "Loafer"
+  trendFlag: varchar("trendFlag", { length: 64 }).notNull(), // legacy single trend (kept for compatibility)
+  trends: text("trends"), // JSON array of trend strings e.g. '["BALLET","MESH"]'
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 

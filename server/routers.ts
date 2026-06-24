@@ -2,7 +2,7 @@ import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import axios from "axios";
 import {
   getAllSkuMeta, upsertSkuMeta,
@@ -26,7 +26,7 @@ import {
   renameBuySession,
   cancelSku, restoreSku, listCancelledSkus,
   getAllStyleSubCategories, upsertStyleSubCategory,
-  getAllStyleTrendFlags,
+  getAllStyleTrendFlags, upsertStyleTrends, deleteStyleTrends,
   upsertStyleWebsiteImage,
   getAllStyleWebsiteImages,
   createFittingGroup, getAllFittingGroups, updateFittingGroup, deleteFittingGroup, addStyleToFittingGroup, removeStyleFromFittingGroup,
@@ -983,6 +983,16 @@ export const appRouter = router({
 
   trendFlag: router({
     getAll: publicProcedure.query(async () => getAllStyleTrendFlags()),
+    upsert: protectedProcedure
+      .input(z.object({ style: z.string(), trends: z.array(z.string()) }))
+      .mutation(async ({ input }) => {
+        await upsertStyleTrends(input.style, input.trends);
+      }),
+    delete: protectedProcedure
+      .input(z.object({ style: z.string() }))
+      .mutation(async ({ input }) => {
+        await deleteStyleTrends(input.style);
+      }),
   }),
 
   // PowerPoint range review sync

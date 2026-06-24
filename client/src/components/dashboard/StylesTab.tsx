@@ -36,6 +36,7 @@ export default function StylesTab() {
   const [lastFilter, setLastFilter] = useState("All");
   const [leatherFilter, setLeatherFilter] = useState("All");
   const [size11Filter, setSize11Filter] = useState(false);
+  const [trendFilter, setTrendFilter] = useState<string | null>(null); // null = no filter
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("style");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -188,7 +189,7 @@ export default function StylesTab() {
   }, [imageOverridesList]);
 
   // Category overrides (sub-categories + trend flags from DB)
-  const { getCategory, getTrendFlag } = useStyleCategories();
+  const { getCategory, getTrendFlag, getTrends, allTrends } = useStyleCategories();
 
   // Add colour inline form state: key = style name, value = { colour, leather } draft
   const [addColourDraft, setAddColourDraft] = useState<Record<string, { colour: string; leather: string }>>({});
@@ -540,9 +541,10 @@ export default function StylesTab() {
           isAllNew: activeNew === activeTotal && activeTotal > 0,
           category: getCategory(s.style, s.category),
           trendFlag: getTrendFlag(s.style),
+          trends: getTrends(s.style),
         };
       });
-  }, [mergedStyles, mergedRawSkus, cancelledSet, cancelledSkuSet, getCategory, getTrendFlag]);
+  }, [mergedStyles, mergedRawSkus, cancelledSet, cancelledSkuSet, getCategory, getTrendFlag, getTrends]);
 
   // Build category list dynamically from resolved categories (case-insensitive, sorted)
   const availableCategories = useMemo(() => {
@@ -618,8 +620,12 @@ export default function StylesTab() {
       data = data.filter((s) => styleMetaMap[s.style]?.fitApproved === true);
     }
 
+    if (trendFilter) {
+      data = data.filter((s) => (s as any).trends?.includes(trendFilter));
+    }
+
     return data;
-  }, [search, categoryFilter, statusFilter, sampleFilter, fittingFilter, lastFilter, leatherFilter, size11Filter, stylesWithCategories, skuMetaMap, styleMetaMap, fittedStylesSet]);
+  }, [search, categoryFilter, statusFilter, sampleFilter, fittingFilter, lastFilter, leatherFilter, size11Filter, trendFilter, stylesWithCategories, skuMetaMap, styleMetaMap, fittedStylesSet]);
 
   // Group by last, sorted alphabetically by last, then by style within each last
   const groupedByLast = useMemo(() => {
@@ -800,24 +806,24 @@ export default function StylesTab() {
           <button
             onClick={() => setShowMoreFilters((v) => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors ${
-              showMoreFilters || sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter
+              showMoreFilters || sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilter
                 ? "bg-amber-50 border-amber-400 text-amber-700"
                 : "bg-card hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700"
             }`}
-            style={{ borderColor: showMoreFilters || sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter ? undefined : "var(--border)" }}
+            style={{ borderColor: showMoreFilters || sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilter ? undefined : "var(--border)" }}
           >
             <SlidersHorizontal className="w-4 h-4" />
             Filters
-            {(sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter) && (
+            {(sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilter) && (
               <span className="ml-1 bg-amber-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                {[sampleFilter !== "All", fittingFilter !== "All", lastFilter !== "All", leatherFilter !== "All", size11Filter].filter(Boolean).length}
+                {[sampleFilter !== "All", fittingFilter !== "All", lastFilter !== "All", leatherFilter !== "All", size11Filter, !!trendFilter].filter(Boolean).length}
               </span>
             )}
           </button>
 
-          {(sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter) && (
+          {(sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilter) && (
             <button
-              onClick={() => { setSampleFilter("All"); setFittingFilter("All"); setLastFilter("All"); setLeatherFilter("All"); setSize11Filter(false); }}
+              onClick={() => { setSampleFilter("All"); setFittingFilter("All"); setLastFilter("All"); setLeatherFilter("All"); setSize11Filter(false); setTrendFilter(null); }}
               className="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
             >
               <X className="w-3 h-3" /> Clear filters
@@ -897,6 +903,28 @@ export default function StylesTab() {
                 {size11Filter ? "SZ11 only ✓" : "SZ11 only"}
               </button>
             </div>
+
+            {allTrends.length > 0 && (
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Trend</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {allTrends.map((trend) => (
+                    <button
+                      key={trend}
+                      onClick={() => setTrendFilter(trendFilter === trend ? null : trend)}
+                      className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                        trendFilter === trend
+                          ? "bg-amber-100 border-amber-400 text-amber-800 font-medium"
+                          : "bg-card text-foreground hover:bg-amber-50"
+                      }`}
+                      style={{ borderColor: trendFilter === trend ? undefined : "var(--border)" }}
+                    >
+                      {trend}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1093,11 +1121,21 @@ export default function StylesTab() {
                                 <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>
                                   {style.category}
                                 </span>
-                                {style.trendFlag && (
-                                  <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: "oklch(0.95 0.06 300)", color: "oklch(0.45 0.15 300)" }}>
-                                    {style.trendFlag}
-                                  </span>
-                                )}
+                                {((style as any).trends as string[] | undefined)?.map((t) => (
+                                  <button
+                                    key={t}
+                                    onClick={(e) => { e.stopPropagation(); setTrendFilter(trendFilter === t ? null : t); }}
+                                    title={`Filter by trend: ${t}`}
+                                    className="text-xs px-1.5 py-0.5 rounded font-medium transition-colors hover:opacity-80"
+                                    style={{
+                                      background: trendFilter === t ? "oklch(0.88 0.10 75)" : "oklch(0.95 0.06 75)",
+                                      color: "oklch(0.45 0.15 75)",
+                                      border: trendFilter === t ? "1px solid oklch(0.70 0.12 75)" : "1px solid transparent",
+                                    }}
+                                  >
+                                    {t}
+                                  </button>
+                                ))}
                               </div>
                             </td>
                             <td className="px-4 py-3 text-right tabular-nums font-semibold text-foreground">{style.totalSKUs}</td>
