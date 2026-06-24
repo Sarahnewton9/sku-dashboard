@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns, customLasts } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns, customLasts, lastMeasurements } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1438,4 +1438,26 @@ export async function bulkCopyCustomRows(data: {
         );
     }
   }
+}
+
+// ─── Last Measurements ───────────────────────────────────────────────────────
+
+/**
+ * Returns all last measurements grouped by lastName → { LENGTH: {size: value}, GIRTH: {size: value} }
+ * Optionally filter to a specific lastName.
+ */
+export async function getLastMeasurements(lastName?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = lastName
+    ? await db.select().from(lastMeasurements).where(eq(lastMeasurements.lastName, lastName))
+    : await db.select().from(lastMeasurements);
+  return rows;
+}
+
+export async function upsertLastMeasurement(lastName: string, measureType: "LENGTH" | "GIRTH", size: string, value: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(lastMeasurements).values({ lastName, measureType, size, value })
+    .onDuplicateKeyUpdate({ set: { value } });
 }

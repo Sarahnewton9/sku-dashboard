@@ -526,3 +526,19 @@ export const customLasts = mysqlTable("custom_lasts", {
 });
 export type CustomLast = typeof customLasts.$inferSelect;
 export type InsertCustomLast = typeof customLasts.$inferInsert;
+
+/**
+ * Last measurements: length and girth per last per size.
+ * Sizes stored as strings like "5", "5.5", "6", ..., "11"
+ */
+export const lastMeasurements = mysqlTable("last_measurements", {
+  id: int("id").autoincrement().primaryKey(),
+  lastName: varchar("last_name", { length: 64 }).notNull(),
+  measureType: mysqlEnum("measure_type", ["LENGTH", "GIRTH"]).notNull(),
+  size: varchar("size", { length: 8 }).notNull(), // e.g. "5", "5.5", "7"
+  value: int("value").notNull(), // measurement in mm
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => [uniqueIndex("last_type_size_idx").on(t.lastName, t.measureType, t.size)]);
+
+export type LastMeasurement = typeof lastMeasurements.$inferSelect;
+export type InsertLastMeasurement = typeof lastMeasurements.$inferInsert;

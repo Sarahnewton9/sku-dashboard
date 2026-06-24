@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   ChevronDown, ChevronRight, Upload, X, ImageIcon, Download,
   CheckCircle, RotateCcw, Search, Plus, Calendar, User, ZoomIn,
-  Layers, Trash2, Edit2, Check,
+  Layers, Trash2, Edit2, Check, Ruler,
 } from "lucide-react";
+import { LastMeasurementsPanel } from "./LastMeasurementsPanel";
 import { toast } from "sonner";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -1630,6 +1631,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
 
 export function FittingTab() {
   const [exportOpen, setExportOpen] = useState(false);
+  const [measurementsOpen, setMeasurementsOpen] = useState(false);
   const [newSessionStyle, setNewSessionStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [approvalFilter, setApprovalFilter] = useState<"all" | "waiting_revised" | "waiting_to_fit" | "approved">("all");
@@ -1981,6 +1983,14 @@ export function FittingTab() {
         />
       )}
 
+      {/* Last Measurements Panel */}
+      {measurementsOpen && (
+        <LastMeasurementsPanel
+          filterLast={null}
+          onClose={() => setMeasurementsOpen(false)}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -2013,6 +2023,10 @@ export function FittingTab() {
               {filteredActive.length} {filteredActive.length === 1 ? "match" : "matches"}
             </span>
           )}
+          <Button variant="outline" size="sm" onClick={() => setMeasurementsOpen(true)} className="gap-2">
+            <Ruler className="w-4 h-4" />
+            Last Measurements
+          </Button>
           <Button variant="outline" size="sm" onClick={handleExportFitReport} className="gap-2">
             <Download className="w-4 h-4" />
             Fit Report

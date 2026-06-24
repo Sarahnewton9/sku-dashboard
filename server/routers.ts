@@ -43,6 +43,8 @@ import {
   setSpecStatus, checkAllSpecsFilled, bulkSetSpecStatus,
   recordPptxImport,
   bulkCopyCustomRows,
+  getLastMeasurements,
+  upsertLastMeasurement,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -1922,10 +1924,33 @@ If the request is unclear or is a question, use no_action.`;
         await hideSpecColumn(input.style, input.colour);
         return { success: true };
       }),
-    show: publicProcedure
+      show: publicProcedure
       .input(z.object({ style: z.string(), colour: z.string() }))
       .mutation(async ({ input }) => {
         await showSpecColumn(input.style, input.colour);
+        return { success: true };
+      }),
+  }),
+
+  lastMeasurements: router({
+    getAll: publicProcedure
+      .query(async () => {
+        return await getLastMeasurements();
+      }),
+    getByLast: publicProcedure
+      .input(z.object({ lastName: z.string() }))
+      .query(async ({ input }) => {
+        return await getLastMeasurements(input.lastName);
+      }),
+    upsert: protectedProcedure
+      .input(z.object({
+        lastName: z.string(),
+        measureType: z.enum(["LENGTH", "GIRTH"]),
+        size: z.string(),
+        value: z.number().int(),
+      }))
+      .mutation(async ({ input }) => {
+        await upsertLastMeasurement(input.lastName, input.measureType, input.size, input.value);
         return { success: true };
       }),
   }),

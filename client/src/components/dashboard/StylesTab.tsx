@@ -14,7 +14,8 @@ import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
-import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock, FileSpreadsheet, X, Camera, ImageOff } from "lucide-react";
+import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock, FileSpreadsheet, X, Camera, ImageOff, Ruler } from "lucide-react";
+import { LastMeasurementsPanel } from "./LastMeasurementsPanel";
 import * as XLSX from "xlsx";
 import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
 import ImportPanel from "./ImportPanel";
@@ -37,6 +38,7 @@ export default function StylesTab() {
   const [leatherFilter, setLeatherFilter] = useState("All");
   const [size11Filter, setSize11Filter] = useState(false);
   const [trendFilters, setTrendFilters] = useState<string[]>([]); // empty = no filter
+  const [measurementsLast, setMeasurementsLast] = useState<string | null>(null); // null = closed
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("style");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -750,6 +752,14 @@ export default function StylesTab() {
 
   return (
     <div className="space-y-4">
+      {/* Last Measurements Panel */}
+      {measurementsLast !== null && (
+        <LastMeasurementsPanel
+          filterLast={measurementsLast}
+          onClose={() => setMeasurementsLast(null)}
+        />
+      )}
+
       {/* Buy Session Bar */}
       <BuySessionBar
         activeSession={activeSession ?? null}
@@ -1024,6 +1034,15 @@ export default function StylesTab() {
                 <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "oklch(0.50 0.14 55)" }}>
                   {last}
                 </span>
+                <button
+                  onClick={() => setMeasurementsLast(last)}
+                  title={`View ${last} measurements`}
+                  className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded hover:bg-amber-100 transition-colors"
+                  style={{ color: "oklch(0.55 0.12 65)" }}
+                >
+                  <Ruler className="w-3 h-3" />
+                  <span className="hidden sm:inline">Measurements</span>
+                </button>
                 {(() => {
                   const hh = heelHeightMap.get(last.toUpperCase());
                   const hasDressCategory = lastStyles.some(s => HEEL_HEIGHT_CATEGORIES.has(s.category));

@@ -333,3 +333,11 @@
 - [x] Show style count on each trend chip (e.g. "BALLET (14)")
 - [x] Update filter chips UI to support multi-select toggle (add/remove from array)
 - [x] Update More Filters badge count and Clear filters to work with array
+
+## Last Measurements Feature (Jun 2026)
+- [ ] Add last_measurements DB table (last, type: LENGTH|GIRTH, size, value)
+- [ ] Seed 7 lasts × 12 sizes × 2 types from image data
+- [ ] Add tRPC getLastMeasurements procedure
+- [ ] Build LastMeasurementsPanel component (full table, Size 7 highlighted)
+- [ ] Add Measurements button to Fitting tab toolbar opening the panel
+- [ ] Make last name clickable in By Style to show that last's measurements
