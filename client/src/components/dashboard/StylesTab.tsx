@@ -102,14 +102,24 @@ export default function StylesTab() {
   }, [cancelledSkuList]);
 
   // Markdown SKUs — fetched from DB and excluded from all style views
-  const { data: markdownSkuList = [] } = trpc.markdown.list.useQuery(undefined, { staleTime: 60_000 });
+  // Fetch all markdown SKUs (pending + deleted) — both should be hidden from By Style
+  const { data: markdownSkuList = [] } = trpc.markdown.list.useQuery({}, { staleTime: 60_000 });
   const markdownSkuSet = useMemo(() => {
     const s = new Set<string>();
-    for (const item of markdownSkuList as Array<{ styleCode: string; colourName: string }>) {
-      s.add(`${item.styleCode}|${item.colourName}`);
+    for (const item of markdownSkuList as Array<{ styleCode: string; colour: string; status: string }>) {
+      // Exclude restored SKUs (they've been put back into the active range)
+      if (item.status !== "restored") {
+        // item.colour is e.g. "BLACK SUEDE" (combined colour+leather from website Name~ tag)
+        s.add(`${item.styleCode}|${item.colour}`);
+      }
     }
     return s;
   }, [markdownSkuList]);
+
+  // Helper: build the combined colour+leather key used by the markdown set
+  // e.g. colour="BLACK" leather="SUEDE" → "BLACK SUEDE" to match the website's Name~ tag
+  const markdownKey = (style: string, colour: string, leather: string) =>
+    `${style}|${[colour, leather].filter(Boolean).join(" ").trim().toUpperCase()}`;
 
   const cancelSkuMutation = trpc.cancelledSku.cancel.useMutation({
     onSuccess: () => { refetchCancelledSkus(); },
@@ -539,7 +549,7 @@ export default function StylesTab() {
         const activeSkus = (mergedRawSkus as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)
           .filter((r) => r.style === s.style
             && !cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`)
-            && !markdownSkuSet.has(`${r.style}|${r.colour}`));
+            && !markdownSkuSet.has(markdownKey(r.style, r.colour, r.leather)));
         const activeLeathers = Array.from(new Set(activeSkus.map((r) => r.leather).filter(Boolean))) as string[];
         const activeColours = Array.from(new Set(activeSkus.map((r) => r.colour).filter(Boolean))) as string[];
         const activeTotal = activeSkus.length;
@@ -590,7 +600,8 @@ export default function StylesTab() {
 
   // Filter styles (uses stylesWithCategories which includes custom SKUs and category overrides)
   const filtered = useMemo(() => {
-    let data = stylesWithCategories;
+    // Hide styles where ALL SKUs are markdown (totalSKUs === 0 after markdown filtering)
+    let data = stylesWithCategories.filter((s) => s.totalSKUs > 0);
 
     if (search.trim()) {
       const q = search.trim().toLowerCase();
@@ -691,7 +702,7 @@ export default function StylesTab() {
     return mergedRawSkus
       .filter((s) => s.style === styleName
         && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`)
-        && !markdownSkuSet.has(`${s.style}|${s.colour}`));
+        && !markdownSkuSet.has(markdownKey(s.style, s.colour, (s as any).leather ?? "")));
   }
 
   // All-sessions buy total for a style (AU + USA + NYC combined, across every session)

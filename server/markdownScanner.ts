@@ -1,7 +1,13 @@
 /**
  * Markdown Scanner — fetches all sale products from tonybianco.com.au
- * using the Shopify collection JSON API and extracts style code + colour
- * from product tags (StyleCode~XXX and Name~XXX).
+ * using the Shopify collection JSON API and extracts style code + colour.
+ *
+ * Style code: derived from the FIRST WORD of the product title (uppercased).
+ *   e.g. "Bettina Black Suede" → styleCode = "BETTINA"
+ *   This is more reliable than the StyleCode~ tag which sometimes has prefixes (B-MABEL etc.)
+ *
+ * Colour: derived from the Name~ tag (e.g. "Name~Black Suede" → "BLACK SUEDE")
+ *   Falls back to title words after the first word if the tag is missing.
  */
 
 const SALE_COLLECTION_URL = "https://tonybianco.com.au/collections/womens-shoe-sale/products.json";
@@ -38,15 +44,24 @@ export async function fetchSaleProducts(): Promise<SaleProduct[]> {
 
     for (const product of products) {
       const tags: string[] = product.tags ?? [];
-      const styleCode = extractTag(tags, "StyleCode~");
-      const colourName = extractTag(tags, "Name~");
+      const title: string = product.title ?? "";
 
-      if (!styleCode || !colourName) continue;
+      // Extract style code from the first word of the product title (most reliable)
+      const titleWords = title.trim().split(/\s+/);
+      const styleCode = titleWords[0]?.toUpperCase();
+
+      // Extract colour from the Name~ tag; fall back to all words after the first
+      const colourTag = extractTag(tags, "Name~");
+      const colour = colourTag
+        ? colourTag.toUpperCase()
+        : titleWords.slice(1).join(" ").toUpperCase();
+
+      if (!styleCode || !colour) continue;
 
       results.push({
-        styleCode: styleCode.toUpperCase(),
-        colour: colourName.toUpperCase(),
-        productTitle: product.title ?? "",
+        styleCode,
+        colour,
+        productTitle: title,
         sourceUrl: `https://tonybianco.com.au/products/${product.handle}`,
       });
     }
