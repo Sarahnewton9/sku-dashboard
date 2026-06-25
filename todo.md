@@ -343,12 +343,12 @@
 - [x] Make last name clickable in By Style to show that last's measurements
 
 ## Markdown Scanner Feature (Jun 2026)
-- [ ] Add markdown_skus DB table (style, colour, source_url, flagged_at, status: pending|deleted|restored)
-- [ ] Add scraper server function to fetch all sale products from tonybianco.com.au Shopify API
-- [ ] Add tRPC procedures: scanMarkdowns, getMarkdownSkus, bulkDeleteMarkdowns, restoreMarkdown
-- [ ] Add /api/scheduled/markdown-scan Express handler for Heartbeat
-- [ ] Build Markdown review page with bulk select/delete/restore
-- [ ] Add scan button with confirmation popup showing matched SKUs before flagging
-- [ ] Filter markdown SKUs out of By Style and By Category tabs
-- [ ] Apply §5c patches to sdk.ts and manusTypes.ts for cron auth
-- [ ] Register weekly Heartbeat schedule (after deploy)
+- [x] Add markdown_skus DB table (style, colour, source_url, flagged_at, status: pending|deleted|restored)
+- [x] Add scraper server function to fetch all sale products from tonybianco.com.au Shopify API
+- [x] Add tRPC procedures: scanMarkdowns, getMarkdownSkus, bulkDeleteMarkdowns, restoreMarkdown
+- [x] Add /api/scheduled/markdown-scan Express handler for Heartbeat
+- [x] Build Markdown review page with bulk select/delete/restore
+- [x] Add scan button with confirmation popup showing matched SKUs before flagging
+- [x] Filter markdown SKUs out of By Style and By Category tabs
+- [x] §5c patches not needed — §4a project-level Heartbeat does not require cron auth patches
+- [ ] Register weekly Heartbeat schedule (requires deploy first)

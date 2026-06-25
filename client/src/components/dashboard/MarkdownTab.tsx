@@ -74,7 +74,7 @@ export function MarkdownTab() {
       setDeleteConfirmOpen(false);
     },
     onError: (err) => {
-      toast({ title: "Update failed", description: err.message, variant: "destructive" });
+      toast.error(`Update failed: ${err.message}`);
     },
   });
 
@@ -112,7 +112,7 @@ export function MarkdownTab() {
   function handleConfirmFlag() {
     const toFlag = scanResults.filter((p) => selectedScan.has(`${p.styleCode}||${p.colour}`));
     if (toFlag.length === 0) {
-      toast({ title: "Nothing selected", description: "Select at least one SKU to flag." });
+      toast.warning("Select at least one SKU to flag.");
       return;
     }
     flagMutation.mutate(toFlag);
