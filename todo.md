@@ -351,4 +351,4 @@
 - [x] Add scan button with confirmation popup showing matched SKUs before flagging
 - [x] Filter markdown SKUs out of By Style and By Category tabs
 - [x] §5c patches not needed — §4a project-level Heartbeat does not require cron auth patches
-- [ ] Register weekly Heartbeat schedule (requires deploy first)
+- [x] Register weekly Heartbeat schedule — task_uid: cW4pFgYKXTVRJHDHCi3KeY, runs Mondays 02:00 UTC

@@ -46,7 +46,11 @@ export function MarkdownTab() {
 
   const scanMutation = trpc.markdown.scan.useMutation({
     onSuccess: (data) => {
-      setScanResults(data.saleProducts);
+      setScanResults(
+        [...data.saleProducts].sort((a, b) =>
+          a.styleCode.localeCompare(b.styleCode) || a.colour.localeCompare(b.colour)
+        )
+      );
       // Pre-select all by default
       setSelectedScan(new Set(data.saleProducts.map((p) => `${p.styleCode}||${p.colour}`)));
       setScanOpen(true);
