@@ -110,7 +110,10 @@ export default function StylesTab() {
       // Exclude restored SKUs (they've been put back into the active range)
       if (item.status !== "restored") {
         // item.colour is e.g. "BLACK SUEDE" (combined colour+leather from website Name~ tag)
-        s.add(`${item.styleCode}|${item.colour}`);
+        // Some website colours have a slash suffix for lining colour (e.g. "CLEAR VINYLITE/SKIN")
+        // Strip everything after the slash so it matches the SKU data key (e.g. "CLEAR VINYLITE")
+        const normalisedColour = item.colour.split("/")[0].trim();
+        s.add(`${item.styleCode}|${normalisedColour}`);
       }
     }
     return s;
