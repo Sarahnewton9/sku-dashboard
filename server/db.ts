@@ -1461,3 +1461,54 @@ export async function upsertLastMeasurement(lastName: string, measureType: "LENG
   await db.insert(lastMeasurements).values({ lastName, measureType, size, value })
     .onDuplicateKeyUpdate({ set: { value } });
 }
+
+
+// ─── Markdown SKUs ────────────────────────────────────────────────────────────
+
+export async function getMarkdownSkus(statusFilter?: "pending" | "deleted" | "restored") {
+  const db = await getDb();
+  if (!db) return [];
+  const { markdownSkus } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  if (statusFilter) {
+    return db.select().from(markdownSkus).where(eq(markdownSkus.status, statusFilter));
+  }
+  return db.select().from(markdownSkus);
+}
+
+/** Upsert a batch of markdown SKUs (flagged from scan). Only inserts if not already present. */
+export async function flagMarkdownSkus(items: { styleCode: string; colour: string; productTitle?: string; sourceUrl?: string }[]) {
+  const db = await getDb();
+  if (!db) return 0;
+  const { markdownSkus } = await import("../drizzle/schema");
+  let flagged = 0;
+  for (const item of items) {
+    try {
+      await db.insert(markdownSkus).values({
+        styleCode: item.styleCode,
+        colour: item.colour,
+        productTitle: item.productTitle ?? null,
+        sourceUrl: item.sourceUrl ?? null,
+        status: "pending",
+      }).onDuplicateKeyUpdate({
+        set: {
+          productTitle: item.productTitle ?? null,
+          sourceUrl: item.sourceUrl ?? null,
+          status: "pending",
+          flaggedAt: new Date(),
+        },
+      });
+      flagged++;
+    } catch {}
+  }
+  return flagged;
+}
+
+export async function updateMarkdownSkuStatus(ids: number[], status: "pending" | "deleted" | "restored") {
+  const db = await getDb();
+  if (!db) return;
+  const { markdownSkus } = await import("../drizzle/schema");
+  const { inArray } = await import("drizzle-orm");
+  if (ids.length === 0) return;
+  await db.update(markdownSkus).set({ status }).where(inArray(markdownSkus.id, ids));
+}

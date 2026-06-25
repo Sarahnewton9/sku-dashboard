@@ -11,7 +11,8 @@ import { serveStatic, setupVite } from "./vite";
 import multer from "multer";
 import { parsePptxBuffer } from "../pptx_parser";
 import { storagePut } from "../storage";
-import { recordPptxImport } from "../db";
+import { recordPptxImport, flagMarkdownSkus } from "../db";
+import { fetchSaleProducts } from "../markdownScanner";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -88,6 +89,25 @@ async function startServer() {
       res.json({ success: true, parsed });
     } catch (e: any) {
       res.status(500).json({ error: e.message || "Parse failed" });
+    }
+  });
+
+  // Scheduled: weekly markdown scan — called by Manus Heartbeat cron
+  app.post("/api/scheduled/markdown-scan", async (req, res) => {
+    try {
+      // Verify this is a cron call (Heartbeat sets x-manus-cron-task-uid header)
+      const taskUid = req.headers["x-manus-cron-task-uid"] as string | undefined;
+      if (!taskUid) {
+        res.status(403).json({ error: "cron-only endpoint" });
+        return;
+      }
+      const saleProducts = await fetchSaleProducts();
+      const flagged = await flagMarkdownSkus(saleProducts);
+      console.log(`[markdown-scan] Scanned ${saleProducts.length} sale products, flagged ${flagged} new markdown SKUs`);
+      res.json({ ok: true, scanned: saleProducts.length, flagged });
+    } catch (err: any) {
+      console.error("[markdown-scan] Error:", err);
+      res.status(500).json({ error: err.message, timestamp: new Date().toISOString() });
     }
   });
 

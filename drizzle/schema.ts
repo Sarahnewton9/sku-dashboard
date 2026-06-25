@@ -542,3 +542,21 @@ export const lastMeasurements = mysqlTable("last_measurements", {
 
 export type LastMeasurement = typeof lastMeasurements.$inferSelect;
 export type InsertLastMeasurement = typeof lastMeasurements.$inferInsert;
+
+/**
+ * Markdown SKUs — SKUs flagged as marked-down on tonybianco.com.au/sale.
+ * Status: pending = waiting for deletion approval, deleted = permanently removed, restored = brought back.
+ */
+export const markdownSkus = mysqlTable("markdown_skus", {
+  id: int("id").autoincrement().primaryKey(),
+  styleCode: varchar("style_code", { length: 64 }).notNull(),
+  colour: varchar("colour", { length: 128 }).notNull(),
+  productTitle: varchar("product_title", { length: 256 }),
+  sourceUrl: varchar("source_url", { length: 512 }),
+  flaggedAt: timestamp("flagged_at").notNull().defaultNow(),
+  status: mysqlEnum("status", ["pending", "deleted", "restored"]).notNull().default("pending"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+}, (t) => [uniqueIndex("markdown_style_colour_idx").on(t.styleCode, t.colour)]);
+
+export type MarkdownSku = typeof markdownSkus.$inferSelect;
+export type InsertMarkdownSku = typeof markdownSkus.$inferInsert;

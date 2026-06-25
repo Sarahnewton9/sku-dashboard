@@ -101,6 +101,16 @@ export default function StylesTab() {
     return s;
   }, [cancelledSkuList]);
 
+  // Markdown SKUs — fetched from DB and excluded from all style views
+  const { data: markdownSkuList = [] } = trpc.markdown.list.useQuery(undefined, { staleTime: 60_000 });
+  const markdownSkuSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const item of markdownSkuList as Array<{ styleCode: string; colourName: string }>) {
+      s.add(`${item.styleCode}|${item.colourName}`);
+    }
+    return s;
+  }, [markdownSkuList]);
+
   const cancelSkuMutation = trpc.cancelledSku.cancel.useMutation({
     onSuccess: () => { refetchCancelledSkus(); },
     onError: (err) => toast.error(`Failed to cancel SKU: ${err.message}`),
@@ -525,9 +535,11 @@ export default function StylesTab() {
     return mergedStyles
       .filter((s) => !cancelledSet.has(s.style))
       .map((s) => {
-        // Recompute leathers and colours excluding cancelled SKUs so the header reflects live state
+        // Recompute leathers and colours excluding cancelled SKUs and markdown SKUs
         const activeSkus = (mergedRawSkus as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)
-          .filter((r) => r.style === s.style && !cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`));
+          .filter((r) => r.style === s.style
+            && !cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`)
+            && !markdownSkuSet.has(`${r.style}|${r.colour}`));
         const activeLeathers = Array.from(new Set(activeSkus.map((r) => r.leather).filter(Boolean))) as string[];
         const activeColours = Array.from(new Set(activeSkus.map((r) => r.colour).filter(Boolean))) as string[];
         const activeTotal = activeSkus.length;
@@ -546,7 +558,7 @@ export default function StylesTab() {
           trends: getTrends(s.style),
         };
       });
-  }, [mergedStyles, mergedRawSkus, cancelledSet, cancelledSkuSet, getCategory, getTrendFlag, getTrends]);
+  }, [mergedStyles, mergedRawSkus, cancelledSet, cancelledSkuSet, markdownSkuSet, getCategory, getTrendFlag, getTrends]);
 
   // Build category list dynamically from resolved categories (case-insensitive, sorted)
   const availableCategories = useMemo(() => {
@@ -677,7 +689,9 @@ export default function StylesTab() {
   function getSkusForStyle(styleName: string) {
     // mergedRawSkus already has overrides applied via useCustomSkus
     return mergedRawSkus
-      .filter((s) => s.style === styleName && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`));
+      .filter((s) => s.style === styleName
+        && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`)
+        && !markdownSkuSet.has(`${s.style}|${s.colour}`));
   }
 
   // All-sessions buy total for a style (AU + USA + NYC combined, across every session)

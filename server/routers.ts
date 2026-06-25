@@ -45,7 +45,11 @@ import {
   bulkCopyCustomRows,
   getLastMeasurements,
   upsertLastMeasurement,
+  getMarkdownSkus,
+  flagMarkdownSkus,
+  updateMarkdownSkuStatus,
 } from "./db";
+import { fetchSaleProducts } from "./markdownScanner";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { execSync } from "child_process";
@@ -1954,8 +1958,48 @@ If the request is unclear or is a question, use no_action.`;
         return { success: true };
       }),
   }),
+
+  markdown: router({
+    /** Fetch all sale products from tonybianco.com.au and return matched SKUs without saving */
+    scan: protectedProcedure.mutation(async () => {
+      const saleProducts = await fetchSaleProducts();
+      return { saleProducts, count: saleProducts.length };
+    }),
+
+    /** Flag matched SKUs as pending markdown (moves them out of active range) */
+    flag: protectedProcedure
+      .input(z.array(z.object({
+        styleCode: z.string(),
+        colour: z.string(),
+        productTitle: z.string().optional(),
+        sourceUrl: z.string().optional(),
+      })))
+      .mutation(async ({ input }) => {
+        const count = await flagMarkdownSkus(input);
+        return { flagged: count };
+      }),
+
+    /** List all markdown SKUs, optionally filtered by status */
+    list: protectedProcedure
+      .input(z.object({ status: z.enum(["pending", "deleted", "restored"]).optional() }))
+      .query(async ({ input }) => {
+        return await getMarkdownSkus(input.status);
+      }),
+
+    /** Bulk update status of markdown SKUs (delete or restore) */
+    updateStatus: protectedProcedure
+      .input(z.object({
+        ids: z.array(z.number()),
+        status: z.enum(["deleted", "restored", "pending"]),
+      }))
+      .mutation(async ({ input }) => {
+        await updateMarkdownSkuStatus(input.ids, input.status);
+        return { success: true };
+      }),
+  }),
 });
 // Patch buy.unlock into the existing buy router by re-exporting
 // (We add it inline here since the buy router is defined earlier in this file)
 export type AppRouter = typeof appRouter;
+
 

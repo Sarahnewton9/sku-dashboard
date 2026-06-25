@@ -27,6 +27,7 @@ import BuySessionsPanel from "@/components/dashboard/BuySessionsPanel";
 import BuyAnalysisTab from "@/components/dashboard/BuyAnalysisTab";
 import LastApprovalTab from "@/components/dashboard/LastApprovalTab";
 import { FittingTab } from "@/components/dashboard/FittingTab";
+import { MarkdownTab } from "@/components/dashboard/MarkdownTab";
 import SeasonAnalysisTab from "@/components/dashboard/SeasonAnalysisTab";
 import SpecsTab from "@/components/dashboard/SpecsTab";
 import {
@@ -45,6 +46,7 @@ import {
   LineChart,
   Ruler,
   ClipboardList,
+  TagsIcon,
   MessageSquare,
   X,
   Send,
@@ -52,12 +54,12 @@ import {
   Sparkles,
 } from "lucide-react";
 
-type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval" | "fitting" | "specs" | "season-analysis";
+type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval" | "fitting" | "specs" | "season-analysis" | "markdown";
 
 const VALID_TABS = new Set<Tab>([
   "overview", "categories", "styles", "leathers", "colours",
   "colourleather", "expansion", "buy-sessions", "buy-analysis",
-  "last-approval", "fitting", "specs", "season-analysis",
+  "last-approval", "fitting", "specs", "season-analysis", "markdown",
 ]);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -75,6 +77,7 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group
   { id: "fitting", label: "Fitting", icon: Ruler, group: "approval" },
   { id: "specs", label: "Specs", icon: ClipboardList, group: "approval" },
   { id: "season-analysis", label: "Season Analysis", icon: LineChart, group: "analysis" },
+  { id: "markdown", label: "Markdowns", icon: TagsIcon, group: "analysis" },
 ];
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -317,6 +320,7 @@ export default function Dashboard() {
               {activeTab === "last-approval" && <LastApprovalTab />}
               {activeTab === "fitting" && <FittingTab />}
               {activeTab === "season-analysis" && <SeasonAnalysisTab />}
+              {activeTab === "markdown" && <MarkdownTab />}
             </div>
           </div>
         )}
