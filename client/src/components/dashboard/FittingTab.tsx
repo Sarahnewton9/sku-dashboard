@@ -1631,7 +1631,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
 
 export function FittingTab() {
   const [exportOpen, setExportOpen] = useState(false);
-  const [measurementsOpen, setMeasurementsOpen] = useState(false);
+  const [selectedMeasurementsLast, setSelectedMeasurementsLast] = useState<string | null>(null);
   const [newSessionStyle, setNewSessionStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [approvalFilter, setApprovalFilter] = useState<"all" | "waiting_revised" | "waiting_to_fit" | "approved">("all");
@@ -1984,10 +1984,10 @@ export function FittingTab() {
       )}
 
       {/* Last Measurements Panel */}
-      {measurementsOpen && (
+      {selectedMeasurementsLast !== null && (
         <LastMeasurementsPanel
-          filterLast={null}
-          onClose={() => setMeasurementsOpen(false)}
+          filterLast={selectedMeasurementsLast}
+          onClose={() => setSelectedMeasurementsLast(null)}
         />
       )}
 
@@ -2023,10 +2023,7 @@ export function FittingTab() {
               {filteredActive.length} {filteredActive.length === 1 ? "match" : "matches"}
             </span>
           )}
-          <Button variant="outline" size="sm" onClick={() => setMeasurementsOpen(true)} className="gap-2">
-            <Ruler className="w-4 h-4" />
-            Last Measurements
-          </Button>
+
           <Button variant="outline" size="sm" onClick={handleExportFitReport} className="gap-2">
             <Download className="w-4 h-4" />
             Fit Report
@@ -2072,6 +2069,14 @@ export function FittingTab() {
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{last}</h3>
             <span className="text-xs text-muted-foreground">({byLast[last].length} styles)</span>
+            <button
+              onClick={() => setSelectedMeasurementsLast(last)}
+              title={`View ${last} measurements`}
+              className="flex items-center gap-1 text-xs px-2 py-0.5 rounded border border-transparent hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 transition-colors text-muted-foreground"
+            >
+              <Ruler className="w-3 h-3" />
+              <span>Measurements</span>
+            </button>
             <div className="flex-1 h-px bg-border" />
           </div>
           <div className="space-y-2">
