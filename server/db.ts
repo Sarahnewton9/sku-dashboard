@@ -1476,13 +1476,28 @@ export async function getMarkdownSkus(statusFilter?: "pending" | "deleted" | "re
   return db.select().from(markdownSkus);
 }
 
-/** Upsert a batch of markdown SKUs (flagged from scan). Only inserts if not already present. */
+/** Upsert a batch of markdown SKUs (flagged from scan).
+ * - New SKUs are inserted as 'pending'.
+ * - Existing 'pending' or 'restored' SKUs have their URL/title refreshed.
+ * - Existing 'deleted' SKUs are left untouched (user already confirmed deletion).
+ */
 export async function flagMarkdownSkus(items: { styleCode: string; colour: string; productTitle?: string; sourceUrl?: string }[]) {
   const db = await getDb();
   if (!db) return 0;
   const { markdownSkus } = await import("../drizzle/schema");
+  const { eq, and, sql } = await import("drizzle-orm");
+
+  // Fetch all existing deleted entries so we can skip them
+  const deletedRows = await db
+    .select({ styleCode: markdownSkus.styleCode, colour: markdownSkus.colour })
+    .from(markdownSkus)
+    .where(eq(markdownSkus.status, "deleted"));
+  const deletedSet = new Set(deletedRows.map(r => `${r.styleCode}|${r.colour}`));
+
   let flagged = 0;
   for (const item of items) {
+    // Skip anything the user has already confirmed as deleted
+    if (deletedSet.has(`${item.styleCode}|${item.colour}`)) continue;
     try {
       await db.insert(markdownSkus).values({
         styleCode: item.styleCode,
@@ -1492,9 +1507,9 @@ export async function flagMarkdownSkus(items: { styleCode: string; colour: strin
         status: "pending",
       }).onDuplicateKeyUpdate({
         set: {
+          // Only refresh metadata — never reset status back to pending for deleted rows
           productTitle: item.productTitle ?? null,
           sourceUrl: item.sourceUrl ?? null,
-          status: "pending",
           flaggedAt: new Date(),
         },
       });
