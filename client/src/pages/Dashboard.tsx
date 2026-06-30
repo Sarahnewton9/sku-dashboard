@@ -246,6 +246,14 @@ export default function Dashboard() {
               <NavItem key={item.id} item={item} />
             ))}
           </ul>
+          <p className="px-2 mt-4 mb-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "oklch(0.50 0.01 80)" }}>
+            Handbags
+          </p>
+          <ul className="space-y-0.5">
+            {NAV_ITEMS.filter((i) => i.group === "handbags").map((item) => (
+              <NavItem key={item.id} item={item} />
+            ))}
+          </ul>
         </nav>
 
         {/* Footer */}
