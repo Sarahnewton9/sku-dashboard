@@ -2090,6 +2090,31 @@ If the request is unclear or is a question, use no_action.`;
         await deleteHandbagBuyItem(input.id);
         return { success: true };
       }),
+
+    /** Upload an image for a handbag style+colour */
+    uploadImage: protectedProcedure
+      .input(z.object({
+        style: z.string(),
+        colour: z.string(),
+        imageBase64: z.string(),
+        mimeType: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const buffer = Buffer.from(input.imageBase64, 'base64');
+        const ext = input.mimeType.split('/')[1] || 'jpg';
+        const fileKey = `handbag-images/${input.style}-${input.colour}-${nanoid(8)}.${ext}`;
+        const { url } = await storagePut(fileKey, buffer, input.mimeType);
+        await upsertHandbagStyle({ style: input.style, colour: input.colour, imageUrl: url });
+        return { url };
+      }),
+
+    /** Remove the image for a handbag style+colour */
+    removeImage: protectedProcedure
+      .input(z.object({ style: z.string(), colour: z.string() }))
+      .mutation(async ({ input }) => {
+        await upsertHandbagStyle({ style: input.style, colour: input.colour, imageUrl: null });
+        return { success: true };
+      }),
   }),
 
   sales: router({

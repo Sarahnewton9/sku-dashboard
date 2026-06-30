@@ -1,0 +1,1 @@
+ALTER TABLE `handbag_styles` ADD `image_url` varchar(1000);

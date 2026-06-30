@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { Plus, Trash2, ChevronDown, ChevronRight, ShoppingBag } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronRight, ShoppingBag, ImageIcon, X, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ type HandbagStyle = {
   notes: string | null;
   rrp: number | null;
   cost: number | null;
+  imageUrl: string | null;
 };
 
 type BuySession = { id: number; name: string; createdAt: Date };
@@ -42,8 +43,7 @@ type BuyItem = {
 const SECTION_ORDER = ["Core / Carry Over", "New Season", "Winter Recut"];
 
 function sectionLabel(s: string | null) {
-  if (!s) return "Other";
-  return s;
+  return s ?? "Other";
 }
 
 function fmt(n: number | null | undefined) {
@@ -53,15 +53,13 @@ function fmt(n: number | null | undefined) {
 
 // ─── Inline qty cell ─────────────────────────────────────────────────────────
 
-function QtyCell({
-  value,
-  onSave,
-}: {
-  value: number;
-  onSave: (v: number) => void;
-}) {
+function QtyCell({ value, onSave, disabled }: { value: number; onSave: (v: number) => void; disabled?: boolean }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
+
+  if (disabled) {
+    return <span className="min-w-[2.5rem] inline-block text-center text-sm text-muted-foreground">{value || "—"}</span>;
+  }
 
   if (editing) {
     return (
@@ -84,25 +82,18 @@ function QtyCell({
   }
   return (
     <span
-      className="cursor-pointer min-w-[2.5rem] inline-block text-center hover:bg-muted rounded px-1 py-0.5 text-sm"
+      className="cursor-pointer min-w-[2.5rem] inline-block text-center hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded px-1 py-0.5 text-sm border border-transparent hover:border-amber-300 transition-colors"
       onClick={() => { setDraft(String(value)); setEditing(true); }}
+      title="Click to edit"
     >
-      {value || <span className="text-muted-foreground">—</span>}
+      {value ? <span className="font-medium text-amber-700 dark:text-amber-400">{value}</span> : <span className="text-muted-foreground">—</span>}
     </span>
   );
 }
 
 // ─── Price edit cell ─────────────────────────────────────────────────────────
 
-function PriceCell({
-  value,
-  onSave,
-  prefix = "$",
-}: {
-  value: number | null;
-  onSave: (v: number | null) => void;
-  prefix?: string;
-}) {
+function PriceCell({ value, onSave, prefix = "$" }: { value: number | null; onSave: (v: number | null) => void; prefix?: string }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value != null ? String(value) : "");
 
@@ -134,6 +125,93 @@ function PriceCell({
     >
       {value != null ? `${prefix}${value.toFixed(2)}` : <span className="text-muted-foreground">—</span>}
     </span>
+  );
+}
+
+// ─── Image cell ───────────────────────────────────────────────────────────────
+
+function ImageCell({ style, colour, imageUrl }: { style: string; colour: string; imageUrl: string | null }) {
+  const utils = trpc.useUtils();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
+
+  const uploadImage = trpc.handbag.uploadImage.useMutation({
+    onSuccess: () => {
+      utils.handbag.listStyles.invalidate();
+      toast.success("Image uploaded");
+    },
+    onError: () => toast.error("Upload failed"),
+    onSettled: () => setUploading(false),
+  });
+
+  const removeImage = trpc.handbag.removeImage.useMutation({
+    onSuccess: () => {
+      utils.handbag.listStyles.invalidate();
+      toast.success("Image removed");
+    },
+  });
+
+  async function handleFile(file: File) {
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    setUploading(true);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = (e.target?.result as string).split(",")[1];
+      uploadImage.mutate({ style, colour, imageBase64: base64, mimeType: file.type });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  if (imageUrl) {
+    return (
+      <>
+        <div className="relative group w-14 h-14 shrink-0">
+          <img
+            src={imageUrl}
+            alt={`${style} ${colour}`}
+            className="w-14 h-14 object-cover rounded-md border border-border cursor-pointer hover:opacity-90 transition-opacity"
+            onClick={() => setLightbox(true)}
+          />
+          <button
+            onClick={(e) => { e.stopPropagation(); removeImage.mutate({ style, colour }); }}
+            className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Remove image"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+        {lightbox && (
+          <div
+            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setLightbox(false)}
+          >
+            <img src={imageUrl} alt={`${style} ${colour}`} className="max-w-full max-h-full object-contain rounded-lg" />
+          </div>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
+      <button
+        onClick={() => fileRef.current?.click()}
+        disabled={uploading}
+        className="w-14 h-14 shrink-0 border-2 border-dashed border-border rounded-md flex flex-col items-center justify-center gap-0.5 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors text-muted-foreground hover:text-amber-600 disabled:opacity-50"
+        title="Upload image"
+      >
+        {uploading ? (
+          <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <>
+            <ImageIcon className="w-4 h-4" />
+            <span className="text-[9px] leading-tight">Upload</span>
+          </>
+        )}
+      </button>
+    </>
   );
 }
 
@@ -197,7 +275,6 @@ export default function HandbagsTab() {
       if (!styleMap.has(s.style)) styleMap.set(s.style, []);
       styleMap.get(s.style)!.push(s);
     }
-    // Sort sections
     const sorted = new Map<string, Map<string, HandbagStyle[]>>();
     const allSections = [...map.keys()].sort((a, b) => {
       const ai = SECTION_ORDER.indexOf(a);
@@ -238,10 +315,10 @@ export default function HandbagsTab() {
     return map;
   }, [allBuyItems, activeSession]);
 
-  function toggleStyle(style: string) {
+  function toggleStyle(key: string) {
     setExpandedStyles(prev => {
       const next = new Set(prev);
-      if (next.has(style)) next.delete(style); else next.add(style);
+      if (next.has(key)) next.delete(key); else next.add(key);
       return next;
     });
   }
@@ -261,6 +338,150 @@ export default function HandbagsTab() {
   }
 
   const activeSessionObj = (sessions as BuySession[]).find(s => s.id === activeSession);
+
+  // ─── Shared style rows renderer ────────────────────────────────────────────
+
+  function renderStyleRows(section: string, styleMap: Map<string, HandbagStyle[]>, mode: "styles" | "buy") {
+    return [...styleMap.entries()].map(([styleName, colours]) => {
+      const expandKey = `${mode}-${styleName}`;
+      const isExpanded = expandedStyles.has(expandKey);
+      const totalBought = colours.reduce((sum, c) => sum + (buyTotals.get(`${c.style}|${c.colour}`)?.total ?? 0), 0);
+      const sessionTotal = mode === "buy" ? colours.reduce((sum, c) => {
+        const item = sessionItems.get(`${c.style}|${c.colour}`);
+        return sum + (item ? item.auQty + item.usaQty + item.nycQty : 0);
+      }, 0) : 0;
+
+      return (
+        <div key={styleName} className="border border-border rounded-lg overflow-hidden">
+          {/* Style header */}
+          <button
+            onClick={() => toggleStyle(expandKey)}
+            className="w-full flex items-center gap-3 px-4 py-3 bg-card hover:bg-muted/50 transition-colors text-left"
+          >
+            {isExpanded
+              ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+              : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+            <span className="font-semibold text-sm w-32 shrink-0">{styleName}</span>
+            <span className="text-xs text-muted-foreground">{colours.length} colour{colours.length !== 1 ? "s" : ""}</span>
+            <div className="ml-auto flex items-center gap-2">
+              {totalBought > 0 && (
+                <Badge variant="outline" className="text-xs border-amber-400 text-amber-600">
+                  {totalBought} bought
+                </Badge>
+              )}
+              {mode === "buy" && sessionTotal > 0 && (
+                <Badge className="text-xs bg-amber-500 text-white">
+                  {sessionTotal} this session
+                </Badge>
+              )}
+            </div>
+          </button>
+
+          {/* Colour rows */}
+          {isExpanded && (
+            <div className="border-t border-border">
+              {mode === "styles" ? (
+                /* ── BY STYLE view ── */
+                <div className="divide-y divide-border">
+                  {colours.map((c) => {
+                    const totals = buyTotals.get(`${c.style}|${c.colour}`);
+                    return (
+                      <div key={c.colour} className="flex items-center gap-4 px-4 py-3 hover:bg-muted/20">
+                        {/* Image */}
+                        <ImageCell style={c.style} colour={c.colour} imageUrl={c.imageUrl} />
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm">{c.colour}</div>
+                          {c.material && <div className="text-xs text-muted-foreground">{c.material}</div>}
+                        </div>
+                        {/* Prices */}
+                        <div className="flex items-center gap-6 text-sm shrink-0">
+                          <div className="text-right">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">RRP</div>
+                            <PriceCell value={c.rrp} onSave={(v) => upsertStyle.mutate({ style: c.style, colour: c.colour, rrp: v })} />
+                          </div>
+                          <div className="text-right">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Cost</div>
+                            <PriceCell value={c.cost} onSave={(v) => upsertStyle.mutate({ style: c.style, colour: c.colour, cost: v })} />
+                          </div>
+                        </div>
+                        {/* Buy totals */}
+                        <div className="flex items-center gap-3 shrink-0 border-l border-border pl-4">
+                          {[
+                            { label: "AU", val: totals?.au },
+                            { label: "USA", val: totals?.usa },
+                            { label: "NYC", val: totals?.nyc },
+                          ].map(({ label, val }) => (
+                            <div key={label} className="text-center w-12">
+                              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</div>
+                              <div className="text-sm font-medium">{val || <span className="text-muted-foreground">—</span>}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                /* ── BUY view ── */
+                <div className="divide-y divide-border">
+                  {colours.map((c) => {
+                    const item = sessionItems.get(`${c.style}|${c.colour}`);
+                    const au = item?.auQty ?? 0;
+                    const usa = item?.usaQty ?? 0;
+                    const nyc = item?.nycQty ?? 0;
+                    const allTotals = buyTotals.get(`${c.style}|${c.colour}`);
+                    return (
+                      <div key={c.colour} className="flex items-center gap-4 px-4 py-3 hover:bg-muted/20">
+                        {/* Image */}
+                        <ImageCell style={c.style} colour={c.colour} imageUrl={c.imageUrl} />
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm">{c.colour}</div>
+                          {c.material && <div className="text-xs text-muted-foreground">{c.material}</div>}
+                          {c.rrp && <div className="text-xs text-muted-foreground">RRP {fmt(c.rrp)}</div>}
+                        </div>
+                        {/* This session qty entry */}
+                        <div className="flex items-center gap-3 shrink-0">
+                          {[
+                            { label: "AU", field: "auQty" as const, val: au },
+                            { label: "USA", field: "usaQty" as const, val: usa },
+                            { label: "NYC", field: "nycQty" as const, val: nyc },
+                          ].map(({ label, field, val }) => (
+                            <div key={label} className="text-center w-16">
+                              <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">{label}</div>
+                              <QtyCell
+                                value={val}
+                                onSave={(v) => handleQty(c.style, c.colour, field, v)}
+                                disabled={activeSession == null}
+                              />
+                            </div>
+                          ))}
+                          <div className="text-center w-14 border-l border-border pl-3">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Total</div>
+                            <div className="text-sm font-semibold text-amber-600">
+                              {au + usa + nyc || <span className="text-muted-foreground font-normal">—</span>}
+                            </div>
+                          </div>
+                        </div>
+                        {/* All-time totals */}
+                        {allTotals && allTotals.total > 0 && (
+                          <div className="text-right shrink-0 border-l border-border pl-3">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">All buys</div>
+                            <div className="text-sm text-muted-foreground">{allTotals.total}</div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    });
+  }
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -300,76 +521,7 @@ export default function HandbagsTab() {
                 {section}
               </div>
               <div className="flex flex-col gap-1">
-                {[...styleMap.entries()].map(([styleName, colours]) => {
-                  const isExpanded = expandedStyles.has(styleName);
-                  const totalBought = colours.reduce((sum, c) => {
-                    return sum + (buyTotals.get(`${c.style}|${c.colour}`)?.total ?? 0);
-                  }, 0);
-                  return (
-                    <div key={styleName} className="border border-border rounded-lg overflow-hidden">
-                      {/* Style header row */}
-                      <button
-                        onClick={() => toggleStyle(styleName)}
-                        className="w-full flex items-center gap-3 px-4 py-3 bg-card hover:bg-muted/50 transition-colors text-left"
-                      >
-                        {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
-                        <span className="font-semibold text-sm w-28 shrink-0">{styleName}</span>
-                        <span className="text-xs text-muted-foreground">{colours.length} colour{colours.length !== 1 ? "s" : ""}</span>
-                        {totalBought > 0 && (
-                          <Badge variant="outline" className="ml-auto text-xs border-amber-400 text-amber-600">
-                            {totalBought} bought
-                          </Badge>
-                        )}
-                      </button>
-                      {/* Colour rows */}
-                      {isExpanded && (
-                        <div className="border-t border-border">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="bg-muted/30 text-xs text-muted-foreground">
-                                <th className="text-left px-4 py-2 font-medium w-36">Colour</th>
-                                <th className="text-left px-4 py-2 font-medium w-36">Material</th>
-                                <th className="text-right px-4 py-2 font-medium w-24">RRP</th>
-                                <th className="text-right px-4 py-2 font-medium w-24">Cost</th>
-                                <th className="text-right px-4 py-2 font-medium w-24">AU Bought</th>
-                                <th className="text-right px-4 py-2 font-medium w-24">USA Bought</th>
-                                <th className="text-right px-4 py-2 font-medium w-24">NYC Bought</th>
-                                <th className="text-left px-4 py-2 font-medium">Notes</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {colours.map((c) => {
-                                const totals = buyTotals.get(`${c.style}|${c.colour}`);
-                                return (
-                                  <tr key={c.colour} className="border-t border-border hover:bg-muted/20">
-                                    <td className="px-4 py-2 font-medium">{c.colour}</td>
-                                    <td className="px-4 py-2 text-muted-foreground">{c.material ?? "—"}</td>
-                                    <td className="px-4 py-2 text-right">
-                                      <PriceCell
-                                        value={c.rrp}
-                                        onSave={(v) => upsertStyle.mutate({ style: c.style, colour: c.colour, rrp: v })}
-                                      />
-                                    </td>
-                                    <td className="px-4 py-2 text-right">
-                                      <PriceCell
-                                        value={c.cost}
-                                        onSave={(v) => upsertStyle.mutate({ style: c.style, colour: c.colour, cost: v })}
-                                      />
-                                    </td>
-                                    <td className="px-4 py-2 text-right text-muted-foreground">{totals?.au || "—"}</td>
-                                    <td className="px-4 py-2 text-right text-muted-foreground">{totals?.usa || "—"}</td>
-                                    <td className="px-4 py-2 text-right text-muted-foreground">{totals?.nyc || "—"}</td>
-                                    <td className="px-4 py-2 text-xs text-muted-foreground">{c.notes ?? ""}</td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                {renderStyleRows(section, styleMap, "styles")}
               </div>
             </div>
           ))}
@@ -423,9 +575,11 @@ export default function HandbagsTab() {
           </div>
 
           {activeSession == null ? (
-            <div className="text-center py-16 text-muted-foreground">
+            <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
               <ShoppingBag className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Select or create a buy session to enter quantities</p>
+              <p className="text-sm font-medium mb-1">No session selected</p>
+              <p className="text-xs">Select a session above to enter quantities, or create a new one.</p>
+              <p className="text-xs mt-3 opacity-70">You can still view all-time buy totals in the By Style tab.</p>
             </div>
           ) : (
             <div className="flex flex-col gap-6">
@@ -435,81 +589,7 @@ export default function HandbagsTab() {
                     {section}
                   </div>
                   <div className="flex flex-col gap-1">
-                    {[...styleMap.entries()].map(([styleName, colours]) => {
-                      const isExpanded = expandedStyles.has(`buy-${styleName}`);
-                      const sessionTotal = colours.reduce((sum, c) => {
-                        const item = sessionItems.get(`${c.style}|${c.colour}`);
-                        return sum + (item ? item.auQty + item.usaQty + item.nycQty : 0);
-                      }, 0);
-                      return (
-                        <div key={styleName} className="border border-border rounded-lg overflow-hidden">
-                          <button
-                            onClick={() => {
-                              const key = `buy-${styleName}`;
-                              setExpandedStyles(prev => {
-                                const next = new Set(prev);
-                                if (next.has(key)) next.delete(key); else next.add(key);
-                                return next;
-                              });
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-3 bg-card hover:bg-muted/50 transition-colors text-left"
-                          >
-                            {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
-                            <span className="font-semibold text-sm w-28 shrink-0">{styleName}</span>
-                            <span className="text-xs text-muted-foreground">{colours.length} colour{colours.length !== 1 ? "s" : ""}</span>
-                            {sessionTotal > 0 && (
-                              <Badge variant="outline" className="ml-auto text-xs border-amber-400 text-amber-600">
-                                {sessionTotal} units
-                              </Badge>
-                            )}
-                          </button>
-                          {isExpanded && (
-                            <div className="border-t border-border">
-                              <table className="w-full text-sm">
-                                <thead>
-                                  <tr className="bg-muted/30 text-xs text-muted-foreground">
-                                    <th className="text-left px-4 py-2 font-medium w-36">Colour</th>
-                                    <th className="text-left px-4 py-2 font-medium w-36">Material</th>
-                                    <th className="text-right px-4 py-2 font-medium w-24">RRP</th>
-                                    <th className="text-center px-4 py-2 font-medium w-24">AU</th>
-                                    <th className="text-center px-4 py-2 font-medium w-24">USA</th>
-                                    <th className="text-center px-4 py-2 font-medium w-24">NYC</th>
-                                    <th className="text-center px-4 py-2 font-medium w-20">Total</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {colours.map((c) => {
-                                    const item = sessionItems.get(`${c.style}|${c.colour}`);
-                                    const au = item?.auQty ?? 0;
-                                    const usa = item?.usaQty ?? 0;
-                                    const nyc = item?.nycQty ?? 0;
-                                    return (
-                                      <tr key={c.colour} className="border-t border-border hover:bg-muted/20">
-                                        <td className="px-4 py-2 font-medium">{c.colour}</td>
-                                        <td className="px-4 py-2 text-muted-foreground">{c.material ?? "—"}</td>
-                                        <td className="px-4 py-2 text-right text-muted-foreground">{fmt(c.rrp)}</td>
-                                        <td className="px-4 py-2 text-center">
-                                          <QtyCell value={au} onSave={(v) => handleQty(c.style, c.colour, "auQty", v)} />
-                                        </td>
-                                        <td className="px-4 py-2 text-center">
-                                          <QtyCell value={usa} onSave={(v) => handleQty(c.style, c.colour, "usaQty", v)} />
-                                        </td>
-                                        <td className="px-4 py-2 text-center">
-                                          <QtyCell value={nyc} onSave={(v) => handleQty(c.style, c.colour, "nycQty", v)} />
-                                        </td>
-                                        <td className="px-4 py-2 text-center font-medium">
-                                          {au + usa + nyc > 0 ? au + usa + nyc : <span className="text-muted-foreground">—</span>}
-                                        </td>
-                                      </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                    {renderStyleRows(section, styleMap, "buy")}
                   </div>
                 </div>
               ))}

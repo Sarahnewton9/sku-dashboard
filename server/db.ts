@@ -1540,11 +1540,20 @@ export async function getHandbagStyles() {
 
 export async function upsertHandbagStyle(item: {
   style: string; colour: string; material?: string; section?: string;
-  notes?: string; rrp?: number | null; cost?: number | null;
+  notes?: string; rrp?: number | null; cost?: number | null; imageUrl?: string | null;
 }) {
   const db = await getDb();
   if (!db) return;
   const { handbagStyles } = await import("../drizzle/schema");
+  const { sql } = await import("drizzle-orm");
+  // Build update set — only include fields that were explicitly provided
+  const updateSet: Record<string, unknown> = {};
+  if (item.material !== undefined) updateSet.material = item.material;
+  if (item.section !== undefined) updateSet.section = item.section;
+  if (item.notes !== undefined) updateSet.notes = item.notes;
+  if (item.rrp !== undefined) updateSet.rrp = item.rrp;
+  if (item.cost !== undefined) updateSet.cost = item.cost;
+  if (item.imageUrl !== undefined) updateSet.imageUrl = item.imageUrl;
   await db.insert(handbagStyles).values({
     style: item.style,
     colour: item.colour,
@@ -1553,14 +1562,9 @@ export async function upsertHandbagStyle(item: {
     notes: item.notes ?? null,
     rrp: item.rrp ?? null,
     cost: item.cost ?? null,
+    imageUrl: item.imageUrl ?? null,
   }).onDuplicateKeyUpdate({
-    set: {
-      material: item.material ?? null,
-      section: item.section ?? null,
-      notes: item.notes ?? null,
-      rrp: item.rrp ?? null,
-      cost: item.cost ?? null,
-    },
+    set: Object.keys(updateSet).length > 0 ? updateSet as any : { material: sql`material` },
   });
 }
 
