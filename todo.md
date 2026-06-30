@@ -359,3 +359,10 @@
 - [x] Add handbag tRPC router with listStyles, upsertStyle, deleteStyle, listSessions, createSession, deleteSession, listBuyItems, upsertBuyItem, deleteBuyItem
 - [x] Build HandbagsTab component with By Style view (colour, material, RRP, cost, buy totals) and Buy view (session selector, inline qty entry per AU/USA/NYC)
 - [x] Add /handbags route and Handbags nav item to Dashboard
+
+## Sales Analysis Tab (Jun 2026)
+- [x] Add sales_snapshots DB table (id, name, createdAt) and sales_data rows (snapshotId, style, colour, units)
+- [x] Add sales tRPC router: listSnapshots, createSnapshot (with parsed rows), deleteSnapshot, getSnapshot
+- [x] Build parser for tab-indented paste format (style header rows vs colour/qty rows)
+- [x] Build SalesTab UI: paste input modal, snapshot selector, style breakdown table with colourway rows, buy qty comparison column
+- [x] Add /sales route and Sales nav item under Analysis group in Dashboard sidebar

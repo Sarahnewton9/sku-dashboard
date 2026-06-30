@@ -281,6 +281,13 @@
       "when": 1782778346478,
       "tag": "0039_flimsy_tattoo",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "5",
+      "when": 1782782155313,
+      "tag": "0040_flashy_hydra",
+      "breakpoints": true
     }
   ]
 }

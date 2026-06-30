@@ -606,3 +606,27 @@ export const handbagBuyItems = mysqlTable("handbag_buy_items", {
 }, (t) => [uniqueIndex("handbag_buy_item_idx").on(t.sessionId, t.style, t.colour)]);
 export type HandbagBuyItem = typeof handbagBuyItems.$inferSelect;
 export type InsertHandbagBuyItem = typeof handbagBuyItems.$inferInsert;
+
+/**
+ * Sales snapshots — a named paste of sales data (e.g. "SS26 Week 4").
+ */
+export const salesSnapshots = mysqlTable("sales_snapshots", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type SalesSnapshot = typeof salesSnapshots.$inferSelect;
+export type InsertSalesSnapshot = typeof salesSnapshots.$inferInsert;
+
+/**
+ * Sales rows — one row per style+colour combination within a snapshot.
+ */
+export const salesRows = mysqlTable("sales_rows", {
+  id: int("id").autoincrement().primaryKey(),
+  snapshotId: int("snapshot_id").notNull(),
+  style: varchar("style", { length: 128 }).notNull(),
+  colour: varchar("colour", { length: 128 }).notNull(),
+  units: int("units").notNull().default(0),
+}, (t) => [uniqueIndex("sales_row_idx").on(t.snapshotId, t.style, t.colour)]);
+export type SalesRow = typeof salesRows.$inferSelect;
+export type InsertSalesRow = typeof salesRows.$inferInsert;

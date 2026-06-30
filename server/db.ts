@@ -1638,3 +1638,42 @@ export async function deleteHandbagBuyItem(id: number) {
   const { eq } = await import("drizzle-orm");
   await db.delete(handbagBuyItems).where(eq(handbagBuyItems.id, id));
 }
+
+// ── Sales Analysis ──────────────────────────────────────────────────────────
+
+export async function listSalesSnapshots() {
+  const db = await getDb();
+  if (!db) return [];
+  const { salesSnapshots } = await import("../drizzle/schema");
+  const { desc } = await import("drizzle-orm");
+  return db.select().from(salesSnapshots).orderBy(desc(salesSnapshots.createdAt));
+}
+
+export async function createSalesSnapshot(name: string, rows: { style: string; colour: string; units: number }[]) {
+  const db = await getDb();
+  if (!db) return null;
+  const { salesSnapshots, salesRows } = await import("../drizzle/schema");
+  const [result] = await db.insert(salesSnapshots).values({ name });
+  const snapshotId = (result as any).insertId as number;
+  if (rows.length > 0) {
+    await db.insert(salesRows).values(rows.map((r) => ({ snapshotId, style: r.style, colour: r.colour, units: r.units })));
+  }
+  return snapshotId;
+}
+
+export async function getSalesSnapshot(snapshotId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { salesRows } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  return db.select().from(salesRows).where(eq(salesRows.snapshotId, snapshotId));
+}
+
+export async function deleteSalesSnapshot(snapshotId: number) {
+  const db = await getDb();
+  if (!db) return;
+  const { salesSnapshots, salesRows } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  await db.delete(salesRows).where(eq(salesRows.snapshotId, snapshotId));
+  await db.delete(salesSnapshots).where(eq(salesSnapshots.id, snapshotId));
+}

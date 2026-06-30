@@ -57,6 +57,10 @@ import {
   getHandbagBuyItems,
   upsertHandbagBuyItem,
   deleteHandbagBuyItem,
+  listSalesSnapshots,
+  createSalesSnapshot,
+  getSalesSnapshot,
+  deleteSalesSnapshot,
 } from "./db";
 import { fetchSaleProducts } from "./markdownScanner";
 import { storagePut } from "./storage";
@@ -2084,6 +2088,43 @@ If the request is unclear or is a question, use no_action.`;
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await deleteHandbagBuyItem(input.id);
+        return { success: true };
+      }),
+  }),
+
+  sales: router({
+    /** List all saved sales snapshots */
+    listSnapshots: protectedProcedure.query(async () => {
+      return await listSalesSnapshots();
+    }),
+
+    /** Create a new snapshot from pasted text */
+    createSnapshot: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        rows: z.array(z.object({
+          style: z.string(),
+          colour: z.string(),
+          units: z.number(),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        const id = await createSalesSnapshot(input.name, input.rows);
+        return { id };
+      }),
+
+    /** Get all rows for a snapshot */
+    getSnapshot: protectedProcedure
+      .input(z.object({ snapshotId: z.number() }))
+      .query(async ({ input }) => {
+        return await getSalesSnapshot(input.snapshotId);
+      }),
+
+    /** Delete a snapshot and all its rows */
+    deleteSnapshot: protectedProcedure
+      .input(z.object({ snapshotId: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteSalesSnapshot(input.snapshotId);
         return { success: true };
       }),
   }),
