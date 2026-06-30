@@ -30,6 +30,7 @@ function Router() {
       <Route path="/season-analysis" component={Dashboard} />
       <Route path="/markdown" component={Dashboard} />
       <Route path="/handbags" component={Dashboard} />
+      <Route path="/sales" component={Dashboard} />
       <Route path="/404" component={NotFound} />
       {/* Any unknown path redirects to overview rather than 404 */}
       <Route>

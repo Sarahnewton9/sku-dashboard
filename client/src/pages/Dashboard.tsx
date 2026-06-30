@@ -80,8 +80,8 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group
   { id: "specs", label: "Specs", icon: ClipboardList, group: "approval" },
   { id: "season-analysis", label: "Season Analysis", icon: LineChart, group: "analysis" },
   { id: "markdown", label: "Markdowns", icon: TagsIcon, group: "analysis" },
+  { id: "sales", label: "Sales Analysis", icon: BarChart3, group: "analysis" },
   { id: "handbags", label: "Handbags", icon: ShoppingCart, group: "handbags" },
-  { id: "sales", label: "Sales Analysis", icon: BarChart3, group: "handbags" },
 ];
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
