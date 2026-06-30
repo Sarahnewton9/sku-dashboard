@@ -28,6 +28,7 @@ import BuyAnalysisTab from "@/components/dashboard/BuyAnalysisTab";
 import LastApprovalTab from "@/components/dashboard/LastApprovalTab";
 import { FittingTab } from "@/components/dashboard/FittingTab";
 import { MarkdownTab } from "@/components/dashboard/MarkdownTab";
+import HandbagsTab from "@/components/dashboard/HandbagsTab";
 import SeasonAnalysisTab from "@/components/dashboard/SeasonAnalysisTab";
 import SpecsTab from "@/components/dashboard/SpecsTab";
 import {
@@ -54,12 +55,12 @@ import {
   Sparkles,
 } from "lucide-react";
 
-type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval" | "fitting" | "specs" | "season-analysis" | "markdown";
+type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval" | "fitting" | "specs" | "season-analysis" | "markdown" | "handbags";
 
 const VALID_TABS = new Set<Tab>([
   "overview", "categories", "styles", "leathers", "colours",
   "colourleather", "expansion", "buy-sessions", "buy-analysis",
-  "last-approval", "fitting", "specs", "season-analysis", "markdown",
+  "last-approval", "fitting", "specs", "season-analysis", "markdown", "handbags",
 ]);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,6 +79,7 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group
   { id: "specs", label: "Specs", icon: ClipboardList, group: "approval" },
   { id: "season-analysis", label: "Season Analysis", icon: LineChart, group: "analysis" },
   { id: "markdown", label: "Markdowns", icon: TagsIcon, group: "analysis" },
+  { id: "handbags", label: "Handbags", icon: ShoppingCart, group: "handbags" },
 ];
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -321,6 +323,7 @@ export default function Dashboard() {
               {activeTab === "fitting" && <FittingTab />}
               {activeTab === "season-analysis" && <SeasonAnalysisTab />}
               {activeTab === "markdown" && <MarkdownTab />}
+              {activeTab === "handbags" && <HandbagsTab />}
             </div>
           </div>
         )}

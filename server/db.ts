@@ -1527,3 +1527,114 @@ export async function updateMarkdownSkuStatus(ids: number[], status: "pending" |
   if (ids.length === 0) return;
   await db.update(markdownSkus).set({ status }).where(inArray(markdownSkus.id, ids));
 }
+
+// ─── Handbag helpers ─────────────────────────────────────────────────────────
+
+export async function getHandbagStyles() {
+  const db = await getDb();
+  if (!db) return [];
+  const { handbagStyles } = await import("../drizzle/schema");
+  const { asc } = await import("drizzle-orm");
+  return db.select().from(handbagStyles).orderBy(asc(handbagStyles.style), asc(handbagStyles.colour));
+}
+
+export async function upsertHandbagStyle(item: {
+  style: string; colour: string; material?: string; section?: string;
+  notes?: string; rrp?: number | null; cost?: number | null;
+}) {
+  const db = await getDb();
+  if (!db) return;
+  const { handbagStyles } = await import("../drizzle/schema");
+  await db.insert(handbagStyles).values({
+    style: item.style,
+    colour: item.colour,
+    material: item.material ?? null,
+    section: item.section ?? null,
+    notes: item.notes ?? null,
+    rrp: item.rrp ?? null,
+    cost: item.cost ?? null,
+  }).onDuplicateKeyUpdate({
+    set: {
+      material: item.material ?? null,
+      section: item.section ?? null,
+      notes: item.notes ?? null,
+      rrp: item.rrp ?? null,
+      cost: item.cost ?? null,
+    },
+  });
+}
+
+export async function deleteHandbagStyle(style: string, colour: string) {
+  const db = await getDb();
+  if (!db) return;
+  const { handbagStyles } = await import("../drizzle/schema");
+  const { and, eq } = await import("drizzle-orm");
+  await db.delete(handbagStyles).where(and(eq(handbagStyles.style, style), eq(handbagStyles.colour, colour)));
+}
+
+export async function getHandbagBuySessions() {
+  const db = await getDb();
+  if (!db) return [];
+  const { handbagBuySessions } = await import("../drizzle/schema");
+  const { desc } = await import("drizzle-orm");
+  return db.select().from(handbagBuySessions).orderBy(desc(handbagBuySessions.createdAt));
+}
+
+export async function createHandbagBuySession(name: string) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const { handbagBuySessions } = await import("../drizzle/schema");
+  const [result] = await db.insert(handbagBuySessions).values({ name });
+  return { id: (result as any).insertId as number, name };
+}
+
+export async function deleteHandbagBuySession(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  const { handbagBuySessions, handbagBuyItems } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  await db.delete(handbagBuyItems).where(eq(handbagBuyItems.sessionId, id));
+  await db.delete(handbagBuySessions).where(eq(handbagBuySessions.id, id));
+}
+
+export async function getHandbagBuyItems(sessionId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { handbagBuyItems } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  if (sessionId !== undefined) {
+    return db.select().from(handbagBuyItems).where(eq(handbagBuyItems.sessionId, sessionId));
+  }
+  return db.select().from(handbagBuyItems);
+}
+
+export async function upsertHandbagBuyItem(item: {
+  sessionId: number; style: string; colour: string;
+  auQty: number; usaQty: number; nycQty: number;
+}) {
+  const db = await getDb();
+  if (!db) return;
+  const { handbagBuyItems } = await import("../drizzle/schema");
+  await db.insert(handbagBuyItems).values({
+    sessionId: item.sessionId,
+    style: item.style,
+    colour: item.colour,
+    auQty: item.auQty,
+    usaQty: item.usaQty,
+    nycQty: item.nycQty,
+  }).onDuplicateKeyUpdate({
+    set: {
+      auQty: item.auQty,
+      usaQty: item.usaQty,
+      nycQty: item.nycQty,
+    },
+  });
+}
+
+export async function deleteHandbagBuyItem(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  const { handbagBuyItems } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  await db.delete(handbagBuyItems).where(eq(handbagBuyItems.id, id));
+}

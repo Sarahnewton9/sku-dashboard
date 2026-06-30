@@ -352,3 +352,10 @@
 - [x] Filter markdown SKUs out of By Style and By Category tabs
 - [x] §5c patches not needed — §4a project-level Heartbeat does not require cron auth patches
 - [x] Register weekly Heartbeat schedule — task_uid: cW4pFgYKXTVRJHDHCi3KeY, runs Mondays 02:00 UTC
+
+## Handbags Section (Jun 2026)
+- [x] Create handbag_styles, handbag_buy_sessions, handbag_buy_items DB tables
+- [x] Seed 30 colourways across 12 styles from SS26 linesheet (names and colours only)
+- [x] Add handbag tRPC router with listStyles, upsertStyle, deleteStyle, listSessions, createSession, deleteSession, listBuyItems, upsertBuyItem, deleteBuyItem
+- [x] Build HandbagsTab component with By Style view (colour, material, RRP, cost, buy totals) and Buy view (session selector, inline qty entry per AU/USA/NYC)
+- [x] Add /handbags route and Handbags nav item to Dashboard

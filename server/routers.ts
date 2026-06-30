@@ -48,6 +48,15 @@ import {
   getMarkdownSkus,
   flagMarkdownSkus,
   updateMarkdownSkuStatus,
+  getHandbagStyles,
+  upsertHandbagStyle,
+  deleteHandbagStyle,
+  getHandbagBuySessions,
+  createHandbagBuySession,
+  deleteHandbagBuySession,
+  getHandbagBuyItems,
+  upsertHandbagBuyItem,
+  deleteHandbagBuyItem,
 } from "./db";
 import { fetchSaleProducts } from "./markdownScanner";
 import { storagePut } from "./storage";
@@ -1994,6 +2003,87 @@ If the request is unclear or is a question, use no_action.`;
       }))
       .mutation(async ({ input }) => {
         await updateMarkdownSkuStatus(input.ids, input.status);
+        return { success: true };
+      }),
+  }),
+
+  handbag: router({
+    /** List all handbag styles (with optional RRP/cost) */
+    listStyles: protectedProcedure.query(async () => {
+      return await getHandbagStyles();
+    }),
+
+    /** Upsert a handbag style (update RRP or cost) */
+    upsertStyle: protectedProcedure
+      .input(z.object({
+        style: z.string(),
+        colour: z.string(),
+        material: z.string().optional(),
+        section: z.string().optional(),
+        notes: z.string().optional(),
+        rrp: z.number().nullable().optional(),
+        cost: z.number().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await upsertHandbagStyle(input);
+        return { success: true };
+      }),
+
+    /** Delete a handbag style */
+    deleteStyle: protectedProcedure
+      .input(z.object({ style: z.string(), colour: z.string() }))
+      .mutation(async ({ input }) => {
+        await deleteHandbagStyle(input.style, input.colour);
+        return { success: true };
+      }),
+
+    /** List all handbag buy sessions */
+    listSessions: protectedProcedure.query(async () => {
+      return await getHandbagBuySessions();
+    }),
+
+    /** Create a new handbag buy session */
+    createSession: protectedProcedure
+      .input(z.object({ name: z.string() }))
+      .mutation(async ({ input }) => {
+        return await createHandbagBuySession(input.name);
+      }),
+
+    /** Delete a handbag buy session */
+    deleteSession: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteHandbagBuySession(input.id);
+        return { success: true };
+      }),
+
+    /** List buy items (optionally filtered by session) */
+    listBuyItems: protectedProcedure
+      .input(z.object({ sessionId: z.number().optional() }))
+      .query(async ({ input }) => {
+        return await getHandbagBuyItems(input.sessionId);
+      }),
+
+    /** Upsert a buy quantity for a style+colour in a session */
+    upsertBuyItem: protectedProcedure
+      .input(z.object({
+        sessionId: z.number(),
+        style: z.string(),
+        colour: z.string(),
+        auQty: z.number().default(0),
+        usaQty: z.number().default(0),
+        nycQty: z.number().default(0),
+      }))
+      .mutation(async ({ input }) => {
+        await upsertHandbagBuyItem(input);
+        return { success: true };
+      }),
+
+    /** Delete a buy item */
+    deleteBuyItem: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteHandbagBuyItem(input.id);
         return { success: true };
       }),
   }),

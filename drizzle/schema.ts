@@ -560,3 +560,49 @@ export const markdownSkus = mysqlTable("markdown_skus", {
 
 export type MarkdownSku = typeof markdownSkus.$inferSelect;
 export type InsertMarkdownSku = typeof markdownSkus.$inferInsert;
+
+/**
+ * Handbag styles — one row per style+colourway from the SS26 linesheet.
+ * Costs are wholesale costs (not retail); RRP is the recommended retail price.
+ */
+export const handbagStyles = mysqlTable("handbag_styles", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 128 }).notNull(),
+  colour: varchar("colour", { length: 128 }).notNull(),
+  material: varchar("material", { length: 128 }),
+  section: varchar("section", { length: 128 }), // e.g. "Core / Carry Over", "New Season", "WINTER RECUT"
+  notes: varchar("notes", { length: 512 }),
+  rrp: float("rrp"),
+  cost: float("cost"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => [uniqueIndex("handbag_style_colour_idx").on(t.style, t.colour)]);
+export type HandbagStyle = typeof handbagStyles.$inferSelect;
+export type InsertHandbagStyle = typeof handbagStyles.$inferInsert;
+
+/**
+ * Handbag buy sessions — a named buying event (e.g. "30.04 AU").
+ */
+export const handbagBuySessions = mysqlTable("handbag_buy_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type HandbagBuySession = typeof handbagBuySessions.$inferSelect;
+export type InsertHandbagBuySession = typeof handbagBuySessions.$inferInsert;
+
+/**
+ * Handbag buy session items — quantities per style+colour per session.
+ */
+export const handbagBuyItems = mysqlTable("handbag_buy_items", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: int("session_id").notNull(),
+  style: varchar("style", { length: 128 }).notNull(),
+  colour: varchar("colour", { length: 128 }).notNull(),
+  auQty: int("au_qty").notNull().default(0),
+  usaQty: int("usa_qty").notNull().default(0),
+  nycQty: int("nyc_qty").notNull().default(0),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => [uniqueIndex("handbag_buy_item_idx").on(t.sessionId, t.style, t.colour)]);
+export type HandbagBuyItem = typeof handbagBuyItems.$inferSelect;
+export type InsertHandbagBuyItem = typeof handbagBuyItems.$inferInsert;
