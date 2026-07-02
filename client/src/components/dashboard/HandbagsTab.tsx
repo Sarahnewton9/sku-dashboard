@@ -170,7 +170,7 @@ function ImageCell({ style, colour, imageUrl }: { style: string; colour: string;
           <img
             src={imageUrl}
             alt={`${style} ${colour}`}
-            className="w-14 h-14 object-cover rounded-md border border-border cursor-pointer hover:opacity-90 transition-opacity"
+            className="w-14 h-14 object-contain rounded-md border border-border cursor-pointer hover:opacity-90 transition-opacity bg-white"
             onClick={() => setLightbox(true)}
           />
           <button
