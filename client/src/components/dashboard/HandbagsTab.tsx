@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { Plus, Trash2, ChevronDown, ChevronRight, ShoppingBag, ImageIcon, X, Upload } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronRight, ShoppingBag, ImageIcon, X, Upload, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -239,6 +239,57 @@ export default function HandbagsTab() {
   const [renamingColour, setRenamingColour] = useState<{ style: string; colour: string } | null>(null);
   const [renameColourDraft, setRenameColourDraft] = useState("");
 
+  // Add/Edit colour modal state
+  type ColourModalMode = "add" | "edit";
+  const [colourModal, setColourModal] = useState<{ mode: ColourModalMode; style: string; row?: HandbagStyle } | null>(null);
+  const [modalColour, setModalColour] = useState("");
+  const [modalMaterial, setModalMaterial] = useState("");
+  const [modalSection, setModalSection] = useState("");
+  const [modalRrp, setModalRrp] = useState("");
+  const [modalCost, setModalCost] = useState("");
+
+  function openAddColour(styleName: string) {
+    setColourModal({ mode: "add", style: styleName });
+    setModalColour("");
+    setModalMaterial("");
+    setModalSection("New Season");
+    setModalRrp("");
+    setModalCost("");
+  }
+
+  function openEditColour(row: HandbagStyle) {
+    setColourModal({ mode: "edit", style: row.style, row });
+    setModalColour(row.colour);
+    setModalMaterial(row.material ?? "");
+    setModalSection(row.section ?? "");
+    setModalRrp(row.rrp != null ? String(row.rrp) : "");
+    setModalCost(row.cost != null ? String(row.cost) : "");
+  }
+
+  async function submitColourModal() {
+    if (!colourModal) return;
+    const colour = modalColour.trim().toUpperCase();
+    if (!colour) { toast.error("Colour name is required"); return; }
+    const rrp = modalRrp ? parseFloat(modalRrp) : null;
+    const cost = modalCost ? parseFloat(modalCost) : null;
+    const section = modalSection || null;
+    const material = modalMaterial.trim() || null;
+
+    if (colourModal.mode === "edit" && colourModal.row) {
+      const old = colourModal.row;
+      // If colour name changed, rename first then upsert other fields
+      if (colour !== old.colour) {
+        await new Promise<void>((resolve, reject) =>
+          renameColour.mutate({ style: old.style, oldColour: old.colour, newColour: colour }, { onSuccess: () => resolve(), onError: () => reject() })
+        ).catch(() => { toast.error("Failed to rename colour"); return; });
+      }
+      upsertStyle.mutate({ style: old.style, colour, material, section, rrp, cost });
+    } else {
+      upsertStyle.mutate({ style: colourModal.style, colour, material, section, rrp, cost });
+    }
+    setColourModal(null);
+  }
+
   // Mutations
   const upsertStyle = trpc.handbag.upsertStyle.useMutation({
     onSuccess: () => utils.handbag.listStyles.invalidate(),
@@ -426,56 +477,28 @@ export default function HandbagsTab() {
                   {colours.map((c) => {
                     const totals = buyTotals.get(`${c.style}|${c.colour}`);
                     return (
-                      <div key={c.colour} className="flex items-center gap-4 px-4 py-3 hover:bg-muted/20">
+                      <div key={c.colour} className="flex items-center gap-4 px-4 py-3 hover:bg-muted/20 group/row">
                         {/* Image */}
                         <ImageCell style={c.style} colour={c.colour} imageUrl={c.imageUrl} />
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                          {renamingColour?.style === c.style && renamingColour?.colour === c.colour ? (
-                            <input
-                              autoFocus
-                              className="font-medium text-sm w-40 border border-amber-400 rounded px-1.5 py-0.5 bg-background"
-                              value={renameColourDraft}
-                              onChange={(e) => setRenameColourDraft(e.target.value)}
-                              onBlur={() => {
-                                const v = renameColourDraft.trim().toUpperCase();
-                                if (v && v !== c.colour) renameColour.mutate({ style: c.style, oldColour: c.colour, newColour: v });
-                                else setRenamingColour(null);
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                                if (e.key === "Escape") setRenamingColour(null);
-                              }}
-                            />
-                          ) : (
-                            <div
-                              className="font-medium text-sm cursor-text hover:text-amber-500 transition-colors"
-                              title="Click to rename colour"
-                              onClick={() => { setRenamingColour({ style: c.style, colour: c.colour }); setRenameColourDraft(c.colour); }}
-                            >{c.colour}</div>
-                          )}
+                          <div className="font-medium text-sm">{c.colour}</div>
                           {c.material && <div className="text-xs text-muted-foreground">{c.material}</div>}
-                          {/* Section badge / selector */}
-                          <select
-                            value={c.section ?? ""}
-                            onChange={(e) => upsertStyle.mutate({ style: c.style, colour: c.colour, section: e.target.value || null })}
-                            className="mt-1 text-[10px] rounded px-1.5 py-0.5 border border-border bg-background text-muted-foreground cursor-pointer hover:border-amber-400 focus:outline-none focus:border-amber-400 transition-colors"
-                            title="Change section"
-                          >
-                            <option value="">— no section —</option>
-                            <option value="Core / Carry Over">Core / Carry Over</option>
-                            <option value="New Season">New Season</option>
-                          </select>
+                          {c.section && (
+                            <span className="mt-1 inline-block text-[10px] rounded px-1.5 py-0.5 border border-border bg-muted text-muted-foreground">
+                              {c.section}
+                            </span>
+                          )}
                         </div>
                         {/* Prices */}
                         <div className="flex items-center gap-6 text-sm shrink-0">
                           <div className="text-right">
                             <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">RRP</div>
-                            <PriceCell value={c.rrp} onSave={(v) => upsertStyle.mutate({ style: c.style, colour: c.colour, rrp: v })} />
+                            <span className="text-sm">{c.rrp != null ? `$${c.rrp.toFixed(2)}` : <span className="text-muted-foreground">—</span>}</span>
                           </div>
                           <div className="text-right">
                             <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Cost</div>
-                            <PriceCell value={c.cost} onSave={(v) => upsertStyle.mutate({ style: c.style, colour: c.colour, cost: v })} />
+                            <span className="text-sm">{c.cost != null ? `$${c.cost.toFixed(2)}` : <span className="text-muted-foreground">—</span>}</span>
                           </div>
                         </div>
                         {/* Buy totals */}
@@ -491,9 +514,25 @@ export default function HandbagsTab() {
                             </div>
                           ))}
                         </div>
+                        {/* Edit button */}
+                        <button
+                          onClick={() => openEditColour(c)}
+                          className="opacity-0 group-hover/row:opacity-100 transition-opacity p-1.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-muted-foreground hover:text-amber-600 shrink-0"
+                          title="Edit colour"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     );
                   })}
+                  {/* Add colour row */}
+                  <button
+                    onClick={() => openAddColour(colours[0]?.style ?? "")}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors border-t border-dashed border-border"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add colour
+                  </button>
                 </div>
               ) : (
                 /* ── BUY view ── */
@@ -670,6 +709,79 @@ export default function HandbagsTab() {
           )}
         </div>
       )}
+
+      {/* Add / Edit colour modal */}
+      <Dialog open={!!colourModal} onOpenChange={(open) => { if (!open) setColourModal(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {colourModal?.mode === "add" ? `Add colour to ${colourModal.style}` : `Edit ${colourModal?.row?.colour}`}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 py-2">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1 block">Colour name *</label>
+              <Input
+                autoFocus
+                placeholder="e.g. PETAL NAPPA"
+                value={modalColour}
+                onChange={(e) => setModalColour(e.target.value.toUpperCase())}
+                onKeyDown={(e) => { if (e.key === "Enter") submitColourModal(); }}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1 block">Material</label>
+              <Input
+                placeholder="e.g. Suede"
+                value={modalMaterial}
+                onChange={(e) => setModalMaterial(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1 block">Section</label>
+              <select
+                value={modalSection}
+                onChange={(e) => setModalSection(e.target.value)}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">— no section —</option>
+                <option value="Core / Carry Over">Core / Carry Over</option>
+                <option value="New Season">New Season</option>
+              </select>
+            </div>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1 block">RRP</label>
+                <Input
+                  placeholder="0.00"
+                  value={modalRrp}
+                  onChange={(e) => setModalRrp(e.target.value)}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1 block">Cost</label>
+                <Input
+                  placeholder="0.00"
+                  value={modalCost}
+                  onChange={(e) => setModalCost(e.target.value)}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setColourModal(null)}>Cancel</Button>
+            <Button onClick={submitColourModal} className="bg-amber-500 hover:bg-amber-600 text-white">
+              {colourModal?.mode === "add" ? "Add colour" : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete session confirm dialog */}
       <Dialog open={!!confirmDeleteSession} onOpenChange={() => setConfirmDeleteSession(null)}>
