@@ -367,6 +367,12 @@
 - [x] Build SalesTab UI: paste input modal, snapshot selector, style breakdown table with colourway rows, buy qty comparison column
 - [x] Add /sales route and Sales nav item under Analysis group in Dashboard sidebar
 
+## Handbags Export (Jul 2026)
+- [x] Add Export button to Handbags tab header
+- [x] Export all colourways to Excel (STYLE, COLOUR, MATERIAL, SECTION, RRP, COST, AU BOUGHT, USA BOUGHT)
+- [x] Style name only shown on first colourway row (bold), subsequent rows blank for readability
+- [x] Styled with dark header row, dated filename (Handbags_SS26_DD-MM-YYYY.xlsx)
+
 ## Handbags Layout Improvements (Jul 2026)
 - [x] Separate bought vs unbought colourways — styles with any buy qty appear in "Bought" section, others in "New Season" section
 - [x] Larger colourway images (112×112px / w-28 h-28) to match Flora-style display

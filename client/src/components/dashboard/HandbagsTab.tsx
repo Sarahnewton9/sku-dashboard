@@ -3,8 +3,9 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
   Plus, X, ImageIcon, Pencil, ChevronDown, ChevronRight,
-  ShoppingBag, Lock, Clock, Check,
+  ShoppingBag, Lock, Clock, Check, Download,
 } from "lucide-react";
+import * as XLSX from "xlsx-js-style";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -1321,6 +1322,108 @@ export default function HandbagsTab() {
     );
   }
 
+  // ─── Export ───────────────────────────────────────────────────────────────────
+
+  function handleExport() {
+    if (styles.length === 0) {
+      toast.error("No handbag styles to export");
+      return;
+    }
+
+    // Build rows: one row per colourway, sorted by style then colour
+    const sorted = [...(styles as HandbagStyle[])].sort((a, b) =>
+      a.style.localeCompare(b.style) || a.colour.localeCompare(b.colour)
+    );
+
+    const COLS = 8; // STYLE | COLOUR | MATERIAL | SECTION | RRP | COST | AU BOUGHT | USA BOUGHT
+    const sheetRows: (string | number)[][] = [];
+    const rowTypes: string[] = [];
+
+    const emptyRow = Array(COLS).fill("") as string[];
+
+    // Title
+    sheetRows.push(["TONY BIANCO — HANDBAGS SS26", ...Array(COLS - 1).fill("") as string[]]);
+    rowTypes.push("title");
+    // Spacer
+    sheetRows.push([...emptyRow]);
+    rowTypes.push("spacer");
+    // Header
+    sheetRows.push(["STYLE", "COLOUR", "MATERIAL", "SECTION", "RRP", "COST", "AU BOUGHT", "USA BOUGHT"]);
+    rowTypes.push("header");
+
+    let prevStyle = "";
+    for (const c of sorted) {
+      const totals = buyTotals.get(`${c.style}|${c.colour}`);
+      const dataRow: (string | number)[] = [
+        c.style !== prevStyle ? c.style : "",
+        c.colour,
+        c.material ?? "",
+        c.section ?? "",
+        c.rrp != null ? c.rrp : "",
+        c.cost != null ? c.cost : "",
+        totals?.au ?? 0,
+        totals?.usa ?? 0,
+      ];
+      sheetRows.push(dataRow);
+      rowTypes.push(c.style !== prevStyle ? "data-first" : "data");
+      prevStyle = c.style;
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(sheetRows);
+
+    ws["!cols"] = [
+      { wch: 18 }, // STYLE
+      { wch: 24 }, // COLOUR
+      { wch: 16 }, // MATERIAL
+      { wch: 20 }, // SECTION
+      { wch: 10 }, // RRP
+      { wch: 10 }, // COST
+      { wch: 12 }, // AU BOUGHT
+      { wch: 12 }, // USA BOUGHT
+    ];
+
+    ws["!rows"] = sheetRows.map((_, i) => {
+      if (rowTypes[i] === "title")  return { hpt: 27.95 };
+      if (rowTypes[i] === "spacer") return { hpt: 15.95 };
+      if (rowTypes[i] === "header") return { hpt: 20.1 };
+      return { hpt: 15.95 };
+    });
+
+    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: COLS - 1 } }];
+
+    const darkFill = { patternType: "solid", fgColor: { rgb: "1A1A1A" } };
+    const whiteFont = { name: "Calibri", sz: 12, bold: true, color: { rgb: "FFFFFF" } };
+    const boldFont  = { name: "Calibri", sz: 11, bold: true };
+    const plainFont = { name: "Calibri", sz: 11, bold: false };
+    const numCols = [4, 5, 6, 7]; // RRP, COST, AU BOUGHT, USA BOUGHT
+
+    for (let R = 0; R < sheetRows.length; R++) {
+      const type = rowTypes[R];
+      for (let C = 0; C < COLS; C++) {
+        const addr = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!ws[addr]) ws[addr] = { v: "", t: "s" };
+        const isNum = numCols.includes(C);
+        if (type === "title") {
+          ws[addr].s = { font: whiteFont, fill: darkFill, alignment: { horizontal: "center", vertical: "center" } };
+        } else if (type === "spacer") {
+          ws[addr].s = {};
+        } else if (type === "header") {
+          ws[addr].s = { font: whiteFont, fill: darkFill, alignment: { horizontal: isNum ? "right" : "center", vertical: "center" } };
+        } else if (type === "data-first") {
+          ws[addr].s = { font: boldFont, alignment: { horizontal: isNum ? "right" : "left", vertical: "center" } };
+        } else {
+          ws[addr].s = { font: plainFont, alignment: { horizontal: isNum ? "right" : "left", vertical: "center" } };
+        }
+      }
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Handbags");
+    const today = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "-");
+    XLSX.writeFile(wb, `Handbags_SS26_${today}.xlsx`, { bookType: "xlsx", cellStyles: true });
+    toast.success(`Exported ${sorted.length} colourways`);
+  }
+
   // ─── Main render ─────────────────────────────────────────────────────────────
 
   const totalColourways = styles.length;
@@ -1339,6 +1442,15 @@ export default function HandbagsTab() {
             {totalColourways} colourways across {totalStyles} styles
           </p>
         </div>
+        <button
+          onClick={handleExport}
+          disabled={styles.length === 0}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 dark:hover:bg-amber-950/20 disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+        >
+          <Download className="w-4 h-4" />
+          Export
+        </button>
       </div>
 
       {/* Session bar */}
