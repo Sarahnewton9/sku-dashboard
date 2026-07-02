@@ -233,10 +233,26 @@ export default function HandbagsTab() {
   const [confirmDeleteSession, setConfirmDeleteSession] = useState<BuySession | null>(null);
   const [activeTab, setActiveTab] = useState<"styles" | "buy">("styles");
 
+  // Rename state
+  const [renamingStyle, setRenamingStyle] = useState<string | null>(null);
+  const [renameStyleDraft, setRenameStyleDraft] = useState("");
+  const [renamingColour, setRenamingColour] = useState<{ style: string; colour: string } | null>(null);
+  const [renameColourDraft, setRenameColourDraft] = useState("");
+
   // Mutations
   const upsertStyle = trpc.handbag.upsertStyle.useMutation({
     onSuccess: () => utils.handbag.listStyles.invalidate(),
     onError: () => toast.error("Failed to save"),
+  });
+
+  const renameStyle = trpc.handbag.renameStyle.useMutation({
+    onSuccess: () => { utils.handbag.listStyles.invalidate(); utils.handbag.listBuyItems.invalidate(); setRenamingStyle(null); toast.success("Style renamed"); },
+    onError: () => toast.error("Failed to rename style"),
+  });
+
+  const renameColour = trpc.handbag.renameColour.useMutation({
+    onSuccess: () => { utils.handbag.listStyles.invalidate(); utils.handbag.listBuyItems.invalidate(); setRenamingColour(null); toast.success("Colour renamed"); },
+    onError: () => toast.error("Failed to rename colour"),
   });
 
   const createSession = trpc.handbag.createSession.useMutation({
@@ -361,7 +377,31 @@ export default function HandbagsTab() {
             {isExpanded
               ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
               : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
-            <span className="font-semibold text-sm w-32 shrink-0">{styleName}</span>
+            {renamingStyle === styleName ? (
+              <input
+                autoFocus
+                className="font-semibold text-sm w-36 border border-amber-400 rounded px-1.5 py-0.5 bg-background"
+                value={renameStyleDraft}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => setRenameStyleDraft(e.target.value)}
+                onBlur={() => {
+                  const v = renameStyleDraft.trim().toUpperCase();
+                  if (v && v !== styleName) renameStyle.mutate({ oldStyle: styleName, newStyle: v });
+                  else setRenamingStyle(null);
+                }}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                  if (e.key === "Escape") setRenamingStyle(null);
+                }}
+              />
+            ) : (
+              <span
+                className="font-semibold text-sm w-32 shrink-0 cursor-text hover:text-amber-500 transition-colors"
+                title="Click to rename style"
+                onClick={(e) => { e.stopPropagation(); setRenamingStyle(styleName); setRenameStyleDraft(styleName); }}
+              >{styleName}</span>
+            )}
             <span className="text-xs text-muted-foreground">{colours.length} colour{colours.length !== 1 ? "s" : ""}</span>
             <div className="ml-auto flex items-center gap-2">
               {totalBought > 0 && (
@@ -391,7 +431,29 @@ export default function HandbagsTab() {
                         <ImageCell style={c.style} colour={c.colour} imageUrl={c.imageUrl} />
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm">{c.colour}</div>
+                          {renamingColour?.style === c.style && renamingColour?.colour === c.colour ? (
+                            <input
+                              autoFocus
+                              className="font-medium text-sm w-40 border border-amber-400 rounded px-1.5 py-0.5 bg-background"
+                              value={renameColourDraft}
+                              onChange={(e) => setRenameColourDraft(e.target.value)}
+                              onBlur={() => {
+                                const v = renameColourDraft.trim().toUpperCase();
+                                if (v && v !== c.colour) renameColour.mutate({ style: c.style, oldColour: c.colour, newColour: v });
+                                else setRenamingColour(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                if (e.key === "Escape") setRenamingColour(null);
+                              }}
+                            />
+                          ) : (
+                            <div
+                              className="font-medium text-sm cursor-text hover:text-amber-500 transition-colors"
+                              title="Click to rename colour"
+                              onClick={() => { setRenamingColour({ style: c.style, colour: c.colour }); setRenameColourDraft(c.colour); }}
+                            >{c.colour}</div>
+                          )}
                           {c.material && <div className="text-xs text-muted-foreground">{c.material}</div>}
                           {/* Section badge / selector */}
                           <select

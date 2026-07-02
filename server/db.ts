@@ -1681,3 +1681,23 @@ export async function deleteSalesSnapshot(snapshotId: number) {
   await db.delete(salesRows).where(eq(salesRows.snapshotId, snapshotId));
   await db.delete(salesSnapshots).where(eq(salesSnapshots.id, snapshotId));
 }
+
+// ── Handbag Rename ──────────────────────────────────────────────────────────
+
+export async function renameHandbagStyle(oldStyle: string, newStyle: string) {
+  const db = await getDb();
+  if (!db) return;
+  const { handbagStyles, handbagBuyItems } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  await db.update(handbagStyles).set({ style: newStyle }).where(eq(handbagStyles.style, oldStyle));
+  await db.update(handbagBuyItems).set({ style: newStyle }).where(eq(handbagBuyItems.style, oldStyle));
+}
+
+export async function renameHandbagColour(style: string, oldColour: string, newColour: string) {
+  const db = await getDb();
+  if (!db) return;
+  const { handbagStyles, handbagBuyItems } = await import("../drizzle/schema");
+  const { and, eq } = await import("drizzle-orm");
+  await db.update(handbagStyles).set({ colour: newColour }).where(and(eq(handbagStyles.style, style), eq(handbagStyles.colour, oldColour)));
+  await db.update(handbagBuyItems).set({ colour: newColour }).where(and(eq(handbagBuyItems.style, style), eq(handbagBuyItems.colour, oldColour)));
+}

@@ -57,6 +57,8 @@ import {
   getHandbagBuyItems,
   upsertHandbagBuyItem,
   deleteHandbagBuyItem,
+  renameHandbagStyle,
+  renameHandbagColour,
   listSalesSnapshots,
   createSalesSnapshot,
   getSalesSnapshot,
@@ -2038,6 +2040,22 @@ If the request is unclear or is a question, use no_action.`;
       .input(z.object({ style: z.string(), colour: z.string() }))
       .mutation(async ({ input }) => {
         await deleteHandbagStyle(input.style, input.colour);
+        return { success: true };
+      }),
+
+    /** Rename a handbag style (updates all rows including buy items) */
+    renameStyle: protectedProcedure
+      .input(z.object({ oldStyle: z.string(), newStyle: z.string() }))
+      .mutation(async ({ input }) => {
+        await renameHandbagStyle(input.oldStyle, input.newStyle);
+        return { success: true };
+      }),
+
+    /** Rename a handbag colourway */
+    renameColour: protectedProcedure
+      .input(z.object({ style: z.string(), oldColour: z.string(), newColour: z.string() }))
+      .mutation(async ({ input }) => {
+        await renameHandbagColour(input.style, input.oldColour, input.newColour);
         return { success: true };
       }),
 
