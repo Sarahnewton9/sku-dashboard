@@ -366,3 +366,13 @@
 - [x] Build parser for tab-indented paste format (style header rows vs colour/qty rows)
 - [x] Build SalesTab UI: paste input modal, snapshot selector, style breakdown table with colourway rows, buy qty comparison column
 - [x] Add /sales route and Sales nav item under Analysis group in Dashboard sidebar
+
+## Handbags Layout Improvements (Jul 2026)
+- [x] Separate bought vs unbought colourways — styles with any buy qty appear in "Bought" section, others in "New Season" section
+- [x] Larger colourway images (112×112px / w-28 h-28) to match Flora-style display
+- [x] Style-level header image (smaller, 64×40px) on collapsed row
+- [x] Add colour button inside buy session — same inline flow as footwear
+- [x] Buy session bar inline in HandbagsTab (no lock/unlock, simpler than footwear)
+- [x] Session-level qty entry per colourway with AU/USA/NYC columns
+- [x] All-sessions total always visible per colourway
+- [x] Grand total summary bar below session bar
