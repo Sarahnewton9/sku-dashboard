@@ -1701,3 +1701,12 @@ export async function renameHandbagColour(style: string, oldColour: string, newC
   await db.update(handbagStyles).set({ colour: newColour }).where(and(eq(handbagStyles.style, style), eq(handbagStyles.colour, oldColour)));
   await db.update(handbagBuyItems).set({ colour: newColour }).where(and(eq(handbagBuyItems.style, style), eq(handbagBuyItems.colour, oldColour)));
 }
+
+// ── Handbag Style Image ──────────────────────────────────────────────────────
+export async function updateHandbagStyleImage(style: string, imageUrl: string | null) {
+  const db = await getDb();
+  if (!db) return;
+  const { handbagStyles } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  await db.update(handbagStyles).set({ styleImageUrl: imageUrl } as any).where(eq(handbagStyles.style, style));
+}

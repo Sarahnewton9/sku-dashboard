@@ -25,6 +25,7 @@ type HandbagStyle = {
   rrp: number | null;
   cost: number | null;
   imageUrl: string | null;
+  styleImageUrl: string | null;
 };
 
 type BuySession = { id: number; name: string; createdAt: Date };
@@ -210,6 +211,82 @@ function ImageCell({ style, colour, imageUrl }: { style: string; colour: string;
             <span className="text-[9px] leading-tight">Upload</span>
           </>
         )}
+      </button>
+    </>
+  );
+}
+
+// ─── Style-level image cell (shown on header row, always visible) ─────────────
+
+function StyleImageCell({ style, imageUrl }: { style: string; imageUrl: string | null }) {
+  const utils = trpc.useUtils();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
+
+  const uploadStyleImage = trpc.handbag.uploadStyleImage.useMutation({
+    onSuccess: () => { utils.handbag.listStyles.invalidate(); toast.success("Style image uploaded"); },
+    onError: () => toast.error("Upload failed"),
+    onSettled: () => setUploading(false),
+  });
+
+  const removeStyleImage = trpc.handbag.removeStyleImage.useMutation({
+    onSuccess: () => { utils.handbag.listStyles.invalidate(); toast.success("Image removed"); },
+  });
+
+  async function handleFile(file: File) {
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    setUploading(true);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = (e.target?.result as string).split(",")[1];
+      uploadStyleImage.mutate({ style, imageBase64: base64, mimeType: file.type });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  if (imageUrl) {
+    return (
+      <>
+        <div className="relative group w-12 h-12 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <img
+            src={imageUrl}
+            alt={style}
+            className="w-12 h-12 object-contain rounded-md border border-border cursor-pointer hover:opacity-90 transition-opacity bg-white"
+            onClick={() => setLightbox(true)}
+          />
+          <button
+            onClick={(e) => { e.stopPropagation(); removeStyleImage.mutate({ style }); }}
+            className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Remove image"
+          >
+            <X className="w-2.5 h-2.5" />
+          </button>
+        </div>
+        {lightbox && (
+          <div
+            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setLightbox(false)}
+          >
+            <img src={imageUrl} alt={style} className="max-w-full max-h-full object-contain rounded-lg" />
+          </div>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
+      <button
+        onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
+        disabled={uploading}
+        className="w-12 h-12 shrink-0 border-2 border-dashed border-border rounded-md flex flex-col items-center justify-center gap-0.5 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors text-muted-foreground hover:text-amber-600 disabled:opacity-50"
+        title="Upload style image"
+      >
+        {uploading
+          ? <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+          : <ImageIcon className="w-3.5 h-3.5" />}
       </button>
     </>
   );
@@ -420,14 +497,12 @@ export default function HandbagsTab() {
 
       return (
         <div key={styleName} className="border border-border rounded-lg overflow-hidden">
-          {/* Style header */}
-          <button
-            onClick={() => toggleStyle(expandKey)}
-            className="w-full flex items-center gap-3 px-4 py-3 bg-card hover:bg-muted/50 transition-colors text-left"
-          >
+          {/* Style header — use div so we can nest interactive elements (StyleImageCell has a button) */}
+          <div className="w-full flex items-center gap-3 px-4 py-3 bg-card hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => toggleStyle(expandKey)}>
             {isExpanded
               ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
               : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+            <StyleImageCell style={styleName} imageUrl={(colours[0] as HandbagStyle).styleImageUrl ?? null} />
             {renamingStyle === styleName ? (
               <input
                 autoFocus
@@ -466,7 +541,7 @@ export default function HandbagsTab() {
                 </Badge>
               )}
             </div>
-          </button>
+          </div>
 
           {/* Colour rows */}
           {isExpanded && (

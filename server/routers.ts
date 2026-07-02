@@ -59,6 +59,7 @@ import {
   deleteHandbagBuyItem,
   renameHandbagStyle,
   renameHandbagColour,
+  updateHandbagStyleImage,
   listSalesSnapshots,
   createSalesSnapshot,
   getSalesSnapshot,
@@ -2131,6 +2132,31 @@ If the request is unclear or is a question, use no_action.`;
       .input(z.object({ style: z.string(), colour: z.string() }))
       .mutation(async ({ input }) => {
         await upsertHandbagStyle({ style: input.style, colour: input.colour, imageUrl: null });
+        return { success: true };
+      }),
+
+    /** Upload a style-level hero image (shown on the collapsed header row) */
+    uploadStyleImage: protectedProcedure
+      .input(z.object({
+        style: z.string(),
+        imageBase64: z.string(),
+        mimeType: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const buffer = Buffer.from(input.imageBase64, 'base64');
+        const ext = input.mimeType.split('/')[1] || 'jpg';
+        const fileKey = `handbag-style-images/${input.style}-${nanoid(8)}.${ext}`;
+        const { url } = await storagePut(fileKey, buffer, input.mimeType);
+        // Store on all rows for this style
+        await updateHandbagStyleImage(input.style, url);
+        return { url };
+      }),
+
+    /** Remove the style-level hero image */
+    removeStyleImage: protectedProcedure
+      .input(z.object({ style: z.string() }))
+      .mutation(async ({ input }) => {
+        await updateHandbagStyleImage(input.style, null);
         return { success: true };
       }),
   }),

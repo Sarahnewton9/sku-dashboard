@@ -575,6 +575,7 @@ export const handbagStyles = mysqlTable("handbag_styles", {
   rrp: float("rrp"),
   cost: float("cost"),
   imageUrl: varchar("image_url", { length: 1000 }),
+  styleImageUrl: varchar("style_image_url", { length: 1000 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => [uniqueIndex("handbag_style_colour_idx").on(t.style, t.colour)]);
