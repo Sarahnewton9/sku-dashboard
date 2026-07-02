@@ -40,7 +40,7 @@ type BuyItem = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const SECTION_ORDER = ["Core / Carry Over", "New Season", "Winter Recut"];
+const SECTION_ORDER = ["Core / Carry Over", "New Season"];
 
 function sectionLabel(s: string | null) {
   return s ?? "Other";
@@ -465,7 +465,6 @@ export default function HandbagsTab() {
                             <option value="">— no section —</option>
                             <option value="Core / Carry Over">Core / Carry Over</option>
                             <option value="New Season">New Season</option>
-                            <option value="Winter Recut">Winter Recut</option>
                           </select>
                         </div>
                         {/* Prices */}
