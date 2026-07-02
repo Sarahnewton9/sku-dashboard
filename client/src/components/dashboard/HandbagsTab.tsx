@@ -502,7 +502,7 @@ export default function HandbagsTab() {
             {isExpanded
               ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
               : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
-            <StyleImageCell style={styleName} imageUrl={(colours[0] as HandbagStyle).styleImageUrl ?? null} />
+            <StyleImageCell style={styleName} imageUrl={(colours[0] as HandbagStyle).styleImageUrl ?? (colours as HandbagStyle[]).find(c => c.imageUrl)?.imageUrl ?? null} />
             {renamingStyle === styleName ? (
               <input
                 autoFocus
