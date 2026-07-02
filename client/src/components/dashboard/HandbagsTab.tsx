@@ -393,6 +393,18 @@ export default function HandbagsTab() {
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm">{c.colour}</div>
                           {c.material && <div className="text-xs text-muted-foreground">{c.material}</div>}
+                          {/* Section badge / selector */}
+                          <select
+                            value={c.section ?? ""}
+                            onChange={(e) => upsertStyle.mutate({ style: c.style, colour: c.colour, section: e.target.value || null })}
+                            className="mt-1 text-[10px] rounded px-1.5 py-0.5 border border-border bg-background text-muted-foreground cursor-pointer hover:border-amber-400 focus:outline-none focus:border-amber-400 transition-colors"
+                            title="Change section"
+                          >
+                            <option value="">— no section —</option>
+                            <option value="Core / Carry Over">Core / Carry Over</option>
+                            <option value="New Season">New Season</option>
+                            <option value="Winter Recut">Winter Recut</option>
+                          </select>
                         </div>
                         {/* Prices */}
                         <div className="flex items-center gap-6 text-sm shrink-0">
