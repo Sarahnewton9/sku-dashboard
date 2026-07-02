@@ -166,11 +166,11 @@ function ImageCell({ style, colour, imageUrl }: { style: string; colour: string;
   if (imageUrl) {
     return (
       <>
-        <div className="relative group w-14 h-14 shrink-0">
+        <div className="relative group w-24 h-24 shrink-0">
           <img
             src={imageUrl}
             alt={`${style} ${colour}`}
-            className="w-14 h-14 object-contain rounded-md border border-border cursor-pointer hover:opacity-90 transition-opacity bg-white"
+            className="w-24 h-24 object-contain rounded-md border border-border cursor-pointer hover:opacity-90 transition-opacity bg-white"
             onClick={() => setLightbox(true)}
           />
           <button
@@ -199,7 +199,7 @@ function ImageCell({ style, colour, imageUrl }: { style: string; colour: string;
       <button
         onClick={() => fileRef.current?.click()}
         disabled={uploading}
-        className="w-14 h-14 shrink-0 border-2 border-dashed border-border rounded-md flex flex-col items-center justify-center gap-0.5 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors text-muted-foreground hover:text-amber-600 disabled:opacity-50"
+        className="w-24 h-24 shrink-0 border-2 border-dashed border-border rounded-md flex flex-col items-center justify-center gap-0.5 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors text-muted-foreground hover:text-amber-600 disabled:opacity-50"
         title="Upload image"
       >
         {uploading ? (
