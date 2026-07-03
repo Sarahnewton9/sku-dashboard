@@ -669,7 +669,8 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForCol
             ?? rowGroup.get(colour.split(" ")[0]); // short-colour fallback
           cellValue = colourRow ? (colourRow.value ?? "") : "";
         }
-        const optKey = `custom:${row.title}`;
+        // Normalise to lowercase so it matches the normalised allDropdownOptions keys
+        const optKey = `custom:${row.title}`.toLowerCase();
         const opts = allDropdownOptions[optKey] ?? [];
         const optIds = allDropdownOptionIds?.[optKey] ?? {};
         return (
@@ -2309,10 +2310,13 @@ export default function SpecsTab({}: SpecsTabProps) {
   // allDropdownOptionIds: component → { value: id } for edit support
   const allDropdownOptionIds: Record<string, Record<string, number>> = {};
   for (const opt of rawDropdownOptions) {
-    if (!allDropdownOptions[opt.component]) allDropdownOptions[opt.component] = [];
-    allDropdownOptions[opt.component].push(opt.value);
-    if (!allDropdownOptionIds[opt.component]) allDropdownOptionIds[opt.component] = {};
-    allDropdownOptionIds[opt.component][opt.value] = opt.id;
+    // Normalise component key to lowercase so custom row suggestions are found
+    // regardless of title case (e.g. "custom:WEDGE NAME" === "custom:wedge name")
+    const normKey = opt.component.startsWith('custom:') ? opt.component.toLowerCase() : opt.component;
+    if (!allDropdownOptions[normKey]) allDropdownOptions[normKey] = [];
+    allDropdownOptions[normKey].push(opt.value);
+    if (!allDropdownOptionIds[normKey]) allDropdownOptionIds[normKey] = {};
+    allDropdownOptionIds[normKey][opt.value] = opt.id;
   }
 
   const specMeta = rawMeta
