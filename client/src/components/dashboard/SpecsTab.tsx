@@ -1277,8 +1277,24 @@ function SpecForm({
 
   function handleCopyFrom(sourceColour: string, targetColours: string[]) {
     const sourceValues = specs[sourceColour] ?? {};
+
+    // Build a map from colourLabel → raw colour key so we can look up the correct DB key.
+    // e.g. "BLUSH NUBUCK" → "BLUSH", "INDIGO NUBUCK" → "INDIGO"
+    // Custom row values are stored under the raw colour key (entry.colours), not the label.
+    const labelToRaw = new Map<string, string>();
+    entry.colourLabels.forEach((label, i) => {
+      labelToRaw.set(label, entry.colours[i] ?? label);
+    });
+
+    // Source: try the label first, then the raw key, then the short colour name
+    const rawSourceColour = labelToRaw.get(sourceColour) ?? sourceColour;
+    const shortSourceColour = rawSourceColour.split(" ")[0];
+
     for (const colour of targetColours) {
-      // Copy template rows
+      // Map the target colourLabel back to the raw colour key for DB storage
+      const rawTargetColour = labelToRaw.get(colour) ?? colour;
+
+      // Copy template rows (keyed by colourLabel in specs object)
       for (const comp of template) {
         // Never copy Upper 1 — each colour has its own upper material
         if (comp.key === "upper_1") continue;
@@ -1288,20 +1304,22 @@ function SpecForm({
       // Copy custom (manually added) rows
       for (const [, group] of Array.from(customRowGroups)) {
         const { rep, colourMap } = group;
-        // Get the value for the source colour.
-        // Fall back to the short colour name (first word) for legacy rows stored under short keys
-        // e.g. "BLUSH NUBUCK" → try "BLUSH" if "BLUSH NUBUCK" not found.
-        const shortSourceColour = sourceColour.split(" ")[0];
+        // Look up source value using raw colour key (how DB stores it), with fallbacks:
+        // 1. exact raw source colour (e.g. "BLUSH")
+        // 2. short colour name (first word, for legacy compound keys)
+        // 3. __all__ (shared value row)
         const sourceRow =
-          colourMap.get(sourceColour) ??
+          colourMap.get(rawSourceColour) ??
           colourMap.get(shortSourceColour) ??
+          colourMap.get(sourceColour) ??
           colourMap.get("__all__");
         const sourceVal = sourceRow?.value ?? null;
         if (!sourceVal) continue; // nothing to copy
         // Current shared value (used by server to decide whether to explode __all__ row)
         const sharedRow = colourMap.get("__all__");
         const currentSharedValue = sharedRow?.value ?? "";
-        onUpdateCustomRowForColour(rep.id, rep.title, colour, sourceVal, currentSharedValue, rep.section, rep.sortOrder);
+        // Use rawTargetColour so the value is stored under the same key as existing rows
+        onUpdateCustomRowForColour(rep.id, rep.title, rawTargetColour, sourceVal, currentSharedValue, rep.section, rep.sortOrder);
       }
     }
     toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s) (Upper 1 kept per-colour)`);
