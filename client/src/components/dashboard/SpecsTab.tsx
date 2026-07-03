@@ -1288,8 +1288,14 @@ function SpecForm({
       // Copy custom (manually added) rows
       for (const [, group] of Array.from(customRowGroups)) {
         const { rep, colourMap } = group;
-        // Get the value for the source colour, falling back to the shared __all__ value
-        const sourceRow = colourMap.get(sourceColour) ?? colourMap.get("__all__");
+        // Get the value for the source colour.
+        // Fall back to the short colour name (first word) for legacy rows stored under short keys
+        // e.g. "BLUSH NUBUCK" → try "BLUSH" if "BLUSH NUBUCK" not found.
+        const shortSourceColour = sourceColour.split(" ")[0];
+        const sourceRow =
+          colourMap.get(sourceColour) ??
+          colourMap.get(shortSourceColour) ??
+          colourMap.get("__all__");
         const sourceVal = sourceRow?.value ?? null;
         if (!sourceVal) continue; // nothing to copy
         // Current shared value (used by server to decide whether to explode __all__ row)
