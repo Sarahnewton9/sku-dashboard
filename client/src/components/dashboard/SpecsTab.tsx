@@ -901,8 +901,10 @@ interface SpecFormProps {
   onResetColour: (colour: string) => void;
   tableScrollRef?: React.RefObject<HTMLDivElement | null>; // lifted up for external sticky scrollbar
   onBulkCopyCustomRowsFromStyle: (targetColours: string[], rows: Array<{ section: string; title: string; value: string; sortOrder: number }>) => void;
-  /** Called once on mount so SpecsTab can register a setter to update localRowKeys inside SpecForm. */
-  onRegisterReplaceRowKey?: (setter: React.Dispatch<React.SetStateAction<string[] | null>>) => void;
+  /** Called once on mount so SpecsTab can register a swap function that replaces oldKey with newKey in localRowKeys.
+   * If localRowKeys is null (no saved order yet), it initialises from the current unifiedRowIds first
+   * so the row stays in its current position instead of jumping to the bottom. */
+  onRegisterReplaceRowKey?: (swapFn: (oldKey: string, newKey: string) => void) => void;
 }
 
 const STYLE_CATEGORIES = [
@@ -1150,10 +1152,20 @@ function SpecForm({
   const [activeId, setActiveId] = useState<string | null>(null);
   // Local row order override (optimistic, updated on drag)
   const [localRowKeys, setLocalRowKeys] = useState<string[] | null>(null);
-  // Register our localRowKeys setter with the parent on mount so SpecsTab can
-  // swap temp/old row keys for real/new ones without a full re-render cycle.
+  // Register a swapRowKey function with the parent so SpecsTab can replace old/temp row keys
+  // with new/real ones without a full re-render cycle.
+  // When localRowKeys is null (no saved order yet), we initialise from unifiedRowIds first
+  // so the row stays in its current visual position instead of jumping to the bottom.
+  const unifiedRowIdsRef = useRef<string[]>([]);
+  useEffect(() => { unifiedRowIdsRef.current = unifiedRowIds; }, [unifiedRowIds]);
   useEffect(() => {
-    onRegisterReplaceRowKey?.(setLocalRowKeys);
+    onRegisterReplaceRowKey?.((oldKey: string, newKey: string) => {
+      setLocalRowKeys((prev) => {
+        const base = prev ?? unifiedRowIdsRef.current;
+        if (!base.includes(oldKey)) return prev;
+        return base.map((k) => k === oldKey ? newKey : k);
+      });
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const dndSensors = useSensors(
@@ -2365,12 +2377,11 @@ export default function SpecsTab({}: SpecsTabProps) {
   // ── Custom rows ──────────────────────────────────────────────────────────
   // Ref to SpecForm's localRowKeys setter — registered via onRegisterReplaceRowKey.
   // Used to swap temp/old row keys for real/new ones after mutations.
-  const replaceRowKeySetterRef = useRef<React.Dispatch<React.SetStateAction<string[] | null>> | null>(null);
+  // The registered function is provided by SpecForm and handles the case where
+  // localRowKeys is null (no saved order) by initialising from unifiedRowIds first.
+  const replaceRowKeySetterRef = useRef<((oldKey: string, newKey: string) => void) | null>(null);
   function swapLocalRowKey(oldKey: string, newKey: string) {
-    replaceRowKeySetterRef.current?.((prev) => {
-      if (!prev || !prev.includes(oldKey)) return prev;
-      return prev.map((k) => k === oldKey ? newKey : k);
-    });
+    replaceRowKeySetterRef.current?.(oldKey, newKey);
   }
 
   const { data: rawCustomRows = [], refetch: refetchCustomRows } = trpc.specCustomRow.getByStyle.useQuery(
@@ -3407,8 +3418,8 @@ export default function SpecsTab({}: SpecsTabProps) {
                 if (!selectedStyle) return;
                 bulkCopyFromStyleMutation.mutate({ targetStyle: selectedStyle, targetColours, rows });
               }}
-              onRegisterReplaceRowKey={(setter) => {
-                replaceRowKeySetterRef.current = setter;
+              onRegisterReplaceRowKey={(swapFn) => {
+                replaceRowKeySetterRef.current = swapFn;
               }}
             />
             </div>{/* end scrollable body */}
