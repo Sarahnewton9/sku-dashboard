@@ -144,6 +144,12 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     const orderedRows: CompRow[] = [];
     let prevSection: string | null = null;
 
+    // Build a set of deleted keys (both template and custom) to prevent re-appending them
+    const exportDeletedKeys = new Set<string>();
+    for (const key of rowKeys) {
+      if (key.startsWith("deleted:")) exportDeletedKeys.add(key.slice("deleted:".length));
+    }
+
     for (const key of rowKeys) {
       if (key.startsWith("deleted:")) continue;
 
@@ -180,13 +186,15 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     // Append any custom row groups that weren't placed by rowKeys.
     // This handles stale ids (after __all__ explosion) where the old c:{id} in rowKeys
     // no longer exists in the DB. We track which repIds were placed and append the rest.
+    // IMPORTANT: skip rows that are marked as deleted (deleted:c:{id} in rowKeys).
     const placedRepIds = new Set(
       orderedRows
         .filter((r) => r.key?.startsWith("__custom__"))
         .map((r) => parseInt(r.key!.slice("__custom__".length), 10))
     );
     for (const [repId, cr] of Array.from(customRowById)) {
-      if (!placedRepIds.has(repId)) {
+      const rowKey = `c:${repId}`;
+      if (!placedRepIds.has(repId) && !exportDeletedKeys.has(rowKey)) {
         orderedRows.push({ label: cr.title.toUpperCase(), key: `__custom__${repId}`, isSpacer: false });
       }
     }

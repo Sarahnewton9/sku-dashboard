@@ -1228,12 +1228,23 @@ function SpecForm({
   const unifiedRows = useMemo((): UnifiedRow[] => {
     const templateMap = new Map(template.map((c) => [`t:${c.key}`, c]));
     const savedKeys = localRowKeys ?? rowOrderData?.rowKeys ?? null;
+    // Build a set of all deleted keys (both template and custom) so we never re-append them
+    const deletedKeys = new Set<string>();
+    if (savedKeys) {
+      for (const key of savedKeys) {
+        if (key.startsWith("deleted:")) deletedKeys.add(key.slice("deleted:".length));
+      }
+    }
     if (savedKeys && savedKeys.length > 0) {
       // Use saved order, adding any new rows not in saved order at the end
       const result: UnifiedRow[] = [];
       const usedKeys = new Set<string>();
       for (const key of savedKeys) {
-        if (key.startsWith("deleted:")) continue; // skip deleted template rows
+        if (key.startsWith("deleted:")) {
+          // Mark the underlying key as used so it doesn't get re-appended below
+          usedKeys.add(key.slice("deleted:".length));
+          continue;
+        }
         if (key.startsWith("t:") && templateMap.has(key)) {
           result.push({ kind: "template", id: key, comp: templateMap.get(key)! });
           usedKeys.add(key);
@@ -1243,13 +1254,13 @@ function SpecForm({
           usedKeys.add(key);
         }
       }
-      // Add any template rows not in saved order (new template rows added after order was saved)
+      // Add any template rows not in saved order AND not deleted (new template rows added after order was saved)
       for (const [key, comp] of Array.from(templateMap)) {
-        if (!usedKeys.has(key)) result.push({ kind: "template", id: key, comp });
+        if (!usedKeys.has(key) && !deletedKeys.has(key)) result.push({ kind: "template", id: key, comp });
       }
-      // Add any custom rows not in saved order (newly added custom rows — use rep key)
+      // Add any custom rows not in saved order AND not deleted (newly added custom rows)
       for (const [key, group] of Array.from(customRepMap)) {
-        if (!usedKeys.has(key)) result.push({ kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap });
+        if (!usedKeys.has(key) && !deletedKeys.has(key)) result.push({ kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap });
       }
       return result;
     }
@@ -1605,8 +1616,9 @@ function SpecForm({
                       onEditDropdownOption={onEditDropdownOption}
                       isActive={activeId === uRow.id}
                       onDelete={(id) => {
-                        // Hide this template row by saving order with it removed
-                        const newKeys = unifiedRowIds.filter((k) => k !== id);
+                        // Mark as deleted (prefix with "deleted:") so it's hidden but restorable
+                        const currentKeys = localRowKeys ?? rowOrderData?.rowKeys ?? unifiedRowIds;
+                        const newKeys = currentKeys.map((k) => k === id ? `deleted:${id}` : k);
                         setLocalRowKeys(newKeys);
                         upsertRowOrderMutation.mutate({ style: entry.style, rowKeys: newKeys });
                       }}
@@ -1623,7 +1635,20 @@ function SpecForm({
                       colours={entry.colours}
                       onUpdate={onUpdateCustomRow}
                       onUpdateForColour={onUpdateCustomRowForColour}
-                      onDelete={onDeleteCustomRow}
+                      onDelete={(id) => {
+                        // Mark as deleted in rowKeys (soft delete — keeps DB rows for restore)
+                        const rowKey = `c:${id}`;
+                        const currentKeys = localRowKeys ?? rowOrderData?.rowKeys ?? unifiedRowIds;
+                        let newKeys: string[];
+                        if (currentKeys.includes(rowKey)) {
+                          newKeys = currentKeys.map((k) => k === rowKey ? `deleted:${rowKey}` : k);
+                        } else {
+                          // Row not yet in rowKeys (newly added) — append as deleted
+                          newKeys = [...currentKeys, `deleted:${rowKey}`];
+                        }
+                        setLocalRowKeys(newKeys);
+                        upsertRowOrderMutation.mutate({ style: entry.style, rowKeys: newKeys });
+                      }}
                       allTitles={allCustomRowTitles}
                       isActive={activeId === uRow.id}
                       allDropdownOptions={allDropdownOptions}
@@ -1636,16 +1661,71 @@ function SpecForm({
                 }
               })}
             </SortableContext>
-            {/* Single Add Row button at the bottom */}
+            {/* Single Add Row button + Restore hidden rows at the bottom */}
             <tr>
               <td colSpan={entry.colours.length + 1} className="px-3 py-2">
-                <button
-                  onClick={() => onAddCustomRow("components")}
-                  className="flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-amber-600 transition-colors"
-                >
-                  <Plus className="w-3 h-3" />
-                  Add row
-                </button>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => onAddCustomRow("components")}
+                    className="flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-amber-600 transition-colors"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add row
+                  </button>
+                  {/* Restore hidden rows */}
+                  {(() => {
+                    const currentKeys = localRowKeys ?? rowOrderData?.rowKeys ?? null;
+                    if (!currentKeys) return null;
+                    const deletedEntries = currentKeys
+                      .filter((k) => k.startsWith("deleted:"))
+                      .map((k) => {
+                        const inner = k.slice("deleted:".length);
+                        if (inner.startsWith("t:")) {
+                          const comp = template.find((c) => `t:${c.key}` === inner);
+                          return comp ? { key: k, label: comp.label, inner } : null;
+                        } else if (inner.startsWith("c:")) {
+                          const id = parseInt(inner.slice(2), 10);
+                          const group = customRepMap.get(inner);
+                          const title = group?.rep.title ?? customRows.find((r) => r.id === id)?.title ?? inner;
+                          return title ? { key: k, label: title, inner } : null;
+                        }
+                        return null;
+                      })
+                      .filter(Boolean) as Array<{ key: string; label: string; inner: string }>;
+                    if (deletedEntries.length === 0) return null;
+                    return (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-amber-600 transition-colors">
+                            <RotateCcw className="w-3 h-3" />
+                            {deletedEntries.length} hidden row{deletedEntries.length > 1 ? "s" : ""}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 p-2" align="start">
+                          <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Hidden rows — click to restore</p>
+                          <div className="flex flex-col gap-0.5">
+                            {deletedEntries.map(({ key, label, inner }) => (
+                              <button
+                                key={key}
+                                onClick={() => {
+                                  const newKeys = (localRowKeys ?? rowOrderData?.rowKeys ?? []).map(
+                                    (k) => k === key ? inner : k
+                                  );
+                                  setLocalRowKeys(newKeys);
+                                  upsertRowOrderMutation.mutate({ style: entry.style, rowKeys: newKeys });
+                                }}
+                                className="flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-amber-50 dark:hover:bg-amber-900/20 text-left w-full group transition-colors"
+                              >
+                                <RotateCcw className="w-3 h-3 text-muted-foreground/40 group-hover:text-amber-600 flex-shrink-0" />
+                                <span className="truncate">{label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    );
+                  })()}
+                </div>
               </td>
             </tr>
           </tbody>

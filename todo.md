@@ -388,3 +388,11 @@
 - [x] Root cause: values stored under short colour key ("BLUSH") but export looked up by compound key ("BLUSH NUBUCK")
 - [x] Fix: add short-colour fallback in exportSpecSheet getValue() function
 - [x] Fix: add short-colour fallback in on-screen UnifiedCustomRow display and onSave handler
+
+## Spec Row Delete Fix (Jul 2026)
+- [x] Fix deleted rows reappearing at the bottom of the spec table
+- [x] Template row delete: mark as deleted:t:key in rowKeys instead of removing (so it doesn't get re-appended)
+- [x] Custom row delete: soft delete via deleted:c:id in rowKeys instead of permanent DB delete
+- [x] unifiedRows: skip deleted:c:id and deleted:t:key entries, and don't re-append them at the bottom
+- [x] Export: skip deleted:c:id entries in the fallback append loop
+- [x] Add "X hidden rows" restore button below the table — popover lists all hidden rows with one-click restore
