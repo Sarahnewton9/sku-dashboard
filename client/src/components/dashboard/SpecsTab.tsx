@@ -1152,22 +1152,6 @@ function SpecForm({
   const [activeId, setActiveId] = useState<string | null>(null);
   // Local row order override (optimistic, updated on drag)
   const [localRowKeys, setLocalRowKeys] = useState<string[] | null>(null);
-  // Register a swapRowKey function with the parent so SpecsTab can replace old/temp row keys
-  // with new/real ones without a full re-render cycle.
-  // When localRowKeys is null (no saved order yet), we initialise from unifiedRowIds first
-  // so the row stays in its current visual position instead of jumping to the bottom.
-  const unifiedRowIdsRef = useRef<string[]>([]);
-  useEffect(() => { unifiedRowIdsRef.current = unifiedRowIds; }, [unifiedRowIds]);
-  useEffect(() => {
-    onRegisterReplaceRowKey?.((oldKey: string, newKey: string) => {
-      setLocalRowKeys((prev) => {
-        const base = prev ?? unifiedRowIdsRef.current;
-        if (!base.includes(oldKey)) return prev;
-        return base.map((k) => k === oldKey ? newKey : k);
-      });
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   const dndSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
@@ -1288,6 +1272,24 @@ function SpecForm({
 
   const unifiedRowIds = useMemo(() => unifiedRows.map((r) => r.id), [unifiedRows]);
   const activeRow = activeId ? unifiedRows.find((r) => r.id === activeId) ?? null : null;
+
+  // Register a swapRowKey function with the parent so SpecsTab can replace old/temp row keys
+  // with new/real ones without a full re-render cycle.
+  // When localRowKeys is null (no saved order yet), we initialise from unifiedRowIds first
+  // so the row stays in its current visual position instead of jumping to the bottom.
+  // IMPORTANT: must be declared AFTER unifiedRowIds to avoid temporal dead zone errors.
+  const unifiedRowIdsRef = useRef<string[]>([]);
+  useEffect(() => { unifiedRowIdsRef.current = unifiedRowIds; }, [unifiedRowIds]);
+  useEffect(() => {
+    onRegisterReplaceRowKey?.((oldKey: string, newKey: string) => {
+      setLocalRowKeys((prev) => {
+        const base = prev ?? unifiedRowIdsRef.current;
+        if (!base.includes(oldKey)) return prev;
+        return base.map((k) => k === oldKey ? newKey : k);
+      });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleCopyFrom(sourceColour: string, targetColours: string[]) {
     const sourceValues = specs[sourceColour] ?? {};
