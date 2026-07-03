@@ -525,7 +525,11 @@ function UnifiedTemplateRow({
   id, comp, colours, colourLabels, specs, allDropdownOptions, allDropdownOptionIds, allColourLeatherOptions,
   onUpsert, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption, isActive, onDelete,
 }: UnifiedTemplateRowProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({ id });
+  const isPinned = comp.key === "upper_1";
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({
+    id,
+    disabled: isPinned,
+  });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -543,24 +547,31 @@ function UnifiedTemplateRow({
     >
       <td className="px-1 py-1.5 font-medium text-muted-foreground align-middle">
         <div className="flex items-center gap-1">
-          <button
-            {...attributes}
-            {...listeners}
-            className="p-0.5 text-muted-foreground/30 hover:text-amber-500 cursor-grab active:cursor-grabbing touch-none flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-            title="Drag to reorder"
-            tabIndex={-1}
-          >
-            <GripVertical className="w-3.5 h-3.5" />
-          </button>
+          {isPinned ? (
+            // Upper 1 is always pinned at the top — no drag handle or delete button
+            <span className="w-4 flex-shrink-0" />
+          ) : (
+            <button
+              {...attributes}
+              {...listeners}
+              className="p-0.5 text-muted-foreground/30 hover:text-amber-500 cursor-grab active:cursor-grabbing touch-none flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              title="Drag to reorder"
+              tabIndex={-1}
+            >
+              <GripVertical className="w-3.5 h-3.5" />
+            </button>
+          )}
           <span className="text-xs">{comp.label}</span>
-          <button
-            onClick={() => onDelete(id)}
-            className="ml-auto p-0.5 text-muted-foreground/20 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-            title="Hide row"
-            tabIndex={-1}
-          >
-            <X className="w-3 h-3" />
-          </button>
+          {!isPinned && (
+            <button
+              onClick={() => onDelete(id)}
+              className="ml-auto p-0.5 text-muted-foreground/20 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+              title="Hide row"
+              tabIndex={-1}
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
         </div>
       </td>
       {colours.map((colour, colIdx) => {
@@ -1233,9 +1244,10 @@ function SpecForm({
         if (key.startsWith("deleted:")) deletedKeys.add(key.slice("deleted:".length));
       }
     }
+    let result: UnifiedRow[];
     if (savedKeys && savedKeys.length > 0) {
       // Use saved order, adding any new rows not in saved order at the end
-      const result: UnifiedRow[] = [];
+      result = [];
       const usedKeys = new Set<string>();
       for (const key of savedKeys) {
         if (key.startsWith("deleted:")) {
@@ -1243,6 +1255,8 @@ function SpecForm({
           usedKeys.add(key.slice("deleted:".length));
           continue;
         }
+        // Never place upper_1 via saved order — it will be pinned to position 0 below
+        if (key === "t:upper_1") { usedKeys.add(key); continue; }
         if (key.startsWith("t:") && templateMap.has(key)) {
           result.push({ kind: "template", id: key, comp: templateMap.get(key)! });
           usedKeys.add(key);
@@ -1260,13 +1274,21 @@ function SpecForm({
       for (const [key, group] of Array.from(customRepMap)) {
         if (!usedKeys.has(key) && !deletedKeys.has(key)) result.push({ kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap });
       }
-      return result;
+    } else {
+      // Default: template rows in template order, then custom rows (one row per title group)
+      result = [
+        ...template.map((c): UnifiedRow => ({ kind: "template", id: `t:${c.key}`, comp: c })),
+        ...Array.from(customRepMap).map(([key, group]): UnifiedRow => ({ kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap })),
+      ];
     }
-    // Default: template rows in template order, then custom rows (one row per title group)
-    const result: UnifiedRow[] = [
-      ...template.map((c): UnifiedRow => ({ kind: "template", id: `t:${c.key}`, comp: c })),
-      ...Array.from(customRepMap).map(([key, group]): UnifiedRow => ({ kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap })),
-    ];
+    // Always pin upper_1 to position 0 (cannot be moved or deleted)
+    const upper1Comp = templateMap.get("t:upper_1");
+    if (upper1Comp) {
+      const upper1Row: UnifiedRow = { kind: "template", id: "t:upper_1", comp: upper1Comp };
+      // Remove it from wherever it ended up (if present) and prepend
+      const filteredResult = result.filter((r) => r.id !== "t:upper_1");
+      return [upper1Row, ...filteredResult];
+    }
     return result;
   }, [template, customRepMap, rowOrderData, localRowKeys]);
 
@@ -1591,8 +1613,11 @@ function SpecForm({
           const { active, over } = event;
           if (!over || active.id === over.id) return;
           const oldIdx = unifiedRowIds.indexOf(active.id as string);
-          const newIdx = unifiedRowIds.indexOf(over.id as string);
+          let newIdx = unifiedRowIds.indexOf(over.id as string);
           if (oldIdx === -1 || newIdx === -1) return;
+          // Upper 1 is always pinned at position 0 — never allow anything to be dragged before it
+          if (newIdx === 0 && unifiedRowIds[0] === "t:upper_1") newIdx = 1;
+          if (oldIdx === newIdx) return;
           const newKeys = arrayMove(unifiedRowIds, oldIdx, newIdx);
           setLocalRowKeys(newKeys);
           upsertRowOrderMutation.mutate({ style: entry.style, rowKeys: newKeys });

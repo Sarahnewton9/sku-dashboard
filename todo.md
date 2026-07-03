@@ -406,3 +406,7 @@
 - [ ] Fix custom row display to use normalised colour key
 - [ ] Fix export to use normalised colour key
 - [ ] Run end-to-end tests to verify all paths
+
+## Upper 1 Pin + Toe Piece Always Available (Jul 2026)
+- [x] Pin Upper 1 row to always appear first in the spec table — cannot be dragged below other rows or deleted
+- [x] Ensure Toe Piece is always available as a row in all relevant categories (Dress Shoe, Sandal, Dress Sandal, Boot, Ankle Boot, Calf Boot, Loafer, Ballet Flat, Casual Flat) by adding it to their templates
