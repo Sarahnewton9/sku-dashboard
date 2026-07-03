@@ -382,3 +382,9 @@
 - [x] Session-level qty entry per colourway with AU/USA/NYC columns
 - [x] All-sessions total always visible per colourway
 - [x] Grand total summary bar below session bar
+
+## Spec Export Bug Fix - Legacy Colour Key Mismatch (Jul 2026)
+- [x] Fix custom row values not appearing in spec export for styles with multiple leathers per colour (e.g. EDGY)
+- [x] Root cause: values stored under short colour key ("BLUSH") but export looked up by compound key ("BLUSH NUBUCK")
+- [x] Fix: add short-colour fallback in exportSpecSheet getValue() function
+- [x] Fix: add short-colour fallback in on-screen UnifiedCustomRow display and onSave handler

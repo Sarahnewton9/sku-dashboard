@@ -226,8 +226,15 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
   }
 
   // Helper to get value for a component row + colour.
-  // For custom rows, the DB stores values keyed by the raw compound colour key (e.g. "GOLD"),
-  // but the export passes the colourLabel (e.g. "GOLD NAPPA") as `colour`. We try both.
+  // For custom rows, the DB stores values keyed by the raw compound colour key (e.g. "GOLD" or "BLUSH").
+  // The export passes the colourLabel (e.g. "GOLD NAPPA" or "BLUSH NUBUCK") as `colour`.
+  // We try multiple fallbacks to handle:
+  //   1. Values stored under the full compound key (e.g. "BLUSH NUBUCK") — current behaviour
+  //   2. Values stored under the rawColour (same as colour for most styles)
+  //   3. Values stored under the short colour name (first word only, e.g. "BLUSH" from "BLUSH NUBUCK")
+  //      — this handles legacy values entered when the style had a single leather per colour,
+  //        before additional leathers were added and the colour key changed to "COLOUR LEATHER".
+  //   4. __all__ shared value
   function getValue(row: CompRow, colour: string, rawColour?: string): string {
     if (row.isSpacer || !row.key) return "";
     if (row.key.startsWith("__custom__")) {
@@ -236,11 +243,29 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
       if (!isNaN(id)) {
         const cr = customRowById.get(id);
         if (cr) {
-          // Try colourLabel first, then rawColour, then __all__
-          return cr.valuesByColour[colour]
-            ?? (rawColour ? cr.valuesByColour[rawColour] : undefined)
-            ?? cr.valuesByColour["__all__"]
-            ?? "";
+          // Try colourLabel first
+          const byLabel = cr.valuesByColour[colour];
+          if (byLabel !== undefined && byLabel !== "") return byLabel;
+          // Try rawColour (may differ from label)
+          if (rawColour && rawColour !== colour) {
+            const byRaw = cr.valuesByColour[rawColour];
+            if (byRaw !== undefined && byRaw !== "") return byRaw;
+          }
+          // Try short colour name (first word) — handles legacy values stored before leather suffix was added
+          const shortColour = colour.split(" ")[0];
+          if (shortColour && shortColour !== colour) {
+            const byShort = cr.valuesByColour[shortColour];
+            if (byShort !== undefined && byShort !== "") return byShort;
+          }
+          if (rawColour) {
+            const shortRaw = rawColour.split(" ")[0];
+            if (shortRaw && shortRaw !== shortColour && shortRaw !== rawColour) {
+              const byShortRaw = cr.valuesByColour[shortRaw];
+              if (byShortRaw !== undefined && byShortRaw !== "") return byShortRaw;
+            }
+          }
+          // Fall back to __all__ shared value (empty string is valid — return it)
+          return cr.valuesByColour["__all__"] ?? "";
         }
       }
       return "";

@@ -657,12 +657,16 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForCol
         </div>
       </td>
       {colours.map((colour, colIdx) => {
-        // Get the value for this specific colour
+        // Get the value for this specific colour.
+        // Try the full colour key first (e.g. "BLUSH NUBUCK"), then the short colour name
+        // (first word, e.g. "BLUSH") as a fallback for legacy values entered before a second
+        // leather was added to the style and the colour key changed from "BLUSH" to "BLUSH NUBUCK".
         let cellValue: string;
         if (isAllRow) {
           cellValue = row.value ?? "";
         } else {
-          const colourRow = rowGroup.get(colour);
+          const colourRow = rowGroup.get(colour)
+            ?? rowGroup.get(colour.split(" ")[0]); // short-colour fallback
           cellValue = colourRow ? (colourRow.value ?? "") : "";
         }
         const optKey = `custom:${row.title}`;
@@ -678,7 +682,8 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForCol
                 if (isAllRow) {
                   onUpdateForColour(row.id, row.title, colour, v, sharedValue, row.section, row.sortOrder);
                 } else {
-                  const colourRow = rowGroup.get(colour);
+                  // Try full colour key first, then short-colour fallback (legacy values stored under short name)
+                  const colourRow = rowGroup.get(colour) ?? rowGroup.get(colour.split(" ")[0]);
                   if (colourRow) {
                     onUpdate(colourRow.id, colourRow.title, v);
                   } else {
