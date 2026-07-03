@@ -879,6 +879,7 @@ interface SpecFormProps {
   customRows: CustomRowData[];
   onUpsert: (colour: string, component: string, value: string) => void;
   onBulkAutoFill: (rows: Array<{ style: string; colour: string; component: string; value: string }>) => void;
+  onBulkCopy: (rows: Array<{ style: string; colour: string; component: string; value: string }>) => void;
   onAddDropdownOption: (component: string, value: string) => void;
   onDeleteDropdownOption: (component: string, value: string) => void;
   onEditDropdownOption: (id: number, newValue: string) => void;
@@ -1130,7 +1131,7 @@ type UnifiedRow =
 
 function SpecForm({
   entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allDropdownOptionIds, allColourLeatherOptions, imageOverride, customRows,
-  onUpsert, onBulkAutoFill, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption, onMetaChange, onAddSku, onAddCustomRow, onUpdateCustomRow, onUpdateCustomRowForColour, onDeleteCustomRow, onReorderCustomRows,
+  onUpsert, onBulkAutoFill, onBulkCopy, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption, onMetaChange, onAddSku, onAddCustomRow, onUpdateCustomRow, onUpdateCustomRowForColour, onDeleteCustomRow, onReorderCustomRows,
   dbCategory, onSetCategory, allCustomRowTitles, allStyleEntries,
   onHideColumn, hiddenColumns, showHiddenColumns, onShowColumn, onResetColour,
   tableScrollRef: externalTableScrollRef,
@@ -1291,18 +1292,23 @@ function SpecForm({
     const rawSourceColour = labelToRaw.get(sourceColour) ?? sourceColour;
     const shortSourceColour = rawSourceColour.split(" ")[0];
 
+    // Collect ALL template row copies into a single bulk upsert to avoid race conditions.
+    // Firing individual mutations per row causes optimistic-update conflicts when many rows
+    // are copied simultaneously — some values get rolled back before they can be confirmed.
+    const bulkRows: Array<{ style: string; colour: string; component: string; value: string }> = [];
+
     for (const colour of targetColours) {
       // Map the target colourLabel back to the raw colour key for DB storage
       const rawTargetColour = labelToRaw.get(colour) ?? colour;
 
-      // Copy template rows (keyed by colourLabel in specs object)
+      // Collect template rows (keyed by colourLabel in specs object)
       for (const comp of template) {
         // Never copy Upper 1 — each colour has its own upper material
         if (comp.key === "upper_1") continue;
         const val = sourceValues[comp.key];
-        if (val) onUpsert(colour, comp.key, val);
+        if (val) bulkRows.push({ style: entry.style, colour, component: comp.key, value: val });
       }
-      // Copy custom (manually added) rows
+      // Copy custom (manually added) rows — these use individual mutations (different procedure)
       for (const [, group] of Array.from(customRowGroups)) {
         const { rep, colourMap } = group;
         // Look up source value using raw colour key (how DB stores it), with fallbacks:
@@ -1322,6 +1328,12 @@ function SpecForm({
         // Use rawTargetColour so the value is stored under the same key as existing rows
         onUpdateCustomRowForColour(rep.id, rep.title, rawTargetColour, sourceVal, currentSharedValue, rep.section, rep.sortOrder);
       }
+    }
+
+    // Fire all template row copies as a single atomic bulk upsert via the parent's handler
+    // (overwrite: true so existing values are replaced with the copied values)
+    if (bulkRows.length > 0) {
+      onBulkCopy(bulkRows);
     }
     toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s) (Upper 1 kept per-colour)`);
   }
@@ -2748,6 +2760,20 @@ export default function SpecsTab({}: SpecsTabProps) {
     );
   }
 
+  // Bulk copy: same as auto-fill but with overwrite: true so existing values are replaced
+  function handleBulkCopy(rows: Array<{ style: string; colour: string; component: string; value: string }>) {
+    if (rows.length === 0) return;
+    bulkUpsertMutation.mutate(
+      { rows, overwrite: true },
+      {
+        onSuccess: () => {
+          utils.specs.getForStyle.invalidate({ style: rows[0].style });
+        },
+        onError: () => toast.error("Copy failed — please try again"),
+      }
+    );
+  }
+
   function handleAddDropdownOption(component: string, value: string) {
     addDropdownMutation.mutate({ component, value });
   }
@@ -3351,6 +3377,7 @@ export default function SpecsTab({}: SpecsTabProps) {
               customRows={rawCustomRows as any[]}
               onUpsert={handleUpsert}
               onBulkAutoFill={handleBulkAutoFill}
+              onBulkCopy={handleBulkCopy}
               onAddDropdownOption={handleAddDropdownOption}
               onDeleteDropdownOption={handleDeleteDropdownOption}
               onEditDropdownOption={handleEditDropdownOption}

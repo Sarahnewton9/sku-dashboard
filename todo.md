@@ -396,3 +396,13 @@
 - [x] unifiedRows: skip deleted:c:id and deleted:t:key entries, and don't re-append them at the bottom
 - [x] Export: skip deleted:c:id entries in the fallback append loop
 - [x] Add "X hidden rows" restore button below the table — popover lists all hidden rows with one-click restore
+
+## Spec Tab - Uniform Colour Key Fix (Jul 2026)
+- [ ] Audit all spec data paths (save, display, copy, export) for colour key inconsistencies
+- [ ] Create a single normalised colour key helper used everywhere
+- [ ] Fix template row copy (onUpsert) to use normalised colour key
+- [ ] Fix template row display (specs lookup) to use normalised colour key
+- [ ] Fix custom row copy to use normalised colour key
+- [ ] Fix custom row display to use normalised colour key
+- [ ] Fix export to use normalised colour key
+- [ ] Run end-to-end tests to verify all paths
