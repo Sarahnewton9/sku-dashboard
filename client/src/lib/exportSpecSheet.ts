@@ -94,6 +94,33 @@ function arialRegular12(): Partial<ExcelJS.Font> { return { name: "Arial", bold:
 function arialBold8(): Partial<ExcelJS.Font> { return { name: "Arial", bold: true, size: 8 }; }
 function arialRegular8(): Partial<ExcelJS.Font> { return { name: "Arial", bold: false, size: 8 }; }
 
+/**
+ * Estimate the Excel row height (in points) needed to display `text` wrapped inside a column
+ * of `colWidthChars` character-units at font size `fontSizePt`.
+ *
+ * Excel row height is in points (1 pt ≈ 1/72 inch).
+ * A character unit in Excel is roughly 7px wide at the default font.
+ * We use ~6.5px per char-unit as a conservative estimate.
+ * Line height at 8pt Arial is approximately 10pt.
+ * Minimum is 16pt (our default row height).
+ */
+function estimateRowHeight(text: string, colWidthChars: number, fontSizePt = 8): number {
+  if (!text || text.trim() === "") return 16;
+  const pxPerChar = 6.5;
+  const colWidthPx = colWidthChars * pxPerChar;
+  const lineHeightPt = fontSizePt * 1.4; // ~1.4 line-height multiplier
+  // Split on existing newlines first, then wrap each line
+  const lines = text.split(/\n/);
+  let totalLines = 0;
+  for (const line of lines) {
+    const charWidth = line.length * (fontSizePt * 0.55); // approx char width in px
+    const wrappedLines = Math.max(1, Math.ceil(charWidth / colWidthPx));
+    totalLines += wrappedLines;
+  }
+  const needed = Math.ceil(totalLines * lineHeightPt) + 4; // +4pt padding
+  return Math.max(16, needed);
+}
+
 const COLOURS_PER_BLOCK = 7;
 // A4 landscape: label col 36 + 7 × 20 = 176 char-units. Wider columns so values aren't cramped.
 const LABEL_COL_WIDTH = 36;
@@ -472,7 +499,19 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
         continue;
       }
 
-      ws.getRow(currentRow).height = 16;
+      // Collect all cell values for this row first so we can calculate the required height
+      const cellValues: string[] = block.colours.map((_, ci) => {
+        const colourKey = block.labels[ci] ?? block.colours[ci];
+        const rawColour = block.colours[ci];
+        return getValue(row, colourKey, rawColour);
+      });
+
+      // Row height = max of: 16pt minimum, label height, and each colour cell height
+      const rowHeight = Math.max(
+        estimateRowHeight(row.label, LABEL_COL_WIDTH),
+        ...cellValues.map((v) => estimateRowHeight(v, COLOUR_COL_WIDTH)),
+      );
+      ws.getRow(currentRow).height = rowHeight;
 
       const labelCell = ws.getCell(currentRow, 1);
       labelCell.value = row.label;
@@ -482,12 +521,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
 
       for (let ci = 0; ci < block.colours.length; ci++) {
         const valueCell = ws.getCell(currentRow, 2 + ci);
-        // Use the full label (e.g. "BLACK CAPRI") as the spec lookup key to match how values are stored.
-        // Also pass the raw compound key (e.g. "GOLD") as a fallback for custom rows which store
-        // values keyed by the raw colour, not the label.
-        const colourKey = block.labels[ci] ?? block.colours[ci];
-        const rawColour = block.colours[ci];
-        valueCell.value = getValue(row, colourKey, rawColour);
+        valueCell.value = cellValues[ci];
         valueCell.font = arialRegular8();
         valueCell.alignment = { vertical: "top", wrapText: true };
         valueCell.border = {
