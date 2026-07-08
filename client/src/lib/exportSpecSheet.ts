@@ -52,9 +52,18 @@ interface ExportSpecSheetParams {
   rowKeys?: string[] | null;
 }
 
+async function getImageNaturalSize(base64: string, mimeType: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => resolve({ width: 120, height: 120 });
+    img.src = `data:${mimeType};base64,${base64}`;
+  });
+}
+
 async function fetchImageAsBase64(
   url: string
-): Promise<{ base64: string; extension: "jpeg" | "png" | "gif" } | null> {
+): Promise<{ base64: string; extension: "jpeg" | "png" | "gif"; width: number; height: number } | null> {
   try {
     const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(url)}`;
     const resp = await fetch(proxyUrl);
@@ -72,7 +81,9 @@ async function fetchImageAsBase64(
     for (let i = 0; i < uint8.byteLength; i++) {
       binary += String.fromCharCode(uint8[i]);
     }
-    return { base64: btoa(binary), extension: ext };
+    const base64 = btoa(binary);
+    const { width, height } = await getImageNaturalSize(base64, mimeType);
+    return { base64, extension: ext, width, height };
   } catch {
     return null;
   }
@@ -295,11 +306,17 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
   wb.creator = "Tony Bianco SKU Dashboard";
   wb.created = new Date();
 
-  // Fetch image once
+  // Fetch image once (also captures natural dimensions for aspect-ratio-correct placement)
   let imageId: number | null = null;
+  let imgNaturalWidth = 120;
+  let imgNaturalHeight = 120;
   if (imageUrl) {
     const imgData = await fetchImageAsBase64(imageUrl);
-    if (imgData) imageId = wb.addImage({ base64: imgData.base64, extension: imgData.extension });
+    if (imgData) {
+      imageId = wb.addImage({ base64: imgData.base64, extension: imgData.extension });
+      imgNaturalWidth = imgData.width || 120;
+      imgNaturalHeight = imgData.height || 120;
+    }
   }
 
   // One worksheet — all blocks stacked vertically
@@ -365,12 +382,16 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
       ws.getRow(currentRow).height = 6;
       currentRow++;
 
-      // ── Image in top-right (rows 1-8) ─────────────────────────────────────
+      // ── Image next to the title (rows 1-8, right of label column) ──────────
       if (imageId !== null) {
-        const sizePx = 130;
+        // Constrain to a 120px tall box and scale width proportionally
+        const maxH = 120;
+        const aspectRatio = imgNaturalWidth / (imgNaturalHeight || 1);
+        const imgHeightPx = maxH;
+        const imgWidthPx = Math.round(maxH * aspectRatio);
         ws.addImage(imageId, {
-          tl: { col: COLOURS_PER_BLOCK, row: 0 },
-          ext: { width: sizePx, height: sizePx },
+          tl: { col: 5, row: 0 },
+          ext: { width: imgWidthPx, height: imgHeightPx },
           editAs: "oneCell",
         } as unknown as ExcelJS.ImageRange);
       }
@@ -424,7 +445,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
         continue;
       }
 
-      ws.getRow(currentRow).height = 28;
+      ws.getRow(currentRow).height = 16;
 
       const labelCell = ws.getCell(currentRow, 1);
       labelCell.value = row.label;
