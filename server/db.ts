@@ -851,7 +851,10 @@ export async function getAllCustomStyles(): Promise<{ id: number; style: string;
 export async function addCustomStyle(style: string, lastName: string, category?: string): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(customStyles).values({ style, lastName, category: category ?? null });
+  const result = await db
+    .insert(customStyles)
+    .values({ style, lastName, category: category ?? null })
+    .onDuplicateKeyUpdate({ set: { lastName, category: category ?? null } });
   return (result[0] as any).insertId as number;
 }
 

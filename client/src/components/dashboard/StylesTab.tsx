@@ -291,6 +291,13 @@ export default function StylesTab() {
       toast.error("Style name and last are required");
       return;
     }
+    // Check if style already exists (in static data or custom styles)
+    const existingCustom = customStyleRows.find((cs) => cs.style.toUpperCase() === name);
+    const existingStatic = stylesWithCategories.find((s) => s.style.toUpperCase() === name);
+    if (existingCustom || existingStatic) {
+      toast.error(`${name} already exists — use the Specs tab to update its category or last`);
+      return;
+    }
     setIsAddingStyle(true);
     // If an image was selected, upload it first then add the style
     if (newStyleImageFile) {
