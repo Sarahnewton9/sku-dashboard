@@ -438,7 +438,34 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     currentRow++;
 
     // ── Component rows ─────────────────────────────────────────────────────
-    for (const row of componentRows) {
+    // Pre-compute which rows have at least one non-empty value across all colours in this block
+    const rowHasValue = (row: CompRow): boolean =>
+      block.colours.some((_, ci) => {
+        const colourKey = block.labels[ci] ?? block.colours[ci];
+        const rawColour = block.colours[ci];
+        return getValue(row, colourKey, rawColour).trim() !== "";
+      });
+
+    // Filter componentRows down to only rows that have a value (or are spacers between non-empty rows)
+    // Strategy: collapse runs of spacers; only keep a spacer if there is a non-empty row on both sides.
+    const filteredRows: CompRow[] = [];
+    for (let ri = 0; ri < componentRows.length; ri++) {
+      const row = componentRows[ri];
+      if (row.isSpacer) {
+        // Find the next non-spacer row
+        const nextNonSpacer = componentRows.slice(ri + 1).find((r) => !r.isSpacer);
+        // Find the previous non-spacer row
+        const prevNonSpacer = [...componentRows].slice(0, ri).reverse().find((r) => !r.isSpacer);
+        // Only keep spacer if both sides have a non-empty row
+        if (nextNonSpacer && rowHasValue(nextNonSpacer) && prevNonSpacer && rowHasValue(prevNonSpacer)) {
+          filteredRows.push(row);
+        }
+      } else {
+        if (rowHasValue(row)) filteredRows.push(row);
+      }
+    }
+
+    for (const row of filteredRows) {
       if (row.isSpacer) {
         ws.getRow(currentRow).height = 6;
         currentRow++;
