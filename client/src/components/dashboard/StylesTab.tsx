@@ -54,6 +54,8 @@ export default function StylesTab() {
   const [newStyleName, setNewStyleName] = useState("");
   const [newStyleLast, setNewStyleLast] = useState("");
   const [newStyleCategory, setNewStyleCategory] = useState("");
+  const [newStyleColour, setNewStyleColour] = useState("");
+  const [newStyleLeather, setNewStyleLeather] = useState("");
   const [newStyleImageFile, setNewStyleImageFile] = useState<File | null>(null);
   const [newStyleImagePreview, setNewStyleImagePreview] = useState<string | null>(null);
   const [newStyleDragging, setNewStyleDragging] = useState(false);
@@ -234,12 +236,18 @@ export default function StylesTab() {
 
   // Add Style mutation
   const addCustomStyleMutation = trpc.customStyle.add.useMutation({
-    onSuccess: () => {
+    onSuccess: (_data, vars) => {
       utils.customStyle.getAll.invalidate();
+      // If a colour was provided, add it as a custom SKU
+      if (newStyleColour.trim()) {
+        addCustomSkuMutation.mutate({ style: vars.style, colour: newStyleColour.trim().toUpperCase(), leather: newStyleLeather.trim().toUpperCase() });
+      }
       setShowAddStyleModal(false);
       setNewStyleName("");
       setNewStyleLast("");
       setNewStyleCategory("");
+      setNewStyleColour("");
+      setNewStyleLeather("");
       setNewStyleImageFile(null);
       setNewStyleImagePreview(null);
       setIsAddingStyle(false);
@@ -1974,6 +1982,32 @@ export default function StylesTab() {
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
+            </div>
+
+            {/* Colour + Leather */}
+            <div className="flex gap-3">
+              <div className="flex flex-col gap-1.5 flex-1">
+                <label className="text-sm font-medium text-foreground">Colour <span className="text-muted-foreground text-xs">(optional)</span></label>
+                <input
+                  type="text"
+                  value={newStyleColour}
+                  onChange={(e) => setNewStyleColour(e.target.value.toUpperCase())}
+                  placeholder="e.g. BLACK"
+                  className="px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-400/40"
+                  style={{ borderColor: "var(--border)" }}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5 flex-1">
+                <label className="text-sm font-medium text-foreground">Leather <span className="text-muted-foreground text-xs">(optional)</span></label>
+                <input
+                  type="text"
+                  value={newStyleLeather}
+                  onChange={(e) => setNewStyleLeather(e.target.value.toUpperCase())}
+                  placeholder="e.g. NAPPA"
+                  className="px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-400/40"
+                  style={{ borderColor: "var(--border)" }}
+                />
+              </div>
             </div>
 
             {/* Image Upload */}
