@@ -611,7 +611,8 @@ export default function StylesTab() {
   // Filter styles (uses stylesWithCategories which includes custom SKUs and category overrides)
   const filtered = useMemo(() => {
     // Hide styles where ALL SKUs are markdown (totalSKUs === 0 after markdown filtering)
-    let data = stylesWithCategories.filter((s) => s.totalSKUs > 0);
+    // BUT always show custom styles (even if they have no SKUs yet)
+    let data = stylesWithCategories.filter((s) => s.totalSKUs > 0 || (s as any)._isCustomStyle);
 
     if (search.trim()) {
       const q = search.trim().toLowerCase();
