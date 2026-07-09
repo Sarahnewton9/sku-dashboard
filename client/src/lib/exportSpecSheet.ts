@@ -106,25 +106,28 @@ function arialRegular8(): Partial<ExcelJS.Font> { return { name: "Arial", bold: 
  */
 function estimateRowHeight(text: string, colWidthChars: number, fontSizePt = 8): number {
   if (!text || text.trim() === "") return 16;
-  const pxPerChar = 6.5;
-  const colWidthPx = colWidthChars * pxPerChar;
-  const lineHeightPt = fontSizePt * 1.4; // ~1.4 line-height multiplier
-  // Split on existing newlines first, then wrap each line
+  // Excel uses ~7px per character-unit at default zoom.
+  // At 8pt Arial, each character is roughly 4.8px wide.
+  // We use a conservative 5px per character to avoid under-estimating.
+  const charWidthPx = 5;
+  const colWidthPx = colWidthChars * 7; // Excel column width unit ≈ 7px
+  const lineHeightPt = fontSizePt * 1.6; // generous line-height so text never clips
   const lines = text.split(/\n/);
   let totalLines = 0;
   for (const line of lines) {
-    const charWidth = line.length * (fontSizePt * 0.55); // approx char width in px
-    const wrappedLines = Math.max(1, Math.ceil(charWidth / colWidthPx));
+    if (line.trim() === "") { totalLines += 1; continue; }
+    const lineWidthPx = line.length * charWidthPx;
+    const wrappedLines = Math.max(1, Math.ceil(lineWidthPx / colWidthPx));
     totalLines += wrappedLines;
   }
-  const needed = Math.ceil(totalLines * lineHeightPt) + 4; // +4pt padding
+  const needed = Math.ceil(totalLines * lineHeightPt) + 6; // +6pt top/bottom padding
   return Math.max(16, needed);
 }
 
 const COLOURS_PER_BLOCK = 7;
 // A4 landscape: label col 36 + 7 × 20 = 176 char-units. Wider columns so values aren't cramped.
-const LABEL_COL_WIDTH = 36;
-const COLOUR_COL_WIDTH = 20;
+const LABEL_COL_WIDTH = 40;
+const COLOUR_COL_WIDTH = 28;
 const GREY_FILL: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9D9D9" } };
 
 export async function exportSpecSheet(params: ExportSpecSheetParams) {
