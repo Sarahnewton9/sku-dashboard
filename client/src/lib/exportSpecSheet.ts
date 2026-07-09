@@ -369,8 +369,15 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
   }
 
   let currentRow = 1;
-  // Track the longest label text so we can auto-fit column A at the end
-  let maxLabelLen = "COMPONENTS".length; // seed with the header label
+  // Track the widest content per column (1-indexed) so we can auto-fit all columns at the end.
+  // colMaxLen[c] = longest string written to column c (1-based).
+  const colMaxLen: number[] = new Array(1 + COLOURS_PER_BLOCK + 1).fill(0);
+  function trackWidth(col: number, text: string) {
+    if (text && text.length > (colMaxLen[col] ?? 0)) colMaxLen[col] = text.length;
+  }
+  // Seed with fixed header strings
+  trackWidth(1, "COMPONENTS");
+  trackWidth(2, "Product Specification Report");
 
   for (let blockIdx = 0; blockIdx < blocks.length; blockIdx++) {
     const block = blocks[blockIdx];
@@ -510,7 +517,8 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
       );
       ws.getRow(currentRow).height = rowHeight;
 
-      if (row.label.length > maxLabelLen) maxLabelLen = row.label.length;
+      trackWidth(1, row.label);
+      cellValues.forEach((v, ci) => trackWidth(2 + ci, v));
 
       const labelCell = ws.getCell(currentRow, 1);
       labelCell.value = row.label;
@@ -533,11 +541,17 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     }
   }
 
-  // ── Auto-fit column A to the longest label (with a small padding) ──────────
+  // ── Auto-fit ALL columns to their widest content ──────────────────────────
   // Excel column width unit ≈ 7px; Arial 8pt char ≈ 5px wide.
-  // We add 2 units of padding so the text isn't flush against the cell edge.
-  const autoFitWidth = Math.ceil(maxLabelLen * (5 / 7)) + 2;
-  ws.getColumn(1).width = Math.max(12, Math.min(autoFitWidth, 40)); // clamp 12–40
+  // Multiply char count by (5/7) to convert to Excel width units, then add 2 for padding.
+  for (let c = 1; c <= 1 + COLOURS_PER_BLOCK; c++) {
+    const maxLen = colMaxLen[c] ?? 0;
+    if (maxLen === 0) continue;
+    const fitWidth = Math.ceil(maxLen * (5 / 7)) + 2;
+    // Col 1 (labels): clamp 12–40. Colour cols: clamp 10–40.
+    const minW = c === 1 ? 12 : 10;
+    ws.getColumn(c).width = Math.max(minW, Math.min(fitWidth, 40));
+  }
 
   // ── Generate and download ──────────────────────────────────────────────────
   const buffer = await wb.xlsx.writeBuffer();
