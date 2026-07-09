@@ -111,7 +111,7 @@ function estimateRowHeight(text: string, colWidthChars: number, fontSizePt = 8):
   // We use a conservative 5px per character to avoid under-estimating.
   const charWidthPx = 5;
   const colWidthPx = colWidthChars * 7; // Excel column width unit ≈ 7px
-  const lineHeightPt = fontSizePt * 1.6; // generous line-height so text never clips
+  const lineHeightPt = fontSizePt * 2.0; // generous line-height so text never clips
   const lines = text.split(/\n/);
   let totalLines = 0;
   for (const line of lines) {
@@ -512,8 +512,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
 
     for (const row of finalRows) {
       if (row.isSpacer) {
-        ws.getRow(currentRow).height = 6;
-        currentRow++;
+        // Skip spacer rows entirely — no empty rows in the export
         continue;
       }
 
