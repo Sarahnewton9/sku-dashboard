@@ -126,8 +126,8 @@ function estimateRowHeight(text: string, colWidthChars: number, fontSizePt = 8):
 
 const COLOURS_PER_BLOCK = 7;
 // A4 landscape: label col 36 + 7 × 20 = 176 char-units. Wider columns so values aren't cramped.
-const LABEL_COL_WIDTH = 40;
-const COLOUR_COL_WIDTH = 28;
+const LABEL_COL_WIDTH = 22;   // narrow label column — text wraps if needed
+const COLOUR_COL_WIDTH = 19;  // colour columns — text wraps if needed
 const GREY_FILL: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9D9D9" } };
 
 export async function exportSpecSheet(params: ExportSpecSheetParams) {
@@ -360,9 +360,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
   ws.pageSetup.fitToHeight = 0;
   ws.pageSetup.margins = { left: 0.4, right: 0.4, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 };
 
-  // Column widths: col 1 = label (auto-fit to longest label), cols 2-8 = colour columns
-  // We'll set col 1 width after building rows based on the longest label actually used.
-  // For now set a generous default; we'll shrink it after.
+  // Fixed narrow column widths — text wraps inside cells, row heights expand to show all content.
   ws.getColumn(1).width = LABEL_COL_WIDTH;
   for (let c = 2; c <= 1 + COLOURS_PER_BLOCK; c++) {
     ws.getColumn(c).width = COLOUR_COL_WIDTH;
@@ -517,13 +515,10 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
       );
       ws.getRow(currentRow).height = rowHeight;
 
-      trackWidth(1, row.label);
-      cellValues.forEach((v, ci) => trackWidth(2 + ci, v));
-
       const labelCell = ws.getCell(currentRow, 1);
       labelCell.value = row.label;
       labelCell.font = arialRegular8();
-      labelCell.alignment = { vertical: "top", wrapText: false };
+      labelCell.alignment = { vertical: "top", wrapText: true };
       labelCell.border = { bottom: { style: "thin", color: { argb: "FFE0E0E0" } } };
 
       for (let ci = 0; ci < block.colours.length; ci++) {
@@ -541,17 +536,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     }
   }
 
-  // ── Auto-fit ALL columns to their widest content ──────────────────────────
-  // Excel column width unit ≈ 7px; Arial 8pt char ≈ 5px wide.
-  // Multiply char count by (5/7) to convert to Excel width units, then add 2 for padding.
-  for (let c = 1; c <= 1 + COLOURS_PER_BLOCK; c++) {
-    const maxLen = colMaxLen[c] ?? 0;
-    if (maxLen === 0) continue;
-    const fitWidth = Math.ceil(maxLen * (5 / 7)) + 2;
-    // Col 1 (labels): clamp 12–40. Colour cols: clamp 10–40.
-    const minW = c === 1 ? 12 : 10;
-    ws.getColumn(c).width = Math.max(minW, Math.min(fitWidth, 40));
-  }
+  // Column widths are fixed (set above). Row heights were already calculated to show all wrapped text.
 
   // ── Generate and download ──────────────────────────────────────────────────
   const buffer = await wb.xlsx.writeBuffer();
