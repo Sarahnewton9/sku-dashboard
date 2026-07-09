@@ -360,13 +360,17 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
   ws.pageSetup.fitToHeight = 0;
   ws.pageSetup.margins = { left: 0.4, right: 0.4, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 };
 
-  // Column widths: col 1 = label, cols 2-8 = 7 colour columns
+  // Column widths: col 1 = label (auto-fit to longest label), cols 2-8 = colour columns
+  // We'll set col 1 width after building rows based on the longest label actually used.
+  // For now set a generous default; we'll shrink it after.
   ws.getColumn(1).width = LABEL_COL_WIDTH;
   for (let c = 2; c <= 1 + COLOURS_PER_BLOCK; c++) {
     ws.getColumn(c).width = COLOUR_COL_WIDTH;
   }
 
   let currentRow = 1;
+  // Track the longest label text so we can auto-fit column A at the end
+  let maxLabelLen = "COMPONENTS".length; // seed with the header label
 
   for (let blockIdx = 0; blockIdx < blocks.length; blockIdx++) {
     const block = blocks[blockIdx];
@@ -384,11 +388,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
       r1c2.font = arialRegular12();
       currentRow++;
 
-      // ── Row 2: blank ──────────────────────────────────────────────────────
-      ws.getRow(currentRow).height = 6;
-      currentRow++;
-
-      // ── Rows 3-7: metadata ────────────────────────────────────────────────
+      // ── Rows 2-6: metadata ────────────────────────────────────────────────
       const headerRows: [string, string][] = [
         ["DATE:", today],
         ["LAST:", last.toUpperCase()],
@@ -408,11 +408,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
         currentRow++;
       }
 
-      // ── Row 8: blank ──────────────────────────────────────────────────────
-      ws.getRow(currentRow).height = 6;
-      currentRow++;
-
-      // ── Image next to the title (rows 1-8, right of label column) ──────────
+      // ── Image next to the title (rows 1-7, right of label column) ──────────
       if (imageId !== null) {
         // Constrain to a 120px tall box and scale width proportionally
         const maxH = 120;
@@ -426,10 +422,8 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
         } as unknown as ExcelJS.ImageRange);
       }
     } else {
-      // Between blocks: 2 blank spacer rows
-      ws.getRow(currentRow).height = 8;
-      currentRow++;
-      ws.getRow(currentRow).height = 8;
+      // Between blocks: 1 thin spacer row
+      ws.getRow(currentRow).height = 6;
       currentRow++;
     }
 
@@ -516,10 +510,12 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
       );
       ws.getRow(currentRow).height = rowHeight;
 
+      if (row.label.length > maxLabelLen) maxLabelLen = row.label.length;
+
       const labelCell = ws.getCell(currentRow, 1);
       labelCell.value = row.label;
       labelCell.font = arialRegular8();
-      labelCell.alignment = { vertical: "top", wrapText: true };
+      labelCell.alignment = { vertical: "top", wrapText: false };
       labelCell.border = { bottom: { style: "thin", color: { argb: "FFE0E0E0" } } };
 
       for (let ci = 0; ci < block.colours.length; ci++) {
@@ -536,6 +532,12 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
       currentRow++;
     }
   }
+
+  // ── Auto-fit column A to the longest label (with a small padding) ──────────
+  // Excel column width unit ≈ 7px; Arial 8pt char ≈ 5px wide.
+  // We add 2 units of padding so the text isn't flush against the cell edge.
+  const autoFitWidth = Math.ceil(maxLabelLen * (5 / 7)) + 2;
+  ws.getColumn(1).width = Math.max(12, Math.min(autoFitWidth, 40)); // clamp 12–40
 
   // ── Generate and download ──────────────────────────────────────────────────
   const buffer = await wb.xlsx.writeBuffer();
