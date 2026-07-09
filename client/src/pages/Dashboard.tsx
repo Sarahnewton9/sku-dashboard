@@ -56,12 +56,12 @@ import {
   Sparkles,
 } from "lucide-react";
 
-type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval" | "fitting" | "specs" | "season-analysis" | "markdown" | "handbags" | "sales";
+type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval" | "fitting" | "specs" | "markdown" | "handbags";
 
 const VALID_TABS = new Set<Tab>([
   "overview", "categories", "styles", "leathers", "colours",
   "colourleather", "expansion", "buy-sessions", "buy-analysis",
-  "last-approval", "fitting", "specs", "season-analysis", "markdown", "handbags", "sales",
+  "last-approval", "fitting", "specs", "markdown", "handbags",
 ]);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,9 +78,7 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group
   { id: "last-approval", label: "Last Approval", icon: Stamp, group: "approval" },
   { id: "fitting", label: "Fitting", icon: Ruler, group: "approval" },
   { id: "specs", label: "Specs", icon: ClipboardList, group: "approval" },
-  { id: "season-analysis", label: "Season Analysis", icon: LineChart, group: "analysis" },
   { id: "markdown", label: "Markdowns", icon: TagsIcon, group: "analysis" },
-  { id: "sales", label: "Sales Analysis", icon: BarChart3, group: "analysis" },
   { id: "handbags", label: "Handbags", icon: ShoppingCart, group: "handbags" },
 ];
 
@@ -292,7 +290,6 @@ export default function Dashboard() {
               {activeTab === "last-approval" && "16 new lasts — track approval status and notes per last"}
               {activeTab === "fitting" && "Style-level fit commentary and imagery for all styles on new lasts"}
               {activeTab === "specs" && "Product specification sheets — per-colour component details for all new styles"}
-              {activeTab === "season-analysis" && "Import Total Season reports and surface hot sellers, colour insights, and SKU coverage"}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -331,10 +328,8 @@ export default function Dashboard() {
               {activeTab === "buy-analysis" && <BuyAnalysisTab />}
               {activeTab === "last-approval" && <LastApprovalTab />}
               {activeTab === "fitting" && <FittingTab />}
-              {activeTab === "season-analysis" && <SeasonAnalysisTab />}
               {activeTab === "markdown" && <MarkdownTab />}
               {activeTab === "handbags" && <HandbagsTab />}
-              {activeTab === "sales" && <SalesTab />}
             </div>
           </div>
         )}
