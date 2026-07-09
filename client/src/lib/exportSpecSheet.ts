@@ -475,26 +475,42 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
         return getValue(row, colourKey, rawColour).trim() !== "";
       });
 
-    // Filter componentRows down to only rows that have a value (or are spacers between non-empty rows)
-    // Strategy: collapse runs of spacers; only keep a spacer if there is a non-empty row on both sides.
+    // Two-pass filter:
+    // Pass 1: keep only non-spacer rows that have at least one value.
+    // Pass 2: keep spacers only when there is a non-empty row on BOTH sides in the pass-1 result.
+    const pass1: CompRow[] = componentRows.filter((r) => r.isSpacer || rowHasValue(r));
     const filteredRows: CompRow[] = [];
-    for (let ri = 0; ri < componentRows.length; ri++) {
-      const row = componentRows[ri];
-      if (row.isSpacer) {
-        // Find the next non-spacer row
-        const nextNonSpacer = componentRows.slice(ri + 1).find((r) => !r.isSpacer);
-        // Find the previous non-spacer row
-        const prevNonSpacer = [...componentRows].slice(0, ri).reverse().find((r) => !r.isSpacer);
-        // Only keep spacer if both sides have a non-empty row
-        if (nextNonSpacer && rowHasValue(nextNonSpacer) && prevNonSpacer && rowHasValue(prevNonSpacer)) {
-          filteredRows.push(row);
-        }
-      } else {
-        if (rowHasValue(row)) filteredRows.push(row);
+    for (let ri = 0; ri < pass1.length; ri++) {
+      const row = pass1[ri];
+      if (!row.isSpacer) {
+        filteredRows.push(row);
+        continue;
+      }
+      // Spacer: only keep if there is a real (non-spacer) row on both sides in pass1
+      const prevReal = [...pass1].slice(0, ri).reverse().find((r) => !r.isSpacer);
+      const nextReal = pass1.slice(ri + 1).find((r) => !r.isSpacer);
+      if (prevReal && nextReal) {
+        filteredRows.push(row);
       }
     }
-
+    // Final pass: collapse consecutive spacers into one
+    const dedupedRows: CompRow[] = [];
+    let lastWasSpacer = false;
     for (const row of filteredRows) {
+      if (row.isSpacer) {
+        if (!lastWasSpacer) dedupedRows.push(row);
+        lastWasSpacer = true;
+      } else {
+        dedupedRows.push(row);
+        lastWasSpacer = false;
+      }
+    }
+    // Remove leading/trailing spacers
+    while (dedupedRows.length > 0 && dedupedRows[0].isSpacer) dedupedRows.shift();
+    while (dedupedRows.length > 0 && dedupedRows[dedupedRows.length - 1].isSpacer) dedupedRows.pop();
+    const finalRows = dedupedRows;
+
+    for (const row of finalRows) {
       if (row.isSpacer) {
         ws.getRow(currentRow).height = 6;
         currentRow++;
