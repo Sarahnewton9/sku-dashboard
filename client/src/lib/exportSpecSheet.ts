@@ -532,7 +532,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
 
       const labelCell = ws.getCell(currentRow, 1);
       labelCell.value = row.label;
-      labelCell.font = arialRegular8();
+      labelCell.font = arialBold8();
       labelCell.alignment = { vertical: "top", wrapText: true };
       labelCell.border = { bottom: { style: "thin", color: { argb: "FFE0E0E0" } } };
 
