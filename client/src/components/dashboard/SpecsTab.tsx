@@ -1757,7 +1757,8 @@ function SpecForm({
                         } else if (inner.startsWith("c:")) {
                           const id = parseInt(inner.slice(2), 10);
                           const group = customRepMap.get(inner);
-                          const title = group?.rep.title ?? customRows.find((r) => r.id === id)?.title ?? inner;
+                          const title = group?.rep.title ?? customRows.find((r) => r.id === id)?.title;
+                          // Skip orphaned custom rows (deleted from DB — can't be restored meaningfully)
                           return title ? { key: k, label: title, inner } : null;
                         }
                         return null;
