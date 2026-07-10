@@ -180,6 +180,8 @@ export const SPEC_TEMPLATES: Record<ShoeCategory, SpecComponent[]> = {
     ...UPPER_BASE,
     { key: "foot_bed_cover", label: "Foot Bed Cover", type: "dropdown", section: "construction" },
     { key: "insole_name",    label: "Insole Name",    type: "text",     section: "construction" },
+    { key: "sock",           label: "Sock",           type: "dropdown", section: "construction" },
+    { key: "sock_treatment", label: "Sock Treatment", type: "dropdown", section: "construction" },
     { key: "toe_piece",      label: "Toe Piece",      type: "dropdown", section: "construction" },
     { key: "insole_binding", label: "Insole Binding", type: "dropdown", section: "construction" },
     ...SOLE_BASE,
