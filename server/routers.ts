@@ -1864,6 +1864,23 @@ If the request is unclear or is a question, use no_action.`;
         await upsertSpecRowOrder(input.style, input.rowKeys);
         return { success: true };
       }),
+    // Remove orphaned c: keys (deleted custom rows no longer in DB) from the saved row order
+    purgeOrphaned: publicProcedure
+      .input(z.object({ style: z.string(), orphanedKeys: z.array(z.string()) }))
+      .mutation(async ({ input }) => {
+        const current = await getSpecRowOrder(input.style);
+        if (!current) return { success: true, removed: 0 };
+        const orphanSet = new Set(input.orphanedKeys);
+        const cleaned = current.filter((k: string) => {
+          // Strip deleted: prefix to get the inner key for comparison
+          const inner = k.startsWith('deleted:') ? k.slice('deleted:'.length) : k;
+          return !orphanSet.has(inner) && !orphanSet.has(k);
+        });
+        if (cleaned.length !== current.length) {
+          await upsertSpecRowOrder(input.style, cleaned);
+        }
+        return { success: true, removed: current.length - cleaned.length };
+      }),
   }),
   specCustomRow: router({
     getByStyle: publicProcedure

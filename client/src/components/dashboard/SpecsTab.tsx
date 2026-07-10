@@ -1178,6 +1178,12 @@ function SpecForm({
       specRowOrderUtils.specRowOrder.get.invalidate({ style: vars.style });
     },
   });
+  const purgeOrphanedMutation = trpc.specRowOrder.purgeOrphaned.useMutation({
+    onSuccess: (_data, vars) => {
+      specRowOrderUtils.specRowOrder.get.invalidate({ style: vars.style });
+      setLocalRowKeys(null);
+    },
+  });
 
   // Pre-compute sorted custom rows
   const allCustomRowsSorted = useMemo(
@@ -1753,46 +1759,66 @@ function SpecForm({
                         const inner = k.slice("deleted:".length);
                         if (inner.startsWith("t:")) {
                           const comp = template.find((c) => `t:${c.key}` === inner);
-                          return comp ? { key: k, label: comp.label, inner } : null;
+                          return comp ? { key: k, label: comp.label, inner, orphaned: false } : null;
                         } else if (inner.startsWith("c:")) {
                           const id = parseInt(inner.slice(2), 10);
                           const group = customRepMap.get(inner);
                           const title = group?.rep.title ?? customRows.find((r) => r.id === id)?.title;
-                          // Skip orphaned custom rows (deleted from DB — can't be restored meaningfully)
-                          return title ? { key: k, label: title, inner } : null;
+                          return { key: k, label: title ?? inner, inner, orphaned: !title };
                         }
                         return null;
                       })
-                      .filter(Boolean) as Array<{ key: string; label: string; inner: string }>;
+                      .filter(Boolean) as Array<{ key: string; label: string; inner: string; orphaned: boolean }>;
+                    const orphanedKeys = deletedEntries.filter((e) => e.orphaned).map((e) => e.inner);
+                    const visibleEntries = deletedEntries.filter((e) => !e.orphaned);
                     if (deletedEntries.length === 0) return null;
                     return (
                       <Popover>
                         <PopoverTrigger asChild>
                           <button className="flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-amber-600 transition-colors">
                             <RotateCcw className="w-3 h-3" />
-                            {deletedEntries.length} hidden row{deletedEntries.length > 1 ? "s" : ""}
+                            {visibleEntries.length > 0 ? `${visibleEntries.length} hidden row${visibleEntries.length > 1 ? "s" : ""}` : `${orphanedKeys.length} orphaned row${orphanedKeys.length > 1 ? "s" : ""}`}
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-64 p-2" align="start">
-                          <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Hidden rows — click to restore</p>
-                          <div className="flex flex-col gap-0.5">
-                            {deletedEntries.map(({ key, label, inner }) => (
+                          {visibleEntries.length > 0 && (
+                            <>
+                              <p className="text-xs font-medium text-muted-foreground mb-2 px-1">Hidden rows — click to restore</p>
+                              <div className="flex flex-col gap-0.5">
+                                {visibleEntries.map(({ key, label, inner }) => (
+                                  <button
+                                    key={key}
+                                    onClick={() => {
+                                      const newKeys = (localRowKeys ?? rowOrderData?.rowKeys ?? []).map(
+                                        (k) => k === key ? inner : k
+                                      );
+                                      setLocalRowKeys(newKeys);
+                                      upsertRowOrderMutation.mutate({ style: entry.style, rowKeys: newKeys });
+                                    }}
+                                    className="flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-amber-50 dark:hover:bg-amber-900/20 text-left w-full group transition-colors"
+                                  >
+                                    <RotateCcw className="w-3 h-3 text-muted-foreground/40 group-hover:text-amber-600 flex-shrink-0" />
+                                    <span className="truncate">{label}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                          {orphanedKeys.length > 0 && (
+                            <div className={visibleEntries.length > 0 ? "mt-2 pt-2 border-t" : ""}>
+                              <p className="text-xs text-muted-foreground px-1 mb-1">
+                                {orphanedKeys.length} orphaned row{orphanedKeys.length > 1 ? "s" : ""} (no longer in database)
+                              </p>
                               <button
-                                key={key}
-                                onClick={() => {
-                                  const newKeys = (localRowKeys ?? rowOrderData?.rowKeys ?? []).map(
-                                    (k) => k === key ? inner : k
-                                  );
-                                  setLocalRowKeys(newKeys);
-                                  upsertRowOrderMutation.mutate({ style: entry.style, rowKeys: newKeys });
-                                }}
-                                className="flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-amber-50 dark:hover:bg-amber-900/20 text-left w-full group transition-colors"
+                                onClick={() => purgeOrphanedMutation.mutate({ style: entry.style, orphanedKeys })}
+                                disabled={purgeOrphanedMutation.isPending}
+                                className="flex items-center gap-1.5 px-2 py-1.5 rounded text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 w-full transition-colors disabled:opacity-50"
                               >
-                                <RotateCcw className="w-3 h-3 text-muted-foreground/40 group-hover:text-amber-600 flex-shrink-0" />
-                                <span className="truncate">{label}</span>
+                                <Trash2 className="w-3 h-3 flex-shrink-0" />
+                                {purgeOrphanedMutation.isPending ? "Cleaning up…" : `Permanently delete ${orphanedKeys.length} orphaned row${orphanedKeys.length > 1 ? "s" : ""}`}
                               </button>
-                            ))}
-                          </div>
+                            </div>
+                          )}
                         </PopoverContent>
                       </Popover>
                     );
