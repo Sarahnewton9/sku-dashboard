@@ -28,6 +28,29 @@ type SortDir = "asc" | "desc";
 // CATEGORIES is now built dynamically from actual data in the component
 const STATUS_FILTERS = ["All", "Has New SKUs", "All New", "No New SKUs"];
 
+// Category ordering within each last group
+const CATEGORY_ORDER: Record<string, number> = {
+  "DRESS SANDAL": 0,
+  "SANDAL": 0,
+  "DRESS SHOE": 1,
+  "CASUAL FLAT": 2,
+  "CASUAL WEDGE": 3,
+  "DRESS WEDGE": 3,
+  "WEDGE": 3,
+  "DRESS ANKLE BOOT": 4,
+  "ANKLE BOOT": 4,
+  "CASUAL BOOT ANKLE": 4,
+  "DRESS CALF BOOT": 5,
+  "CALF BOOT": 5,
+  "CASUAL BOOT CALF": 5,
+  "DRESS BOOT LONG": 6,
+  "LONG BOOT": 6,
+  "CASUAL BOOT LONG": 6,
+};
+function categoryOrder(cat: string): number {
+  return CATEGORY_ORDER[cat?.toUpperCase()?.trim()] ?? 99;
+}
+
 export default function StylesTab() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -685,18 +708,20 @@ export default function StylesTab() {
     return data;
   }, [search, categoryFilter, statusFilter, sampleFilter, fittingFilter, lastFilter, leatherFilter, size11Filter, trendFilters, stylesWithCategories, skuMetaMap, styleMetaMap, fittedStylesSet]);
 
-  // Group by last, sorted alphabetically by last, then by style within each last
+  // Group by last, sorted alphabetically by last, then by category order within each last, then alphabetically within category
   const groupedByLast = useMemo(() => {
-    // Sort within each group by style name
     const groups: Record<string, typeof filtered> = {};
     for (const s of filtered) {
       const last = s.last || "UNKNOWN";
       if (!groups[last]) groups[last] = [];
       groups[last].push(s);
     }
-    // Sort styles within each group
+    // Sort styles within each group: category order first, then alphabetical within category
     for (const last of Object.keys(groups)) {
-      groups[last].sort((a, b) => a.style.localeCompare(b.style));
+      groups[last].sort((a, b) => {
+        const diff = categoryOrder(a.category) - categoryOrder(b.category);
+        return diff !== 0 ? diff : a.style.localeCompare(b.style);
+      });
     }
     // Sort last names alphabetically
     const sortedLasts = Object.keys(groups).sort((a, b) => a.localeCompare(b));
