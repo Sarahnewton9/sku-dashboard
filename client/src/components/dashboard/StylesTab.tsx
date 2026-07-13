@@ -437,12 +437,12 @@ export default function StylesTab() {
 
   // Buy session item lookup — uses selected session items, or falls back to most recent session for read-only display
   const sessionItemMap = useMemo(() => {
-    const map: Record<string, { auQty: number; usaQty: number; nycQty: number }> = {};
+    const map: Record<string, { auQty: number; usaQty: number; nycQty: number; laQty: number }> = {};
     for (const item of displayItems) {
       const key = `${item.style}|${item.colour}|${item.leather}` as string;
       // Use legacy qty as fallback for auQty so old sessions display correctly
       const legacyQty = (item as any).qty ?? 0;
-      map[key] = { auQty: (item as any).auQty || legacyQty, usaQty: (item as any).usaQty ?? 0, nycQty: (item as any).nycQty ?? 0 };
+      map[key] = { auQty: (item as any).auQty || legacyQty, usaQty: (item as any).usaQty ?? 0, nycQty: (item as any).nycQty ?? 0, laQty: (item as any).laQty ?? 0 };
     }
     return map;
   }, [displayItems]);
@@ -474,7 +474,7 @@ export default function StylesTab() {
     refetchActive();
   }
 
-  function handleQtyChange(style: string, colour: string, leather: string, field: 'au' | 'usa' | 'nyc', val: string) {
+  function handleQtyChange(style: string, colour: string, leather: string, field: 'au' | 'usa' | 'nyc' | 'la', val: string) {
     const key = `${style}|${colour}|${leather}|${field}`;
     if (val === '' || val === null) {
       // Empty field — store 0 so blur handler saves it as 0
@@ -487,18 +487,19 @@ export default function StylesTab() {
     }
   }
 
-  function handleQtyBlur(style: string, colour: string, leather: string, field: 'au' | 'usa' | 'nyc') {
+  function handleQtyBlur(style: string, colour: string, leather: string, field: 'au' | 'usa' | 'nyc' | 'la') {
     if (!selectedSessionId || isSessionLocked) return;
     const baseKey = `${style}|${colour}|${leather}`;
     const fieldKey = `${baseKey}|${field}`;
     const newVal = pendingQty.current[fieldKey];
     if (newVal === undefined) return;
-    const current = sessionItemMap[baseKey] ?? { auQty: 0, usaQty: 0, nycQty: 0 };
+    const current = sessionItemMap[baseKey] ?? { auQty: 0, usaQty: 0, nycQty: 0, laQty: 0 };
     const auQty = field === 'au' ? newVal : current.auQty;
     const usaQty = field === 'usa' ? newVal : current.usaQty;
     const nycQty = field === 'nyc' ? newVal : current.nycQty;
+    const laQty = field === 'la' ? newVal : current.laQty;
     upsertItemMutation.mutate(
-      { sessionId: selectedSessionId, style, colour, leather, auQty, usaQty, nycQty },
+      { sessionId: selectedSessionId, style, colour, leather, auQty, usaQty, nycQty, laQty },
       { onSuccess: () => { refetchItems(); delete pendingQty.current[fieldKey]; } }
     );
   }
@@ -740,7 +741,7 @@ export default function StylesTab() {
     return getSkusForStyle(styleName).reduce((sum, sku) => {
       const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
       const item = sessionItemMap[key];
-      return sum + (item ? item.auQty + item.usaQty + (item.nycQty ?? 0) : 0);
+      return sum + (item ? item.auQty + item.usaQty + (item.nycQty ?? 0) + (item.laQty ?? 0) : 0);
     }, 0);
   }
   // Grand totals across all sessions
@@ -1449,16 +1450,18 @@ export default function StylesTab() {
                                   const renderRow = (sku: typeof allSkus[0], isNew: boolean) => {
                                     const skuKey2 = `${sku.style}|${sku.colour}|${sku.leather}`;
                                     const dbMeta = skuMetaMap[skuKey2];
-                                    const sessionQtyObj = sessionItemMap[skuKey2] ?? { auQty: 0, usaQty: 0, nycQty: 0 };
+                                    const sessionQtyObj = sessionItemMap[skuKey2] ?? { auQty: 0, usaQty: 0, nycQty: 0, laQty: 0 };
                                     const sessionAuQty = sessionQtyObj.auQty;
                                     const sessionUsaQty = sessionQtyObj.usaQty;
                                     const sessionNycQty = sessionQtyObj.nycQty;
-                                    const sessionTotalQty = sessionAuQty + sessionUsaQty + sessionNycQty;
+                                    const sessionLaQty = sessionQtyObj.laQty;
+                                    const sessionTotalQty = sessionAuQty + sessionUsaQty + sessionNycQty + sessionLaQty;
                                     // All-session combined totals
-                                    const allQtyData = (allSessionQtys as Record<string, { totalAu: number; totalUsa: number; totalNyc: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number }> }>)[skuKey2];
+                                    const allQtyData = (allSessionQtys as Record<string, { totalAu: number; totalUsa: number; totalNyc: number; totalLa: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number; la: number }> }>)[skuKey2];
                                     const allTotalAu = allQtyData?.totalAu ?? 0;
                                     const allTotalUsa = allQtyData?.totalUsa ?? 0;
                                     const allTotalNyc = allQtyData?.totalNyc ?? 0;
+                                    const allTotalLa = allQtyData?.totalLa ?? 0;
                                     const allTotal = allQtyData?.total ?? 0;
                                     return (
                                       <div
@@ -1516,6 +1519,9 @@ export default function StylesTab() {
                                               </span>
                                               {allTotalNyc > 0 && (
                                                 <span className="text-[9px] tabular-nums leading-none" style={{ color: "oklch(0.45 0.16 300)" }}>NYC {allTotalNyc}</span>
+                                              )}
+                                              {allTotalLa > 0 && (
+                                                <span className="text-[9px] tabular-nums leading-none" style={{ color: "oklch(0.45 0.16 160)" }}>LA {allTotalLa}</span>
                                               )}
                                             </div>
                                           ) : (
@@ -1576,6 +1582,22 @@ export default function StylesTab() {
                                                     placeholder="0"
                                                     className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-purple-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
                                                     style={{ borderColor: sessionNycQty > 0 ? "oklch(0.55 0.18 300)" : "var(--border)" }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                  />
+                                                </div>
+                                                <div className="flex flex-col items-center gap-0.5">
+                                                  <span className="text-[9px] font-semibold uppercase tracking-wide leading-none" style={{ color: "var(--muted-foreground)", opacity: canEdit ? 1 : 0.5 }}>LA</span>
+                                                  <input
+                                                    type="number" min={0}
+                                                    disabled={!canEdit}
+                                                    defaultValue={sessionLaQty || ""}
+                                                    key={`la-${selectedSessionId}-${skuKey2}-${sessionLaQty}`}
+                                                    onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, 'la', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, 'la')}
+                                                    onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
+                                                    placeholder="0"
+                                                    className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-green-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    style={{ borderColor: sessionLaQty > 0 ? "oklch(0.55 0.18 160)" : "var(--border)" }}
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
                                                 </div>

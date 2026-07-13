@@ -298,20 +298,22 @@ export async function getBuySessionItems(sessionId: number) {
     .where(eq(buySessionItems.sessionId, sessionId));
 }
 
-export async function getSessionTotals(): Promise<Record<number, { au: number; usa: number; nyc: number; total: number }>> {
+export async function getSessionTotals(): Promise<Record<number, { au: number; usa: number; nyc: number; la: number; total: number }>> {
   const db = await getDb();
   if (!db) return {};
   const rows = await db.select().from(buySessionItems);
-  const totals: Record<number, { au: number; usa: number; nyc: number; total: number }> = {};
+  const totals: Record<number, { au: number; usa: number; nyc: number; la: number; total: number }> = {};
   for (const row of rows) {
     const au = row.auQty ?? 0;
     const usa = row.usaQty ?? 0;
     const nyc = row.nycQty ?? 0;
-    if (!totals[row.sessionId]) totals[row.sessionId] = { au: 0, usa: 0, nyc: 0, total: 0 };
+    const la = row.laQty ?? 0;
+    if (!totals[row.sessionId]) totals[row.sessionId] = { au: 0, usa: 0, nyc: 0, la: 0, total: 0 };
     totals[row.sessionId].au += au;
     totals[row.sessionId].usa += usa;
     totals[row.sessionId].nyc += nyc;
-    totals[row.sessionId].total += au + usa + nyc;
+    totals[row.sessionId].la += la;
+    totals[row.sessionId].total += au + usa + nyc + la;
   }
   return totals;
 }
@@ -325,8 +327,9 @@ export async function getAllSessionQtys(): Promise<Record<string, {
   totalAu: number;
   totalUsa: number;
   totalNyc: number;
+  totalLa: number;
   total: number;
-  sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number }>;
+  sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number; la: number }>;
 }>> {
   const db = await getDb();
   if (!db) return {};
@@ -336,26 +339,28 @@ export async function getAllSessionQtys(): Promise<Record<string, {
   ]);
   const sessionMap: Record<number, string> = {};
   for (const s of sessions) sessionMap[s.id] = s.name;
-  const result: Record<string, { totalAu: number; totalUsa: number; totalNyc: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number }> }> = {};
+  const result: Record<string, { totalAu: number; totalUsa: number; totalNyc: number; totalLa: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number; la: number }> }> = {};
   for (const row of items) {
     const au = row.auQty ?? 0;
     const usa = row.usaQty ?? 0;
     const nyc = row.nycQty ?? 0;
-    if (au === 0 && usa === 0 && nyc === 0) continue;
+    const la = row.laQty ?? 0;
+    if (au === 0 && usa === 0 && nyc === 0 && la === 0) continue;
     const key = `${row.style}|${row.colour}|${row.leather}`;
-    if (!result[key]) result[key] = { totalAu: 0, totalUsa: 0, totalNyc: 0, total: 0, sessions: [] };
+    if (!result[key]) result[key] = { totalAu: 0, totalUsa: 0, totalNyc: 0, totalLa: 0, total: 0, sessions: [] };
     result[key].totalAu += au;
     result[key].totalUsa += usa;
     result[key].totalNyc += nyc;
-    result[key].total += au + usa + nyc;
-    result[key].sessions.push({ sessionId: row.sessionId, sessionName: sessionMap[row.sessionId] ?? `Session ${row.sessionId}`, au, usa, nyc });
+    result[key].totalLa += la;
+    result[key].total += au + usa + nyc + la;
+    result[key].sessions.push({ sessionId: row.sessionId, sessionName: sessionMap[row.sessionId] ?? `Session ${row.sessionId}`, au, usa, nyc, la });
   }
   return result;
 }
 
 export async function upsertBuySessionItem(
   sessionId: number, style: string, colour: string, leather: string,
-  auQty: number, usaQty: number, nycQty: number = 0
+  auQty: number, usaQty: number, nycQty: number = 0, laQty: number = 0
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -367,13 +372,13 @@ export async function upsertBuySessionItem(
       eq(buySessionItems.leather, leather)
     ))
     .limit(1);
-  const qty = auQty + usaQty + nycQty; // keep legacy qty in sync
+  const qty = auQty + usaQty + nycQty + laQty; // keep legacy qty in sync
   if (existing.length > 0) {
     await db.update(buySessionItems)
-      .set({ auQty, usaQty, nycQty, qty })
+      .set({ auQty, usaQty, nycQty, laQty, qty })
       .where(eq(buySessionItems.id, existing[0].id));
   } else {
-    await db.insert(buySessionItems).values({ sessionId, style, colour, leather, auQty, usaQty, nycQty, qty });
+    await db.insert(buySessionItems).values({ sessionId, style, colour, leather, auQty, usaQty, nycQty, laQty, qty });
   }
 }
 

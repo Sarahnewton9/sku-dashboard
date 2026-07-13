@@ -410,3 +410,11 @@
 ## Upper 1 Pin + Toe Piece Always Available (Jul 2026)
 - [x] Pin Upper 1 row to always appear first in the spec table — cannot be dragged below other rows or deleted
 - [x] Ensure Toe Piece is always available as a row in all relevant categories (Dress Shoe, Sandal, Dress Sandal, Boot, Ankle Boot, Calf Boot, Loafer, Ballet Flat, Casual Flat) by adding it to their templates
+## LA Buy Location (Jul 2026)
+- [x] DB schema: laQty column added to buy_session_items (migration applied via direct SQL)
+- [x] server/db.ts: laQty added to upsertBuySessionItem, getSessionTotals, getAllSessionQtys
+- [x] server/routers.ts: laQty added to buy.upsertItem z.object schema
+- [x] BuySessionsPanel.tsx: LA column added to export and session preview table
+- [x] StylesTab.tsx: laQty added to sessionItemMap, handleQtyChange/Blur, all-session totals, LA input field
+- [x] BuyAnalysisTab.tsx data layer: mergedItems, boughtItems filter, totalLA, byCategory/byStyle/byLeather/byColourLeather/byColourOverall/byStyleWithColours maps, skuTableRows all include laQty
+- [x] BuyAnalysisTab.tsx UI: LA Pairs summary card (green), BarRow la prop (4th green segment), section subtitles updated, pairs breakdown table header/rows, SKU table header/rows/footer

@@ -295,6 +295,13 @@
       "when": 1782791163893,
       "tag": "0041_far_rage",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "5",
+      "when": 1783919961511,
+      "tag": "0042_flashy_cyclops",
+      "breakpoints": true
     }
   ]
 }

@@ -493,9 +493,10 @@ export const appRouter = router({
         auQty: z.number().int().min(0).default(0),
         usaQty: z.number().int().min(0).default(0),
         nycQty: z.number().int().min(0).default(0),
+        laQty: z.number().int().min(0).default(0),
       }))
       .mutation(async ({ input }) => {
-        await upsertBuySessionItem(input.sessionId, input.style, input.colour, input.leather, input.auQty, input.usaQty, input.nycQty);
+        await upsertBuySessionItem(input.sessionId, input.style, input.colour, input.leather, input.auQty, input.usaQty, input.nycQty, input.laQty);
         return { success: true };
       }),
 

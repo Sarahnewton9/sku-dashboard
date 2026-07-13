@@ -11,7 +11,7 @@ import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { BarChart3, ChevronDown, Package, Check, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { displayColour, displayLeather } from "@/lib/utils";
 
-type SortField = "style" | "colour" | "leather" | "category" | "last" | "au" | "usa" | "nyc" | "total";
+type SortField = "style" | "colour" | "leather" | "category" | "last" | "au" | "usa" | "nyc" | "la" | "total";
 type SortDir = "asc" | "desc";
 type ViewTab = "summary" | "sku-table" | "not-bought" | "pairs-breakdown";
 
@@ -52,22 +52,24 @@ export default function BuyAnalysisTab() {
 
   // Merge all items across selected sessions, summing AU+USA qtys per SKU
   const mergedItems = useMemo(() => {
-    const map = new Map<string, { style: string; colour: string; leather: string; auQty: number; usaQty: number; nycQty: number; sessionBreakdown: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number }> }>();
+    const map = new Map<string, { style: string; colour: string; leather: string; auQty: number; usaQty: number; nycQty: number; laQty: number; sessionBreakdown: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number; la: number }> }>();
     for (let i = 0; i < selectedSessionIds.length; i++) {
       const sessionId = selectedSessionIds[i];
       const sessionName = (allSessions as Array<{ id: number; name: string }>).find((s) => s.id === sessionId)?.name ?? `Session ${sessionId}`;
-      const items = ((sessionQueries[i]?.data ?? []) as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number; nycQty?: number; qty?: number }>);
+      const items = ((sessionQueries[i]?.data ?? []) as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number; nycQty?: number; laQty?: number; qty?: number }>);
       for (const item of items) {
         const au = item.auQty ?? 0;
         const usa = item.usaQty ?? 0;
         const nyc = item.nycQty ?? 0;
-        if (au === 0 && usa === 0 && nyc === 0) continue;
+        const la = item.laQty ?? 0;
+        if (au === 0 && usa === 0 && nyc === 0 && la === 0) continue;
         const key = `${item.style}|${item.colour}|${item.leather}`;
-        const existing = map.get(key) ?? { style: item.style, colour: item.colour, leather: item.leather, auQty: 0, usaQty: 0, nycQty: 0, sessionBreakdown: [] };
+        const existing = map.get(key) ?? { style: item.style, colour: item.colour, leather: item.leather, auQty: 0, usaQty: 0, nycQty: 0, laQty: 0, sessionBreakdown: [] };
         existing.auQty += au;
         existing.usaQty += usa;
         existing.nycQty += nyc;
-        existing.sessionBreakdown.push({ sessionId, sessionName, au, usa, nyc });
+        existing.laQty += la;
+        existing.sessionBreakdown.push({ sessionId, sessionName, au, usa, nyc, la });
         map.set(key, existing);
       }
     }
@@ -100,11 +102,12 @@ export default function BuyAnalysisTab() {
   }, [mergedRawSkus]);
 
   // Only items with any qty (for selected sessions)
-  const boughtItems = useMemo(() => mergedItems.filter((i) => i.auQty + i.usaQty + i.nycQty > 0), [mergedItems]);
+  const boughtItems = useMemo(() => mergedItems.filter((i) => i.auQty + i.usaQty + i.nycQty + i.laQty > 0), [mergedItems]);
   const totalAU = useMemo(() => boughtItems.reduce((s, i) => s + i.auQty, 0), [boughtItems]);
   const totalUSA = useMemo(() => boughtItems.reduce((s, i) => s + i.usaQty, 0), [boughtItems]);
   const totalNYC = useMemo(() => boughtItems.reduce((s, i) => s + i.nycQty, 0), [boughtItems]);
-  const totalPairs = totalAU + totalUSA + totalNYC;
+  const totalLA = useMemo(() => boughtItems.reduce((s, i) => s + i.laQty, 0), [boughtItems]);
+  const totalPairs = totalAU + totalUSA + totalNYC + totalLA;
 
   // Not yet bought — NEW SKUs only with zero total across ALL sessions, excluding cancelled styles/SKUs
   const notBoughtSkus = useMemo(() => {
@@ -120,87 +123,93 @@ export default function BuyAnalysisTab() {
 
   // By category
   const byCategory = useMemo(() => {
-    const map: Record<string, { au: number; usa: number; nyc: number }> = {};
+    const map: Record<string, { au: number; usa: number; nyc: number; la: number }> = {};
     for (const item of boughtItems) {
       const cat = styleInfoMap[item.style]?.category ?? "Unknown";
-      if (!map[cat]) map[cat] = { au: 0, usa: 0, nyc: 0 };
+      if (!map[cat]) map[cat] = { au: 0, usa: 0, nyc: 0, la: 0 };
       map[cat].au += item.auQty;
       map[cat].usa += item.usaQty;
       map[cat].nyc += item.nycQty;
+      map[cat].la += item.laQty;
     }
     return Object.entries(map)
-      .map(([cat, v]) => ({ cat, au: v.au, usa: v.usa, nyc: v.nyc, total: v.au + v.usa + v.nyc }))
+      .map(([cat, v]) => ({ cat, au: v.au, usa: v.usa, nyc: v.nyc, la: v.la, total: v.au + v.usa + v.nyc + v.la }))
       .sort((a, b) => b.total - a.total);
   }, [boughtItems, styleInfoMap]);
 
   // By style
   const byStyle = useMemo(() => {
-    const map: Record<string, { au: number; usa: number; nyc: number }> = {};
+    const map: Record<string, { au: number; usa: number; nyc: number; la: number }> = {};
     for (const item of boughtItems) {
-      if (!map[item.style]) map[item.style] = { au: 0, usa: 0, nyc: 0 };
+      if (!map[item.style]) map[item.style] = { au: 0, usa: 0, nyc: 0, la: 0 };
       map[item.style].au += item.auQty;
       map[item.style].usa += item.usaQty;
       map[item.style].nyc += item.nycQty;
+      map[item.style].la += item.laQty;
     }
     return Object.entries(map)
-      .map(([style, v]) => ({ style, au: v.au, usa: v.usa, nyc: v.nyc, total: v.au + v.usa + v.nyc }))
+      .map(([style, v]) => ({ style, au: v.au, usa: v.usa, nyc: v.nyc, la: v.la, total: v.au + v.usa + v.nyc + v.la }))
       .sort((a, b) => b.total - a.total);
   }, [boughtItems]);
 
   // By leather
   const byLeather = useMemo(() => {
-    const map: Record<string, { au: number; usa: number; nyc: number }> = {};
+    const map: Record<string, { au: number; usa: number; nyc: number; la: number }> = {};
     for (const item of boughtItems) {
       const leather = item.leather || "Unknown";
-      if (!map[leather]) map[leather] = { au: 0, usa: 0, nyc: 0 };
+      if (!map[leather]) map[leather] = { au: 0, usa: 0, nyc: 0, la: 0 };
       map[leather].au += item.auQty;
       map[leather].usa += item.usaQty;
       map[leather].nyc += item.nycQty;
+      map[leather].la += item.laQty;
     }
     return Object.entries(map)
-      .map(([leather, v]) => ({ leather, au: v.au, usa: v.usa, nyc: v.nyc, total: v.au + v.usa + v.nyc }))
+      .map(([leather, v]) => ({ leather, au: v.au, usa: v.usa, nyc: v.nyc, la: v.la, total: v.au + v.usa + v.nyc + v.la }))
       .sort((a, b) => b.total - a.total);
   }, [boughtItems]);
 
   // By colour+leather combo (new SKUs only)
   const byColourLeather = useMemo(() => {
-    const map: Record<string, { au: number; usa: number; nyc: number }> = {};
+    const map: Record<string, { au: number; usa: number; nyc: number; la: number }> = {};
     for (const item of boughtItems) {
       const isNew = rawSkuMap[`${item.style}|${item.colour}|${item.leather}`] ?? false;
       if (!isNew) continue;
       const combo = `${displayColour(item.colour, item.leather)} / ${displayLeather(item.leather || "", item.style) || "—"}`;
-      if (!map[combo]) map[combo] = { au: 0, usa: 0, nyc: 0 };
+      if (!map[combo]) map[combo] = { au: 0, usa: 0, nyc: 0, la: 0 };
       map[combo].au += item.auQty;
       map[combo].usa += item.usaQty;
       map[combo].nyc += item.nycQty;
+      map[combo].la += item.laQty;
     }
     return Object.entries(map)
-      .map(([combo, v]) => ({ combo, au: v.au, usa: v.usa, nyc: v.nyc, total: v.au + v.usa + v.nyc }))
+      .map(([combo, v]) => ({ combo, au: v.au, usa: v.usa, nyc: v.nyc, la: v.la, total: v.au + v.usa + v.nyc + v.la }))
       .sort((a, b) => b.total - a.total);
   }, [boughtItems, rawSkuMap]);
 
   // By style with colour breakdown — for Pairs Breakdown tab
   const byStyleWithColours = useMemo(() => {
-    const styleMap: Record<string, { au: number; usa: number; nyc: number; colours: Record<string, { au: number; usa: number; nyc: number }> }> = {};
+    const styleMap: Record<string, { au: number; usa: number; nyc: number; la: number; colours: Record<string, { au: number; usa: number; nyc: number; la: number }> }> = {};
     for (const item of boughtItems) {
-      if (!styleMap[item.style]) styleMap[item.style] = { au: 0, usa: 0, nyc: 0, colours: {} };
+      if (!styleMap[item.style]) styleMap[item.style] = { au: 0, usa: 0, nyc: 0, la: 0, colours: {} };
       styleMap[item.style].au += item.auQty;
       styleMap[item.style].usa += item.usaQty;
       styleMap[item.style].nyc += item.nycQty;
+      styleMap[item.style].la += item.laQty;
       const colKey = displayColour(item.colour, item.leather);
-      if (!styleMap[item.style].colours[colKey]) styleMap[item.style].colours[colKey] = { au: 0, usa: 0, nyc: 0 };
+      if (!styleMap[item.style].colours[colKey]) styleMap[item.style].colours[colKey] = { au: 0, usa: 0, nyc: 0, la: 0 };
       styleMap[item.style].colours[colKey].au += item.auQty;
       styleMap[item.style].colours[colKey].usa += item.usaQty;
       styleMap[item.style].colours[colKey].nyc += item.nycQty;
+      styleMap[item.style].colours[colKey].la += item.laQty;
     }
     return Object.entries(styleMap)
       .map(([style, v]) => ({
         style,
-        au: v.au, usa: v.usa, nyc: v.nyc,
-        total: v.au + v.usa + v.nyc,
+        au: v.au, usa: v.usa, nyc: v.nyc, la: v.la,
+        total: v.au + v.usa + v.nyc + v.la,
         category: styleInfoMap[style]?.category ?? "Unknown",
         colours: Object.entries(v.colours)
-          .map(([colour, cv]) => ({ colour, au: cv.au, usa: cv.usa, nyc: cv.nyc, total: cv.au + cv.usa + cv.nyc }))
+          .map(([colour, cv]) => ({ colour, au: cv.au, usa: cv.usa, nyc: cv.nyc, la: cv.la, total: cv.au + cv.usa + cv.nyc + cv.la }))
           .sort((a, b) => b.total - a.total),
       }))
       .sort((a, b) => b.total - a.total);
@@ -208,21 +217,22 @@ export default function BuyAnalysisTab() {
 
   // Top colours overall — across all styles
   const byColourOverall = useMemo(() => {
-    const map: Record<string, { au: number; usa: number; nyc: number }> = {};
+    const map: Record<string, { au: number; usa: number; nyc: number; la: number }> = {};
     for (const item of boughtItems) {
       const colKey = displayColour(item.colour, item.leather);
-      if (!map[colKey]) map[colKey] = { au: 0, usa: 0, nyc: 0 };
+      if (!map[colKey]) map[colKey] = { au: 0, usa: 0, nyc: 0, la: 0 };
       map[colKey].au += item.auQty;
       map[colKey].usa += item.usaQty;
       map[colKey].nyc += item.nycQty;
+      map[colKey].la += item.laQty;
     }
     return Object.entries(map)
-      .map(([colour, v]) => ({ colour, au: v.au, usa: v.usa, nyc: v.nyc, total: v.au + v.usa + v.nyc }))
+      .map(([colour, v]) => ({ colour, au: v.au, usa: v.usa, nyc: v.nyc, la: v.la, total: v.au + v.usa + v.nyc + v.la }))
       .sort((a, b) => b.total - a.total);
   }, [boughtItems]);
 
   const newPairs = useMemo(() =>
-    boughtItems.filter((i) => rawSkuMap[`${i.style}|${i.colour}|${i.leather}`]).reduce((s, i) => s + i.auQty + i.usaQty + i.nycQty, 0),
+    boughtItems.filter((i) => rawSkuMap[`${i.style}|${i.colour}|${i.leather}`]).reduce((s, i) => s + i.auQty + i.usaQty + i.nycQty + i.laQty, 0),
     [boughtItems, rawSkuMap]
   );
 
@@ -248,7 +258,8 @@ export default function BuyAnalysisTab() {
       au: item.auQty,
       usa: item.usaQty,
       nyc: item.nycQty,
-      total: item.auQty + item.usaQty + item.nycQty,
+      la: item.laQty,
+      total: item.auQty + item.usaQty + item.nycQty + item.laQty,
       isNew: rawSkuMap[`${item.style}|${item.colour}|${item.leather}`] ?? false,
     }));
     if (categoryFilter !== "All") rows = rows.filter((r) => r.category === categoryFilter);
@@ -299,12 +310,13 @@ export default function BuyAnalysisTab() {
       : <ArrowDown className="w-3 h-3" style={{ color: "oklch(0.55 0.14 55)" }} />;
   }
 
-  function BarRow({ label, au, usa, nyc = 0, max }: { label: string; au: number; usa: number; nyc?: number; max: number }) {
-    const total = au + usa + nyc;
+  function BarRow({ label, au, usa, nyc = 0, la = 0, max }: { label: string; au: number; usa: number; nyc?: number; la?: number; max: number }) {
+    const total = au + usa + nyc + la;
     const pct = max > 0 ? (total / max) * 100 : 0;
     const auPct = total > 0 ? (au / total) * 100 : 0;
     const usaPct = total > 0 ? (usa / total) * 100 : 0;
     const nycPct = total > 0 ? (nyc / total) * 100 : 0;
+    const laPct = total > 0 ? (la / total) * 100 : 0;
     return (
       <div className="flex items-center gap-3">
         <span className="text-sm text-foreground w-40 truncate flex-shrink-0">{label}</span>
@@ -313,13 +325,15 @@ export default function BuyAnalysisTab() {
             <div className="h-full transition-all duration-500" style={{ width: `${auPct}%`, background: "#f59e0b" }} />
             <div className="h-full transition-all duration-500" style={{ width: `${usaPct}%`, background: "oklch(0.60 0.14 200)" }} />
             {nyc > 0 && <div className="h-full transition-all duration-500" style={{ width: `${nycPct}%`, background: "oklch(0.55 0.18 300)" }} />}
+            {la > 0 && <div className="h-full transition-all duration-500" style={{ width: `${laPct}%`, background: "oklch(0.55 0.18 140)" }} />}
           </div>
         </div>
-        <div className="flex gap-1 items-center text-xs tabular-nums w-36 justify-end">
+        <div className="flex gap-1 items-center text-xs tabular-nums w-44 justify-end">
           <span className="font-bold" style={{ color: "#f59e0b" }}>{au}</span>
           <span className="text-muted-foreground">/</span>
           <span className="font-bold" style={{ color: "oklch(0.60 0.14 200)" }}>{usa}</span>
           {nyc > 0 && <><span className="text-muted-foreground">/</span><span className="font-bold" style={{ color: "oklch(0.55 0.18 300)" }}>{nyc}</span></>}
+          {la > 0 && <><span className="text-muted-foreground">/</span><span className="font-bold" style={{ color: "oklch(0.55 0.18 140)" }}>{la}</span></>}
           <span className="text-muted-foreground text-xs">({pct.toFixed(0)}%)</span>
         </div>
       </div>
@@ -457,12 +471,13 @@ export default function BuyAnalysisTab() {
           ) : (
             <>
               {/* Summary cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                 {[
-                  { label: "Total Pairs", value: totalPairs, sub: "AU + USA + NYC combined" },
+                  { label: "Total Pairs", value: totalPairs, sub: "AU + USA + NYC + LA" },
                   { label: "AU Pairs", value: totalAU, sub: "Australia", color: "#f59e0b" },
                   { label: "USA Pairs", value: totalUSA, sub: "United States", color: "oklch(0.60 0.14 200)" },
                   { label: "NYC Pairs", value: totalNYC, sub: "New York City", color: "oklch(0.55 0.18 300)" },
+                  { label: "LA Pairs", value: totalLA, sub: "Los Angeles", color: "oklch(0.55 0.18 140)" },
                   { label: "New SKU Pairs", value: newPairs, sub: "new styles only" },
                 ].map((card) => (
                   <div key={card.label} className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
@@ -477,10 +492,10 @@ export default function BuyAnalysisTab() {
                 {/* By Category */}
                 <div className="rounded-xl border p-5" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                   <h3 className="text-sm font-bold text-foreground mb-1">Pairs by Category</h3>
-                  <p className="text-xs text-muted-foreground mb-4">Amber = AU · Blue = USA · Purple = NYC</p>
+                  <p className="text-xs text-muted-foreground mb-4">Amber = AU · Blue = USA · Purple = NYC · Green = LA</p>
                   <div className="space-y-2.5">
-                    {byCategory.map(({ cat, au, usa, nyc }) => (
-                      <BarRow key={cat} label={cat} au={au} usa={usa} nyc={nyc} max={totalPairs} />
+                    {byCategory.map(({ cat, au, usa, nyc, la }) => (
+                      <BarRow key={cat} label={cat} au={au} usa={usa} nyc={nyc} la={la} max={totalPairs} />
                     ))}
                   </div>
                 </div>
@@ -488,10 +503,10 @@ export default function BuyAnalysisTab() {
                 {/* By Style */}
                 <div className="rounded-xl border p-5" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                   <h3 className="text-sm font-bold text-foreground mb-1">Pairs by Style</h3>
-                  <p className="text-xs text-muted-foreground mb-4">Amber = AU · Blue = USA · Purple = NYC</p>
+                  <p className="text-xs text-muted-foreground mb-4">Amber = AU · Blue = USA · Purple = NYC · Green = LA</p>
                   <div className="space-y-2.5">
-                    {byStyle.map(({ style, au, usa, nyc }) => (
-                      <BarRow key={style} label={style} au={au} usa={usa} nyc={nyc} max={totalPairs} />
+                    {byStyle.map(({ style, au, usa, nyc, la }) => (
+                      <BarRow key={style} label={style} au={au} usa={usa} nyc={nyc} la={la} max={totalPairs} />
                     ))}
                   </div>
                 </div>
@@ -499,10 +514,10 @@ export default function BuyAnalysisTab() {
                 {/* By Leather */}
                 <div className="rounded-xl border p-5" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                   <h3 className="text-sm font-bold text-foreground mb-1">Pairs by Leather</h3>
-                  <p className="text-xs text-muted-foreground mb-4">Amber = AU · Blue = USA · Purple = NYC</p>
+                  <p className="text-xs text-muted-foreground mb-4">Amber = AU · Blue = USA · Purple = NYC · Green = LA</p>
                   <div className="space-y-2.5">
-                    {byLeather.map(({ leather, au, usa, nyc }) => (
-                      <BarRow key={leather} label={leather} au={au} usa={usa} nyc={nyc} max={totalPairs} />
+                    {byLeather.map(({ leather, au, usa, nyc, la }) => (
+                      <BarRow key={leather} label={leather} au={au} usa={usa} nyc={nyc} la={la} max={totalPairs} />
                     ))}
                   </div>
                 </div>
@@ -520,8 +535,8 @@ export default function BuyAnalysisTab() {
                     <p className="text-sm text-muted-foreground">No new SKUs with quantities in selected sessions.</p>
                   ) : (
                     <div className="space-y-2.5">
-                      {byColourLeather.map(({ combo, au, usa, nyc }) => (
-                        <BarRow key={combo} label={combo} au={au} usa={usa} nyc={nyc} max={newPairs} />
+                      {byColourLeather.map(({ combo, au, usa, nyc, la }) => (
+                        <BarRow key={combo} label={combo} au={au} usa={usa} nyc={nyc} la={la} max={newPairs} />
                       ))}
                     </div>
                   )}
@@ -552,10 +567,10 @@ export default function BuyAnalysisTab() {
               {/* Top colours overall */}
               <div className="rounded-xl border p-5" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                 <h3 className="text-sm font-bold text-foreground mb-1">Top Colours — All Styles Combined</h3>
-                <p className="text-xs text-muted-foreground mb-4">Total pairs per colour across every style · Amber = AU · Blue = USA · Purple = NYC</p>
+                <p className="text-xs text-muted-foreground mb-4">Total pairs per colour across every style · Amber = AU · Blue = USA · Purple = NYC · Green = LA</p>
                 <div className="space-y-2">
-                  {byColourOverall.map(({ colour, au, usa, nyc }) => (
-                    <BarRow key={colour} label={colour} au={au} usa={usa} nyc={nyc} max={totalPairs} />
+                  {byColourOverall.map(({ colour, au, usa, nyc, la }) => (
+                    <BarRow key={colour} label={colour} au={au} usa={usa} nyc={nyc} la={la} max={totalPairs} />
                   ))}
                 </div>
               </div>
@@ -567,23 +582,24 @@ export default function BuyAnalysisTab() {
                   <p className="text-xs text-muted-foreground mt-0.5">Sorted highest to lowest total pairs · click any row to expand colour split</p>
                 </div>
                 {/* Table header */}
-                <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-0 text-xs font-semibold text-muted-foreground uppercase tracking-wide px-5 py-2.5 border-b" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto_auto] gap-0 text-xs font-semibold text-muted-foreground uppercase tracking-wide px-5 py-2.5 border-b" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                   <span>Style</span>
                   <span className="text-right w-20">AU</span>
                   <span className="text-right w-20">USA</span>
                   <span className="text-right w-20">NYC</span>
+                  <span className="text-right w-20">LA</span>
                   <span className="text-right w-20">Total</span>
                   <span className="text-right w-16">% of buy</span>
                 </div>
                 <div className="divide-y" style={{ borderColor: "var(--border)" }}>
-                  {byStyleWithColours.map(({ style, au, usa, nyc, total, category, colours }) => {
+                  {byStyleWithColours.map(({ style, au, usa, nyc, la, total, category, colours }) => {
                     const isExpanded = expandedStyles.has(style);
                     const pct = totalPairs > 0 ? ((total / totalPairs) * 100).toFixed(1) : "0.0";
                     return (
                       <div key={style}>
                         {/* Style row */}
                         <button
-                          className="w-full grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-0 px-5 py-3 text-left hover:bg-muted/40 transition-colors items-center"
+                          className="w-full grid grid-cols-[1fr_auto_auto_auto_auto_auto_auto] gap-0 px-5 py-3 text-left hover:bg-muted/40 transition-colors items-center"
                           onClick={() => setExpandedStyles((prev) => {
                             const next = new Set(prev);
                             if (next.has(style)) next.delete(style); else next.add(style);
@@ -601,6 +617,7 @@ export default function BuyAnalysisTab() {
                           <span className="text-sm tabular-nums text-right w-20" style={{ color: "#f59e0b" }}>{au > 0 ? au.toLocaleString() : "—"}</span>
                           <span className="text-sm tabular-nums text-right w-20" style={{ color: "oklch(0.60 0.14 200)" }}>{usa > 0 ? usa.toLocaleString() : "—"}</span>
                           <span className="text-sm tabular-nums text-right w-20" style={{ color: "oklch(0.55 0.18 300)" }}>{nyc > 0 ? nyc.toLocaleString() : "—"}</span>
+                          <span className="text-sm tabular-nums text-right w-20" style={{ color: "oklch(0.55 0.18 140)" }}>{la > 0 ? la.toLocaleString() : "—"}</span>
                           <span className="text-sm tabular-nums font-bold text-right w-20 text-foreground">{total.toLocaleString()}</span>
                           <span className="text-xs tabular-nums text-right w-16 text-muted-foreground">{pct}%</span>
                         </button>
@@ -608,19 +625,20 @@ export default function BuyAnalysisTab() {
                         {isExpanded && (
                           <div className="border-t" style={{ borderColor: "var(--border)", background: "oklch(0.98 0.01 65 / 0.4)" }}>
                             {/* Colour sub-header */}
-                            <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-0 px-8 py-1.5 text-xs font-medium text-muted-foreground border-b" style={{ borderColor: "var(--border)" }}>
+                            <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto_auto] gap-0 px-8 py-1.5 text-xs font-medium text-muted-foreground border-b" style={{ borderColor: "var(--border)" }}>
                               <span>Colour</span>
                               <span className="text-right w-20">AU</span>
                               <span className="text-right w-20">USA</span>
                               <span className="text-right w-20">NYC</span>
+                              <span className="text-right w-20">LA</span>
                               <span className="text-right w-20">Total</span>
                               <span className="text-right w-16">% of style</span>
                             </div>
-                            {colours.map(({ colour, au: cAu, usa: cUsa, nyc: cNyc, total: cTotal }) => {
+                            {colours.map(({ colour, au: cAu, usa: cUsa, nyc: cNyc, la: cLa, total: cTotal }) => {
                               const colPct = total > 0 ? ((cTotal / total) * 100).toFixed(1) : "0.0";
                               const barWidth = total > 0 ? (cTotal / total) * 100 : 0;
                               return (
-                                <div key={colour} className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-0 px-8 py-2.5 items-center border-b last:border-0" style={{ borderColor: "var(--border)" }}>
+                                <div key={colour} className="grid grid-cols-[1fr_auto_auto_auto_auto_auto_auto] gap-0 px-8 py-2.5 items-center border-b last:border-0" style={{ borderColor: "var(--border)" }}>
                                   <div className="flex items-center gap-3">
                                     <span className="text-sm text-foreground font-medium">{colour}</span>
                                     <div className="flex-1 h-1.5 rounded-full overflow-hidden max-w-24" style={{ background: "var(--muted)" }}>
@@ -630,6 +648,7 @@ export default function BuyAnalysisTab() {
                                   <span className="text-sm tabular-nums text-right w-20" style={{ color: "#f59e0b" }}>{cAu > 0 ? cAu.toLocaleString() : "—"}</span>
                                   <span className="text-sm tabular-nums text-right w-20" style={{ color: "oklch(0.60 0.14 200)" }}>{cUsa > 0 ? cUsa.toLocaleString() : "—"}</span>
                                   <span className="text-sm tabular-nums text-right w-20" style={{ color: "oklch(0.55 0.18 300)" }}>{cNyc > 0 ? cNyc.toLocaleString() : "—"}</span>
+                                  <span className="text-sm tabular-nums text-right w-20" style={{ color: "oklch(0.55 0.18 140)" }}>{cLa > 0 ? cLa.toLocaleString() : "—"}</span>
                                   <span className="text-sm tabular-nums font-semibold text-right w-20 text-foreground">{cTotal.toLocaleString()}</span>
                                   <span className="text-xs tabular-nums text-right w-16 text-muted-foreground">{colPct}%</span>
                                 </div>
@@ -706,6 +725,7 @@ export default function BuyAnalysisTab() {
                           { field: "au", label: "AU" },
                           { field: "usa", label: "USA" },
                           { field: "nyc", label: "NYC" },
+                          { field: "la", label: "LA" },
                           { field: "total", label: "Total" },
                         ] as Array<{ field: SortField; label: string }>).map(({ field, label }) => (
                           <th
@@ -744,13 +764,14 @@ export default function BuyAnalysisTab() {
                           <td className="px-3 py-2 font-mono font-bold text-right" style={{ color: "#f59e0b" }}>{row.auQty}</td>
                           <td className="px-3 py-2 font-mono font-bold text-right" style={{ color: "oklch(0.60 0.14 200)" }}>{row.usaQty}</td>
                           <td className="px-3 py-2 font-mono font-bold text-right" style={{ color: "oklch(0.55 0.18 300)" }}>{row.nycQty}</td>
+                          <td className="px-3 py-2 font-mono font-bold text-right" style={{ color: "oklch(0.55 0.18 140)" }}>{row.laQty}</td>
                           <td className="px-3 py-2 font-mono font-bold text-right" style={{ color: "oklch(0.50 0.14 55)" }}>{row.total}</td>
                           {selectedSessionIds.length > 1 && (
                             <td className="px-3 py-2">
                               <div className="flex flex-wrap gap-1">
                                 {row.sessionBreakdown.map((s) => (
                                   <span key={s.sessionId} className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>
-                                    {s.sessionName}: {s.au}AU/{s.usa}USA{s.nyc ? `/${s.nyc}NYC` : ""}
+                                    {s.sessionName}: {s.au}AU/{s.usa}USA{s.nyc ? `/${s.nyc}NYC` : ""}{s.la ? `/${s.la}LA` : ""}
                                   </span>
                                 ))}
                               </div>
@@ -770,6 +791,9 @@ export default function BuyAnalysisTab() {
                         </td>
                         <td className="px-3 py-2 font-mono font-bold text-right" style={{ color: "oklch(0.55 0.18 300)" }}>
                           {skuTableRows.reduce((s, r) => s + r.nycQty, 0)}
+                        </td>
+                        <td className="px-3 py-2 font-mono font-bold text-right" style={{ color: "oklch(0.55 0.18 140)" }}>
+                          {skuTableRows.reduce((s, r) => s + r.laQty, 0)}
                         </td>
                         <td className="px-3 py-2 font-mono font-bold text-right" style={{ color: "oklch(0.50 0.14 55)" }}>
                           {skuTableRows.reduce((s, r) => s + r.total, 0)}

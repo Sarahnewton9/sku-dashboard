@@ -186,10 +186,10 @@ export default function BuySessionsPanel() {
 
     type RowData = {
       category: string; last: string; size11: string;
-      style: string; colourDesc: string; auQty: number; usaQty: number; nycQty: number;
+      style: string; colourDesc: string; auQty: number; usaQty: number; nycQty: number; laQty: number;
     };
 
-    const allItems = items as Array<{ style: string; colour: string; leather: string; qty?: number; auQty?: number; usaQty?: number; nycQty?: number }>;
+    const allItems = items as Array<{ style: string; colour: string; leather: string; qty?: number; auQty?: number; usaQty?: number; nycQty?: number; laQty?: number }>;
 
     const rows: RowData[] = allItems
       .filter((item) => {
@@ -197,6 +197,7 @@ export default function BuySessionsPanel() {
         const au = (item.auQty ?? 0) || (item.qty ?? 0);
         const usa = item.usaQty ?? 0;
         const nyc = item.nycQty ?? 0;
+        const la = item.laQty ?? 0;
         return (au + usa + nyc) > 0 && !cancelledStyleSet.has(item.style);
       })
       .map((item) => {
@@ -211,6 +212,7 @@ export default function BuySessionsPanel() {
           auQty: (item.auQty ?? 0) || (item.qty ?? 0),
           usaQty: item.usaQty ?? 0,
           nycQty: item.nycQty ?? 0,
+          laQty: item.laQty ?? 0,
         };
       });
 
@@ -231,6 +233,7 @@ export default function BuySessionsPanel() {
     // Determine which optional market columns to include
     const hasUsa = rows.some((r) => r.usaQty > 0);
     const hasNyc = rows.some((r) => r.nycQty > 0);
+    const hasLa = rows.some((r) => r.laQty > 0);
 
     // Filename uses session name
     const fileName = `${sessionName} BUY.xlsx`;
@@ -243,7 +246,7 @@ export default function BuySessionsPanel() {
     // Rows 4+: Data rows (plain white)
     // Last row: TOTAL
 
-    const COLS = 6 + (hasUsa ? 1 : 0) + (hasNyc ? 1 : 0);
+    const COLS = 6 + (hasUsa ? 1 : 0) + (hasNyc ? 1 : 0) + (hasLa ? 1 : 0);
     const sheetRows: (string | number)[][] = [];
     const rowTypes: string[] = [];
 
@@ -260,6 +263,7 @@ export default function BuySessionsPanel() {
     const headerRow = ["CATEGORY", "LAST", "SIZE 11", "STYLE", "COLOUR", "AU QTY"];
     if (hasUsa) headerRow.push("USA QTY");
     if (hasNyc) headerRow.push("NYC QTY");
+    if (hasLa) headerRow.push("LA QTY");
     sheetRows.push(headerRow);
     rowTypes.push("header");
 
@@ -268,6 +272,7 @@ export default function BuySessionsPanel() {
       const dataRow: (string | number)[] = [r.category, r.last, r.size11, r.style, r.colourDesc, r.auQty];
       if (hasUsa) dataRow.push(r.usaQty > 0 ? r.usaQty : "");
       if (hasNyc) dataRow.push(r.nycQty > 0 ? r.nycQty : "");
+      if (hasLa) dataRow.push(r.laQty > 0 ? r.laQty : "");
       sheetRows.push(dataRow);
       rowTypes.push("data");
     }
@@ -276,9 +281,11 @@ export default function BuySessionsPanel() {
     const totalAu = rows.reduce((s, r) => s + r.auQty, 0);
     const totalUsa = rows.reduce((s, r) => s + r.usaQty, 0);
     const totalNyc = rows.reduce((s, r) => s + r.nycQty, 0);
+    const totalLa = rows.reduce((s, r) => s + r.laQty, 0);
     const totalRow: (string | number)[] = ["TOTAL", "", "", "", " ", totalAu];
     if (hasUsa) totalRow.push(totalUsa);
     if (hasNyc) totalRow.push(totalNyc);
+    if (hasLa) totalRow.push(totalLa);
     sheetRows.push(totalRow);
     rowTypes.push("total");
 
@@ -288,6 +295,7 @@ export default function BuySessionsPanel() {
     const qtyColWidths: { wch: number }[] = [{ wch: 10.875 }]; // AU QTY always
     if (hasUsa) qtyColWidths.push({ wch: 10.875 }); // USA QTY
     if (hasNyc) qtyColWidths.push({ wch: 10.875 }); // NYC QTY
+    if (hasLa) qtyColWidths.push({ wch: 10.875 }); // LA QTY
     ws["!cols"] = [
       { wch: 20.875 }, // CATEGORY
       { wch: 14.875 }, // LAST
@@ -457,7 +465,7 @@ export default function BuySessionsPanel() {
   }
 
   const selectedSession = allSessions.find((s) => s.id === selectedSessionId);
-  const selectedTotal = (sessionItems as Array<{ auQty?: number; usaQty?: number; nycQty?: number; qty?: number }>).reduce((sum, item) => sum + (item.auQty ?? 0) + (item.usaQty ?? 0) + (item.nycQty ?? 0), 0);
+  const selectedTotal = (sessionItems as Array<{ auQty?: number; usaQty?: number; nycQty?: number; laQty?: number; qty?: number }>).reduce((sum, item) => sum + (item.auQty ?? 0) + (item.usaQty ?? 0) + (item.nycQty ?? 0) + (item.laQty ?? 0), 0);
 
   return (
     <div className="space-y-6">
@@ -656,7 +664,7 @@ export default function BuySessionsPanel() {
                   <div className="mt-4 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        SKUs in this session ({(sessionItems as Array<{ auQty?: number; usaQty?: number; nycQty?: number }>).filter((i) => ((i.auQty ?? 0) + (i.usaQty ?? 0) + (i.nycQty ?? 0)) > 0).length} with qty)
+                        SKUs in this session ({(sessionItems as Array<{ auQty?: number; usaQty?: number; nycQty?: number; laQty?: number }>).filter((i) => ((i.auQty ?? 0) + (i.usaQty ?? 0) + (i.nycQty ?? 0) + (i.laQty ?? 0)) > 0).length} with qty)
                       </span>
                       <span className="text-sm font-bold" style={{ color: "oklch(0.50 0.14 55)" }}>
                         {selectedTotal} total pairs
@@ -672,11 +680,12 @@ export default function BuySessionsPanel() {
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">AU</th>
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">USA</th>
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">NYC</th>
+                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">LA</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {(sessionItems as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number; nycQty?: number }>)
-                            .filter((i) => ((i.auQty ?? 0) + (i.usaQty ?? 0) + (i.nycQty ?? 0)) > 0)
+                          {(sessionItems as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number; nycQty?: number; laQty?: number }>)
+                            .filter((i) => ((i.auQty ?? 0) + (i.usaQty ?? 0) + (i.nycQty ?? 0) + (i.laQty ?? 0)) > 0)
                             .sort((a, b) => a.style.localeCompare(b.style))
                             .map((item) => {
                               return (
@@ -688,6 +697,7 @@ export default function BuySessionsPanel() {
                                   <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{item.auQty ?? 0}</td>
                                   <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.15 240)" }}>{item.usaQty ?? 0}</td>
                                   <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.55 0.18 300)" }}>{item.nycQty ?? 0}</td>
+                                  <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.16 160)" }}>{(item as any).laQty ?? 0}</td>
                                 </tr>
                               );
                             })}
@@ -703,6 +713,9 @@ export default function BuySessionsPanel() {
                             </td>
                             <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.55 0.18 300)" }}>
                               {(sessionItems as Array<{ nycQty?: number }>).reduce((s, i) => s + (i.nycQty ?? 0), 0)}
+                            </td>
+                            <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.16 160)" }}>
+                              {(sessionItems as Array<{ laQty?: number }>).reduce((s, i) => s + (i.laQty ?? 0), 0)}
                             </td>
                           </tr>
                         </tfoot>
