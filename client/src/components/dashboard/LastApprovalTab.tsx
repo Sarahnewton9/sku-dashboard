@@ -2,6 +2,7 @@ import { useState, useRef, useMemo, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
+import { useStyleCategories } from "@/hooks/useStyleCategories";
 import { CheckCircle2, Clock, ChevronDown, ChevronRight, Upload, X, AlertTriangle, Trash2, Plus, Image as ImageIcon } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
@@ -19,6 +20,29 @@ const LAST_DESCRIPTIONS: Record<string, string> = {
 const LAST_PHOTOS: Record<string, string> = {
   OASIS: "/manus-storage/oasis-last_7e2d7a84.png",
 };
+
+// Category ordering for styles within a last
+const CATEGORY_ORDER: Record<string, number> = {
+  "DRESS SANDAL": 0,
+  "SANDAL": 0,
+  "DRESS SHOE": 1,
+  "CASUAL FLAT": 2,
+  "CASUAL WEDGE": 3,
+  "DRESS WEDGE": 3,
+  "WEDGE": 3,
+  "DRESS ANKLE BOOT": 4,
+  "ANKLE BOOT": 4,
+  "CASUAL BOOT ANKLE": 4,
+  "DRESS CALF BOOT": 5,
+  "CALF BOOT": 5,
+  "CASUAL BOOT CALF": 5,
+  "DRESS BOOT LONG": 6,
+  "LONG BOOT": 6,
+  "CASUAL BOOT LONG": 6,
+};
+function categoryOrder(cat: string): number {
+  return CATEGORY_ORDER[cat?.toUpperCase()?.trim()] ?? 99;
+}
 
 // Static STYLE_IMAGE_MAP fallback (used when no DB override)
 const STYLE_IMAGE_MAP: Record<string, string> = {};
@@ -247,18 +271,28 @@ function AddStyleForm({
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function LastApprovalTab() {
   const { mergedStyles, customStyleRows, refetchCustomStyles, refetchImageOverrides } = useCustomSkus();
+  const { getCategory } = useStyleCategories();
 
   // Build style lookup per last (live, includes custom SKUs and custom styles)
+  // Each entry stores { style, category } so we can group/sort by category in the render
   const { lastToStyles, lastNewSkuCount } = useMemo(() => {
-    const lastToStyles: Record<string, string[]> = {};
+    const lastToStyles: Record<string, Array<{ style: string; category: string }>> = {};
     const lastNewSkuCount: Record<string, number> = {};
-    for (const s of mergedStyles as typeof skuData.styles) {
+    for (const s of mergedStyles as unknown as Array<{ style: string; last: string; category: string; newSKUs: number }>) {
       if (!lastToStyles[s.last]) lastToStyles[s.last] = [];
-      lastToStyles[s.last].push(s.style);
+      const resolvedCat = getCategory(s.style, (s as any).category ?? "");
+      lastToStyles[s.last].push({ style: s.style, category: resolvedCat });
       lastNewSkuCount[s.last] = (lastNewSkuCount[s.last] ?? 0) + (s.newSKUs ?? 0);
     }
+    // Sort each last's styles by category order, then alphabetically within category
+    for (const last of Object.keys(lastToStyles)) {
+      lastToStyles[last].sort((a, b) => {
+        const diff = categoryOrder(a.category) - categoryOrder(b.category);
+        return diff !== 0 ? diff : a.style.localeCompare(b.style);
+      });
+    }
     return { lastToStyles, lastNewSkuCount };
-  }, [mergedStyles]);
+  }, [mergedStyles, getCategory]);
 
   const { data: approvals, refetch } = trpc.lastApproval.getAll.useQuery();
   const { data: deletedLastsFromDb = [], refetch: refetchDeleted } = trpc.lastApproval.getDeleted.useQuery();
@@ -444,7 +478,7 @@ export default function LastApprovalTab() {
   };
 
   const handleDeleteLast = (lastName: string) => {
-    setLocalDeletedLasts((prev) => new Set([...prev, lastName]));
+    setLocalDeletedLasts((prev) => new Set(Array.from(prev).concat(lastName)));
     setDeletingLast(null);
     deleteLastMutation.mutate({ lastName });
   };
@@ -973,28 +1007,50 @@ export default function LastApprovalTab() {
                       />
                     )}
 
-                    {/* Style cards grid */}
-                    <div className="flex flex-wrap gap-3 mt-2">
-                      {styles.map((s) => {
-                        const imgUrl = imageOverrides[s] ?? STYLE_IMAGE_MAP[s];
-                        const isCustom = customStyleNames.has(s.toUpperCase());
-                        const customStyleRow = customStyleRows.find((cs) => cs.style.toUpperCase() === s.toUpperCase());
-                        return (
-                          <StyleCard
-                            key={s}
-                            styleName={s}
-                            imageUrl={imgUrl}
-                            isCustom={isCustom}
-                            customStyleId={customStyleRow?.id}
-                            onImageUploaded={handleImageUploaded}
-                            onDeleteCustomStyle={isCustom ? (id) => deleteCustomStyleMutation.mutate({ id }) : undefined}
-                          />
-                        );
-                      })}
-                      {styles.length === 0 && !isAddingStyle && (
-                        <p className="text-xs text-muted-foreground italic">No styles on this last yet. Click "Add Style" to add one.</p>
-                      )}
-                    </div>
+                    {/* Style cards grouped by category */}
+                    {styles.length === 0 && !isAddingStyle && (
+                      <p className="text-xs text-muted-foreground italic mt-2">No styles on this last yet. Click "Add Style" to add one.</p>
+                    )}
+                    {(() => {
+                      // Group styles by category, preserving sorted order
+                      const groups: Array<{ category: string; items: typeof styles }> = [];
+                      for (const item of styles) {
+                        const last = groups[groups.length - 1];
+                        if (last && last.category === item.category) {
+                          last.items.push(item);
+                        } else {
+                          groups.push({ category: item.category, items: [item] });
+                        }
+                      }
+                      return groups.map((group) => (
+                        <div key={group.category} className="mt-3">
+                          {/* Category header — only show when there are multiple categories */}
+                          {groups.length > 1 && (
+                            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 pb-1 border-b" style={{ borderColor: "var(--border)" }}>
+                              {group.category || "Uncategorised"}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap gap-3">
+                            {group.items.map(({ style: s }) => {
+                              const imgUrl = imageOverrides[s] ?? STYLE_IMAGE_MAP[s];
+                              const isCustom = customStyleNames.has(s.toUpperCase());
+                              const customStyleRow = customStyleRows.find((cs) => cs.style.toUpperCase() === s.toUpperCase());
+                              return (
+                                <StyleCard
+                                  key={s}
+                                  styleName={s}
+                                  imageUrl={imgUrl}
+                                  isCustom={isCustom}
+                                  customStyleId={customStyleRow?.id}
+                                  onImageUploaded={handleImageUploaded}
+                                  onDeleteCustomStyle={isCustom ? (id) => deleteCustomStyleMutation.mutate({ id }) : undefined}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ));
+                    })()}
                   </div>
 
                   {/* Notes */}
