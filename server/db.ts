@@ -1268,11 +1268,11 @@ export async function showSpecColumn(style: string, colour: string): Promise<voi
 
 // ─── Custom Lasts ─────────────────────────────────────────────────────────────
 
-export async function getCustomLasts(): Promise<string[]> {
+export async function getCustomLasts(): Promise<Array<{ lastName: string; isRunOn: boolean }>> {
   const db = await getDb();
   if (!db) return [];
-  const rows = await db.select({ lastName: customLasts.lastName }).from(customLasts).orderBy(customLasts.lastName);
-  return rows.map((r) => r.lastName);
+  const rows = await db.select({ lastName: customLasts.lastName, isRunOn: customLasts.isRunOn }).from(customLasts).orderBy(customLasts.lastName);
+  return rows.map((r) => ({ lastName: r.lastName, isRunOn: r.isRunOn ?? false }));
 }
 
 export async function addCustomLast(lastName: string): Promise<void> {

@@ -327,7 +327,10 @@ export default function LastApprovalTab() {
   const [deletingLast, setDeletingLast] = useState<string | null>(null);
   // Custom lasts from DB
   const { data: customLastsFromDb = [], refetch: refetchCustomLasts } = trpc.customLast.getAll.useQuery();
-  const customLasts = customLastsFromDb;
+  // Filter out run-on lasts — they don't need Last Approval
+  const customLasts = (customLastsFromDb as Array<{ lastName: string; isRunOn: boolean }>)
+    .filter((l) => !l.isRunOn)
+    .map((l) => l.lastName);
   const addCustomLastMutation = trpc.customLast.add.useMutation({
     onSuccess: (_, variables) => {
       // Remove from local deleted set so it reappears immediately
@@ -403,7 +406,7 @@ export default function LastApprovalTab() {
     // Deduplicate: ALL_LASTS takes precedence; custom lasts only added if not already present
     const seen = new Set<string>();
     const merged: string[] = [];
-    for (const l of [...ALL_LASTS, ...customLasts]) {
+    for (const l of [...ALL_LASTS, ...(customLasts as string[])]) {
       const key = l.toUpperCase();
       if (!seen.has(key)) { seen.add(key); merged.push(l); }
     }

@@ -291,7 +291,9 @@ export default function StylesTab() {
     // Also include any lasts that appear in skuData but aren't in ALL_LASTS
     for (const style of skuData.styles) { if (style.last) s.add(style.last); }
     // And any custom lasts added via the Last Approval tab
-    for (const l of customLastsData) s.add(l);
+    for (const l of (customLastsData as Array<{ lastName: string; isRunOn: boolean } | string>)) {
+      s.add(typeof l === "string" ? l : l.lastName);
+    }
     return Array.from(s).sort();
   }, [customLastsData]);
   // Add Style drag-and-drop handlers

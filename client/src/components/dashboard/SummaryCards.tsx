@@ -196,7 +196,8 @@ export default function SummaryCards() {
     const deletedSet = new Set(deletedLastsFromDb);
     const seen = new Set<string>();
     let count = 0;
-    for (const l of [...ALL_LASTS, ...customLastsFromDb]) {
+    for (const raw of [...ALL_LASTS, ...(customLastsFromDb as Array<{ lastName: string; isRunOn: boolean } | string>)]) {
+      const l = typeof raw === "string" ? raw : raw.lastName;
       const key = l.toUpperCase();
       if (!seen.has(key)) {
         seen.add(key);

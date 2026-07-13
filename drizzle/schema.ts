@@ -525,6 +525,7 @@ export type InsertSpecHiddenColumn = typeof specHiddenColumns.$inferInsert;
 export const customLasts = mysqlTable("custom_lasts", {
   id: int("id").autoincrement().primaryKey(),
   lastName: varchar("last_name", { length: 128 }).notNull().unique(),
+  isRunOn: boolean("is_run_on").notNull().default(false), // run-on lasts don't need Last Approval
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type CustomLast = typeof customLasts.$inferSelect;

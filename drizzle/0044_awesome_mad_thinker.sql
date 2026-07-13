@@ -1,0 +1,1 @@
+ALTER TABLE `custom_lasts` ADD `is_run_on` boolean DEFAULT false NOT NULL;
