@@ -418,3 +418,10 @@
 - [x] StylesTab.tsx: laQty added to sessionItemMap, handleQtyChange/Blur, all-session totals, LA input field
 - [x] BuyAnalysisTab.tsx data layer: mergedItems, boughtItems filter, totalLA, byCategory/byStyle/byLeather/byColourLeather/byColourOverall/byStyleWithColours maps, skuTableRows all include laQty
 - [x] BuyAnalysisTab.tsx UI: LA Pairs summary card (green), BarRow la prop (4th green segment), section subtitles updated, pairs breakdown table header/rows, SKU table header/rows/footer
+
+## Winter Lasts Book Import Prep (Jul 2026)
+- [ ] Extract all lasts, styles, colours, and leathers from WINTERLASTS.pptx into a structured spreadsheet
+- [ ] Separate colour and leather into distinct columns for every extracted row
+- [ ] Validate the extracted spreadsheet against the slide deck and flag any ambiguous entries for review
+- [ ] Deliver the editable spreadsheet for user corrections before any DB upload
+
