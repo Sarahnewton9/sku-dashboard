@@ -23,6 +23,7 @@ export default function BuyAnalysisTab() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
   const [lastFilter, setLastFilter] = useState<string>("All");
+  const [notBoughtMarket, setNotBoughtMarket] = useState<"all" | "au" | "usa" | "nyc" | "la">("all");
   const [expandedStyles, setExpandedStyles] = useState<Set<string>>(new Set());
 
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
@@ -109,17 +110,23 @@ export default function BuyAnalysisTab() {
   const totalLA = useMemo(() => boughtItems.reduce((s, i) => s + i.laQty, 0), [boughtItems]);
   const totalPairs = totalAU + totalUSA + totalNYC + totalLA;
 
-  // Not yet bought — NEW SKUs only with zero total across ALL sessions, excluding cancelled styles/SKUs
+  // Not yet bought — NEW SKUs only with zero qty for the selected market, excluding cancelled styles/SKUs
   const notBoughtSkus = useMemo(() => {
-    const allQtys = allSessionQtys as Record<string, { total: number }>;
+    const allQtys = allSessionQtys as Record<string, { total: number; totalAu: number; totalUsa: number; totalNyc: number; totalLa: number }>;
     return allRangeSkus.filter((sku) => {
       if (!sku.is_new) return false; // only show new SKUs
       if (cancelledStyleSet.has(sku.style)) return false; // exclude cancelled styles
       const key = `${sku.style}|${sku.colour}|${sku.leather}`;
       if (cancelledSkuSet.has(key)) return false; // exclude cancelled SKUs
-      return !allQtys[key] || allQtys[key].total === 0;
+      const q = allQtys[key];
+      if (notBoughtMarket === "all") return !q || q.total === 0;
+      if (notBoughtMarket === "au")  return !q || q.totalAu === 0;
+      if (notBoughtMarket === "usa") return !q || q.totalUsa === 0;
+      if (notBoughtMarket === "nyc") return !q || q.totalNyc === 0;
+      if (notBoughtMarket === "la")  return !q || q.totalLa === 0;
+      return true;
     });
-  }, [allRangeSkus, allSessionQtys, cancelledStyleSet, cancelledSkuSet]);
+  }, [allRangeSkus, allSessionQtys, cancelledStyleSet, cancelledSkuSet, notBoughtMarket]);
 
   // By category
   const byCategory = useMemo(() => {
@@ -812,12 +819,31 @@ export default function BuyAnalysisTab() {
       {/* ─── NOT YET BOUGHT TAB ─── */}
       {viewTab === "not-bought" && (
         <>
+          {/* Market toggle */}
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Market:</span>
+            {(["all", "au", "usa", "nyc", "la"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setNotBoughtMarket(m)}
+                className="text-xs px-3 py-1 rounded-full font-semibold transition-colors"
+                style={{
+                  background: notBoughtMarket === m ? "oklch(0.50 0.14 30)" : "var(--muted)",
+                  color: notBoughtMarket === m ? "#fff" : "var(--muted-foreground)",
+                  border: "1px solid",
+                  borderColor: notBoughtMarket === m ? "oklch(0.50 0.14 30)" : "var(--border)",
+                }}
+              >
+                {m === "all" ? "All Markets" : m.toUpperCase()}
+              </button>
+            ))}
+          </div>
           <div className="flex items-center gap-3 mb-2">
             <div className="rounded-xl border px-4 py-3 flex items-center gap-3" style={{ borderColor: "oklch(0.85 0.08 30)", background: "oklch(0.97 0.04 30)" }}>
               <span className="text-2xl font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 30)" }}>{notBoughtRows.length}</span>
               <div>
               <p className="text-sm font-medium text-foreground">New SKUs not yet bought</p>
-              <p className="text-xs text-muted-foreground">Zero units across all sessions</p>
+              <p className="text-xs text-muted-foreground">{notBoughtMarket === "all" ? "Zero units across all markets" : `Zero units for ${notBoughtMarket.toUpperCase()}`}</p>
               </div>
             </div>
             <div className="rounded-xl border px-4 py-3 flex items-center gap-3" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
