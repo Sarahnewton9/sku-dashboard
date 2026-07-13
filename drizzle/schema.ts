@@ -328,6 +328,8 @@ export const customSkus = mysqlTable("custom_skus", {
   leather: varchar("leather", { length: 64 }).notNull().default(""),
   isNew: boolean("is_new").notNull().default(true),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  imageUrl: text("image_url"),
+  productUrl: text("product_url"),
 });
 export type CustomSku = typeof customSkus.$inferSelect;
 export type InsertCustomSku = typeof customSkus.$inferInsert;
