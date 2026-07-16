@@ -12,35 +12,56 @@ import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { trpc } from "@/lib/trpc";
 
 const CATEGORY_COLOURS: Record<string, string> = {
+  // Shoes
   "DRESS SHOE": "#f59e0b",
+  "CASUAL SHOE": "#fbbf24",
+  // Sandals
   "DRESS SANDAL": "#10b981",
+  "SANDAL": "#34d399",
+  "FLAT SANDAL": "#6ee7b7",
+  "CASUAL SANDAL": "#a7f3d0",
+  // Flats
   "CASUAL FLAT": "#8b5cf6",
+  // Wedges
   "CASUAL WEDGE": "#f97316",
   "DRESS WEDGE": "#fb923c",
-  "WEDGE": "#f97316",
-  "SANDAL": "#06b6d4",
-  "FLAT SANDAL": "#06b6d4",
-  "CASUAL SANDAL": "#06b6d4",
+  "WEDGE": "#fdba74",
+  // Ankle Boots
   "DRESS ANKLE BOOT": "#ec4899",
-  "ANKLE BOOT": "#ec4899",
-  "DRESS CALF BOOT": "#6b7280",
-  "CALF BOOT": "#6b7280",
+  "ANKLE BOOT": "#f472b6",
+  "DRESS BOOT ANKLE": "#ec4899",
+  "CASUAL BOOT ANKLE": "#f9a8d4",
+  // Calf Boots
+  "DRESS CALF BOOT": "#6366f1",
+  "CALF BOOT": "#818cf8",
+  "DRESS BOOT CALF": "#6366f1",
+  "CASUAL BOOT CALF": "#a5b4fc",
+  // Long Boots
+  "DRESS BOOT LONG": "#0ea5e9",
+  "CASUAL BOOT LONG": "#38bdf8",
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
   "DRESS SHOE": "👠",
+  "CASUAL SHOE": "👟",
   "DRESS SANDAL": "👡",
+  "SANDAL": "🩴",
+  "FLAT SANDAL": "🩴",
+  "CASUAL SANDAL": "🩴",
   "CASUAL FLAT": "🩰",
   "CASUAL WEDGE": "👢",
   "DRESS WEDGE": "👢",
   "WEDGE": "👢",
-  "SANDAL": "🩴",
-  "FLAT SANDAL": "🩴",
-  "CASUAL SANDAL": "🩴",
   "DRESS ANKLE BOOT": "👢",
   "ANKLE BOOT": "👢",
+  "DRESS BOOT ANKLE": "👢",
+  "CASUAL BOOT ANKLE": "👢",
   "DRESS CALF BOOT": "👢",
   "CALF BOOT": "👢",
+  "DRESS BOOT CALF": "👢",
+  "CASUAL BOOT CALF": "👢",
+  "DRESS BOOT LONG": "👢",
+  "CASUAL BOOT LONG": "👢",
 };
 
 const TREND_COLOURS: Record<string, string> = {
@@ -178,7 +199,7 @@ export default function CategoryTab() {
     }
 
     return {
-      mergedCategories: Array.from(catMap.values()).sort((a, b) => b.totalSKUs - a.totalSKUs),
+      mergedCategories: Array.from(catMap.values()).sort((a, b) => a.category.localeCompare(b.category)),
       trendStats: Array.from(trendMap.values()).sort((a, b) => b.totalSKUs - a.totalSKUs),
     };
   }, [getCategory, getTrendFlag, getTrends, cancelledStyleSet, cancelledSkuSet, mergedRawSkus, mergedStyles]);
@@ -191,7 +212,6 @@ export default function CategoryTab() {
           const colour = CATEGORY_COLOURS[cat.category] ?? "#6b7280";
           const icon = CATEGORY_ICONS[cat.category] ?? "👟";
           const pctNew = cat.totalSKUs > 0 ? Math.round((cat.newSKUs / cat.totalSKUs) * 100) : 0;
-          const hasTrendBreakdown = Object.keys(cat.trendBreakdown).length > 0;
 
           return (
             <div
@@ -210,20 +230,7 @@ export default function CategoryTab() {
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {cat.totalStyles} {cat.totalStyles === 1 ? "style" : "styles"}
                     </p>
-                    {hasTrendBreakdown && (
-                      <div className="flex flex-wrap gap-1 mt-1.5">
-                        {Object.entries(cat.trendBreakdown).map(([flag, count]) => (
-                          <span
-                            key={flag}
-                            className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full border"
-                            style={{ borderColor: colour, color: colour, background: `${colour}15` }}
-                          >
-                            {flag}
-                            <span className="font-semibold">{count}</span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
+
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-display font-bold tabular-nums text-foreground">
@@ -314,11 +321,7 @@ export default function CategoryTab() {
                       <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: colour }} />
                         <span className="font-medium text-foreground">{cat.category}</span>
-                        {Object.keys(cat.trendBreakdown).length > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            ({Object.keys(cat.trendBreakdown).join(" / ")})
-                          </span>
-                        )}
+
                       </div>
                     </td>
                     <td className="text-right px-4 py-3 tabular-nums text-muted-foreground">{cat.totalStyles}</td>
