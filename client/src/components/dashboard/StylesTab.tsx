@@ -182,7 +182,25 @@ export default function StylesTab() {
   });
 
   // Custom SKUs (added during buy)
-  const { mergedRawSkus, mergedStyles, customSkus, customStyleRows, refetch: refetchCustomSkus, refetchImageOverrides } = useCustomSkus();
+    const { mergedRawSkus, mergedStyles, customSkus, customStyleRows, refetch: refetchCustomSkus, refetchImageOverrides } = useCustomSkus();
+
+  // Auto-cancel styles where every SKU has been individually cancelled
+  const autoCancelledRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!cancelledSkuList.length || !mergedStyles.length) return;
+    for (const s of mergedStyles) {
+      if (cancelledSet.has(s.style)) continue; // already style-cancelled
+      if (autoCancelledRef.current.has(s.style)) continue; // already processed this session
+      const styleSkus = (mergedRawSkus as Array<{ style: string; colour: string; leather: string }>)
+        .filter((r) => r.style === s.style);
+      if (styleSkus.length === 0) continue;
+      const allCancelled = styleSkus.every((r) => cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`));
+      if (allCancelled) {
+        autoCancelledRef.current.add(s.style);
+        cancelStyleMutation.mutate({ style: s.style });
+      }
+    }
+  }, [cancelledSkuSet, mergedStyles, mergedRawSkus, cancelledSet, cancelledSkuList]);
 
   // Style image upload
   const [uploadingImage, setUploadingImage] = useState<string | null>(null); // style name being uploaded
@@ -593,16 +611,20 @@ export default function StylesTab() {
       .filter((s) => !cancelledSet.has(s.style))
       .map((s) => {
         // Recompute leathers and colours excluding cancelled SKUs and markdown SKUs
-        const activeSkus = (mergedRawSkus as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)
-          .filter((r) => r.style === s.style
-            && !cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`)
+        const allStyleSkus = (mergedRawSkus as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)
+          .filter((r) => r.style === s.style);
+        const activeSkus = allStyleSkus
+          .filter((r) => !cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`)
             && !markdownSkuSet.has(markdownKey(r.style, r.colour, r.leather)));
+        // Track if all SKUs for this style are individually cancelled (so we still show the style row)
+        const _allSkusCancelled = allStyleSkus.length > 0 && allStyleSkus.every((r) => cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`));
         const activeLeathers = Array.from(new Set(activeSkus.map((r) => r.leather).filter(Boolean))) as string[];
         const activeColours = Array.from(new Set(activeSkus.map((r) => r.colour).filter(Boolean))) as string[];
         const activeTotal = activeSkus.length;
         const activeNew = activeSkus.filter((r) => r.is_new).length;
         return {
           ...s,
+          _allSkusCancelled,
           leathers: activeLeathers.length > 0 ? activeLeathers : (s.leathers as string[]),
           colours: activeColours.length > 0 ? activeColours : (s.colours as string[]),
           totalSKUs: activeTotal,
@@ -649,6 +671,8 @@ export default function StylesTab() {
   const filtered = useMemo(() => {
     // Hide styles where ALL SKUs are markdown (totalSKUs === 0 after markdown filtering)
     // BUT always show custom styles (even if they have no SKUs yet)
+    // Styles where all SKUs are individually cancelled are auto-promoted to style-level cancellation
+    // via the useEffect above, so they will move to the Cancelled section automatically
     let data = stylesWithCategories.filter((s) => s.totalSKUs > 0 || (s as any)._isCustomStyle);
 
     if (search.trim()) {
