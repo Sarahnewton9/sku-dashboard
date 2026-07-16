@@ -1646,9 +1646,9 @@ export function FittingTab() {
     typeof window !== "undefined" ? (localStorage.getItem("fitting_last_model") ?? "") : ""
   );
 
-  // Live merged styles (includes custom SKUs from DB)
+    // Live merged styles (includes custom SKUs from DB)
   const { mergedStyles } = useCustomSkus();
-
+  const { season } = useSeason();
   // Run-on lasts — styles on these lasts should not appear in Fitting
   const { data: customLastsData = [] } = trpc.customLast.getAll.useQuery({ season }, { staleTime: 300_000 });
   const runOnLastsSet = useMemo(() => {
@@ -1669,10 +1669,7 @@ export function FittingTab() {
   const cancelledSkuSet = useMemo(
     () => new Set((cancelledSkusRaw as any[]).map((r: any) => `${r.style}|${r.colour}` as string)),
     [cancelledSkusRaw]
-  );
-
-  const { season } = useSeason();
-
+    );
   // mergedStyles already has new/existing overrides applied via useCustomSkus
   const seasonNewLasts = useMemo(() => getNewLastsForSeason(season), [season]);
   const styleList = useMemo(() => {
