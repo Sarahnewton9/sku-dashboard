@@ -11,34 +11,37 @@ import { useStyleCategories } from "@/hooks/useStyleCategories";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { trpc } from "@/lib/trpc";
 
+const BOOT_COLOUR = "#6366f1";   // indigo — all boots
+const WEDGE_COLOUR = "#f97316";  // orange — all wedges
+const SANDAL_COLOUR = "#10b981"; // green — dress sandal
+const FLAT_SANDAL_COLOUR = "#34d399"; // lighter green — flat/casual sandal
+
 const CATEGORY_COLOURS: Record<string, string> = {
   // Shoes
   "DRESS SHOE": "#f59e0b",
   "CASUAL SHOE": "#fbbf24",
   // Sandals
-  "DRESS SANDAL": "#10b981",
-  "SANDAL": "#34d399",
-  "FLAT SANDAL": "#6ee7b7",
-  "CASUAL SANDAL": "#a7f3d0",
+  "DRESS SANDAL": SANDAL_COLOUR,
+  "SANDAL": SANDAL_COLOUR,
+  "FLAT SANDAL": FLAT_SANDAL_COLOUR,
+  "CASUAL SANDAL": FLAT_SANDAL_COLOUR,
   // Flats
   "CASUAL FLAT": "#8b5cf6",
-  // Wedges
-  "CASUAL WEDGE": "#f97316",
-  "DRESS WEDGE": "#fb923c",
-  "WEDGE": "#fdba74",
-  // Ankle Boots
-  "DRESS ANKLE BOOT": "#ec4899",
-  "ANKLE BOOT": "#f472b6",
-  "DRESS BOOT ANKLE": "#ec4899",
-  "CASUAL BOOT ANKLE": "#f9a8d4",
-  // Calf Boots
-  "DRESS CALF BOOT": "#6366f1",
-  "CALF BOOT": "#818cf8",
-  "DRESS BOOT CALF": "#6366f1",
-  "CASUAL BOOT CALF": "#a5b4fc",
-  // Long Boots
-  "DRESS BOOT LONG": "#0ea5e9",
-  "CASUAL BOOT LONG": "#38bdf8",
+  // Wedges — all one colour
+  "CASUAL WEDGE": WEDGE_COLOUR,
+  "DRESS WEDGE": WEDGE_COLOUR,
+  "WEDGE": WEDGE_COLOUR,
+  // Boots — all one colour
+  "DRESS ANKLE BOOT": BOOT_COLOUR,
+  "ANKLE BOOT": BOOT_COLOUR,
+  "DRESS BOOT ANKLE": BOOT_COLOUR,
+  "CASUAL BOOT ANKLE": BOOT_COLOUR,
+  "DRESS CALF BOOT": BOOT_COLOUR,
+  "CALF BOOT": BOOT_COLOUR,
+  "DRESS BOOT CALF": BOOT_COLOUR,
+  "CASUAL BOOT CALF": BOOT_COLOUR,
+  "DRESS BOOT LONG": BOOT_COLOUR,
+  "CASUAL BOOT LONG": BOOT_COLOUR,
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
