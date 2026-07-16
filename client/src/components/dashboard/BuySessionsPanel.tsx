@@ -12,10 +12,12 @@ import { Lock, Download, Plus, Clock, CheckCircle, Package, Trash2, Pencil, File
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
+import { useSeason } from "@/contexts/SeasonContext";
 
 export default function BuySessionsPanel() {
   const { mergedStyles } = useCustomSkus();
   const { cancelledSet: cancelledStyleSet } = useCancelledStyles();
+  const { season } = useSeason();
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
@@ -24,13 +26,13 @@ export default function BuySessionsPanel() {
   const editInputRef = useRef<HTMLInputElement>(null);
   const [changesReportSessionId, setChangesReportSessionId] = useState<number | null>(null);
 
-  const { data: allSessions = [], refetch: refetchSessions } = trpc.buy.getSessions.useQuery();
-  const { data: activeSession, refetch: refetchActive } = trpc.buy.getActive.useQuery();
+  const { data: allSessions = [], refetch: refetchSessions } = trpc.buy.getSessions.useQuery({ season });
+  const { data: activeSession, refetch: refetchActive } = trpc.buy.getActive.useQuery({ season });
   const { data: sessionItems = [], refetch: refetchItems } = trpc.buy.getItems.useQuery(
     { sessionId: selectedSessionId ?? 0 },
     { enabled: selectedSessionId !== null }
   );
-  const { data: sessionTotals = {} } = trpc.buy.getSessionTotals.useQuery();
+  const { data: sessionTotals = {} } = trpc.buy.getSessionTotals.useQuery({ season });
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
   const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
   const { data: subCategoryList = [] } = trpc.styleSubCategory.getAll.useQuery();

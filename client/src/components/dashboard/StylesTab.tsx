@@ -14,6 +14,7 @@ import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
+import { useSeason } from "@/contexts/SeasonContext";
 import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock, FileSpreadsheet, X, Camera, ImageOff, Ruler } from "lucide-react";
 import { LastMeasurementsPanel } from "./LastMeasurementsPanel";
 import * as XLSX from "xlsx";
@@ -167,8 +168,10 @@ export default function StylesTab() {
   // Fitting images for approved styles
   const { data: allFitImages = [], refetch: refetchFitImages } = trpc.styleFitting.getAll.useQuery(undefined, { staleTime: 60_000 });
 
+  const { season } = useSeason();
+
   // All fitting sessions — used for the Fitting Status filter
-  const { data: allFittingSessions = [] } = trpc.fittingSession.getAll.useQuery(undefined, { staleTime: 30_000 });
+  const { data: allFittingSessions = [] } = trpc.fittingSession.getAll.useQuery({ season }, { staleTime: 30_000 });
   // Set of style names that have at least one fitting session
   const fittedStylesSet = useMemo(() => new Set(allFittingSessions.map((s) => s.style)), [allFittingSessions]);
 
@@ -359,11 +362,11 @@ export default function StylesTab() {
   });
 
   // All-session combined buy quantities (persistent, always visible)
-  const { data: allSessionQtys = {} } = trpc.buy.getAllSessionQtys.useQuery(undefined, { staleTime: 10_000 });
+  const { data: allSessionQtys = {} } = trpc.buy.getAllSessionQtys.useQuery({ season }, { staleTime: 10_000 });
 
   // Buy sessions
-  const { data: allSessions = [], refetch: refetchSessions } = trpc.buy.getSessions.useQuery(undefined, { staleTime: 30_000 });
-  const { data: activeSession, refetch: refetchActive } = trpc.buy.getActive.useQuery(undefined, { staleTime: 30_000 });
+  const { data: allSessions = [], refetch: refetchSessions } = trpc.buy.getSessions.useQuery({ season }, { staleTime: 30_000 });
+  const { data: activeSession, refetch: refetchActive } = trpc.buy.getActive.useQuery({ season }, { staleTime: 30_000 });
   const { data: sessionItems = [], refetch: refetchItems } = trpc.buy.getItems.useQuery(
     { sessionId: selectedSessionId ?? 0 },
     { enabled: selectedSessionId !== null }

@@ -11,6 +11,7 @@
 
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useSeason, type Season } from "@/contexts/SeasonContext";
 import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
@@ -86,6 +87,7 @@ type ChatMessage = { role: "user" | "assistant"; content: string };
 
 export default function Dashboard() {
   const [location, navigate] = useLocation();
+  const { season, setSeason } = useSeason();
   const [showExport, setShowExport] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -190,13 +192,26 @@ export default function Dashboard() {
       <aside className="w-60 flex-shrink-0 flex flex-col h-full overflow-y-auto"
         style={{ background: "var(--sidebar)", borderRight: "1px solid var(--sidebar-border)" }}>
         {/* Logo area */}
-        <div className="px-5 py-6 border-b" style={{ borderColor: "var(--sidebar-border)" }}>
+        <div className="px-5 py-5 border-b" style={{ borderColor: "var(--sidebar-border)" }}>
           <h1 className="font-display font-bold text-lg leading-tight" style={{ color: "var(--sidebar-foreground)" }}>
-            SKU Analysis
+            SKU DASH
           </h1>
-          <p className="text-xs mt-1 font-medium" style={{ color: "oklch(0.60 0.01 80)" }}>
-            SS26 Range Review
-          </p>
+          {/* Season toggle */}
+          <div className="flex items-center gap-1 mt-2 p-0.5 rounded-lg" style={{ background: "oklch(0.88 0.01 80)" }}>
+            {(["SS26", "W27"] as Season[]).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSeason(s)}
+                className="flex-1 text-xs font-semibold py-1 rounded-md transition-all"
+                style={{
+                  background: season === s ? "var(--sidebar-foreground)" : "transparent",
+                  color: season === s ? "var(--sidebar)" : "oklch(0.50 0.01 80)",
+                }}
+              >
+                {s === "SS26" ? "SS26" : "Winter 27"}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Quick stats */}

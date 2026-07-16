@@ -8,6 +8,7 @@ import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { ALL_LASTS } from "@shared/const";
+import { useSeason } from "@/contexts/SeasonContext";
 
 const ALL_LASTS_UPPER = new Set(ALL_LASTS.map((l) => l.toUpperCase()));
 
@@ -203,10 +204,12 @@ function StyleCard({
 // ─── Add Style Form ────────────────────────────────────────────────────────────
 function AddStyleForm({
   lastName,
+  season,
   onAdded,
   onCancel,
 }: {
   lastName: string;
+  season: string;
   onAdded: () => void;
   onCancel: () => void;
 }) {
@@ -226,7 +229,7 @@ function AddStyleForm({
   const handleSubmit = () => {
     const name = styleName.trim().toUpperCase();
     if (!name) return;
-    addMutation.mutate({ style: name, lastName, category: category.trim() || undefined });
+    addMutation.mutate({ style: name, lastName, category: category.trim() || undefined, season });
   };
 
   return (
@@ -294,8 +297,9 @@ export default function LastApprovalTab() {
     return { lastToStyles, lastNewSkuCount };
   }, [mergedStyles, getCategory]);
 
-  const { data: approvals, refetch } = trpc.lastApproval.getAll.useQuery();
-  const { data: deletedLastsFromDb = [], refetch: refetchDeleted } = trpc.lastApproval.getDeleted.useQuery();
+  const { season } = useSeason();
+  const { data: approvals, refetch } = trpc.lastApproval.getAll.useQuery({ season });
+  const { data: deletedLastsFromDb = [], refetch: refetchDeleted } = trpc.lastApproval.getDeleted.useQuery({ season });
   const { data: imageOverrideList = [], refetch: refetchImages } = trpc.styleImage.getAll.useQuery();
   const imageOverrides = useMemo(
     () => imageOverrideList.reduce<Record<string, string>>((acc, o) => { acc[o.style] = o.imageUrl; return acc; }, {}),
@@ -1002,6 +1006,7 @@ export default function LastApprovalTab() {
                     {isAddingStyle && (
                       <AddStyleForm
                         lastName={lastName}
+                        season={season}
                         onAdded={() => {
                           setAddingStyleToLast(null);
                           refetchCustomStyles();

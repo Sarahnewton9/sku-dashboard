@@ -6,6 +6,7 @@ import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { FileDown, X, FileSpreadsheet, ClipboardList, RefreshCw, Upload, FileText } from "lucide-react";
+import { useSeason } from "@/contexts/SeasonContext";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import PptxSyncModal from "./PptxSyncModal";
@@ -43,6 +44,7 @@ const FULL_EXPORT_DEFAULT_COLS = new Set(FULL_EXPORT_ALL_COLS.map(c => c.key));
 
 export default function ExportPanel({ onClose }: Props) {
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
+  const { season } = useSeason();
   const [exporting, setExporting] = useState<string | null>(null);
   const [ap21Style, setAp21Style] = useState<string>("ALL");
   const [showPptxSync, setShowPptxSync] = useState(false);
@@ -51,8 +53,8 @@ export default function ExportPanel({ onClose }: Props) {
 
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
   const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
-  const { data: allSessions = [] } = trpc.buy.getSessions.useQuery();
-  const { data: customSkuList = [] } = trpc.customSku.getAll.useQuery();
+  const { data: allSessions = [] } = trpc.buy.getSessions.useQuery({ season });
+  const { data: customSkuList = [] } = trpc.customSku.getAll.useQuery({ season });
   const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery();
   const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
   const { data: heelHeightData = [] } = trpc.heelHeight.getAll.useQuery();

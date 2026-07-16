@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns, customLasts, lastMeasurements } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -255,29 +255,29 @@ export async function getAllFittingImages() {
 
 // ─── Buy Sessions ─────────────────────────────────────────────────────────────
 
-export async function getAllBuySessions() {
+export async function getAllBuySessions(season = "SS26") {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(buySessions).orderBy(buySessions.createdAt);
+  return db.select().from(buySessions).where(eq(buySessions.season, season)).orderBy(buySessions.createdAt);
 }
 
-export async function getActiveBuySession() {
+export async function getActiveBuySession(season = "SS26") {
   const db = await getDb();
   if (!db) return null;
   const result = await db.select().from(buySessions)
-    .where(eq(buySessions.isLocked, false))
+    .where(and(eq(buySessions.isLocked, false), eq(buySessions.season, season)))
     .orderBy(buySessions.createdAt)
     .limit(1);
   return result[0] ?? null;
 }
 
-export async function createBuySession(name: string) {
+export async function createBuySession(name: string, season = "SS26") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(buySessions).values({ name, isLocked: false });
+  await db.insert(buySessions).values({ name, isLocked: false, season });
   // Return the newly created session
   const result = await db.select().from(buySessions)
-    .where(eq(buySessions.name, name))
+    .where(and(eq(buySessions.name, name), eq(buySessions.season, season)))
     .orderBy(buySessions.createdAt)
     .limit(1);
   return result[0];
@@ -298,10 +298,12 @@ export async function getBuySessionItems(sessionId: number) {
     .where(eq(buySessionItems.sessionId, sessionId));
 }
 
-export async function getSessionTotals(): Promise<Record<number, { au: number; usa: number; nyc: number; la: number; total: number }>> {
+export async function getSessionTotals(season = "SS26"): Promise<Record<number, { au: number; usa: number; nyc: number; la: number; total: number }>> {
   const db = await getDb();
   if (!db) return {};
-  const rows = await db.select().from(buySessionItems);
+  const sessionIds = (await db.select({ id: buySessions.id }).from(buySessions).where(eq(buySessions.season, season))).map(s => s.id);
+  if (sessionIds.length === 0) return {};
+  const rows = await db.select().from(buySessionItems).where(inArray(buySessionItems.sessionId, sessionIds));
   const totals: Record<number, { au: number; usa: number; nyc: number; la: number; total: number }> = {};
   for (const row of rows) {
     const au = row.auQty ?? 0;
@@ -323,7 +325,7 @@ export async function getSessionTotals(): Promise<Record<number, { au: number; u
  * Key: "style|colour|leather"
  * Only includes SKUs with at least 1 unit bought.
  */
-export async function getAllSessionQtys(): Promise<Record<string, {
+export async function getAllSessionQtys(season = "SS26"): Promise<Record<string, {
   totalAu: number;
   totalUsa: number;
   totalNyc: number;
@@ -333,9 +335,11 @@ export async function getAllSessionQtys(): Promise<Record<string, {
 }>> {
   const db = await getDb();
   if (!db) return {};
+  const seasonSessions = await db.select().from(buySessions).where(eq(buySessions.season, season));
+  const seasonSessionIds = seasonSessions.map(s => s.id);
   const [items, sessions] = await Promise.all([
-    db.select().from(buySessionItems),
-    db.select().from(buySessions),
+    seasonSessionIds.length > 0 ? db.select().from(buySessionItems).where(inArray(buySessionItems.sessionId, seasonSessionIds)) : Promise.resolve([]),
+    Promise.resolve(seasonSessions),
   ]);
   const sessionMap: Record<number, string> = {};
   for (const s of sessions) sessionMap[s.id] = s.name;
@@ -439,10 +443,10 @@ export async function deleteBuySession(id: number) {
 
 // ─── Last Approvals ─────────────────────────────────────────────────────────────────────────────
 
-export async function getAllLastApprovals() {
+export async function getAllLastApprovals(season = "SS26") {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(lastApprovals);
+  return db.select().from(lastApprovals).where(eq(lastApprovals.season, season));
 }
 
 export async function upsertLastApproval(
@@ -473,10 +477,10 @@ export async function upsertLastApproval(
 
 // ─── Deleted Lasts ───────────────────────────────────────────────────────────
 
-export async function getDeletedLasts(): Promise<string[]> {
+export async function getDeletedLasts(season = "SS26"): Promise<string[]> {
   const db = await getDb();
   if (!db) return [];
-  const rows = await db.select().from(deletedLasts);
+  const rows = await db.select().from(deletedLasts).where(eq(deletedLasts.season, season));
   return rows.map(r => r.lastName);
 }
 
@@ -699,7 +703,7 @@ export async function getSpecCountsForAllStyles(): Promise<{ style: string; fill
 }
 
 // ─── Fitting Sessions ─────────────────────────────────────────────────────────
-export async function createFittingSession(data: { style: string; fitModel: string; sessionDate: string; notes?: string; sampleDate?: string | null; sampleType?: string | null; sampleSize?: string | null }): Promise<number> {
+export async function createFittingSession(data: { style: string; fitModel: string; sessionDate: string; notes?: string; sampleDate?: string | null; sampleType?: string | null; sampleSize?: string | null; season?: string }): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(fittingSessions).values({
@@ -710,6 +714,7 @@ export async function createFittingSession(data: { style: string; fitModel: stri
     sampleDate: data.sampleDate ?? null,
     sampleType: data.sampleType ?? null,
     sampleSize: data.sampleSize ?? null,
+    season: data.season ?? "SS26",
   });
   return (result[0] as { insertId: number }).insertId;
 }
@@ -736,13 +741,13 @@ export async function deleteFittingSession(id: number): Promise<void> {
   await db.delete(fittingSessions).where(eq(fittingSessions.id, id));
 }
 
-export async function getFittingSessionsForStyle(style: string): Promise<Array<{
+export async function getFittingSessionsForStyle(style: string, season = "SS26"): Promise<Array<{
   id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; sampleDate: string | null; sampleType: string | null; createdAt: Date;
   images: Array<{ id: number; imageUrl: string; fileKey: string; createdAt: Date }>;
 }>> {
   const db = await getDb();
   if (!db) return [];
-  const sessions = await db.select().from(fittingSessions).where(eq(fittingSessions.style, style)).orderBy(fittingSessions.sessionDate);
+  const sessions = await db.select().from(fittingSessions).where(and(eq(fittingSessions.style, style), eq(fittingSessions.season, season))).orderBy(fittingSessions.sessionDate);
   const images = await db.select().from(fittingSessionImages).where(eq(fittingSessionImages.style, style));
   return sessions.map((s) => ({
     ...s,
@@ -750,13 +755,13 @@ export async function getFittingSessionsForStyle(style: string): Promise<Array<{
   }));
 }
 
-export async function getAllFittingSessions(): Promise<Array<{
+export async function getAllFittingSessions(season = "SS26"): Promise<Array<{
   id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; sampleDate: string | null; sampleType: string | null; createdAt: Date;
   images: Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string; createdAt: Date }>;
 }>> {
   const db = await getDb();
   if (!db) return [];
-  const sessions = await db.select().from(fittingSessions).orderBy(fittingSessions.style, fittingSessions.sessionDate);
+  const sessions = await db.select().from(fittingSessions).where(eq(fittingSessions.season, season)).orderBy(fittingSessions.style, fittingSessions.sessionDate);
   const images = await db.select().from(fittingSessionImages);
   return sessions.map((s) => ({
     ...s,
@@ -821,23 +826,22 @@ export async function listCancelledStyles(): Promise<{ style: string; cancelledA
 }
 
 // ─── Custom SKUs ───────────────────────────────────────────────────────────────
-export async function addCustomSku(style: string, colour: string, leather: string): Promise<number> {
+export async function addCustomSku(style: string, colour: string, leather: string, season = "SS26"): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  // If this exact style/colour/leather already exists, return the existing id
-  // (caller will un-hide and un-cancel it so it reappears)
+  // If this exact style/colour/leather already exists for this season, return the existing id
   const existing = await db.select({ id: customSkus.id }).from(customSkus)
-    .where(and(eq(customSkus.style, style), eq(customSkus.colour, colour), eq(customSkus.leather, leather)))
+    .where(and(eq(customSkus.style, style), eq(customSkus.colour, colour), eq(customSkus.leather, leather), eq(customSkus.season, season)))
     .limit(1);
   if (existing.length > 0) return existing[0].id;
-  const result = await db.insert(customSkus).values({ style, colour, leather });
+  const result = await db.insert(customSkus).values({ style, colour, leather, season });
   return (result[0] as any).insertId as number;
 }
 
-export async function getAllCustomSkus(): Promise<{ id: number; style: string; colour: string; leather: string; isNew: boolean; createdAt: Date }[]> {
+export async function getAllCustomSkus(season = "SS26"): Promise<{ id: number; style: string; colour: string; leather: string; isNew: boolean; createdAt: Date }[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(customSkus);
+  return db.select().from(customSkus).where(eq(customSkus.season, season));
 }
 
 export async function deleteCustomSku(id: number): Promise<void> {
@@ -847,18 +851,18 @@ export async function deleteCustomSku(id: number): Promise<void> {
 }
 
 // ─── Custom Styles ────────────────────────────────────────────────────────────
-export async function getAllCustomStyles(): Promise<{ id: number; style: string; lastName: string; category: string | null; createdAt: Date }[]> {
+export async function getAllCustomStyles(season = "SS26"): Promise<{ id: number; style: string; lastName: string; category: string | null; createdAt: Date }[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(customStyles);
+  return db.select().from(customStyles).where(eq(customStyles.season, season));
 }
 
-export async function addCustomStyle(style: string, lastName: string, category?: string): Promise<number> {
+export async function addCustomStyle(style: string, lastName: string, category?: string, season = "SS26"): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db
     .insert(customStyles)
-    .values({ style, lastName, category: category ?? null })
+    .values({ style, lastName, category: category ?? null, season })
     .onDuplicateKeyUpdate({ set: { lastName, category: category ?? null } });
   return (result[0] as any).insertId as number;
 }

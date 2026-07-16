@@ -2726,7 +2726,7 @@ export default function SpecsTab({}: SpecsTabProps) {
         }
         return [
           ...old,
-          { id: -Date.now(), style: input.style, colour: input.colour, component: input.component, value: input.value, updatedAt: new Date() },
+          { id: -Date.now(), style: input.style, colour: input.colour, component: input.component, value: input.value, updatedAt: new Date(), season: "SS26" },
         ];
       });
       return { prev };

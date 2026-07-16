@@ -7,6 +7,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Lock, Unlock, Plus, ChevronDown, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { useSeason } from "@/contexts/SeasonContext";
 
 interface Props {
   activeSession: { id: number; name: string; isLocked: boolean; createdAt: Date } | null | undefined;
@@ -30,6 +31,7 @@ export default function BuySessionBar({
   const [showHistory, setShowHistory] = useState(false);
 
   const utils = trpc.useUtils();
+  const { season } = useSeason();
 
   const createMutation = trpc.buy.create.useMutation({
     onSuccess: (session) => {
@@ -66,7 +68,7 @@ export default function BuySessionBar({
 
   function handleCreate() {
     const name = newName.trim() || `Buy — ${new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" })}`;
-    createMutation.mutate({ name });
+    createMutation.mutate({ name, season });
   }
 
   function handleLock() {

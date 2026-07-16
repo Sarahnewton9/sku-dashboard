@@ -458,22 +458,30 @@ export const appRouter = router({
 
   // Buy sessions
   buy: router({
-    getSessions: publicProcedure.query(async () => getAllBuySessions()),
+    getSessions: publicProcedure
+      .input(z.object({ season: z.string().default("SS26") }))
+      .query(async ({ input }) => getAllBuySessions(input.season)),
 
-    getSessionTotals: publicProcedure.query(async () => getSessionTotals()),
+    getSessionTotals: publicProcedure
+      .input(z.object({ season: z.string().default("SS26") }))
+      .query(async ({ input }) => getSessionTotals(input.season)),
 
-    getAllSessionQtys: publicProcedure.query(async () => getAllSessionQtys()),
+    getAllSessionQtys: publicProcedure
+      .input(z.object({ season: z.string().default("SS26") }))
+      .query(async ({ input }) => getAllSessionQtys(input.season)),
 
-    getActive: publicProcedure.query(async () => getActiveBuySession()),
+    getActive: publicProcedure
+      .input(z.object({ season: z.string().default("SS26") }))
+      .query(async ({ input }) => getActiveBuySession(input.season)),
 
     getItems: publicProcedure
       .input(z.object({ sessionId: z.number() }))
       .query(async ({ input }) => getBuySessionItems(input.sessionId)),
 
     create: publicProcedure
-      .input(z.object({ name: z.string().min(1) }))
+      .input(z.object({ name: z.string().min(1), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
-        const session = await createBuySession(input.name);
+        const session = await createBuySession(input.name, input.season);
         return session;
       }),
 
@@ -522,9 +530,13 @@ export const appRouter = router({
 
   // Last approvals
   lastApproval: router({
-    getAll: publicProcedure.query(async () => getAllLastApprovals()),
+    getAll: publicProcedure
+      .input(z.object({ season: z.string().optional().default("SS26") }))
+      .query(async ({ input }) => getAllLastApprovals(input.season)),
 
-    getDeleted: publicProcedure.query(async () => getDeletedLasts()),
+    getDeleted: publicProcedure
+      .input(z.object({ season: z.string().optional().default("SS26") }))
+      .query(async ({ input }) => getDeletedLasts(input.season)),
 
     upsert: publicProcedure
       .input(z.object({
@@ -830,12 +842,13 @@ export const appRouter = router({
   }),
   fittingSession: router({
     getAll: publicProcedure
-      .query(async () => getAllFittingSessions()),
+      .input(z.object({ season: z.string().default("SS26") }))
+      .query(async ({ input }) => getAllFittingSessions(input.season)),
     getForStyle: publicProcedure
-      .input(z.object({ style: z.string() }))
-      .query(async ({ input }) => getFittingSessionsForStyle(input.style)),
+      .input(z.object({ style: z.string(), season: z.string().default("SS26") }))
+      .query(async ({ input }) => getFittingSessionsForStyle(input.style, input.season)),
     create: publicProcedure
-      .input(z.object({ style: z.string(), fitModel: z.string(), sessionDate: z.string(), notes: z.string().optional(), sampleDate: z.string().nullable().optional(), sampleType: z.string().nullable().optional(), sampleSize: z.string().nullable().optional() }))
+      .input(z.object({ style: z.string(), fitModel: z.string(), sessionDate: z.string(), notes: z.string().optional(), sampleDate: z.string().nullable().optional(), sampleType: z.string().nullable().optional(), sampleSize: z.string().nullable().optional(), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
         const id = await createFittingSession(input);
         return { id };
@@ -912,15 +925,16 @@ export const appRouter = router({
 
   customSku: router({
     getAll: publicProcedure
-      .query(async () => getAllCustomSkus()),
+      .input(z.object({ season: z.string().default("SS26") }))
+      .query(async ({ input }) => getAllCustomSkus(input.season)),
 
     add: publicProcedure
-      .input(z.object({ style: z.string(), colour: z.string(), leather: z.string() }))
+      .input(z.object({ style: z.string(), colour: z.string(), leather: z.string(), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
-        const { style, colour, leather } = input;
+        const { style, colour, leather, season } = input;
         // If the SKU already exists in custom_skus, just make sure it's visible:
         // un-cancel it and un-hide it so it reappears in the spec sheet.
-        const id = await addCustomSku(style, colour, leather);
+        const id = await addCustomSku(style, colour, leather, season);
         // Also clear any hidden-column entry and cancelled-sku entry for this colour key.
         // Build the compound colour key the same way the spec sheet does.
         const colourKey = leather ? `${colour} ${leather}` : colour;
@@ -939,12 +953,13 @@ export const appRouter = router({
 
   customStyle: router({
     getAll: publicProcedure
-      .query(async () => getAllCustomStyles()),
+      .input(z.object({ season: z.string().default("SS26") }))
+      .query(async ({ input }) => getAllCustomStyles(input.season)),
 
     add: publicProcedure
-      .input(z.object({ style: z.string(), lastName: z.string(), category: z.string().optional() }))
+      .input(z.object({ style: z.string(), lastName: z.string(), category: z.string().optional(), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
-        const id = await addCustomStyle(input.style, input.lastName, input.category);
+        const id = await addCustomStyle(input.style, input.lastName, input.category, input.season);
         return { id };
       }),
 

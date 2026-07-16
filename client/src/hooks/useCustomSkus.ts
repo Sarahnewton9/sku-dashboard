@@ -1,6 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { useMemo } from "react";
+import { useSeason } from "@/contexts/SeasonContext";
 
 export type CustomSkuRow = {
   id: number;
@@ -28,7 +29,9 @@ export type CustomSkuRow = {
  *  - isLoading: whether the query is still loading
  */
 export function useCustomSkus() {
-  const { data: customSkus = [], isLoading, refetch } = trpc.customSku.getAll.useQuery(undefined, {
+  const { season } = useSeason();
+
+  const { data: customSkus = [], isLoading, refetch } = trpc.customSku.getAll.useQuery({ season }, {
     staleTime: 30_000,
   });
 
@@ -43,7 +46,7 @@ export function useCustomSkus() {
   });
 
   // Fetch custom styles (brand-new styles added manually, not in static skuData)
-  const { data: customStyleRows = [], refetch: refetchCustomStyles } = trpc.customStyle.getAll.useQuery(undefined, {
+  const { data: customStyleRows = [], refetch: refetchCustomStyles } = trpc.customStyle.getAll.useQuery({ season }, {
     staleTime: 30_000,
   });
 

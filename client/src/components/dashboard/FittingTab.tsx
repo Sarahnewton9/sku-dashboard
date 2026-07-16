@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { LastMeasurementsPanel } from "./LastMeasurementsPanel";
 import { toast } from "sonner";
+import { useSeason } from "@/contexts/SeasonContext";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -1238,7 +1239,8 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
 
   const { data: styleMetaList = [] } = trpc.style.getAll.useQuery(undefined, { staleTime: 30_000 });
   const { data: imageOverrideList = [] } = trpc.styleImage.getAll.useQuery(undefined, { staleTime: 120_000 });
-  const { data: allSessionsRaw = [] } = trpc.fittingSession.getAll.useQuery(undefined, { staleTime: 15_000 });
+  const { season: groupSeason } = useSeason();
+  const { data: allSessionsRaw = [] } = trpc.fittingSession.getAll.useQuery({ season: groupSeason }, { staleTime: 15_000 });
 
   const styleMeta = useMemo(() => styleMetaList.reduce<Record<string, any>>((acc, m) => { acc[m.style] = m; return acc; }, {}), [styleMetaList]);
   const imageOverrides = useMemo(() => imageOverrideList.reduce<Record<string, string>>((acc, o) => { acc[o.style] = o.imageUrl; return acc; }, {}), [imageOverrideList]);
@@ -1705,8 +1707,10 @@ export function FittingTab() {
     (acc, o) => { acc[o.style] = o.imageUrl; return acc; }, {}
   );
 
+  const { season } = useSeason();
+
   // ── Bulk session fetch (single query for all styles) ────────────────────────
-  const { data: allSessionsRaw = [], refetch: refetchSessions } = trpc.fittingSession.getAll.useQuery(undefined, { staleTime: 15_000 });
+  const { data: allSessionsRaw = [], refetch: refetchSessions } = trpc.fittingSession.getAll.useQuery({ season }, { staleTime: 15_000 });
 
   // Build a map: style -> sessions[] so each row can look up its sessions instantly
   const sessionsByStyle = useMemo(() => {

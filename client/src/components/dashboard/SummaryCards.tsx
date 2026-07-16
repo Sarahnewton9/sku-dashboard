@@ -12,6 +12,7 @@ import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Package, Sparkles, Archive, Layers, Star, RefreshCw, FlaskConical, CheckCircle2 } from "lucide-react";
 import { ALL_LASTS } from "@shared/const";
+import { useSeason } from "@/contexts/SeasonContext";
 
 const CATEGORY_COLOURS: Record<string, string> = {
   "Dress Shoe": "#f59e0b",
@@ -187,8 +188,9 @@ export default function SummaryCards() {
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
 
   // Fetch last approval data — same sources as LastApprovalTab
-  const { data: lastApprovals = [] } = trpc.lastApproval.getAll.useQuery();
-  const { data: deletedLastsFromDb = [] } = trpc.lastApproval.getDeleted.useQuery();
+  const { season } = useSeason();
+  const { data: lastApprovals = [] } = trpc.lastApproval.getAll.useQuery({ season });
+  const { data: deletedLastsFromDb = [] } = trpc.lastApproval.getDeleted.useQuery({ season });
   const { data: customLastsFromDb = [] } = trpc.customLast.getAll.useQuery();
 
   // Build the same visible lasts list as LastApprovalTab does

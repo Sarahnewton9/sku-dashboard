@@ -111,6 +111,7 @@ export const buySessions = mysqlTable("buy_sessions", {
   isLocked: boolean("isLocked").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   lockedAt: timestamp("lockedAt"),
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
 });
 
 export type BuySession = typeof buySessions.$inferSelect;
@@ -141,7 +142,8 @@ export type InsertBuySessionItem = typeof buySessionItems.$inferInsert;
  */
 export const lastApprovals = mysqlTable("last_approvals", {
   id: int("id").autoincrement().primaryKey(),
-  lastName: varchar("lastName", { length: 128 }).notNull().unique(),
+  lastName: varchar("lastName", { length: 128 }).notNull(),
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
   status: mysqlEnum("status", ["approved", "waiting_revised"]).default("waiting_revised").notNull(),
   notes: text("notes"),
   // Per-size approval checkboxes
@@ -204,8 +206,9 @@ export const styleSpecs = mysqlTable("style_specs", {
   component: varchar("component", { length: 128 }).notNull(),
   value: text("value"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
 }, (t) => ({
-  uniq: uniqueIndex("style_colour_component_uniq").on(t.style, t.colour, t.component),
+  uniq: uniqueIndex("style_colour_component_uniq").on(t.style, t.colour, t.component, t.season),
 }));
 
 export type StyleSpec = typeof styleSpecs.$inferSelect;
@@ -230,7 +233,8 @@ export type InsertSpecDropdownOption = typeof specDropdownOptions.$inferInsert;
  */
 export const styleSpecMeta = mysqlTable("style_spec_meta", {
   id: int("id").autoincrement().primaryKey(),
-  style: varchar("style", { length: 64 }).notNull().unique(),
+  style: varchar("style", { length: 64 }).notNull(),
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
   hasBuckle: boolean("hasBuckle").default(false).notNull(),
   dressShoeSubType: mysqlEnum("dressShoeSubType", ["court", "sling"]),
   notes: text("notes"),
@@ -257,6 +261,7 @@ export const fittingSessions = mysqlTable("fitting_sessions", {
   sampleSize: varchar("sampleSize", { length: 32 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
 });
 
 export type FittingSession = typeof fittingSessions.$inferSelect;
@@ -313,6 +318,7 @@ export const deletedLasts = mysqlTable("deleted_lasts", {
   id: int("id").autoincrement().primaryKey(),
   lastName: varchar("lastName", { length: 128 }).notNull().unique(),
   deletedAt: timestamp("deletedAt").defaultNow().notNull(),
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
 });
 
 export type DeletedLast = typeof deletedLasts.$inferSelect;
@@ -330,6 +336,7 @@ export const customSkus = mysqlTable("custom_skus", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   imageUrl: text("image_url"),
   productUrl: text("product_url"),
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
 });
 export type CustomSku = typeof customSkus.$inferSelect;
 export type InsertCustomSku = typeof customSkus.$inferInsert;
@@ -463,11 +470,14 @@ export type InsertLastHeelHeight = typeof lastHeelHeights.$inferInsert;
  */
 export const customStyles = mysqlTable("custom_styles", {
   id: int("id").autoincrement().primaryKey(),
-  style: varchar("style", { length: 64 }).notNull().unique(),
+  style: varchar("style", { length: 64 }).notNull(),
   lastName: varchar("last_name", { length: 128 }).notNull(),
   category: varchar("category", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
+}, (t) => ({
+  styleSeasonUniq: uniqueIndex("custom_styles_style_season_uniq").on(t.style, t.season),
+}));
 export type CustomStyle = typeof customStyles.$inferSelect;
 export type InsertCustomStyle = typeof customStyles.$inferInsert;
 
@@ -482,8 +492,9 @@ export const skuNewOverride = mysqlTable("sku_new_override", {
   leather: varchar("leather", { length: 64 }).notNull().default(""),
   isNew: boolean("isNew").notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
 }, (t) => ({
-  skuIdx: uniqueIndex("sku_new_override_sku_idx").on(t.style, t.colour, t.leather),
+  skuIdx: uniqueIndex("sku_new_override_sku_idx").on(t.style, t.colour, t.leather, t.season),
 }));
 export type SkuNewOverride = typeof skuNewOverride.$inferSelect;
 export type InsertSkuNewOverride = typeof skuNewOverride.$inferInsert;
@@ -496,7 +507,8 @@ export type InsertSkuNewOverride = typeof skuNewOverride.$inferInsert;
  */
 export const specRowOrder = mysqlTable("spec_row_order", {
   id: int("id").autoincrement().primaryKey(),
-  style: varchar("style", { length: 64 }).notNull().unique(),
+  style: varchar("style", { length: 64 }).notNull(),
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
   rowKeys: text("row_keys").notNull(), // JSON array of "template:key" | "custom:id"
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -512,8 +524,9 @@ export const specHiddenColumns = mysqlTable("spec_hidden_columns", {
   style: varchar("style", { length: 64 }).notNull(),
   colour: varchar("colour", { length: 64 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
 }, (t) => ({
-  styleColourIdx: uniqueIndex("spec_hidden_col_idx").on(t.style, t.colour),
+  styleColourIdx: uniqueIndex("spec_hidden_col_idx").on(t.style, t.colour, t.season),
 }));
 export type SpecHiddenColumn = typeof specHiddenColumns.$inferSelect;
 export type InsertSpecHiddenColumn = typeof specHiddenColumns.$inferInsert;

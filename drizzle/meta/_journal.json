@@ -316,6 +316,20 @@
       "when": 1783986819546,
       "tag": "0044_awesome_mad_thinker",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "5",
+      "when": 1784168378855,
+      "tag": "0045_tough_lucky_pierre",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "5",
+      "when": 1784169351147,
+      "tag": "0046_clean_toro",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `deleted_lasts` ADD `season` varchar(16) DEFAULT 'SS26' NOT NULL;

@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
+import { useSeason } from "@/contexts/SeasonContext";
 import { BarChart3, ChevronDown, Package, Check, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { displayColour, displayLeather } from "@/lib/utils";
 
@@ -28,15 +29,16 @@ export default function BuyAnalysisTab() {
 
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
   const { cancelledSet: cancelledStyleSet } = useCancelledStyles();
+  const { season } = useSeason();
   const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
   const cancelledSkuSet = useMemo(
     () => new Set((cancelledSkusRaw as any[]).map((r: any) => `${r.style}|${r.colour}|${r.leather}`)),
     [cancelledSkusRaw]
   );
 
-  const { data: allSessions = [] } = trpc.buy.getSessions.useQuery();
-  const { data: activeSession } = trpc.buy.getActive.useQuery();
-  const { data: allSessionQtys = {} } = trpc.buy.getAllSessionQtys.useQuery();
+  const { data: allSessions = [] } = trpc.buy.getSessions.useQuery({ season });
+  const { data: activeSession } = trpc.buy.getActive.useQuery({ season });
+  const { data: allSessionQtys = {} } = trpc.buy.getAllSessionQtys.useQuery({ season });
   const { getCategory } = useStyleCategories();
 
   // Auto-select active session on first load
