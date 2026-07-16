@@ -11,22 +11,22 @@ import { useStyleCategories } from "@/hooks/useStyleCategories";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { trpc } from "@/lib/trpc";
 
-const BOOT_COLOUR = "#6366f1";   // indigo — all boots
-const WEDGE_COLOUR = "#f97316";  // orange — all wedges
-const SANDAL_COLOUR = "#10b981"; // green — dress sandal
-const FLAT_SANDAL_COLOUR = "#34d399"; // lighter green — flat/casual sandal
+const BOOT_COLOUR = "#8B162B";        // Crimson Ink — all boots
+const WEDGE_COLOUR = "#F37521";       // Burnt Sienna — all wedges
+const SANDAL_COLOUR = "#C6B63B";      // Neon Pear — dress sandal
+const FLAT_SANDAL_COLOUR = "#d4c96a"; // lighter Neon Pear — flat/casual sandal
 
 const CATEGORY_COLOURS: Record<string, string> = {
   // Shoes
-  "DRESS SHOE": "#f59e0b",
-  "CASUAL SHOE": "#fbbf24",
+  "DRESS SHOE": "#F9B6B8",   // Dusty Rose
+  "CASUAL SHOE": "#f5c8ca",  // lighter Dusty Rose
   // Sandals
   "DRESS SANDAL": SANDAL_COLOUR,
   "SANDAL": SANDAL_COLOUR,
   "FLAT SANDAL": FLAT_SANDAL_COLOUR,
   "CASUAL SANDAL": FLAT_SANDAL_COLOUR,
   // Flats
-  "CASUAL FLAT": "#8b5cf6",
+  "CASUAL FLAT": "#BAD2E8",  // Arctic Blue
   // Wedges — all one colour
   "CASUAL WEDGE": WEDGE_COLOUR,
   "DRESS WEDGE": WEDGE_COLOUR,
@@ -68,12 +68,12 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 const TREND_COLOURS: Record<string, string> = {
-  "MESH": "#06b6d4",
-  "SLINGBACK": "#ec4899",
-  "TOE CAP": "#f59e0b",
-  "ROSETTE": "#a855f7",
-  "BALLET": "#8b5cf6",
-  "LOAFER": "#10b981",
+  "MESH": "#BAD2E8",      // Arctic Blue
+  "SLINGBACK": "#F9B6B8", // Dusty Rose
+  "TOE CAP": "#F37521",   // Burnt Sienna
+  "ROSETTE": "#8B162B",   // Crimson Ink
+  "BALLET": "#BAD2E8",    // Arctic Blue
+  "LOAFER": "#C6B63B",    // Neon Pear
 };
 
 const TREND_ICONS: Record<string, string> = {

@@ -49,70 +49,68 @@
   --radius: 0.5rem;
 
   /*
-   * Palette reference:
-   *   linen sheets    #9db8c1  oklch(0.765 0.0322 220.0)  — dusty blue
-   *   bathrobe fuzz   #d38d78  oklch(0.709 0.0912  37.4)  — warm terracotta
-   *   mud mask        #a4823b  oklch(0.625 0.0983  83.5)  — golden brown
-   *   bubble bath     #b4c3ad  oklch(0.799 0.0345 135.7)  — sage green (light)
-   *   striped towel   #65a068  oklch(0.650 0.1028 145.5)  — mid green
-   *   tomato perfume  #a2302c  oklch(0.482 0.1506  26.5)  — deep red
-   *   lazy pyjamas    #c5a0b2  oklch(0.745 0.0498 347.5)  — dusty rose
-   *   lobby fireplace #4a4036  oklch(0.379 0.0215  67.1)  — dark espresso brown
+   * Palette:
+   *   Crimson Ink   #8B162B  oklch(0.382 0.148  17.0)  — deep red, primary
+   *   Dusty Rose    #F9B6B8  oklch(0.820 0.072 358.0)  — soft pink, secondary
+   *   Cosmic Latte  #F6F3CF  oklch(0.965 0.040  97.0)  — warm cream, background
+   *   Neon Pear     #C6B63B  oklch(0.730 0.118  96.0)  — olive gold, accent
+   *   Burnt Sienna  #F37521  oklch(0.700 0.175  47.0)  — vivid orange, highlight
+   *   Arctic Blue   #BAD2E8  oklch(0.855 0.040 218.0)  — soft blue, info
    */
 
-  /* Page background: very light warm cream (lighter than linen sheets) */
-  --background: oklch(0.975 0.008 90);
-  --foreground: oklch(0.25 0.018 67.1);
+  /* Page background: Cosmic Latte cream */
+  --background: oklch(0.968 0.038 97.0);
+  --foreground: oklch(0.22 0.040 17.0);
 
-  /* Cards: clean white with warm tint */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.25 0.018 67.1);
+  /* Cards: slightly lighter cream */
+  --card: oklch(0.990 0.012 97.0);
+  --card-foreground: oklch(0.22 0.040 17.0);
 
   /* Popover */
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.25 0.018 67.1);
+  --popover: oklch(0.990 0.012 97.0);
+  --popover-foreground: oklch(0.22 0.040 17.0);
 
-  /* Primary: striped towel green — main action colour */
-  --primary: oklch(0.650 0.1028 145.5);
-  --primary-foreground: oklch(0.98 0.005 145.5);
+  /* Primary: Crimson Ink — main action colour */
+  --primary: oklch(0.382 0.148 17.0);
+  --primary-foreground: oklch(0.97 0.008 97.0);
 
-  /* Secondary: bubble bath sage — softer secondary actions */
-  --secondary: oklch(0.920 0.022 135.7);
-  --secondary-foreground: oklch(0.35 0.040 135.7);
+  /* Secondary: Dusty Rose — softer secondary actions */
+  --secondary: oklch(0.900 0.050 358.0);
+  --secondary-foreground: oklch(0.30 0.100 17.0);
 
-  /* Muted: very light warm grey */
-  --muted: oklch(0.945 0.010 90);
-  --muted-foreground: oklch(0.52 0.018 67.1);
+  /* Muted: warm light cream-grey */
+  --muted: oklch(0.940 0.025 97.0);
+  --muted-foreground: oklch(0.48 0.030 17.0);
 
-  /* Accent: linen sheets blue — hover highlights */
-  --accent: oklch(0.920 0.018 220.0);
-  --accent-foreground: oklch(0.30 0.040 220.0);
+  /* Accent: Arctic Blue — hover highlights */
+  --accent: oklch(0.900 0.032 218.0);
+  --accent-foreground: oklch(0.28 0.060 218.0);
 
-  /* Destructive: tomato perfume red */
-  --destructive: oklch(0.482 0.1506 26.5);
-  --destructive-foreground: oklch(0.98 0.005 26.5);
+  /* Destructive: Crimson Ink */
+  --destructive: oklch(0.382 0.148 17.0);
+  --destructive-foreground: oklch(0.97 0.008 97.0);
 
   /* Borders & inputs */
-  --border: oklch(0.880 0.015 90);
-  --input: oklch(0.880 0.015 90);
-  --ring: oklch(0.650 0.1028 145.5);
+  --border: oklch(0.870 0.030 97.0);
+  --input: oklch(0.870 0.030 97.0);
+  --ring: oklch(0.382 0.148 17.0);
 
-  /* Charts — use the full palette */
-  --chart-1: oklch(0.650 0.1028 145.5);  /* striped towel green */
-  --chart-2: oklch(0.765 0.0322 220.0);  /* linen sheets blue */
-  --chart-3: oklch(0.625 0.0983  83.5);  /* mud mask gold */
-  --chart-4: oklch(0.709 0.0912  37.4);  /* bathrobe fuzz terracotta */
-  --chart-5: oklch(0.745 0.0498 347.5);  /* lazy pyjamas rose */
+  /* Charts — full palette */
+  --chart-1: oklch(0.382 0.148 17.0);   /* Crimson Ink */
+  --chart-2: oklch(0.700 0.175 47.0);   /* Burnt Sienna */
+  --chart-3: oklch(0.730 0.118 96.0);   /* Neon Pear */
+  --chart-4: oklch(0.855 0.040 218.0);  /* Arctic Blue */
+  --chart-5: oklch(0.820 0.072 358.0);  /* Dusty Rose */
 
-  /* Sidebar: lobby fireplace dark espresso */
-  --sidebar: oklch(0.290 0.018 67.1);
-  --sidebar-foreground: oklch(0.920 0.010 90);
-  --sidebar-primary: oklch(0.799 0.0345 135.7);   /* bubble bath — active item bg */
-  --sidebar-primary-foreground: oklch(0.25 0.040 135.7);
-  --sidebar-accent: oklch(0.360 0.018 67.1);       /* hover row */
-  --sidebar-accent-foreground: oklch(0.940 0.010 90);
-  --sidebar-border: oklch(0.380 0.018 67.1);
-  --sidebar-ring: oklch(0.799 0.0345 135.7);
+  /* Sidebar: deep Crimson Ink dark */
+  --sidebar: oklch(0.230 0.080 17.0);
+  --sidebar-foreground: oklch(0.940 0.020 97.0);
+  --sidebar-primary: oklch(0.382 0.148 17.0);          /* Crimson Ink — active item */
+  --sidebar-primary-foreground: oklch(0.97 0.008 97.0);
+  --sidebar-accent: oklch(0.300 0.080 17.0);            /* hover row */
+  --sidebar-accent-foreground: oklch(0.960 0.015 97.0);
+  --sidebar-border: oklch(0.320 0.060 17.0);
+  --sidebar-ring: oklch(0.820 0.072 358.0);
 }
 
 @layer base {
@@ -180,12 +178,12 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.799 0.0345 135.7);
+  background: oklch(0.820 0.072 358.0);
   border-radius: 3px;
   opacity: 0.5;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.650 0.1028 145.5);
+  background: oklch(0.382 0.148 17.0);
 }
 
 /* Count-up animation helper */
