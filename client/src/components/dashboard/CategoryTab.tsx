@@ -1,6 +1,8 @@
 /**
  * CategoryTab — shows each category as a card with SKU breakdown.
  * Ballet Flat and Loafer are merged under "Casual Flat" with trend tags.
+ * A separate Trends section shows MESH, SLINGBACK, TOE CAP, ROSETTE, etc.
+ * "Other" is excluded from categories — those styles appear only in Trends.
  */
 
 import { useMemo } from "react";
@@ -17,6 +19,8 @@ const CATEGORY_COLOURS: Record<string, string> = {
   "DRESS WEDGE": "#fb923c",
   "WEDGE": "#f97316",
   "SANDAL": "#06b6d4",
+  "FLAT SANDAL": "#06b6d4",
+  "CASUAL SANDAL": "#06b6d4",
   "DRESS ANKLE BOOT": "#ec4899",
   "ANKLE BOOT": "#ec4899",
   "DRESS CALF BOOT": "#6b7280",
@@ -31,14 +35,34 @@ const CATEGORY_ICONS: Record<string, string> = {
   "DRESS WEDGE": "👢",
   "WEDGE": "👢",
   "SANDAL": "🩴",
+  "FLAT SANDAL": "🩴",
+  "CASUAL SANDAL": "🩴",
   "DRESS ANKLE BOOT": "👢",
   "ANKLE BOOT": "👢",
   "DRESS CALF BOOT": "👢",
   "CALF BOOT": "👢",
 };
 
+const TREND_COLOURS: Record<string, string> = {
+  "MESH": "#06b6d4",
+  "SLINGBACK": "#ec4899",
+  "TOE CAP": "#f59e0b",
+  "ROSETTE": "#a855f7",
+  "BALLET": "#8b5cf6",
+  "LOAFER": "#10b981",
+};
+
+const TREND_ICONS: Record<string, string> = {
+  "MESH": "🕸️",
+  "SLINGBACK": "👡",
+  "TOE CAP": "👟",
+  "ROSETTE": "🌸",
+  "BALLET": "🩰",
+  "LOAFER": "🥿",
+};
+
 export default function CategoryTab() {
-  const { getCategory, getTrendFlag } = useStyleCategories();
+  const { getCategory, getTrendFlag, getTrends, allTrends } = useStyleCategories();
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
 
   // Fetch cancelled styles and SKUs
@@ -55,7 +79,7 @@ export default function CategoryTab() {
   );
 
   // Build merged category stats using resolved categories
-  const mergedCategories = useMemo(() => {
+  const { mergedCategories, trendStats } = useMemo(() => {
     type CatStats = {
       category: string;
       totalStyles: number;
@@ -63,10 +87,20 @@ export default function CategoryTab() {
       newSKUs: number;
       existingSKUs: number;
       images: string[];
-      trendBreakdown: Record<string, number>; // e.g. { "Ballet Flat": 12, "Loafer": 5 }
+      trendBreakdown: Record<string, number>;
     };
 
-    const map = new Map<string, CatStats>();
+    type TrendStats = {
+      trend: string;
+      totalStyles: number;
+      totalSKUs: number;
+      newSKUs: number;
+      existingSKUs: number;
+      images: string[];
+    };
+
+    const catMap = new Map<string, CatStats>();
+    const trendMap = new Map<string, TrendStats>();
 
     // Build a lookup of style -> imageUrl from mergedStyles (includes custom SKU styles)
     const styleImageMap: Record<string, string> = {};
@@ -74,20 +108,20 @@ export default function CategoryTab() {
       if ((s as any).imageUrl) styleImageMap[s.style] = (s as any).imageUrl;
     }
 
-    // Group mergedRawSkus by style first (for efficient per-style SKU lookup)
+    // Group mergedRawSkus by style first
     const skusByStyle: Record<string, Array<{ colour: string; leather: string; is_new: boolean }>> = {};
     for (const sku of mergedRawSkus) {
       if (!skusByStyle[sku.style]) skusByStyle[sku.style] = [];
       skusByStyle[sku.style].push(sku);
     }
 
-    // Collect all active style names (from mergedRawSkus, excluding cancelled)
+    // Collect all active style names
     const activeStyles = new Set<string>();
     for (const sku of mergedRawSkus) {
       if (!cancelledStyleSet.has(sku.style)) activeStyles.add(sku.style);
     }
 
-    // Build a category lookup from skuData.styles for resolving category/imageUrl
+    // Build a category lookup from skuData.styles
     const styleCatMap: Record<string, string> = {};
     for (const s of skuData.styles) styleCatMap[s.style] = s.category;
 
@@ -95,50 +129,63 @@ export default function CategoryTab() {
       const baseCategory = styleCatMap[styleName] ?? "Other";
       const resolvedCat = getCategory(styleName, baseCategory).toUpperCase();
       const trendFlag = getTrendFlag(styleName);
+      const trends = getTrends(styleName);
 
-      if (!map.has(resolvedCat)) {
-        map.set(resolvedCat, {
-          category: resolvedCat,
-          totalStyles: 0,
-          totalSKUs: 0,
-          newSKUs: 0,
-          existingSKUs: 0,
-          images: [],
-          trendBreakdown: {},
-        });
-      }
-
-      const entry = map.get(resolvedCat)!;
-      entry.totalStyles += 1;
-
-      // Count SKUs for this style (from mergedRawSkus, excluding individually cancelled SKUs)
+      // Count SKUs for this style (excluding individually cancelled SKUs)
       const styleSKUs = (skusByStyle[styleName] ?? []).filter(
         (s) => !cancelledSkuSet.has(`${styleName}|${s.colour}|${s.leather}`)
       );
       const newCount = styleSKUs.filter((s) => s.is_new).length;
       const existingCount = styleSKUs.filter((s) => !s.is_new).length;
-      entry.totalSKUs += styleSKUs.length;
-      entry.newSKUs += newCount;
-      entry.existingSKUs += existingCount;
-
-      // Collect images (up to 6)
       const imageUrl = styleImageMap[styleName];
-      if (imageUrl && entry.images.length < 6) {
-        entry.images.push(imageUrl);
+
+      // --- Category stats (skip "OTHER") ---
+      if (resolvedCat !== "OTHER") {
+        if (!catMap.has(resolvedCat)) {
+          catMap.set(resolvedCat, {
+            category: resolvedCat,
+            totalStyles: 0,
+            totalSKUs: 0,
+            newSKUs: 0,
+            existingSKUs: 0,
+            images: [],
+            trendBreakdown: {},
+          });
+        }
+        const entry = catMap.get(resolvedCat)!;
+        entry.totalStyles += 1;
+        entry.totalSKUs += styleSKUs.length;
+        entry.newSKUs += newCount;
+        entry.existingSKUs += existingCount;
+        if (imageUrl && entry.images.length < 6) entry.images.push(imageUrl);
+        if (trendFlag) {
+          entry.trendBreakdown[trendFlag] = (entry.trendBreakdown[trendFlag] ?? 0) + 1;
+        }
       }
 
-      // Track trend breakdown
-      if (trendFlag) {
-        entry.trendBreakdown[trendFlag] = (entry.trendBreakdown[trendFlag] ?? 0) + 1;
+      // --- Trend stats (all styles with any trend flag) ---
+      for (const t of trends) {
+        if (!trendMap.has(t)) {
+          trendMap.set(t, { trend: t, totalStyles: 0, totalSKUs: 0, newSKUs: 0, existingSKUs: 0, images: [] });
+        }
+        const te = trendMap.get(t)!;
+        te.totalStyles += 1;
+        te.totalSKUs += styleSKUs.length;
+        te.newSKUs += newCount;
+        te.existingSKUs += existingCount;
+        if (imageUrl && te.images.length < 6) te.images.push(imageUrl);
       }
     }
 
-    // Sort by totalSKUs descending
-    return Array.from(map.values()).sort((a, b) => b.totalSKUs - a.totalSKUs);
-  }, [getCategory, getTrendFlag, cancelledStyleSet, cancelledSkuSet, mergedRawSkus, mergedStyles]);
+    return {
+      mergedCategories: Array.from(catMap.values()).sort((a, b) => b.totalSKUs - a.totalSKUs),
+      trendStats: Array.from(trendMap.values()).sort((a, b) => b.totalSKUs - a.totalSKUs),
+    };
+  }, [getCategory, getTrendFlag, getTrends, cancelledStyleSet, cancelledSkuSet, mergedRawSkus, mergedStyles]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Category cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
         {mergedCategories.map((cat) => {
           const colour = CATEGORY_COLOURS[cat.category] ?? "#6b7280";
@@ -152,11 +199,8 @@ export default function CategoryTab() {
               className="rounded-xl border bg-card overflow-hidden hover:shadow-md transition-shadow"
               style={{ borderColor: "var(--border)" }}
             >
-              {/* Colour bar top */}
               <div className="h-1" style={{ background: colour }} />
-
               <div className="p-5">
-                {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <span className="text-2xl">{icon}</span>
@@ -166,18 +210,13 @@ export default function CategoryTab() {
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {cat.totalStyles} {cat.totalStyles === 1 ? "style" : "styles"}
                     </p>
-                    {/* Trend breakdown tags (e.g. Ballet Flat / Loafer) */}
                     {hasTrendBreakdown && (
                       <div className="flex flex-wrap gap-1 mt-1.5">
                         {Object.entries(cat.trendBreakdown).map(([flag, count]) => (
                           <span
                             key={flag}
                             className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full border"
-                            style={{
-                              borderColor: colour,
-                              color: colour,
-                              background: `${colour}15`,
-                            }}
+                            style={{ borderColor: colour, color: colour, background: `${colour}15` }}
                           >
                             {flag}
                             <span className="font-semibold">{count}</span>
@@ -194,7 +233,6 @@ export default function CategoryTab() {
                   </div>
                 </div>
 
-                {/* New vs Existing breakdown */}
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="flex items-center gap-1.5">
@@ -216,7 +254,6 @@ export default function CategoryTab() {
                   </div>
                 </div>
 
-                {/* Style image strip */}
                 {cat.images.length > 0 && (
                   <div className="flex gap-1.5 mb-4 flex-wrap">
                     {cat.images.slice(0, 6).map((url, i) => (
@@ -225,18 +262,12 @@ export default function CategoryTab() {
                         className="w-12 h-9 rounded overflow-hidden flex items-center justify-center flex-shrink-0"
                         style={{ background: "var(--muted)" }}
                       >
-                        <img
-                          src={url}
-                          alt=""
-                          className="w-full h-full object-contain"
-                          loading="lazy"
-                        />
+                        <img src={url} alt="" className="w-full h-full object-contain" loading="lazy" />
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* Progress bar */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs text-muted-foreground">% New SKUs</span>
@@ -245,10 +276,7 @@ export default function CategoryTab() {
                     </span>
                   </div>
                   <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
-                    <div
-                      className="h-full rounded-full bar-fill"
-                      style={{ width: `${pctNew}%`, background: colour }}
-                    />
+                    <div className="h-full rounded-full bar-fill" style={{ width: `${pctNew}%`, background: colour }} />
                   </div>
                 </div>
               </div>
@@ -257,7 +285,7 @@ export default function CategoryTab() {
         })}
       </div>
 
-      {/* Comparison table */}
+      {/* Category comparison table */}
       <div className="rounded-xl border bg-card overflow-hidden" style={{ borderColor: "var(--border)" }}>
         <div className="px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
           <h3 className="font-display font-semibold text-base text-foreground">Category Comparison</h3>
@@ -281,11 +309,7 @@ export default function CategoryTab() {
                 const avg = cat.totalStyles > 0 ? (cat.totalSKUs / cat.totalStyles).toFixed(1) : "0";
                 const pctNew = cat.totalSKUs > 0 ? Math.round((cat.newSKUs / cat.totalSKUs) * 100) : 0;
                 return (
-                  <tr
-                    key={cat.category}
-                    className="border-b transition-colors hover:bg-muted/40"
-                    style={{ borderColor: "var(--border)" }}
-                  >
+                  <tr key={cat.category} className="border-b transition-colors hover:bg-muted/40" style={{ borderColor: "var(--border)" }}>
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: colour }} />
@@ -305,14 +329,9 @@ export default function CategoryTab() {
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
-                          <div
-                            className="h-full rounded-full"
-                            style={{ width: `${pctNew}%`, background: colour }}
-                          />
+                          <div className="h-full rounded-full" style={{ width: `${pctNew}%`, background: colour }} />
                         </div>
-                        <span className="text-xs tabular-nums font-medium text-muted-foreground w-10 text-right">
-                          {pctNew}%
-                        </span>
+                        <span className="text-xs tabular-nums font-medium text-muted-foreground w-10 text-right">{pctNew}%</span>
                       </div>
                     </td>
                   </tr>
@@ -322,6 +341,98 @@ export default function CategoryTab() {
           </table>
         </div>
       </div>
+
+      {/* Trends section */}
+      {trendStats.length > 0 && (
+        <div className="space-y-4">
+          <div>
+            <h3 className="font-display font-semibold text-base text-foreground">Trends</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Styles tagged with a trend direction — a style may appear in multiple trends</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+            {trendStats.map((t) => {
+              const colour = TREND_COLOURS[t.trend] ?? "#6b7280";
+              const icon = TREND_ICONS[t.trend] ?? "✨";
+              const pctNew = t.totalSKUs > 0 ? Math.round((t.newSKUs / t.totalSKUs) * 100) : 0;
+              return (
+                <div
+                  key={t.trend}
+                  className="rounded-xl border bg-card overflow-hidden hover:shadow-md transition-shadow"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  <div className="h-1" style={{ background: colour }} />
+                  <div className="p-5">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <span className="text-2xl">{icon}</span>
+                        <h3 className="font-display font-semibold text-base text-foreground mt-1">
+                          {t.trend}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {t.totalStyles} {t.totalStyles === 1 ? "style" : "styles"}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-display font-bold tabular-nums text-foreground">
+                          {t.totalSKUs}
+                        </div>
+                        <div className="text-xs text-muted-foreground">total SKUs</div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                          <span className="text-muted-foreground">New</span>
+                        </span>
+                        <span className="font-semibold tabular-nums" style={{ color: "oklch(0.55 0.14 55)" }}>
+                          {t.newSKUs}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full inline-block" style={{ background: "oklch(0.80 0.01 80)" }} />
+                          <span className="text-muted-foreground">Existing</span>
+                        </span>
+                        <span className="font-medium tabular-nums text-muted-foreground">
+                          {t.existingSKUs}
+                        </span>
+                      </div>
+                    </div>
+
+                    {t.images.length > 0 && (
+                      <div className="flex gap-1.5 mb-4 flex-wrap">
+                        {t.images.slice(0, 6).map((url, i) => (
+                          <div
+                            key={i}
+                            className="w-12 h-9 rounded overflow-hidden flex items-center justify-center flex-shrink-0"
+                            style={{ background: "var(--muted)" }}
+                          >
+                            <img src={url} alt="" className="w-full h-full object-contain" loading="lazy" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs text-muted-foreground">% New SKUs</span>
+                        <span className="text-xs font-semibold tabular-nums" style={{ color: colour }}>
+                          {pctNew}%
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
+                        <div className="h-full rounded-full bar-fill" style={{ width: `${pctNew}%`, background: colour }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
