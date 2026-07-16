@@ -1645,6 +1645,16 @@ export function FittingTab() {
   // Live merged styles (includes custom SKUs from DB)
   const { mergedStyles } = useCustomSkus();
 
+  // Run-on lasts — styles on these lasts should not appear in Fitting
+  const { data: customLastsData = [] } = trpc.customLast.getAll.useQuery(undefined, { staleTime: 300_000 });
+  const runOnLastsSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const l of (customLastsData as Array<{ lastName: string; isRunOn: boolean } | string>)) {
+      if (typeof l !== "string" && l.isRunOn) s.add(l.lastName.toUpperCase());
+    }
+    return s;
+  }, [customLastsData]);
+
   // ── Cancelled styles + cancelled SKUs ─────────────────────────────────────
   const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery(undefined, { staleTime: 30_000 });
   const cancelledStyleSet = useMemo(
@@ -1662,7 +1672,7 @@ export function FittingTab() {
     // Custom styles (_isCustomStyle) always appear regardless of last name
     const allStyles = mergedStyles as Array<typeof skuData.styles[number] & { _isCustomStyle?: boolean }>;
     const customEntries: StyleEntry[] = allStyles
-      .filter((s) => s._isCustomStyle && !cancelledStyleSet.has(s.style))
+      .filter((s) => s._isCustomStyle && !cancelledStyleSet.has(s.style) && !runOnLastsSet.has((s.last ?? "").toUpperCase()))
       .map((s) => ({
         style: s.style,
         last: s.last ?? "",
