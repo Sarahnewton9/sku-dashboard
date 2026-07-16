@@ -193,24 +193,30 @@ export default function SummaryCards() {
   const { data: deletedLastsFromDb = [] } = trpc.lastApproval.getDeleted.useQuery({ season });
   const { data: customLastsFromDb = [] } = trpc.customLast.getAll.useQuery({ season });
 
-  // Build the same visible lasts list as LastApprovalTab does (season-aware)
+  // Build the same visible lasts list and approval map as LastApprovalTab (season-aware)
   const seasonLasts = useMemo(() => getNewLastsForSeason(season), [season]);
-  const totalLastsCount = useMemo(() => {
+  const approvalMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const a of lastApprovals as Array<{ lastName: string; status: string }>) {
+      map[a.lastName] = a.status;
+    }
+    return map;
+  }, [lastApprovals]);
+  const visibleLasts = useMemo(() => {
     const deletedSet = new Set(deletedLastsFromDb);
     const seen = new Set<string>();
-    let count = 0;
-    for (const raw of [...seasonLasts, ...(customLastsFromDb as Array<{ lastName: string; isRunOn: boolean } | string>)]) {
-      const l = typeof raw === "string" ? raw : raw.lastName;
+    const merged: string[] = [];
+    const customLasts = (customLastsFromDb as Array<{ lastName: string; isRunOn: boolean }>)
+      .filter((l) => !l.isRunOn)
+      .map((l) => l.lastName);
+    for (const l of [...seasonLasts, ...customLasts]) {
       const key = l.toUpperCase();
-      if (!seen.has(key)) {
-        seen.add(key);
-        if (!deletedSet.has(l)) count++;
-      }
+      if (!seen.has(key)) { seen.add(key); merged.push(l); }
     }
-    return count;
-  }, [seasonLasts, deletedLastsFromDb, customLastsFromDb]);
-
-  const approvedLastsCount = lastApprovals.filter((a) => a.status === "approved").length;
+    return merged.filter((l) => !deletedSet.has(l));
+  }, [seasonLasts, customLastsFromDb, deletedLastsFromDb]);
+  const totalLastsCount = visibleLasts.length;
+  const approvedLastsCount = visibleLasts.filter((l) => approvalMap[l] === "approved").length;
 
   const sampleCounts = useMemo(() => {
     // Build a set of new SKU keys for fast lookup (use merged+filtered list)
