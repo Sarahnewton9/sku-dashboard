@@ -21,7 +21,6 @@ import CategoryTab from "@/components/dashboard/CategoryTab";
 import StylesTab from "@/components/dashboard/StylesTab";
 import LeathersTab from "@/components/dashboard/LeathersTab";
 import ColoursTab from "@/components/dashboard/ColoursTab";
-import ExpansionTab from "@/components/dashboard/ExpansionTab";
 import ColourLeatherTab from "@/components/dashboard/ColourLeatherTab";
 import ExportPanel from "@/components/dashboard/ExportPanel";
 import BuySessionsPanel from "@/components/dashboard/BuySessionsPanel";
@@ -39,7 +38,6 @@ import {
   Table2,
   Layers,
   Palette,
-  TrendingUp,
   ChevronRight,
   Combine,
   Download,
@@ -57,11 +55,11 @@ import {
   Sparkles,
 } from "lucide-react";
 
-type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "expansion" | "buy-sessions" | "buy-analysis" | "last-approval" | "fitting" | "specs" | "markdown" | "handbags";
+type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "buy-sessions" | "buy-analysis" | "last-approval" | "fitting" | "specs" | "markdown" | "handbags";
 
 const VALID_TABS = new Set<Tab>([
   "overview", "categories", "styles", "leathers", "colours",
-  "colourleather", "expansion", "buy-sessions", "buy-analysis",
+  "colourleather", "buy-sessions", "buy-analysis",
   "last-approval", "fitting", "specs", "markdown", "handbags",
 ]);
 
@@ -73,7 +71,6 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group
   { id: "leathers", label: "Leathers", icon: Layers },
   { id: "colours", label: "Colours", icon: Palette },
   { id: "colourleather", label: "Colour/Leather", icon: Combine },
-  { id: "expansion", label: "Expansion Analysis", icon: TrendingUp },
   { id: "buy-sessions", label: "Buy Sessions", icon: ShoppingCart, group: "buying" },
   { id: "buy-analysis", label: "Buy Analysis", icon: BarChart3, group: "buying" },
   { id: "last-approval", label: "Last Approval", icon: Stamp, group: "approval" },
@@ -299,7 +296,6 @@ export default function Dashboard() {
               {activeTab === "leathers" && `${skuData.leathers.length} unique leather types`}
               {activeTab === "colours" && `${skuData.colours.length} unique colours`}
               {activeTab === "colourleather" && "Colour/leather combinations"}
-              {activeTab === "expansion" && "New SKU coverage analysis"}
               {activeTab === "buy-sessions" && "Manage weekly buy rounds — create, lock, and export independently"}
               {activeTab === "buy-analysis" && "Breakdown of pairs bought per session by category, leather, and colour/leather combo"}
               {activeTab === "last-approval" && "16 new lasts — track approval status and notes per last"}
@@ -338,7 +334,6 @@ export default function Dashboard() {
               {activeTab === "leathers" && <LeathersTab />}
               {activeTab === "colours" && <ColoursTab />}
               {activeTab === "colourleather" && <ColourLeatherTab />}
-              {activeTab === "expansion" && <ExpansionTab />}
               {activeTab === "buy-sessions" && <BuySessionsPanel />}
               {activeTab === "buy-analysis" && <BuyAnalysisTab />}
               {activeTab === "last-approval" && <LastApprovalTab />}
