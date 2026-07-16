@@ -1,11 +1,10 @@
 /**
- * ExportPanel — exports for fitting notes and buy sheet
+ * ExportPanel — Full Data Export, AP21 CSV, and PPTX Range Review Sync
  */
-
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
-import { FileDown, X, FileSpreadsheet, ClipboardList, RefreshCw, Upload, FileText } from "lucide-react";
+import { FileDown, X, Upload, FileText } from "lucide-react";
 import { useSeason } from "@/contexts/SeasonContext";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
@@ -32,11 +31,6 @@ const FULL_EXPORT_ALL_COLS: Array<{ key: string; label: string }> = [
   { key: "Status",            label: "New / Existing" },
   { key: "Size 11",           label: "Size 11" },
   { key: "Sample Status",     label: "Sample Status" },
-  { key: "Order Qty",         label: "Order Qty" },
-  { key: "Cost Price",        label: "Cost Price" },
-  { key: "RRP",               label: "RRP" },
-  { key: "Fit Rating",        label: "Fit Rating" },
-  { key: "Fitting Notes",     label: "Fitting Notes" },
 ];
 // These columns are always included and cannot be deselected
 const FULL_EXPORT_REQUIRED_COLS = ["Style", "Colour", "Leather"];
@@ -53,8 +47,6 @@ export default function ExportPanel({ onClose }: Props) {
 
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
   const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
-  const { data: allSessions = [] } = trpc.buy.getSessions.useQuery({ season });
-  const { data: customSkuList = [] } = trpc.customSku.getAll.useQuery({ season });
   const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery();
   const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
   const { data: heelHeightData = [] } = trpc.heelHeight.getAll.useQuery();
@@ -67,57 +59,7 @@ export default function ExportPanel({ onClose }: Props) {
   }, [heelHeightData]);
   const HEEL_HEIGHT_CATEGORIES = new Set(["Dress Shoe", "Dress Sandal", "Wedge"]);
 
-  const fetchRrpMutation = trpc.style.fetchFromTonyBianco.useMutation({
-    onSuccess: (data) => {
-      utils.style.getAll.invalidate();
-      toast.success(`Fetched RRPs for ${data.updated} styles from Tony Bianco AU (${data.totalProducts} products scanned)`);
-    },
-    onError: (err) => {
-      toast.error(`Failed to fetch RRPs: ${err.message}`);
-    },
-  });
 
-  function handleFetchRrp() {
-    const styleNames = (mergedStyles as any[]).map((s: any) => s.style);
-    fetchRrpMutation.mutate({ styleNames });
-  }
-
-  const fetchImagesMutation = trpc.style.fetchImages.useMutation({
-    onSuccess: (data) => {
-      utils.style.getAll.invalidate();
-      toast.success(`Fetched images for ${data.updated}/${data.total} styles from Tony Bianco AU`);
-    },
-    onError: (err) => {
-      toast.error(`Failed to fetch style images: ${err.message}`);
-    },
-  });
-
-  // Style image selector state
-  const [imageSelectMode, setImageSelectMode] = useState<"all" | "select">("all");
-  const [imageStyleSearch, setImageStyleSearch] = useState("");
-  const [imageSelectedStyles, setImageSelectedStyles] = useState<Set<string>>(new Set());
-
-  const allStyleNames = useMemo(() => (mergedStyles as any[]).map((s: any) => s.style).sort(), [mergedStyles]);
-  const filteredStyleNames = useMemo(() =>
-    allStyleNames.filter((s) => s.toLowerCase().includes(imageStyleSearch.toLowerCase())),
-    [allStyleNames, imageStyleSearch]
-  );
-
-  function toggleImageStyle(style: string) {
-    setImageSelectedStyles((prev) => {
-      const next = new Set(prev);
-      if (next.has(style)) next.delete(style); else next.add(style);
-      return next;
-    });
-  }
-
-  function handleFetchImages() {
-    const styleNames = imageSelectMode === "all"
-      ? (mergedStyles as any[]).map((s: any) => s.style)
-      : Array.from(imageSelectedStyles);
-    if (styleNames.length === 0) { toast.error("No styles selected."); return; }
-    fetchImagesMutation.mutate({ styleNames });
-  }
 
   // Build lookup maps
   const skuMetaMap: Record<string, typeof skuMetaList[0]> = {};
@@ -351,133 +293,11 @@ export default function ExportPanel({ onClose }: Props) {
     }
   }
 
-  function exportFittingNotes() {
-    setExporting("fitting");
-    try {
-      const rows = (mergedRawSkus as any[])
-        .filter((sku: any) => !cancelledStyleSet.has(sku.style) && !cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`))
-        .map((sku: any) => {
-          const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
-          const meta = skuMetaMap[key];
-          return {
-            Style: sku.style,
-            Category: styleLookup[sku.style]?.category ?? "",
-            Last: styleLookup[sku.style]?.last ?? "",
-            Colour: sku.colour,
-            Leather: sku.leather,
-            Status: sku.is_new ? "New" : "Existing",
-            "Size 11": meta?.isSize11 ? "Yes" : "No",
-            "Sample Status": meta?.sampleStatus === "received" ? "Received" : meta?.sampleStatus === "fitting_sample" ? "Fitting Sample" : "Waiting",
-            "Fit Rating": (() => {
-              // Prefer style-level fit rating (set in Fittings tab) over per-SKU fit rating
-              const rawRating = styleMetaMap[sku.style]?.fitRating || meta?.fitRating;
-              return rawRating
-                ? ({ tts: "True to Size", runs_small: "Runs Small", runs_large: "Runs Large" }[rawRating] ?? rawRating)
-                : "";
-            })(),
-            "Fitting Notes": styleMetaMap[sku.style]?.fittingNotes || meta?.fittingNotes || "",
-            "Cost Price": meta?.costPrice != null ? meta.costPrice : "",
-            RRP: styleMetaMap[sku.style]?.rrp != null ? styleMetaMap[sku.style].rrp : "",
-          };
-        })
-        .filter((r: any) => r["Fitting Notes"] || r["Fit Rating"] || r["Sample Status"] === "received" || r["Sample Status"] === "Fitting Sample");
-
-      if (rows.length === 0) {
-        toast.info("No fitting notes or sample data to export yet.");
-        return;
-      }
-
-      const ws = XLSX.utils.json_to_sheet(rows);
-      ws["!cols"] = [
-        { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 22 },
-        { wch: 10 }, { wch: 8 }, { wch: 14 }, { wch: 16 }, { wch: 40 }, { wch: 12 }, { wch: 10 },
-      ];
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Fitting Notes");
-      XLSX.writeFile(wb, "SS26_Fitting_Notes.xlsx");
-      toast.success(`Exported ${rows.length} SKUs with fitting data`);
-    } finally {
-      setExporting(null);
-    }
-  }
-
-  async function exportBuySheet() {
-    setExporting("buy");
-    try {
-      // Build cancelled SKU set
-      const cancelledSkuSet = new Set<string>();
-      for (const c of cancelledSkuList as Array<{ style: string; colour: string; leather: string }>) {
-        cancelledSkuSet.add(`${c.style}|${c.colour}|${c.leather}`);
-      }
-
-      // Use mergedRawSkus which already includes custom SKUs
-      type SkuRow = { style: string; colour: string; leather: string; is_new: boolean };
-      const allSkus: SkuRow[] = (mergedRawSkus as unknown as SkuRow[])
-        .filter((s) => !cancelledStyleSet.has(s.style) && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`));
-
-      // Fetch items for all sessions
-      const wb = XLSX.utils.book_new();
-      let totalRows = 0;
-
-      for (const session of allSessions as Array<{ id: number; name: string }>) {
-        // Fetch items for this session
-        const items = await fetch(`/api/trpc/buy.getItems?batch=1&input=${encodeURIComponent(JSON.stringify({ "0": { json: { sessionId: session.id } } }))}`);
-        const itemsJson = await items.json();
-        const sessionItems: Array<{ style: string; colour: string; leather: string; auQty: number; usaQty: number; nycQty: number }> =
-          itemsJson?.[0]?.result?.data?.json ?? [];
-
-        const itemMap: Record<string, { auQty: number; usaQty: number; nycQty: number }> = {};
-        for (const item of sessionItems) {
-          itemMap[`${item.style}|${item.colour}|${item.leather}`] = { auQty: item.auQty ?? 0, usaQty: item.usaQty ?? 0, nycQty: item.nycQty ?? 0 };
-        }
-
-        const rows = allSkus
-          .map((sku) => {
-            const key = `${sku.style}|${sku.colour}|${sku.leather}`;
-            const item = itemMap[key];
-            if (!item || (item.auQty === 0 && item.usaQty === 0 && item.nycQty === 0)) return null;
-            const skuKey = `${sku.style}|${sku.colour}|${sku.leather}`;
-            const skuMeta = skuMetaMap[skuKey];
-            return {
-              Category: styleLookup[sku.style]?.category ?? "",
-              Style: sku.style,
-              Colour: sku.colour,
-              Leather: sku.leather,
-              "Size 11": skuMeta?.isSize11 ? "Yes" : "No",
-              "AU Units": item.auQty,
-              "USA Units": item.usaQty,
-              "NYC Units": item.nycQty,
-            };
-          })
-          .filter(Boolean) as Array<{ Category: string; Style: string; Colour: string; Leather: string; "Size 11": string; "AU Units": number; "USA Units": number; "NYC Units": number }>;
-
-        if (rows.length > 0) {
-          const ws = XLSX.utils.json_to_sheet(rows);
-          ws["!cols"] = [{ wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
-          const sheetName = session.name.slice(0, 31); // Excel sheet name limit
-          XLSX.utils.book_append_sheet(wb, ws, sheetName);
-          totalRows += rows.length;
-        }
-      }
-
-      if (totalRows === 0) {
-        toast.info("No buy quantities set yet. Add AU/USA/NYC quantities in the By Style tab.");
-        return;
-      }
-
-      XLSX.writeFile(wb, "SS26_Buy_Sheet.xlsx");
-      toast.success(`Exported buy sheet with ${totalRows} SKUs across ${allSessions.length} sessions`);
-    } finally {
-      setExporting(null);
-    }
-  }
-
   // Column width map for the full export
   const FULL_EXPORT_COL_WIDTHS: Record<string, number> = {
     "Style": 14, "Category": 16, "Last": 14, "Heel Height (cm)": 14,
     "Colour": 16, "Leather": 22, "Status": 10, "Size 11": 8,
-    "Sample Status": 14, "Order Qty": 10, "Cost Price": 12, "RRP": 10,
-    "Fit Rating": 16, "Fitting Notes": 40,
+    "Sample Status": 14,
   };
 
   function exportFullData() {
@@ -505,17 +325,6 @@ export default function ExportPanel({ onClose }: Props) {
           Status: sku.is_new ? "New" : "Existing",
           "Size 11": meta?.isSize11 ? "Yes" : "No",
           "Sample Status": meta?.sampleStatus === "received" ? "Received" : meta?.sampleStatus === "fitting_sample" ? "Fitting Sample" : "Waiting",
-          "Order Qty": meta?.orderQty ?? 0,
-          "Cost Price": meta?.costPrice != null ? meta.costPrice : "",
-          RRP: styleMetaMap[sku.style]?.rrp != null ? styleMetaMap[sku.style].rrp : "",
-          "Fit Rating": (() => {
-            // Prefer style-level fit rating (set in Fittings tab) over per-SKU fit rating
-            const rawRating = styleMetaMap[sku.style]?.fitRating || meta?.fitRating;
-            return rawRating
-              ? ({ tts: "True to Size", runs_small: "Runs Small", runs_large: "Runs Large" }[rawRating] ?? rawRating)
-              : "";
-          })(),
-          "Fitting Notes": styleMetaMap[sku.style]?.fittingNotes || meta?.fittingNotes || "",
         };
         // Return only selected columns in order
         const filtered: Record<string, any> = {};
@@ -551,169 +360,9 @@ export default function ExportPanel({ onClose }: Props) {
             Choose an export format. All exports include Size 11 flag and current DB data.
           </p>
 
-          {/* Fitting Notes Export */}
-          <button
-            onClick={exportFittingNotes}
-            disabled={exporting !== null}
-            className="w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all hover:bg-muted/30 disabled:opacity-50"
-            style={{ borderColor: "var(--border)" }}
-          >
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "oklch(0.96 0.08 65)" }}>
-              <ClipboardList className="w-5 h-5" style={{ color: "oklch(0.50 0.14 55)" }} />
-            </div>
-            <div>
-              <p className="font-semibold text-sm text-foreground">Fitting Notes Export</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                SKUs with fitting notes, fit rating, or received samples. For sharing with factory.
-              </p>
-            </div>
-            {exporting === "fitting" && <span className="ml-auto text-xs text-muted-foreground">Exporting…</span>}
-          </button>
 
-          {/* Buy Sheet Export */}
-          <button
-            onClick={exportBuySheet}
-            disabled={exporting !== null}
-            className="w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all hover:bg-muted/30 disabled:opacity-50"
-            style={{ borderColor: "var(--border)" }}
-          >
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "oklch(0.94 0.08 155)" }}>
-              <FileSpreadsheet className="w-5 h-5" style={{ color: "oklch(0.40 0.14 155)" }} />
-            </div>
-            <div>
-              <p className="font-semibold text-sm text-foreground">Buy Sheet Export</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Only SKUs with order qty &gt; 0. Includes style, colour, leather, category, last, qty, cost, RRP.
-              </p>
-            </div>
-            {exporting === "buy" && <span className="ml-auto text-xs text-muted-foreground">Exporting…</span>}
-          </button>
 
-          {/* Fetch RRP from Tony Bianco */}
-          <button
-            onClick={handleFetchRrp}
-            disabled={exporting !== null || fetchRrpMutation.isPending}
-            className="w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all hover:bg-muted/30 disabled:opacity-50"
-            style={{ borderColor: "oklch(0.80 0.10 240)", background: "oklch(0.97 0.02 240)" }}
-          >
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "oklch(0.92 0.06 240)" }}>
-              <RefreshCw className={`w-5 h-5 ${fetchRrpMutation.isPending ? "animate-spin" : ""}`} style={{ color: "oklch(0.40 0.14 240)" }} />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-sm text-foreground">Fetch RRP from Tony Bianco AU</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Pulls current AU prices from tonybianco.com.au and auto-matches to your styles. Takes ~10 seconds.
-              </p>
-            </div>
-            {fetchRrpMutation.isPending && <span className="ml-auto text-xs text-muted-foreground flex-shrink-0">Fetching…</span>}
-          </button>
 
-          {/* Fetch Style Images from Tony Bianco */}
-          <div
-            className="w-full rounded-xl border overflow-hidden"
-            style={{ borderColor: "oklch(0.80 0.10 150)", background: "oklch(0.97 0.02 150)" }}
-          >
-            {/* Header row */}
-            <div className="flex items-start gap-4 p-4">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "oklch(0.92 0.06 150)" }}>
-                <RefreshCw className={`w-5 h-5 ${fetchImagesMutation.isPending ? "animate-spin" : ""}`} style={{ color: "oklch(0.40 0.14 150)" }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-foreground">Fetch Style Images from Tony Bianco AU</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Pulls one representative product image per style. Only carry-over styles will be found.
-                </p>
-                {/* All / Select toggle */}
-                <div className="flex items-center gap-2 mt-3">
-                  <button
-                    onClick={() => setImageSelectMode("all")}
-                    className={`text-xs px-3 py-1 rounded-full border font-medium transition-colors ${
-                      imageSelectMode === "all"
-                        ? "text-white border-transparent"
-                        : "bg-transparent text-muted-foreground hover:bg-muted/40"
-                    }`}
-                    style={imageSelectMode === "all" ? { background: "oklch(0.55 0.14 150)", borderColor: "oklch(0.55 0.14 150)" } : { borderColor: "oklch(0.80 0.10 150)" }}
-                  >
-                    All Styles ({allStyleNames.length})
-                  </button>
-                  <button
-                    onClick={() => setImageSelectMode("select")}
-                    className={`text-xs px-3 py-1 rounded-full border font-medium transition-colors ${
-                      imageSelectMode === "select"
-                        ? "text-white border-transparent"
-                        : "bg-transparent text-muted-foreground hover:bg-muted/40"
-                    }`}
-                    style={imageSelectMode === "select" ? { background: "oklch(0.55 0.14 150)", borderColor: "oklch(0.55 0.14 150)" } : { borderColor: "oklch(0.80 0.10 150)" }}
-                  >
-                    Select Styles{imageSelectMode === "select" && imageSelectedStyles.size > 0 ? ` (${imageSelectedStyles.size})` : ""}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Style selector — shown only in select mode */}
-            {imageSelectMode === "select" && (
-              <div className="px-4 pb-3 border-t" style={{ borderColor: "oklch(0.88 0.06 150)" }}>
-                <div className="flex items-center gap-2 mt-3 mb-2">
-                  <input
-                    type="text"
-                    placeholder="Search styles…"
-                    value={imageStyleSearch}
-                    onChange={(e) => setImageStyleSearch(e.target.value)}
-                    className="flex-1 text-xs rounded-md border bg-background px-2 py-1.5 focus:outline-none focus:ring-2 text-foreground"
-                    style={{ borderColor: "oklch(0.80 0.10 150)" }}
-                  />
-                  <button
-                    onClick={() => setImageSelectedStyles(new Set(filteredStyleNames))}
-                    className="text-xs px-2 py-1.5 rounded border font-medium hover:bg-muted/30 transition-colors"
-                    style={{ borderColor: "oklch(0.80 0.10 150)", color: "oklch(0.40 0.14 150)" }}
-                  >Select all</button>
-                  <button
-                    onClick={() => setImageSelectedStyles(new Set())}
-                    className="text-xs px-2 py-1.5 rounded border font-medium hover:bg-muted/30 transition-colors"
-                    style={{ borderColor: "oklch(0.80 0.10 150)", color: "oklch(0.40 0.14 150)" }}
-                  >Clear</button>
-                </div>
-                <div className="max-h-48 overflow-y-auto rounded-lg border" style={{ borderColor: "oklch(0.88 0.06 150)" }}>
-                  {filteredStyleNames.map((style) => (
-                    <label
-                      key={style}
-                      className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-muted/20 transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={imageSelectedStyles.has(style)}
-                        onChange={() => toggleImageStyle(style)}
-                        className="accent-green-600 w-3.5 h-3.5"
-                      />
-                      <span className="text-xs font-medium text-foreground">{style}</span>
-                    </label>
-                  ))}
-                  {filteredStyleNames.length === 0 && (
-                    <p className="text-xs text-muted-foreground px-3 py-3">No styles match.</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Fetch button */}
-            <div className="px-4 pb-4 pt-2">
-              <button
-                onClick={handleFetchImages}
-                disabled={exporting !== null || fetchImagesMutation.isPending || (imageSelectMode === "select" && imageSelectedStyles.size === 0)}
-                className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-semibold text-white transition-colors disabled:opacity-50"
-                style={{ background: "oklch(0.55 0.14 150)" }}
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${fetchImagesMutation.isPending ? "animate-spin" : ""}`} />
-                {fetchImagesMutation.isPending
-                  ? "Fetching…"
-                  : imageSelectMode === "all"
-                    ? `Fetch All ${allStyleNames.length} Styles`
-                    : `Fetch ${imageSelectedStyles.size} Selected Style${imageSelectedStyles.size !== 1 ? "s" : ""}`
-                }
-              </button>
-            </div>
-          </div>
 
           {/* AP21 CSV Export */}
           <div
