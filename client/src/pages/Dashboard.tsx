@@ -205,7 +205,7 @@ export default function Dashboard() {
                   color: season === s ? "var(--sidebar)" : "oklch(0.50 0.01 80)",
                 }}
               >
-                {s === "SS26" ? "SS26" : "Winter 27"}
+                {s === "SS26" ? "SS26" : "W27"}
               </button>
             ))}
           </div>
