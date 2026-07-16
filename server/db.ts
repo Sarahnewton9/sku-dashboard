@@ -1272,27 +1272,30 @@ export async function showSpecColumn(style: string, colour: string): Promise<voi
 
 // ─── Custom Lasts ─────────────────────────────────────────────────────────────
 
-export async function getCustomLasts(): Promise<Array<{ lastName: string; isRunOn: boolean }>> {
+export async function getCustomLasts(season = "SS26"): Promise<Array<{ lastName: string; isRunOn: boolean }>> {
   const db = await getDb();
   if (!db) return [];
-  const rows = await db.select({ lastName: customLasts.lastName, isRunOn: customLasts.isRunOn }).from(customLasts).orderBy(customLasts.lastName);
+  const rows = await db.select({ lastName: customLasts.lastName, isRunOn: customLasts.isRunOn })
+    .from(customLasts)
+    .where(eq(customLasts.season, season))
+    .orderBy(customLasts.lastName);
   return rows.map((r) => ({ lastName: r.lastName, isRunOn: r.isRunOn ?? false }));
 }
 
-export async function addCustomLast(lastName: string): Promise<void> {
+export async function addCustomLast(lastName: string, season = "SS26"): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const name = lastName.toUpperCase().trim();
-  // Insert (or upsert) the custom last
-  await db.insert(customLasts).values({ lastName: name }).onDuplicateKeyUpdate({ set: { lastName: name } });
+  // Insert (or upsert) the custom last for this season
+  await db.insert(customLasts).values({ lastName: name, season }).onDuplicateKeyUpdate({ set: { lastName: name } });
   // Also remove from deleted_lasts so re-adding a previously deleted last works
-  await db.delete(deletedLasts).where(eq(deletedLasts.lastName, name));
+  await db.delete(deletedLasts).where(and(eq(deletedLasts.lastName, name), eq(deletedLasts.season, season)));
 }
 
-export async function deleteCustomLast(lastName: string): Promise<void> {
+export async function deleteCustomLast(lastName: string, season = "SS26"): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(customLasts).where(eq(customLasts.lastName, lastName));
+  await db.delete(customLasts).where(and(eq(customLasts.lastName, lastName), eq(customLasts.season, season)));
 }
 
 // ─── Reset Spec Colour Column ──────────────────────────────────────────────────

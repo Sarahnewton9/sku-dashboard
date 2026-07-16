@@ -328,7 +328,7 @@ export default function LastApprovalTab() {
   const [filter, setFilter] = useState<"all" | "approved" | "waiting_revised">("all");
   const [deletingLast, setDeletingLast] = useState<string | null>(null);
   // Custom lasts from DB
-  const { data: customLastsFromDb = [], refetch: refetchCustomLasts } = trpc.customLast.getAll.useQuery();
+  const { data: customLastsFromDb = [], refetch: refetchCustomLasts } = trpc.customLast.getAll.useQuery({ season });
   // Filter out run-on lasts — they don't need Last Approval
   const customLasts = (customLastsFromDb as Array<{ lastName: string; isRunOn: boolean }>)
     .filter((l) => !l.isRunOn)
@@ -685,7 +685,7 @@ export default function LastApprovalTab() {
               onChange={(e) => setNewLastName(e.target.value.toUpperCase())}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && newLastName.trim()) {
-                  addCustomLastMutation.mutate({ lastName: newLastName.trim() });
+                  addCustomLastMutation.mutate({ lastName: newLastName.trim(), season });
                   setAddLastDialogOpen(false);
                   toast.success(`Last "${newLastName.trim()}" added`);
                 }
@@ -705,7 +705,7 @@ export default function LastApprovalTab() {
               <button
                 onClick={() => {
                   if (!newLastName.trim()) return;
-                  addCustomLastMutation.mutate({ lastName: newLastName.trim() });
+                  addCustomLastMutation.mutate({ lastName: newLastName.trim(), season });
                   setAddLastDialogOpen(false);
                   toast.success(`Last "${newLastName.trim()}" added`);
                 }}

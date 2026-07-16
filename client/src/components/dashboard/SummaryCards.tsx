@@ -191,7 +191,7 @@ export default function SummaryCards() {
   const { season } = useSeason();
   const { data: lastApprovals = [] } = trpc.lastApproval.getAll.useQuery({ season });
   const { data: deletedLastsFromDb = [] } = trpc.lastApproval.getDeleted.useQuery({ season });
-  const { data: customLastsFromDb = [] } = trpc.customLast.getAll.useQuery();
+  const { data: customLastsFromDb = [] } = trpc.customLast.getAll.useQuery({ season });
 
   // Build the same visible lasts list as LastApprovalTab does (season-aware)
   const seasonLasts = useMemo(() => getNewLastsForSeason(season), [season]);

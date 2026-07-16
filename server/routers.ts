@@ -973,19 +973,20 @@ export const appRouter = router({
 
   customLast: router({
     getAll: publicProcedure
-      .query(async () => getCustomLasts()),
+      .input(z.object({ season: z.string().default("SS26") }))
+      .query(async ({ input }) => getCustomLasts(input.season)),
 
     add: publicProcedure
-      .input(z.object({ lastName: z.string().min(1).max(128) }))
+      .input(z.object({ lastName: z.string().min(1).max(128), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
-        await addCustomLast(input.lastName);
+        await addCustomLast(input.lastName, input.season);
         return { success: true };
       }),
 
     delete: publicProcedure
-      .input(z.object({ lastName: z.string() }))
+      .input(z.object({ lastName: z.string(), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
-        await deleteCustomLast(input.lastName);
+        await deleteCustomLast(input.lastName, input.season);
         return { success: true };
       }),
   }),

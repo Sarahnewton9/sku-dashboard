@@ -1650,7 +1650,7 @@ export function FittingTab() {
   const { mergedStyles } = useCustomSkus();
 
   // Run-on lasts — styles on these lasts should not appear in Fitting
-  const { data: customLastsData = [] } = trpc.customLast.getAll.useQuery(undefined, { staleTime: 300_000 });
+  const { data: customLastsData = [] } = trpc.customLast.getAll.useQuery({ season }, { staleTime: 300_000 });
   const runOnLastsSet = useMemo(() => {
     const s = new Set<string>();
     for (const l of (customLastsData as Array<{ lastName: string; isRunOn: boolean } | string>)) {

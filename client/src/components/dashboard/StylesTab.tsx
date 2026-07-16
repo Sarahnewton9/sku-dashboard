@@ -285,7 +285,7 @@ export default function StylesTab() {
     },
   });
   // Custom lasts from DB
-  const { data: customLastsData = [] } = trpc.customLast.getAll.useQuery(undefined, { staleTime: 300_000 });
+  const { data: customLastsData = [] } = trpc.customLast.getAll.useQuery({ season }, { staleTime: 300_000 });
   // All unique lasts: ALL_LASTS (shared canonical list) + skuData lasts + custom DB lasts — deduplicated
   const allKnownLasts = useMemo(() => {
     const s = new Set<string>();

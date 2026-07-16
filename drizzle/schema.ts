@@ -537,10 +537,13 @@ export type InsertSpecHiddenColumn = typeof specHiddenColumns.$inferInsert;
  */
 export const customLasts = mysqlTable("custom_lasts", {
   id: int("id").autoincrement().primaryKey(),
-  lastName: varchar("last_name", { length: 128 }).notNull().unique(),
+  lastName: varchar("last_name", { length: 128 }).notNull(),
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
   isRunOn: boolean("is_run_on").notNull().default(false), // run-on lasts don't need Last Approval
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (t) => ({
+  lastSeasonUniq: uniqueIndex("custom_lasts_last_season_uniq").on(t.lastName, t.season),
+}));
 export type CustomLast = typeof customLasts.$inferSelect;
 export type InsertCustomLast = typeof customLasts.$inferInsert;
 
