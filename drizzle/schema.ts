@@ -63,6 +63,15 @@ export const styleMeta = mysqlTable("style_meta", {
   websiteImageUrl: text("websiteImageUrl"),
   /** Shoe category — drives spec template and filtering across the app */
   category: varchar("category", { length: 64 }),
+  /**
+   * AP21 size range for this style.
+   * AU5-11  = AU 5–11 incl. half sizes, no 10.5 (default)
+   * AU6-9   = AU 6–9 incl. half sizes
+   * AU5-10  = AU 5–10 full sizes only (no half sizes)
+   * EU35-42 = EU 35–42
+   * EU35-41 = EU 35–41
+   */
+  ap21SizeRange: mysqlEnum("ap21SizeRange", ["AU5-11", "AU6-9", "AU5-10", "EU35-42", "EU35-41"]).default("AU5-11"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

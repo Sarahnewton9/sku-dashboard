@@ -1,0 +1,1 @@
+ALTER TABLE `style_meta` ADD `ap21SizeRange` enum('AU5-11','AU6-9','AU5-10','EU35-42','EU35-41') DEFAULT 'AU5-11';

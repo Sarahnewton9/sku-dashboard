@@ -57,6 +57,15 @@ function toTitleCase(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
+// Size range config — defined outside component to avoid unstable reference in useCallback
+const SIZE_RANGE_CONFIG: Record<string, { label: string; sizes: string[] }> = {
+  "AU5-11":  { label: "AU5-11",  sizes: ["5","5.5","6","6.5","7","7.5","8","8.5","9","9.5","10","11"] },
+  "AU6-9":   { label: "AU6-9",   sizes: ["6","6.5","7","7.5","8","8.5","9"] },
+  "AU5-10":  { label: "AU5-10",  sizes: ["5","6","7","8","9","10"] },
+  "EU35-42": { label: "EU35-42", sizes: ["35","36","37","38","39","40","41","42"] },
+  "EU35-41": { label: "EU35-41", sizes: ["35","36","37","38","39","40","41"] },
+};
+
 // All available columns for the Full Data Export
 const FULL_EXPORT_ALL_COLS: Array<{ key: string; label: string }> = [
   { key: "Style",             label: "Style" },
@@ -96,6 +105,8 @@ export default function ExportPanel({ onClose }: Props) {
   const { data: heelHeightData = [] } = trpc.heelHeight.getAll.useQuery();
   // Load all colour codes for AP21 lookup
   const { data: colourCodeList = [] } = trpc.colourCode.getAll.useQuery();
+  // Load per-style AP21 size ranges
+  const { data: ap21SizeRangeMap = {} } = trpc.ap21SizeRange.getAll.useQuery();
 
   const heelHeightMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -224,11 +235,17 @@ export default function ExportPanel({ onClose }: Props) {
         // Look up the colour code from the map
         const colourCode = codeMap.get(colourDescUpper) ?? "";
 
-        // Determine if this colour has size 11
+        // Determine size range for this style (per-style DB setting, default AU5-11)
         const skuMeta = skuMetaMap[`${styleName}|${colour}|${leather}`];
         const hasSize11 = skuMeta?.isSize11 === true;
-        const sizeRange = hasSize11 ? AP21_SIZE_RANGE_WITH_PACK : AP21_SIZE_RANGE;
-        const sizes = hasSize11 ? AP21_SIZES_WITH_PACK : AP21_SIZES;
+        const styleRangeKey = (ap21SizeRangeMap as Record<string, string>)[styleName] ?? "AU5-11";
+        const rangeConfig = SIZE_RANGE_CONFIG[styleRangeKey] ?? SIZE_RANGE_CONFIG["AU5-11"];
+        // Only AU ranges support PACK (size 11 extension); EU ranges never get PACK
+        const isAuRange = styleRangeKey.startsWith("AU");
+        const sizeRange = rangeConfig.label;
+        const sizes = (hasSize11 && isAuRange)
+          ? [...rangeConfig.sizes, "PACK"]
+          : rangeConfig.sizes;
 
         // ── Colour-level row (Style Level = 1) ─────────────────────────
         const colourRow: string[] = [
@@ -289,7 +306,7 @@ export default function ExportPanel({ onClose }: Props) {
     }
 
     return csvRows;
-  }, [mergedRawSkus, mergedStyles, ap21Style, cancelledStyleSet, cancelledSkuSet, skuMetaMap]);
+  }, [mergedRawSkus, mergedStyles, ap21Style, cancelledStyleSet, cancelledSkuSet, skuMetaMap, ap21SizeRangeMap]);
 
   function downloadCsvRows(csvRows: string[][], suffix: string) {
     const csvContent = csvRows

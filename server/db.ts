@@ -1768,3 +1768,41 @@ export async function getMissingColourCodes(descriptions: string[]) {
   const foundSet = new Set(found.map((r) => r.colourDescription));
   return uppers.filter((d) => !foundSet.has(d));
 }
+
+// ─── AP21 Size Range helpers ────────────────────────────────────────────────
+
+export type Ap21SizeRange = "AU5-11" | "AU6-9" | "AU5-10" | "EU35-42" | "EU35-41";
+
+/** Returns the AP21 size range for a style, defaulting to AU5-11 if not set. */
+export async function getAp21SizeRange(style: string): Promise<Ap21SizeRange> {
+  const db = await getDb();
+  if (!db) return "AU5-11";
+  const row = await db.select({ ap21SizeRange: styleMeta.ap21SizeRange })
+    .from(styleMeta)
+    .where(eq(styleMeta.style, style.toUpperCase()))
+    .limit(1);
+  return (row[0]?.ap21SizeRange as Ap21SizeRange) ?? "AU5-11";
+}
+
+/** Upserts the AP21 size range for a style. */
+export async function setAp21SizeRange(style: string, sizeRange: Ap21SizeRange) {
+  const db = await getDb();
+  if (!db) return;
+  const upper = style.toUpperCase();
+  await db.insert(styleMeta)
+    .values({ style: upper, ap21SizeRange: sizeRange })
+    .onDuplicateKeyUpdate({ set: { ap21SizeRange: sizeRange } });
+}
+
+/** Returns a map of style → ap21SizeRange for all styles that have one set. */
+export async function getAllAp21SizeRanges(): Promise<Record<string, Ap21SizeRange>> {
+  const db = await getDb();
+  if (!db) return {};
+  const rows = await db.select({ style: styleMeta.style, ap21SizeRange: styleMeta.ap21SizeRange })
+    .from(styleMeta);
+  const result: Record<string, Ap21SizeRange> = {};
+  for (const r of rows) {
+    if (r.ap21SizeRange) result[r.style] = r.ap21SizeRange as Ap21SizeRange;
+  }
+  return result;
+}

@@ -68,6 +68,9 @@ import {
   getColourCodeByDescription,
   upsertColourCode,
   getMissingColourCodes,
+  setAp21SizeRange,
+  getAllAp21SizeRanges,
+  type Ap21SizeRange,
 } from "./db";
 import { fetchSaleProducts } from "./markdownScanner";
 import { storagePut } from "./storage";
@@ -2354,6 +2357,21 @@ Respond with ONLY the code, nothing else. No explanation.`,
           return { code: `${colourPart}-${materialPart}` };
         }
         return { code: parts[0].slice(0, 6) };
+      }),
+  }),
+
+  // AP21 size range — per-style setting used in AP21 Product Import CSV export
+  ap21SizeRange: router({
+    getAll: publicProcedure.query(async () => getAllAp21SizeRanges()),
+
+    set: publicProcedure
+      .input(z.object({
+        style: z.string(),
+        sizeRange: z.enum(["AU5-11", "AU6-9", "AU5-10", "EU35-42", "EU35-41"]),
+      }))
+      .mutation(async ({ input }) => {
+        await setAp21SizeRange(input.style, input.sizeRange as Ap21SizeRange);
+        return { ok: true };
       }),
   }),
 });

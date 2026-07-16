@@ -2371,11 +2371,16 @@ export default function SpecsTab({}: SpecsTabProps) {
   const { data: specCounts = [] } = trpc.specs.getCounts.useQuery();
   const specCountMap = Object.fromEntries(specCounts.map((r) => [r.style, r.filledCount]));
   // Spec status for all styles (for sidebar status badges)
-  const { data: allSpecMeta = [], refetch: refetchAllSpecMeta } = trpc.specs.getAllMeta.useQuery();
+    const { data: allSpecMeta = [], refetch: refetchAllSpecMeta } = trpc.specs.getAllMeta.useQuery();
   const specStatusMap = Object.fromEntries(
     allSpecMeta.map((m) => [m.style, (m as any).specStatus as "not_started" | "in_progress" | "complete"])
   );
-
+  // AP21 size ranges for all styles
+  const { data: ap21SizeRangeMap = {}, refetch: refetchAp21SizeRanges } = trpc.ap21SizeRange.getAll.useQuery();
+  const setAp21SizeRangeMutation = trpc.ap21SizeRange.set.useMutation({
+    onSuccess: () => { refetchAp21SizeRanges(); toast.success("AP21 size range saved"); },
+    onError: () => toast.error("Failed to save AP21 size range"),
+  });
   // ── Derived data ──────────────────────────────────────────────────────────
   // specs: colour → component → value
   const specs: Record<string, Record<string, string>> = {};
@@ -3350,10 +3355,31 @@ export default function SpecsTab({}: SpecsTabProps) {
                     <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
                     Complete
                   </DropdownMenuItem>
-                </DropdownMenuContent>
+                                </DropdownMenuContent>
               </DropdownMenu>
             </div>
-
+            {/* AP21 size range selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-medium">AP21 Size Range:</span>
+              <Select
+                value={(ap21SizeRangeMap as Record<string, string>)[selectedStyle ?? ""] ?? "AU5-11"}
+                onValueChange={(val) => {
+                  if (!selectedStyle) return;
+                  setAp21SizeRangeMutation.mutate({ style: selectedStyle, sizeRange: val as any });
+                }}
+              >
+                <SelectTrigger className="h-7 text-xs w-36 border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="AU5-11" className="text-xs">AU 5–11 (half sizes)</SelectItem>
+                  <SelectItem value="AU6-9" className="text-xs">AU 6–9 (half sizes)</SelectItem>
+                  <SelectItem value="AU5-10" className="text-xs">AU 5–10 (full sizes)</SelectItem>
+                  <SelectItem value="EU35-42" className="text-xs">EU 35–42</SelectItem>
+                  <SelectItem value="EU35-41" className="text-xs">EU 35–41</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             {/* Import preview banner */}
             {importParsed && (
               <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 p-4 space-y-3">

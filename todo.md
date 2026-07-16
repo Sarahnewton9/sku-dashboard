@@ -441,3 +441,11 @@
 - [x] Colour Code column now populated from colour_codes DB table (matched by UPPERCASE description)
 - [x] Missing colour code modal: shows before export when any colour has no code; AI-suggests codes; user can edit; Save & Export saves codes then downloads CSV
 - [x] AP21ColourCodeModal component with per-description AI suggestion (colourCode.suggestCode), editable inputs, reset-to-suggestion button, Save & Export flow
+
+## AP21 Size Range Per Style (Jul 2026)
+- [x] Add ap21SizeRange column to style_meta DB table (enum: AU6-9, AU5-11, AU5-10, EU35-42, EU35-41), default AU5-11
+- [x] Run pnpm db:push to apply migration
+- [x] Add getAp21SizeRange, setAp21SizeRange, getAllAp21SizeRanges DB helpers
+- [x] Add ap21SizeRange.set and ap21SizeRange.getAll tRPC procedures
+- [x] Add size range selector to Specs tab header (below spec status badge)
+- [x] Wire AP21 export to use per-style sizeRange from DB; AU ranges support PACK; EU ranges never get PACK; default AU5-11

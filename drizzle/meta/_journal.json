@@ -344,6 +344,13 @@
       "when": 1784183594113,
       "tag": "0048_modern_tomorrow_man",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "5",
+      "when": 1784185302768,
+      "tag": "0049_rare_spitfire",
+      "breakpoints": true
     }
   ]
 }
