@@ -37,9 +37,12 @@ import {
 } from "@shared/specTemplates";
 import { exportSpecSheet } from "@/lib/exportSpecSheet";
 import { parseSpecSheetFile, type ParsedSpecSheet } from "@/lib/importSpecSheet";
+import { getNewLastsForSeason } from "@shared/const";
+import { useSeason } from "@/contexts/SeasonContext";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────────────────
 
+// SS26 new lasts (kept for reference; season-aware version uses getNewLastsForSeason)
 const NEW_LASTS = [
   "DAZIE", "SIA", "SALLY", "TIANA", "BILLIE", "MATISSE",
   "EDGY", "EMBER", "TILDA", "LUCY", "ENVY", "FINCH",
@@ -1882,6 +1885,7 @@ interface SpecsTabProps {}
 
 export default function SpecsTab({}: SpecsTabProps) {
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
+  const { season } = useSeason();
 
   // Build colour+leather lookup from live merged raw SKUs
   // For styles with duplicate colours (different leathers), the key is "COLOUR LEATHER"
@@ -2000,6 +2004,7 @@ export default function SpecsTab({}: SpecsTabProps) {
   }, [mergedRawSkus, mergedStyles]);
 
   // Build base style list from live merged styles
+  const seasonNewLasts = useMemo(() => getNewLastsForSeason(season), [season]);
   const baseStyleList = useMemo(() => {
     const allStyles = mergedStyles as Array<typeof skuData.styles[number] & { _isCustomStyle?: boolean }>;
     return allStyles
@@ -2007,7 +2012,8 @@ export default function SpecsTab({}: SpecsTabProps) {
         // Custom styles always appear regardless of last name
         if ((s as any)._isCustomStyle) return true;
         const lastUpper = (s.last ?? "").toUpperCase();
-        const isOnNewLast = NEW_LASTS.some((nl) => lastUpper.includes(nl));
+        // Use season-specific new lasts so W27 shows empty specs list (no new lasts yet)
+        const isOnNewLast = seasonNewLasts.some((nl) => lastUpper.includes(nl));
         return isOnNewLast || s.isAllNew;
       })
       .map((s) => {
@@ -2030,7 +2036,7 @@ export default function SpecsTab({}: SpecsTabProps) {
       // Custom styles appear even with 0 colours (they can have specs added)
       .filter((s) => s.colours.length > 0 || s._isCustomStyle)
       .sort((a, b) => a.style.localeCompare(b.style));
-  }, [mergedStyles, NEW_COLOURS_PER_STYLE, COLOUR_LEATHER_MAP, TOE_CAP_MAP]);
+  }, [mergedStyles, NEW_COLOURS_PER_STYLE, COLOUR_LEATHER_MAP, TOE_CAP_MAP, seasonNewLasts]);
 
   const utils = trpc.useUtils();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);

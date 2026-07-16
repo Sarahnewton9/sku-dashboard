@@ -100,8 +100,10 @@ export function useCustomSkus() {
   // Merge custom SKUs into rawSkus — same shape as skuData.rawSkus entries
   const mergedRawSkus = useMemo(() => {
     // Apply overrides to static SKUs
+    // For W27 (and any non-SS26 season), all static SKUs are carry-overs — force is_new=false
     const baseSkus = (skuData.rawSkus as Array<{ style: string; colour: string; leather: string; is_new: boolean }>).map((sku) => {
-      const effectiveIsNew = resolveIsNew(sku.style, sku.colour, sku.leather ?? "", sku.is_new);
+      const staticIsNew = season === "SS26" ? sku.is_new : false;
+      const effectiveIsNew = resolveIsNew(sku.style, sku.colour, sku.leather ?? "", staticIsNew);
       if (effectiveIsNew === sku.is_new) return sku;
       return { ...sku, is_new: effectiveIsNew };
     });
@@ -143,10 +145,13 @@ export function useCustomSkus() {
       const overrideUrl = imageOverrideMap[s.style.toUpperCase()] ?? websiteImageMap[s.style.toUpperCase()];
 
       // Re-compute new SKU counts for static SKUs of this style using overrides
-      const staticNewCount = (skuData.rawSkus as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)
-        .filter((r) => r.style === s.style)
-        .filter((r) => resolveIsNew(r.style, r.colour, r.leather ?? "", r.is_new))
-        .length;
+      // For W27 (and any non-SS26 season), all static SKUs are carry-overs — force is_new=false
+      const staticNewCount = season === "SS26"
+        ? (skuData.rawSkus as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)
+            .filter((r) => r.style === s.style)
+            .filter((r) => resolveIsNew(r.style, r.colour, r.leather ?? "", r.is_new))
+            .length
+        : 0;
 
       const customNewCount = extra.filter((e) => e.isNew).length;
       const totalNewSKUs = staticNewCount + customNewCount;

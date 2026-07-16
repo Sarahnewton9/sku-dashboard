@@ -11,7 +11,7 @@ import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Package, Sparkles, Archive, Layers, Star, RefreshCw, FlaskConical, CheckCircle2 } from "lucide-react";
-import { ALL_LASTS } from "@shared/const";
+import { getNewLastsForSeason } from "@shared/const";
 import { useSeason } from "@/contexts/SeasonContext";
 
 const CATEGORY_COLOURS: Record<string, string> = {
@@ -193,12 +193,13 @@ export default function SummaryCards() {
   const { data: deletedLastsFromDb = [] } = trpc.lastApproval.getDeleted.useQuery({ season });
   const { data: customLastsFromDb = [] } = trpc.customLast.getAll.useQuery();
 
-  // Build the same visible lasts list as LastApprovalTab does
+  // Build the same visible lasts list as LastApprovalTab does (season-aware)
+  const seasonLasts = useMemo(() => getNewLastsForSeason(season), [season]);
   const totalLastsCount = useMemo(() => {
     const deletedSet = new Set(deletedLastsFromDb);
     const seen = new Set<string>();
     let count = 0;
-    for (const raw of [...ALL_LASTS, ...(customLastsFromDb as Array<{ lastName: string; isRunOn: boolean } | string>)]) {
+    for (const raw of [...seasonLasts, ...(customLastsFromDb as Array<{ lastName: string; isRunOn: boolean } | string>)]) {
       const l = typeof raw === "string" ? raw : raw.lastName;
       const key = l.toUpperCase();
       if (!seen.has(key)) {
@@ -207,7 +208,7 @@ export default function SummaryCards() {
       }
     }
     return count;
-  }, [deletedLastsFromDb, customLastsFromDb]);
+  }, [seasonLasts, deletedLastsFromDb, customLastsFromDb]);
 
   const approvedLastsCount = lastApprovals.filter((a) => a.status === "approved").length;
 

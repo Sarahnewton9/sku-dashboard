@@ -7,10 +7,8 @@ import { CheckCircle2, Clock, ChevronDown, ChevronRight, Upload, X, AlertTriangl
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
-import { ALL_LASTS } from "@shared/const";
+import { getNewLastsForSeason } from "@shared/const";
 import { useSeason } from "@/contexts/SeasonContext";
-
-const ALL_LASTS_UPPER = new Set(ALL_LASTS.map((l) => l.toUpperCase()));
 
 // Short descriptor shown under each last name
 const LAST_DESCRIPTIONS: Record<string, string> = {
@@ -406,16 +404,19 @@ export default function LastApprovalTab() {
     return set;
   }, [deletedLastsFromDb, localDeletedLasts]);
 
+  const seasonLasts = useMemo(() => getNewLastsForSeason(season), [season]);
+  const seasonLastsUpper = useMemo(() => new Set(seasonLasts.map((l) => l.toUpperCase())), [seasonLasts]);
+
   const visibleLasts = useMemo(() => {
-    // Deduplicate: ALL_LASTS takes precedence; custom lasts only added if not already present
+    // Deduplicate: season-specific lasts take precedence; custom lasts only added if not already present
     const seen = new Set<string>();
     const merged: string[] = [];
-    for (const l of [...ALL_LASTS, ...(customLasts as string[])]) {
+    for (const l of [...seasonLasts, ...(customLasts as string[])]) {
       const key = l.toUpperCase();
       if (!seen.has(key)) { seen.add(key); merged.push(l); }
     }
     return merged.filter((l) => !deletedLastsSet.has(l));
-  }, [customLasts, deletedLastsSet]);
+  }, [seasonLasts, customLasts, deletedLastsSet]);
 
   const filteredLasts = useMemo(() => {
     return visibleLasts.filter((last) => {
@@ -554,7 +555,7 @@ export default function LastApprovalTab() {
             lastName: rawLast,
             notes,
             status,
-            matched: ALL_LASTS_UPPER.has(rawLast),
+            matched: seasonLastsUpper.has(rawLast),
           };
         }).filter((r) => r.lastName !== "");
 
@@ -578,7 +579,7 @@ export default function LastApprovalTab() {
     const matched = importPreview.filter((r) => r.matched);
     try {
       for (const row of matched) {
-        const canonical = ALL_LASTS.find((l) => l.toUpperCase() === row.lastName) ?? row.lastName;
+        const canonical = seasonLasts.find((l: string) => l.toUpperCase() === row.lastName) ?? row.lastName;
         await upsert.mutateAsync({
           lastName: canonical,
           status: row.status ?? approvalMap[canonical]?.status ?? "waiting_revised",

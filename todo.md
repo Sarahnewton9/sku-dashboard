@@ -427,8 +427,8 @@
 
 
 ## Winter 27 Season (Jul 2026)
-- [ ] Add season switcher to sidebar (SS26 / Winter 27) — replace "SS26 Range Review" subtitle with "SKU DASH" title + toggle
-- [ ] Add SeasonContext provider to wrap the app
-- [ ] Seed Winter 27 DB tables — copy all SS26 styles/SKUs with is_new=false
-- [ ] Wire season filter to all data queries (buy sessions, analysis, fitting, specs, last approval)
-- [ ] Verify all tabs respect active season
+- [x] Add season switcher to sidebar (SS26 / Winter 27) — replace "SS26 Range Review" subtitle with "SKU DASH" title + toggle
+- [x] Add SeasonContext provider to wrap the app
+- [x] Seed Winter 27 DB tables — copy all SS26 styles/SKUs with is_new=false
+- [x] Wire season filter to all data queries (buy sessions, analysis, fitting, specs, last approval)
+- [x] Verify all tabs respect active season

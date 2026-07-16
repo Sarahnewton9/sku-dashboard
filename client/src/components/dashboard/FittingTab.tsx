@@ -16,9 +16,11 @@ import {
 import { LastMeasurementsPanel } from "./LastMeasurementsPanel";
 import { toast } from "sonner";
 import { useSeason } from "@/contexts/SeasonContext";
+import { getNewLastsForSeason } from "@shared/const";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
+// SS26 new lasts (kept for reference; season-aware version uses getNewLastsForSeason)
 const NEW_LASTS = [
   "DAZIE", "SIA", "SALLY", "TIANA", "BILLIE", "MATISSE",
   "EMBER", "TILDA", "LUCY", "ENVY", "FINCH",
@@ -65,11 +67,11 @@ interface FittingSession {
 
 // ─── Build style list (now used inside component with live data) ──────────────
 
-function buildStyleListFromData(styles: typeof skuData.styles): StyleEntry[] {
+function buildStyleListFromData(styles: typeof skuData.styles, newLasts: readonly string[] = NEW_LASTS): StyleEntry[] {
   return styles
     .filter((s) => {
       const lastUpper = (s.last ?? "").toUpperCase();
-      const isOnNewLast = NEW_LASTS.some((nl) => lastUpper.includes(nl));
+      const isOnNewLast = newLasts.some((nl) => lastUpper.includes(nl));
       return isOnNewLast || s.isAllNew;
     })
     .map((s) => ({
@@ -1669,7 +1671,10 @@ export function FittingTab() {
     [cancelledSkusRaw]
   );
 
+  const { season } = useSeason();
+
   // mergedStyles already has new/existing overrides applied via useCustomSkus
+  const seasonNewLasts = useMemo(() => getNewLastsForSeason(season), [season]);
   const styleList = useMemo(() => {
     // Custom styles (_isCustomStyle) always appear regardless of last name
     const allStyles = mergedStyles as Array<typeof skuData.styles[number] & { _isCustomStyle?: boolean }>;
@@ -1685,7 +1690,8 @@ export function FittingTab() {
         newSKUs: s.newSKUs,
         totalSKUs: s.totalSKUs,
       }));
-    const staticEntries = buildStyleListFromData(mergedStyles as typeof skuData.styles)
+    // Pass season-specific new lasts so W27 shows empty fitting list (no new lasts yet)
+    const staticEntries = buildStyleListFromData(mergedStyles as typeof skuData.styles, seasonNewLasts)
       .filter((s) => !cancelledStyleSet.has(s.style));
     // Merge, deduplicate (custom style wins if same name)
     const seen = new Set(customEntries.map((s) => s.style));
@@ -1693,7 +1699,7 @@ export function FittingTab() {
       ...customEntries,
       ...staticEntries.filter((s) => !seen.has(s.style)),
     ].sort((a, b) => a.last.localeCompare(b.last) || a.style.localeCompare(b.style));
-  }, [mergedStyles, cancelledStyleSet]);
+  }, [mergedStyles, cancelledStyleSet, seasonNewLasts]);
 
   // Data queries
   const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery(undefined, { staleTime: 30_000 });
@@ -1706,8 +1712,6 @@ export function FittingTab() {
   const imageOverrides = imageOverrideList.reduce<Record<string, string>>(
     (acc, o) => { acc[o.style] = o.imageUrl; return acc; }, {}
   );
-
-  const { season } = useSeason();
 
   // ── Bulk session fetch (single query for all styles) ────────────────────────
   const { data: allSessionsRaw = [], refetch: refetchSessions } = trpc.fittingSession.getAll.useQuery({ season }, { staleTime: 15_000 });
