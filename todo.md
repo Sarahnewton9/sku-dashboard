@@ -432,3 +432,12 @@
 - [x] Seed Winter 27 DB tables — copy all SS26 styles/SKUs with is_new=false
 - [x] Wire season filter to all data queries (buy sessions, analysis, fitting, specs, last approval)
 - [x] Verify all tabs respect active season
+
+## AP21 Product Import CSV — Colour Code Management (Jul 2026)
+- [x] Add colour_codes DB table (colourDescription, colourCode) with 544 seeded codes
+- [x] Add DB helpers: getAllColourCodes, getColourCodeByDescription, upsertColourCode, getMissingColourCodes
+- [x] Add colourCode tRPC router: getAll, getByDescription, upsert, getMissing, suggestCode (AI)
+- [x] Rewrite AP21 export to 101836 BxB format: 50 columns, AU sizes 5–11 + PACK, Style Level 0/1/2
+- [x] Colour Code column now populated from colour_codes DB table (matched by UPPERCASE description)
+- [x] Missing colour code modal: shows before export when any colour has no code; AI-suggests codes; user can edit; Save & Export saves codes then downloads CSV
+- [x] AP21ColourCodeModal component with per-description AI suggestion (colourCode.suggestCode), editable inputs, reset-to-suggestion button, Save & Export flow

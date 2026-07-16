@@ -1725,3 +1725,46 @@ export async function updateHandbagStyleImage(style: string, imageUrl: string | 
   const { eq } = await import("drizzle-orm");
   await db.update(handbagStyles).set({ styleImageUrl: imageUrl } as any).where(eq(handbagStyles.style, style));
 }
+
+// ── Colour Codes (AP21 Export) ───────────────────────────────────────────────
+export async function getAllColourCodes() {
+  const db = await getDb();
+  if (!db) return [];
+  const { colourCodes } = await import("../drizzle/schema");
+  const { asc } = await import("drizzle-orm");
+  return db.select().from(colourCodes).orderBy(asc(colourCodes.colourDescription));
+}
+
+export async function getColourCodeByDescription(description: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const { colourCodes } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  const upper = description.toUpperCase();
+  const rows = await db.select().from(colourCodes).where(eq(colourCodes.colourDescription, upper)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function upsertColourCode(description: string, code: string) {
+  const db = await getDb();
+  if (!db) return;
+  const { colourCodes } = await import("../drizzle/schema");
+  const upper = description.toUpperCase();
+  await db.insert(colourCodes)
+    .values({ colourDescription: upper, colourCode: code })
+    .onDuplicateKeyUpdate({ set: { colourCode: code } });
+}
+
+export async function getMissingColourCodes(descriptions: string[]) {
+  if (descriptions.length === 0) return [];
+  const db = await getDb();
+  if (!db) return descriptions;
+  const { colourCodes } = await import("../drizzle/schema");
+  const { inArray } = await import("drizzle-orm");
+  const uppers = descriptions.map((d) => d.toUpperCase());
+  const found = await db.select({ colourDescription: colourCodes.colourDescription })
+    .from(colourCodes)
+    .where(inArray(colourCodes.colourDescription, uppers));
+  const foundSet = new Set(found.map((r) => r.colourDescription));
+  return uppers.filter((d) => !foundSet.has(d));
+}

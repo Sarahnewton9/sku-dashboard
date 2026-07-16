@@ -652,3 +652,17 @@ export const salesRows = mysqlTable("sales_rows", {
 }, (t) => [uniqueIndex("sales_row_idx").on(t.snapshotId, t.style, t.colour)]);
 export type SalesRow = typeof salesRows.$inferSelect;
 export type InsertSalesRow = typeof salesRows.$inferInsert;
+
+/**
+ * Colour codes — maps colour descriptions (e.g. "BLACK SUEDE") to AP21 colour codes (e.g. "BLK-SDE").
+ * Used when generating AP21 product import CSV files.
+ */
+export const colourCodes = mysqlTable("colour_codes", {
+  id: int("id").autoincrement().primaryKey(),
+  colourDescription: varchar("colour_description", { length: 128 }).notNull().unique(),
+  colourCode: varchar("colour_code", { length: 20 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ColourCode = typeof colourCodes.$inferSelect;
+export type InsertColourCode = typeof colourCodes.$inferInsert;

@@ -64,6 +64,10 @@ import {
   createSalesSnapshot,
   getSalesSnapshot,
   deleteSalesSnapshot,
+  getAllColourCodes,
+  getColourCodeByDescription,
+  upsertColourCode,
+  getMissingColourCodes,
 } from "./db";
 import { fetchSaleProducts } from "./markdownScanner";
 import { storagePut } from "./storage";
@@ -2229,6 +2233,127 @@ If the request is unclear or is a question, use no_action.`;
       .mutation(async ({ input }) => {
         await deleteSalesSnapshot(input.snapshotId);
         return { success: true };
+      }),
+  }),
+
+  // ── Colour Codes (AP21 Export) ─────────────────────────────────────────────
+  colourCode: router({
+    /** Return all 544+ colour codes from the DB */
+    getAll: publicProcedure.query(async () => {
+      return await getAllColourCodes();
+    }),
+
+    /** Look up a single colour code by its UPPERCASE description */
+    getByDescription: publicProcedure
+      .input(z.object({ description: z.string() }))
+      .query(async ({ input }) => {
+        return await getColourCodeByDescription(input.description);
+      }),
+
+    /** Save (insert or update) a colour code */
+    upsert: protectedProcedure
+      .input(z.object({
+        description: z.string().min(1),
+        code: z.string().min(1).max(20),
+      }))
+      .mutation(async ({ input }) => {
+        await upsertColourCode(input.description, input.code);
+        return { success: true };
+      }),
+
+    /** Given a list of colour descriptions, return those that have no code in the DB */
+    getMissing: publicProcedure
+      .input(z.object({ descriptions: z.array(z.string()) }))
+      .query(async ({ input }) => {
+        return await getMissingColourCodes(input.descriptions);
+      }),
+
+    /**
+     * AI-suggest a colour code for a given description.
+     * Uses the abbreviation pattern: first word abbreviated 3-5 chars + "-" + second word abbreviated 3-4 chars.
+     * E.g. "AQUA SUEDE" → "AQU-SDE", "BLACK PATENT" → "BLK-PAT"
+     * Falls back to a deterministic rule if LLM fails.
+     */
+    suggestCode: publicProcedure
+      .input(z.object({ description: z.string() }))
+      .query(async ({ input }) => {
+        const { invokeLLM } = await import("./_core/llm");
+        const desc = input.description.toUpperCase().trim();
+        // Provide a few-shot prompt with known examples
+        const examples = [
+          "AQUA SUEDE → AQU-SDE",
+          "BLACK PATENT → BLK-PAT",
+          "BLACK SUEDE → BLK-SDE",
+          "CARAMEL NAPPA → CARM-NAP",
+          "CHAMPAGNE METALLIC → CHMP-MET",
+          "CHOCOLATE COMO → CHOC-CMO",
+          "COBALT SUEDE → CBL-SDE",
+          "CREAM NAPPA → CRM-NAP",
+          "DUSTY PINK SUEDE → DSTPNK-SDE",
+          "ESPRESSO SUEDE → ESPRSO-SDE",
+          "GOLD METALLIC → GLD-MET",
+          "IVORY SUEDE → IVY-SDE",
+          "KHAKI SUEDE → KHK-SDE",
+          "LATTE NAPPA → LAT-NAP",
+          "LIME SUEDE → LIM-SDE",
+          "MERLOT SUEDE → MRL-SDE",
+          "MIDNIGHT BLUE SUEDE → MDNT-SDE",
+          "MOCHA NAPPA → MCH-NAP",
+          "NUDE PATENT → NDE-PAT",
+          "OLIVE SUEDE → OLV-SDE",
+          "ORANGE SUEDE → ORG-SDE",
+          "PEBBLE LEATHER → PBL-LTH",
+          "PEWTER METALLIC → PWT-MET",
+          "PLUM SUEDE → PLM-SDE",
+          "RED PATENT → RED-PAT",
+          "ROSE GOLD METALLIC → RSGLD-MET",
+          "SAGE SUEDE → SGE-SDE",
+          "SILVER METALLIC → SLV-MET",
+          "SMOKE SUEDE → SMK-SDE",
+          "TAN NAPPA → TAN-NAP",
+          "TEAL SUEDE → TEL-SDE",
+          "TERRACOTTA SUEDE → TRCT-SDE",
+          "WHITE PATENT → WHT-PAT",
+          "WINE SUEDE → WNE-SDE",
+        ];
+        try {
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `You are a product code generator for a fashion brand. Given a colour description, generate a short AP21 colour code using this pattern:
+- Take the first word (colour), abbreviate to 3-5 uppercase letters
+- Take the second word (material/leather), abbreviate to 3-4 uppercase letters
+- Join with a hyphen
+- For compound colours (e.g. DUSTY PINK SUEDE), abbreviate the compound colour part together
+- For compound materials (e.g. NAPPA METALLIC), abbreviate together
+- Keep it unique and recognisable
+
+Examples:
+${examples.join("\n")}
+
+Respond with ONLY the code, nothing else. No explanation.`,
+              },
+              { role: "user", content: desc },
+            ],
+          });
+          const rawContent = response.choices?.[0]?.message?.content;
+          const contentStr = typeof rawContent === "string" ? rawContent : "";
+          const suggested = contentStr.trim().toUpperCase();
+          if (suggested && /^[A-Z0-9]+-[A-Z0-9]+$/.test(suggested)) {
+            return { code: suggested };
+          }
+        } catch (e) {
+          console.warn("[colourCode.suggestCode] LLM failed, using fallback", e);
+        }
+        // Deterministic fallback: take first 3 chars of each word
+        const parts = desc.replace(/[^A-Z0-9 ]/g, " ").trim().split(/\s+/);
+        if (parts.length >= 2) {
+          const colourPart = parts.slice(0, parts.length - 1).join("").slice(0, 5);
+          const materialPart = parts[parts.length - 1].slice(0, 4);
+          return { code: `${colourPart}-${materialPart}` };
+        }
+        return { code: parts[0].slice(0, 6) };
       }),
   }),
 });

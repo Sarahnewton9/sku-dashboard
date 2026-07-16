@@ -1,7 +1,7 @@
 /**
- * ExportPanel — Full Data Export, AP21 CSV, and PPTX Range Review Sync
+ * ExportPanel — Full Data Export, AP21 CSV (101836 BxB format), and PPTX Range Review Sync
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { FileDown, X, Upload, FileText } from "lucide-react";
@@ -9,16 +9,53 @@ import { useSeason } from "@/contexts/SeasonContext";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import PptxSyncModal from "./PptxSyncModal";
+import AP21ColourCodeModal from "./AP21ColourCodeModal";
 
 interface Props {
   onClose: () => void;
 }
 
-// AP21 size ranges — standard EU footwear
-const AP21_SIZE_RANGE_STANDARD = "EU35-41";
-const AP21_SIZE_RANGE_WITH_11 = "EU35-42";
-const AP21_SIZES_STANDARD = ["35", "36", "37", "38", "39", "40", "41"];
-const AP21_SIZES_WITH_11 = ["35", "36", "37", "38", "39", "40", "41", "42"];
+// ── AP21 101836 BxB format ─────────────────────────────────────────────────
+// AU size range: 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 11 (no 10.5) + PACK
+const AP21_SIZE_RANGE = "AU5-11";
+const AP21_SIZES = ["5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10", "11"];
+const AP21_SIZE_RANGE_WITH_PACK = "AU5-11";
+const AP21_SIZES_WITH_PACK = [...AP21_SIZES, "PACK"];
+
+// 101836 column headers (50 columns)
+const AP21_HEADERS = [
+  "Product Code",       // 1  - style name in CAPS
+  "Product Description",// 2  - style name in Title Case
+  "Colour Code",        // 3  - short code from colour_codes table
+  "Colour Description", // 4  - full colour+leather description
+  "Size Range",         // 5  - e.g. AU5-11
+  "Size Code",          // 6  - individual size e.g. 7.5
+  "EAN Code",           // 7
+  "Sell Price",         // 8
+  "Purchased",          // 9
+  "Produced",           // 10
+  "Sold",               // 11
+  "Stocked",            // 12
+  "Used In Production", // 13
+  "Include in MRP",     // 14
+  "Sold at Retail",     // 15
+  "Ref1",  "Ref2",  "Ref3",  "Ref4",  "Ref5",
+  "Ref6",  "Ref7",  "Ref8",  "Ref9",  "Ref10",
+  "Ref11", "Ref12", "Ref13", "Ref14", "Ref15",
+  "Ref16", "Ref17", "Ref18", "Ref19", "Ref20",
+  "ColourRef1", "ColourRef2", "ColourRef3", "ColourRef4", "ColourRef5",
+  "ColourRef6", "ColourRef7", "ColourRef8", "ColourRef9", "ColourRef10",
+  "Cost",           // 46
+  "Dimension Range",// 47
+  "Dimension Code", // 48
+  "Style Level",    // 49
+  "UOM",            // 50
+];
+
+// Helper: Title Case a string (e.g. "KASSY" → "Kassy")
+function toTitleCase(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
 
 // All available columns for the Full Data Export
 const FULL_EXPORT_ALL_COLS: Array<{ key: string; label: string }> = [
@@ -43,6 +80,13 @@ export default function ExportPanel({ onClose }: Props) {
   const [ap21Style, setAp21Style] = useState<string>("ALL");
   const [showPptxSync, setShowPptxSync] = useState(false);
   const [fullExportCols, setFullExportCols] = useState<Set<string>>(FULL_EXPORT_DEFAULT_COLS);
+
+  // Missing colour code modal state
+  const [missingColourDescriptions, setMissingColourDescriptions] = useState<string[]>([]);
+  const [showColourCodeModal, setShowColourCodeModal] = useState(false);
+  // Callback to run after codes are confirmed
+  const [pendingExportCallback, setPendingExportCallback] = useState<(() => void) | null>(null);
+
   const utils = trpc.useUtils();
 
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
@@ -50,6 +94,9 @@ export default function ExportPanel({ onClose }: Props) {
   const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery();
   const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
   const { data: heelHeightData = [] } = trpc.heelHeight.getAll.useQuery();
+  // Load all colour codes for AP21 lookup
+  const { data: colourCodeList = [] } = trpc.colourCode.getAll.useQuery();
+
   const heelHeightMap = useMemo(() => {
     const map = new Map<string, number>();
     for (const row of heelHeightData as Array<{ lastName: string; heelHeightCm: number }>) {
@@ -59,7 +106,14 @@ export default function ExportPanel({ onClose }: Props) {
   }, [heelHeightData]);
   const HEEL_HEIGHT_CATEGORIES = new Set(["Dress Shoe", "Dress Sandal", "Wedge"]);
 
-
+  // Build colour code lookup map (UPPERCASE description → code)
+  const colourCodeMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const row of colourCodeList as Array<{ colourDescription: string; colourCode: string }>) {
+      map.set(row.colourDescription.toUpperCase(), row.colourCode);
+    }
+    return map;
+  }, [colourCodeList]);
 
   // Build lookup maps
   const skuMetaMap: Record<string, typeof skuMetaList[0]> = {};
@@ -97,8 +151,171 @@ export default function ExportPanel({ onClose }: Props) {
     return ["ALL", ...styles];
   }, [mergedStyles, cancelledStyleSet]);
 
-  // AP21 CSV generator
-  function exportAP21Csv() {
+  // ── AP21 CSV generator (101836 BxB format) ────────────────────────────────
+  const generateAP21CsvRows = useCallback((codeMap: Map<string, string>): string[][] => {
+    type RawSku = { style: string; colour: string; leather: string; is_new: boolean };
+    const rawSkus = mergedRawSkus as unknown as RawSku[];
+
+    // Determine which styles to export
+    const stylesToExport = ap21Style === "ALL"
+      ? (mergedStyles as any[]).filter((s: any) => !cancelledStyleSet.has(s.style)).map((s: any) => s.style)
+      : [ap21Style];
+
+    const csvRows: string[][] = [];
+    csvRows.push(AP21_HEADERS);
+
+    for (const styleName of stylesToExport) {
+      // Get all active (non-cancelled) SKUs for this style
+      const allStyleSkus = rawSkus.filter(
+        (r) =>
+          r.style === styleName &&
+          !cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`)
+      );
+      if (allStyleSkus.length === 0) continue;
+
+      const productCode = styleName.toUpperCase();
+      const productDesc = toTitleCase(styleName);
+
+      // ── Style-level row (Style Level = 0) ──────────────────────────────
+      // Product Code + Product Description only; colour/size fields blank
+      const styleRow: string[] = [
+        productCode,  // Product Code
+        productDesc,  // Product Description
+        "",           // Colour Code (blank at style level)
+        "",           // Colour Description (blank at style level)
+        "",           // Size Range (blank)
+        "",           // Size Code (blank)
+        "",           // EAN Code
+        "",           // Sell Price (leave blank)
+        "Y",          // Purchased
+        "N",          // Produced
+        "Y",          // Sold
+        "Y",          // Stocked
+        "N",          // Used In Production
+        "N",          // Include in MRP
+        "Y",          // Sold at Retail
+        ...Array(20).fill(""), // Ref1-Ref20
+        ...Array(10).fill(""), // ColourRef1-ColourRef10
+        "",           // Cost (leave blank)
+        "",           // Dimension Range
+        "",           // Dimension Code
+        "0",          // Style Level = 0 (style row)
+        "Each",       // UOM
+      ];
+      csvRows.push(styleRow);
+
+      // Collect unique colour/leather combos, sorted alphabetically
+      const seenColours = new Set<string>();
+      const orderedColours: { colour: string; leather: string }[] = [];
+      for (const sku of allStyleSkus) {
+        const key = `${sku.colour}|${sku.leather}`;
+        if (!seenColours.has(key)) {
+          seenColours.add(key);
+          orderedColours.push({ colour: sku.colour, leather: sku.leather });
+        }
+      }
+      orderedColours.sort((a, b) => a.colour.localeCompare(b.colour));
+
+      for (const { colour, leather } of orderedColours) {
+        // Build the colour description (UPPERCASE, as stored in colour_codes table)
+        const colourDesc = leather ? `${colour} ${leather}` : colour;
+        const colourDescUpper = colourDesc.toUpperCase();
+
+        // Look up the colour code from the map
+        const colourCode = codeMap.get(colourDescUpper) ?? "";
+
+        // Determine if this colour has size 11
+        const skuMeta = skuMetaMap[`${styleName}|${colour}|${leather}`];
+        const hasSize11 = skuMeta?.isSize11 === true;
+        const sizeRange = hasSize11 ? AP21_SIZE_RANGE_WITH_PACK : AP21_SIZE_RANGE;
+        const sizes = hasSize11 ? AP21_SIZES_WITH_PACK : AP21_SIZES;
+
+        // ── Colour-level row (Style Level = 1) ─────────────────────────
+        const colourRow: string[] = [
+          productCode,    // Product Code
+          productDesc,    // Product Description
+          colourCode,     // Colour Code (from DB)
+          colourDesc,     // Colour Description (e.g. "Black Suede")
+          "",             // Size Range (blank at colour level)
+          "",             // Size Code (blank)
+          "",             // EAN Code
+          "",             // Sell Price
+          "Y",            // Purchased
+          "N",            // Produced
+          "Y",            // Sold
+          "Y",            // Stocked
+          "N",            // Used In Production
+          "N",            // Include in MRP
+          "Y",            // Sold at Retail
+          ...Array(20).fill(""), // Ref1-Ref20
+          ...Array(10).fill(""), // ColourRef1-ColourRef10
+          "",             // Cost (leave blank)
+          "",             // Dimension Range
+          "",             // Dimension Code
+          "1",            // Style Level = 1 (colour row)
+          "",             // UOM
+        ];
+        csvRows.push(colourRow);
+
+        // ── Size rows (Style Level = 2) ─────────────────────────────────
+        for (const sizeCode of sizes) {
+          const sizeRow: string[] = [
+            productCode,    // Product Code
+            productDesc,    // Product Description
+            colourCode,     // Colour Code
+            colourDesc,     // Colour Description
+            sizeRange,      // Size Range (e.g. AU5-11)
+            sizeCode,       // Size Code (individual size)
+            "",             // EAN Code
+            "",             // Sell Price
+            "Y",            // Purchased
+            "N",            // Produced
+            "Y",            // Sold
+            "Y",            // Stocked
+            "N",            // Used In Production
+            "N",            // Include in MRP
+            "Y",            // Sold at Retail
+            ...Array(20).fill(""), // Ref1-Ref20
+            ...Array(10).fill(""), // ColourRef1-ColourRef10
+            "",             // Cost (leave blank)
+            "",             // Dimension Range
+            "",             // Dimension Code
+            "2",            // Style Level = 2 (size row)
+            "",             // UOM
+          ];
+          csvRows.push(sizeRow);
+        }
+      }
+    }
+
+    return csvRows;
+  }, [mergedRawSkus, mergedStyles, ap21Style, cancelledStyleSet, cancelledSkuSet, skuMetaMap]);
+
+  function downloadCsvRows(csvRows: string[][], suffix: string) {
+    const csvContent = csvRows
+      .map((row) =>
+        row.map((cell) => {
+          const s = String(cell ?? "");
+          if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+            return `"${s.replace(/"/g, '""')}"`;
+          }
+          return s;
+        }).join(",")
+      )
+      .join("\r\n");
+
+    const filename = `AP21_products_${suffix}_${Date.now()}.csv`;
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    return filename;
+  }
+
+  async function exportAP21Csv() {
     setExporting("ap21");
     try {
       type RawSku = { style: string; colour: string; leather: string; is_new: boolean };
@@ -109,182 +326,81 @@ export default function ExportPanel({ onClose }: Props) {
         ? (mergedStyles as any[]).filter((s: any) => !cancelledStyleSet.has(s.style)).map((s: any) => s.style)
         : [ap21Style];
 
-      const csvRows: string[][] = [];
-
-      // AP21 column headers
-      const headers = [
-        "Article Code", "Article Name", "COMMENTS",
-        "Colour Code", "Colour Description",
-        "Size Code", "Code1",
-        "EAN Code", "Sell Price",
-        "Purchased", "Produced", "Sold", "Stocked", "UsedInProd",
-        "Include in MRP", "Sold at Retail",
-        ...Array.from({ length: 30 }, (_, i) => `Ref${i + 1}`),
-        "Cost", "Dimension Range", "Dimension Code",
-        "Style Level", "UOM",
-      ];
-      csvRows.push(headers);
-
+      // Collect all unique colour descriptions needed
+      const neededDescriptions = new Set<string>();
       for (const styleName of stylesToExport) {
-        const styleInfo = styleLookup[styleName];
-        const articleName = styleInfo
-          ? `${styleName} ${styleInfo.category.toUpperCase()}`
-          : styleName;
-
-        // Get all active SKUs for this style
         const styleSkus = rawSkus.filter(
           (r) =>
             r.style === styleName &&
             !cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`)
         );
-
-        // mergedRawSkus already includes custom SKUs, so no extra merge needed
-        const allStyleSkus = styleSkus;
-        if (allStyleSkus.length === 0) continue;
-
-        // Determine if this style has size 11 (any SKU has isSize11=true)
-        const hasSize11 = allStyleSkus.some((sku) => {
-          const meta = skuMetaMap[`${sku.style}|${sku.colour}|${sku.leather}`];
-          return meta?.isSize11 === true;
-        });
-        const sizeRange = hasSize11 ? AP21_SIZE_RANGE_WITH_11 : AP21_SIZE_RANGE_STANDARD;
-        const sizes = hasSize11 ? AP21_SIZES_WITH_11 : AP21_SIZES_STANDARD;
-
-        // Get style-level RRP
-        const styleMeta = styleMetaMap[styleName];
-        const rrp = styleMeta?.rrp ?? "";
-
-        // ── Style-level row (no colour, no size) ──
-        // AP21 requires a style row first with Style Level set
-        const styleRow = [
-          styleName,           // Article Code
-          articleName,         // Article Name
-          "",                  // COMMENTS
-          "",                  // Colour Code
-          "",                  // Colour Description
-          "",                  // Size Code
-          "",                  // Code1
-          "",                  // EAN Code
-          rrp !== "" ? String(rrp) : "", // Sell Price
-          "Y",                 // Purchased
-          "N",                 // Produced
-          "Y",                 // Sold
-          "Y",                 // Stocked
-          "N",                 // UsedInProd
-          "N",                 // Include in MRP
-          "Y",                 // Sold at Retail
-          ...Array(30).fill(""), // Ref1-Ref30
-          "",                  // Cost
-          "",                  // Dimension Range
-          "",                  // Dimension Code
-          "2",                 // Style Level (colours and sizes)
-          "Each",              // UOM
-        ];
-        csvRows.push(styleRow);
-
-        // ── Colour rows (one per unique colour/leather combo) ──
-        // Ordered by colour then size per AP21 spec
-        const seenColours = new Set<string>();
-        const orderedColours: { colour: string; leather: string }[] = [];
-        for (const sku of allStyleSkus) {
-          const key = `${sku.colour}|${sku.leather}`;
-          if (!seenColours.has(key)) {
-            seenColours.add(key);
-            orderedColours.push({ colour: sku.colour, leather: sku.leather });
-          }
-        }
-        orderedColours.sort((a, b) => a.colour.localeCompare(b.colour));
-
-        for (const { colour, leather } of orderedColours) {
-          const colourDesc = leather ? `${colour} ${leather}` : colour;
-          const skuMeta = skuMetaMap[`${styleName}|${colour}|${leather}`];
-          const cost = skuMeta?.costPrice ?? "";
-
-          // Colour-level row (no size)
-          const colourRow = [
-            styleName,           // Article Code
-            articleName,         // Article Name
-            "",                  // COMMENTS
-            colour,              // Colour Code
-            colourDesc,          // Colour Description
-            "",                  // Size Code
-            "",                  // Code1
-            "",                  // EAN Code
-            "",                  // Sell Price (style level only)
-            "Y",                 // Purchased
-            "N",                 // Produced
-            "Y",                 // Sold
-            "Y",                 // Stocked
-            "N",                 // UsedInProd
-            "N",                 // Include in MRP
-            "Y",                 // Sold at Retail
-            ...Array(30).fill(""), // Ref1-Ref30
-            cost !== "" ? String(cost) : "", // Cost
-            "",                  // Dimension Range
-            "",                  // Dimension Code
-            "",                  // Style Level (blank on colour rows)
-            "",                  // UOM
-          ];
-          csvRows.push(colourRow);
-
-          // Size rows (one per size in range)
-          for (const sizeCode of sizes) {
-            const sizeRow = [
-              styleName,           // Article Code
-              articleName,         // Article Name
-              "",                  // COMMENTS
-              colour,              // Colour Code
-              colourDesc,          // Colour Description
-              sizeRange,           // Size Code (range)
-              sizeCode,            // Code1 (individual size)
-              "",                  // EAN Code
-              "",                  // Sell Price
-              "Y",                 // Purchased
-              "N",                 // Produced
-              "Y",                 // Sold
-              "Y",                 // Stocked
-              "N",                 // UsedInProd
-              "N",                 // Include in MRP
-              "Y",                 // Sold at Retail
-              ...Array(30).fill(""), // Ref1-Ref30
-              "",                  // Cost (SKU level, leave blank)
-              "",                  // Dimension Range
-              "",                  // Dimension Code
-              "",                  // Style Level
-              "",                  // UOM
-            ];
-            csvRows.push(sizeRow);
-          }
+        for (const sku of styleSkus) {
+          const colourDesc = sku.leather ? `${sku.colour} ${sku.leather}` : sku.colour;
+          neededDescriptions.add(colourDesc.toUpperCase());
         }
       }
 
-      // Build CSV string
-      const csvContent = csvRows
-        .map((row) =>
-          row.map((cell) => {
-            const s = String(cell ?? "");
-            // Quote cells that contain commas, quotes, or newlines
-            if (s.includes(",") || s.includes('"') || s.includes("\n")) {
-              return `"${s.replace(/"/g, '""')}"`;
-            }
-            return s;
-          }).join(",")
-        )
-        .join("\r\n");
+      // Check which descriptions are missing from the colour code map
+      const missing = Array.from(neededDescriptions).filter(
+        (d) => !colourCodeMap.has(d)
+      );
 
-      // Download
+      if (missing.length > 0) {
+        // Show the missing colour code modal
+        setMissingColourDescriptions(missing);
+        setPendingExportCallback(() => () => {
+          // After codes are saved, re-fetch and then generate
+          utils.colourCode.getAll.invalidate().then(() => {
+            // The colourCodeList will update via React Query; we need to re-run
+            // with the fresh data. We use a small timeout to let the query update.
+            setTimeout(() => {
+              doExportWithFreshCodes();
+            }, 500);
+          });
+        });
+        setShowColourCodeModal(true);
+        setExporting(null);
+        return;
+      }
+
+      // All codes present — generate and download
+      doExportWithCurrentCodes();
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to generate AP21 CSV");
+      setExporting(null);
+    }
+  }
+
+  function doExportWithCurrentCodes() {
+    try {
+      const csvRows = generateAP21CsvRows(colourCodeMap);
       const suffix = ap21Style === "ALL" ? "all" : ap21Style.toLowerCase();
-      const filename = `products_${suffix}_${Date.now()}.csv`;
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
+      const filename = downloadCsvRows(csvRows, suffix);
+      const rowCount = csvRows.length - 1; // exclude header
+      toast.success(`AP21 CSV exported: ${filename} (${rowCount} rows)`);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to generate AP21 CSV");
+    } finally {
+      setExporting(null);
+    }
+  }
 
-      const skuCount = csvRows.length - 1; // exclude header
-      toast.success(`AP21 CSV exported: ${filename} (${skuCount} rows)`);
+  async function doExportWithFreshCodes() {
+    setExporting("ap21");
+    try {
+      // Re-fetch the latest colour codes
+      const freshCodes = await utils.colourCode.getAll.fetch();
+      const freshMap = new Map<string, string>();
+      for (const row of freshCodes as Array<{ colourDescription: string; colourCode: string }>) {
+        freshMap.set(row.colourDescription.toUpperCase(), row.colourCode);
+      }
+      const csvRows = generateAP21CsvRows(freshMap);
+      const suffix = ap21Style === "ALL" ? "all" : ap21Style.toLowerCase();
+      const filename = downloadCsvRows(csvRows, suffix);
+      const rowCount = csvRows.length - 1;
+      toast.success(`AP21 CSV exported: ${filename} (${rowCount} rows)`);
     } catch (e) {
       console.error(e);
       toast.error("Failed to generate AP21 CSV");
@@ -309,28 +425,28 @@ export default function ExportPanel({ onClose }: Props) {
       const rows = (mergedRawSkus as any[])
         .filter((sku: any) => !cancelledStyleSet.has(sku.style) && !cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`))
         .map((sku: any) => {
-        const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
-        const meta = skuMetaMap[key];
-        const lastName = (styleLookup[sku.style]?.last ?? "").toUpperCase();
-        const category = styleLookup[sku.style]?.category ?? "";
-        const isHeelCategory = HEEL_HEIGHT_CATEGORIES.has(category);
-        const heelHeight = isHeelCategory ? (heelHeightMap.get(lastName) ?? "") : "";
-        const allFields: Record<string, any> = {
-          Style: sku.style,
-          Category: category,
-          Last: styleLookup[sku.style]?.last ?? "",
-          "Heel Height (cm)": heelHeight,
-          Colour: sku.colour,
-          Leather: sku.leather,
-          Status: sku.is_new ? "New" : "Existing",
-          "Size 11": meta?.isSize11 ? "Yes" : "No",
-          "Sample Status": meta?.sampleStatus === "received" ? "Received" : meta?.sampleStatus === "fitting_sample" ? "Fitting Sample" : "Waiting",
-        };
-        // Return only selected columns in order
-        const filtered: Record<string, any> = {};
-        for (const k of selectedKeys) filtered[k] = allFields[k];
-        return filtered;
-      });
+          const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
+          const meta = skuMetaMap[key];
+          const lastName = (styleLookup[sku.style]?.last ?? "").toUpperCase();
+          const category = styleLookup[sku.style]?.category ?? "";
+          const isHeelCategory = HEEL_HEIGHT_CATEGORIES.has(category);
+          const heelHeight = isHeelCategory ? (heelHeightMap.get(lastName) ?? "") : "";
+          const allFields: Record<string, any> = {
+            Style: sku.style,
+            Category: category,
+            Last: styleLookup[sku.style]?.last ?? "",
+            "Heel Height (cm)": heelHeight,
+            Colour: sku.colour,
+            Leather: sku.leather,
+            Status: sku.is_new ? "New" : "Existing",
+            "Size 11": meta?.isSize11 ? "Yes" : "No",
+            "Sample Status": meta?.sampleStatus === "received" ? "Received" : meta?.sampleStatus === "fitting_sample" ? "Fitting Sample" : "Waiting",
+          };
+          // Return only selected columns in order
+          const filtered: Record<string, any> = {};
+          for (const k of selectedKeys) filtered[k] = allFields[k];
+          return filtered;
+        });
 
       const ws = XLSX.utils.json_to_sheet(rows);
       ws["!cols"] = selectedKeys.map(k => ({ wch: FULL_EXPORT_COL_WIDTHS[k] ?? 14 }));
@@ -360,10 +476,6 @@ export default function ExportPanel({ onClose }: Props) {
             Choose an export format. All exports include Size 11 flag and current DB data.
           </p>
 
-
-
-
-
           {/* AP21 CSV Export */}
           <div
             className="w-full rounded-xl border overflow-hidden"
@@ -376,7 +488,7 @@ export default function ExportPanel({ onClose }: Props) {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm text-foreground">AP21 Product Import CSV</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Generates a B2B product import CSV in the AP21 format. One row per colour per size, ordered correctly for import.
+                  Generates a 101836 BxB product import CSV. AU sizes 5–11 + PACK. Colour codes from DB with AI suggestion for new colours.
                 </p>
                 <div className="flex items-center gap-2 mt-3">
                   <label className="text-xs text-muted-foreground font-medium flex-shrink-0">Style:</label>
@@ -502,6 +614,7 @@ export default function ExportPanel({ onClose }: Props) {
         </div>
       </div>
     </div>
+
     {showPptxSync && (
       <PptxSyncModal
         onClose={() => setShowPptxSync(false)}
@@ -510,6 +623,23 @@ export default function ExportPanel({ onClose }: Props) {
           utils.cancelledSku.list.invalidate();
           utils.styles.listCancelled.invalidate();
           utils.sku.getAll.invalidate();
+        }}
+      />
+    )}
+
+    {showColourCodeModal && (
+      <AP21ColourCodeModal
+        missingDescriptions={missingColourDescriptions}
+        onConfirm={() => {
+          setShowColourCodeModal(false);
+          if (pendingExportCallback) {
+            pendingExportCallback();
+            setPendingExportCallback(null);
+          }
+        }}
+        onCancel={() => {
+          setShowColourCodeModal(false);
+          setPendingExportCallback(null);
         }}
       />
     )}
