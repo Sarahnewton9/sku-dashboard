@@ -3424,7 +3424,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                       value={ap21StyleRefsData?.subCategory ?? ""}
                       onChange={(e) => {
                         const val = e.target.value || null;
-                        upsertAp21StyleRefsMutation.mutate({ style: selectedStyle, subCategory: val });
+                        if (!selectedStyle) return; upsertAp21StyleRefsMutation.mutate({ style: selectedStyle, subCategory: val });
                       }}
                     >
                       <option value="">-- select sub-category --</option>
@@ -3472,7 +3472,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                           defaultValue={(ap21StyleRefsData as any)?.[key] ?? ""}
                           onBlur={(e) => {
                             const val = e.target.value.trim() || null;
-                            upsertAp21StyleRefsMutation.mutate({ style: selectedStyle, [key]: val });
+                            if (!selectedStyle) return; upsertAp21StyleRefsMutation.mutate({ style: selectedStyle, [key]: val });
                           }}
                         />
                       </div>
@@ -3532,7 +3532,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                                       defaultValue={saved[key] ?? ""}
                                       onBlur={(e) => {
                                         const val = e.target.value.trim() || null;
-                                        upsertAp21ColourRefsMutation.mutate({ style: selectedStyle, colourKey, [key]: val });
+                                        if (!selectedStyle) return; upsertAp21ColourRefsMutation.mutate({ style: selectedStyle, colourKey, [key]: val });
                                       }}
                                     />
                                   </td>
