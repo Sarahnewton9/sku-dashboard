@@ -16,20 +16,14 @@ interface Props {
 }
 
 // ── AP21 101836 BxB format ─────────────────────────────────────────────────
-// AU size range: 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 11 (no 10.5) + PACK
-const AP21_SIZE_RANGE = "AU5-11";
-const AP21_SIZES = ["5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10", "11"];
-const AP21_SIZE_RANGE_WITH_PACK = "AU5-11";
-const AP21_SIZES_WITH_PACK = [...AP21_SIZES, "PACK"];
-
-// 101836 column headers (50 columns)
+// 101836 column headers (50 columns) — matches KKtest1 sample exactly
 const AP21_HEADERS = [
   "Product Code",       // 1  - style name in CAPS
   "Product Description",// 2  - style name in Title Case
   "Colour Code",        // 3  - short code from colour_codes table
-  "Colour Description", // 4  - full colour+leather description
-  "Size Range",         // 5  - e.g. AU5-11
-  "Size Code",          // 6  - individual size e.g. 7.5
+  "Colour Description", // 4  - colour name only (not leather)
+  "Size Range",         // 5  - e.g. "Shoes - AU (5-11)"
+  "Size Code",          // 6  - individual size e.g. "7.5"
   "EAN Code",           // 7
   "Sell Price",         // 8
   "Purchased",          // 9
@@ -57,13 +51,31 @@ function toTitleCase(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
+// Division lookup — derived from AP21 sub-category (Ref3)
+const SUB_CATEGORY_TO_DIVISION: Record<string, string> = {
+  "Dress Shoe":        "Dress",
+  "Dress Sandal":      "Dress",
+  "Casual Shoe":       "Casual",
+  "Casual Flat":       "Casual",
+  "Casual Sandal":     "Sandals",
+  "Flat Sandal":       "Sandals",
+  "Dress Boot Ankle":  "Boots",
+  "Casual Boot Ankle": "Boots",
+  "Dress Boot Calf":   "Boots",
+  "Casual Boot Calf":  "Boots",
+  "Dress Boot Long":   "Boots",
+  "Casual Boot Long":  "Boots",
+  "Dress Wedge":       "Wedges",
+  "Casual Wedge":      "Wedges",
+};
+
 // Size range config — defined outside component to avoid unstable reference in useCallback
 const SIZE_RANGE_CONFIG: Record<string, { label: string; sizes: string[] }> = {
-  "AU5-11":  { label: "AU5-11",  sizes: ["5","5.5","6","6.5","7","7.5","8","8.5","9","9.5","10","11"] },
-  "AU6-9":   { label: "AU6-9",   sizes: ["6","6.5","7","7.5","8","8.5","9"] },
-  "AU5-10":  { label: "AU5-10",  sizes: ["5","6","7","8","9","10"] },
-  "EU35-42": { label: "EU35-42", sizes: ["35","36","37","38","39","40","41","42"] },
-  "EU35-41": { label: "EU35-41", sizes: ["35","36","37","38","39","40","41"] },
+  "AU5-11":  { label: "Shoes - AU (5-11)",  sizes: ["5","5.5","6","6.5","7","7.5","8","8.5","9","9.5","10","11"] },
+  "AU6-9":   { label: "Shoes - AU (6-9)",   sizes: ["6","6.5","7","7.5","8","8.5","9"] },
+  "AU5-10":  { label: "Shoes - AU (5-10)",  sizes: ["5","6","7","8","9","10"] },
+  "EU35-42": { label: "Shoes - EU (35-42)", sizes: ["35","36","37","38","39","40","41","42"] },
+  "EU35-41": { label: "Shoes - EU (35-41)", sizes: ["35","36","37","38","39","40","41"] },
 };
 
 // All available columns for the Full Data Export
@@ -107,6 +119,10 @@ export default function ExportPanel({ onClose }: Props) {
   const { data: colourCodeList = [] } = trpc.colourCode.getAll.useQuery();
   // Load per-style AP21 size ranges
   const { data: ap21SizeRangeMap = {} } = trpc.ap21SizeRange.getAll.useQuery();
+  // Load all AP21 style refs (Ref1-Ref20)
+  const { data: ap21StyleRefsMap = {} } = trpc.ap21Refs.getAllStyleRefs.useQuery();
+  // Load all AP21 colour refs (ColourRef1-ColourRef10)
+  const { data: ap21ColourRefsAll = {} } = trpc.ap21Refs.getAllColourRefs.useQuery();
 
   const heelHeightMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -115,7 +131,6 @@ export default function ExportPanel({ onClose }: Props) {
     }
     return map;
   }, [heelHeightData]);
-  const HEEL_HEIGHT_CATEGORIES = new Set(["Dress Shoe", "Dress Sandal", "Wedge"]);
 
   // Build colour code lookup map (UPPERCASE description → code)
   const colourCodeMap = useMemo(() => {
@@ -162,7 +177,9 @@ export default function ExportPanel({ onClose }: Props) {
     return ["ALL", ...styles];
   }, [mergedStyles, cancelledStyleSet]);
 
-  // ── AP21 CSV generator (101836 BxB format) ────────────────────────────────
+  // ── AP21 CSV generator (101836 BxB format — KKtest1 structure) ────────────
+  // Produces SIZE-LEVEL rows only (Style Level = 2).
+  // Each size row contains all Ref1-Ref20 and ColourRef1-10 fields.
   const generateAP21CsvRows = useCallback((codeMap: Map<string, string>): string[][] => {
     type RawSku = { style: string; colour: string; leather: string; is_new: boolean };
     const rawSkus = mergedRawSkus as unknown as RawSku[];
@@ -187,33 +204,45 @@ export default function ExportPanel({ onClose }: Props) {
       const productCode = styleName.toUpperCase();
       const productDesc = toTitleCase(styleName);
 
-      // ── Style-level row (Style Level = 0) ──────────────────────────────
-      // Product Code + Product Description only; colour/size fields blank
-      const styleRow: string[] = [
-        productCode,  // Product Code
-        productDesc,  // Product Description
-        "",           // Colour Code (blank at style level)
-        "",           // Colour Description (blank at style level)
-        "",           // Size Range (blank)
-        "",           // Size Code (blank)
-        "",           // EAN Code
-        "",           // Sell Price (leave blank)
-        "Y",          // Purchased
-        "N",          // Produced
-        "Y",          // Sold
-        "Y",          // Stocked
-        "N",          // Used In Production
-        "N",          // Include in MRP
-        "Y",          // Sold at Retail
-        ...Array(20).fill(""), // Ref1-Ref20
-        ...Array(10).fill(""), // ColourRef1-ColourRef10
-        "",           // Cost (leave blank)
-        "",           // Dimension Range
-        "",           // Dimension Code
-        "0",          // Style Level = 0 (style row)
-        "Each",       // UOM
-      ];
-      csvRows.push(styleRow);
+      // Style-level data
+      const styleInfo = styleLookup[styleName] ?? { category: "", last: "" };
+      const lastName = styleInfo.last?.toUpperCase() ?? "";
+      const heelHeightVal = heelHeightMap.get(lastName);
+      const heelHeightStr = heelHeightVal != null ? `${heelHeightVal} cm` : "";
+
+      // AP21 style refs from DB
+      const styleRefs = (ap21StyleRefsMap as any)[styleName] ?? {};
+      const subCategory = styleRefs.subCategory ?? "";
+      const division = subCategory ? (SUB_CATEGORY_TO_DIVISION[subCategory] ?? "") : "";
+
+      // Ref fields (constants + DB values)
+      const ref1  = "Footwear";                     // always
+      const ref2  = division;                        // derived from subCategory
+      const ref3  = subCategory;                     // Ref3 — Sub-category
+      const ref4  = styleRefs.rangeType ?? "";       // Range Type
+      const ref5  = "Tony Bianco";                   // always
+      const ref6  = styleInfo.last ?? "";            // Last
+      const ref7  = heelHeightStr;                   // Heel Height
+      const ref8  = styleRefs.toeShape ?? "";        // Toe Shape
+      const ref9  = styleRefs.upperHeight ?? "";     // Upper Height
+      const ref10 = "Product";                       // always
+      // Component refs (Ref11-Ref20)
+      const ref11 = "FG";                            // always mandatory
+      const ref12 = styleRefs.countryOfOrigin ?? ""; // Country of Origin
+      const ref13 = styleRefs.supplier ?? "";        // Supplier
+      const ref14 = styleRefs.hsCode ?? "";          // HS Code
+      const ref15 = "";
+      const ref16 = "";
+      const ref17 = "";
+      const ref18 = "";
+      const ref19 = "";
+      const ref20 = "";
+
+      // Determine size range for this style (per-style DB setting, default AU5-11)
+      const styleRangeKey = (ap21SizeRangeMap as Record<string, string>)[styleName] ?? "AU5-11";
+      const rangeConfig = SIZE_RANGE_CONFIG[styleRangeKey] ?? SIZE_RANGE_CONFIG["AU5-11"];
+      const isAuRange = styleRangeKey.startsWith("AU");
+      const sizeRangeLabel = rangeConfig.label;
 
       // Collect unique colour/leather combos, sorted alphabetically
       const seenColours = new Set<string>();
@@ -228,77 +257,71 @@ export default function ExportPanel({ onClose }: Props) {
       orderedColours.sort((a, b) => a.colour.localeCompare(b.colour));
 
       for (const { colour, leather } of orderedColours) {
-        // Build the colour description (UPPERCASE, as stored in colour_codes table)
-        const colourDesc = leather ? `${colour} ${leather}` : colour;
-        const colourDescUpper = colourDesc.toUpperCase();
-
-        // Look up the colour code from the map
+        // Colour code lookup uses full "COLOUR LEATHER" description
+        const colourDescFull = leather ? `${colour} ${leather}` : colour;
+        const colourDescUpper = colourDescFull.toUpperCase();
         const colourCode = codeMap.get(colourDescUpper) ?? "";
 
-        // Determine size range for this style (per-style DB setting, default AU5-11)
+        // Colour Description in the CSV = colour name only (not leather)
+        // This matches the KKtest1 sample format
+        const colourDescCsv = toTitleCase(colour);
+
+        // Per-colour AP21 refs from DB
+        // colourKey = colour name only (uppercase, as stored)
+        const colourKey = colour.toUpperCase();
+        const colourRefsForStyle = (ap21ColourRefsAll as any)[styleName] ?? {};
+        const colourRefs = colourRefsForStyle[colourKey] ?? {};
+
+        // Default season for ColourRef4: per-colour override, else style-level default
+        const seasonDefault = styleRefs.season ?? "";
+
+        const cr1  = colourRefs.upperMaterial ?? "";
+        const cr2  = colourRefs.soleMaterial ?? "";
+        const cr3  = colourRefs.liningMaterial ?? "";
+        const cr4  = colourRefs.season ?? seasonDefault;
+        const cr5  = colourRefs.productStatus ?? "";
+        const cr6  = colourRefs.fabrication ?? "";
+        const cr7  = colourRefs.iconic ?? "";
+        const cr8  = colourRefs.webColourGroup ?? "";
+        const cr9  = colourRefs.occasion ?? "";
+        const cr10 = colourRefs.web ?? "";
+
+        // Determine sizes (AU ranges: add PACK if isSize11; EU ranges: never PACK)
         const skuMeta = skuMetaMap[`${styleName}|${colour}|${leather}`];
         const hasSize11 = skuMeta?.isSize11 === true;
-        const styleRangeKey = (ap21SizeRangeMap as Record<string, string>)[styleName] ?? "AU5-11";
-        const rangeConfig = SIZE_RANGE_CONFIG[styleRangeKey] ?? SIZE_RANGE_CONFIG["AU5-11"];
-        // Only AU ranges support PACK (size 11 extension); EU ranges never get PACK
-        const isAuRange = styleRangeKey.startsWith("AU");
-        const sizeRange = rangeConfig.label;
         const sizes = (hasSize11 && isAuRange)
           ? [...rangeConfig.sizes, "PACK"]
           : rangeConfig.sizes;
 
-        // ── Colour-level row (Style Level = 1) ─────────────────────────
-        const colourRow: string[] = [
-          productCode,    // Product Code
-          productDesc,    // Product Description
-          colourCode,     // Colour Code (from DB)
-          colourDesc,     // Colour Description (e.g. "Black Suede")
-          "",             // Size Range (blank at colour level)
-          "",             // Size Code (blank)
-          "",             // EAN Code
-          "",             // Sell Price
-          "Y",            // Purchased
-          "N",            // Produced
-          "Y",            // Sold
-          "Y",            // Stocked
-          "N",            // Used In Production
-          "N",            // Include in MRP
-          "Y",            // Sold at Retail
-          ...Array(20).fill(""), // Ref1-Ref20
-          ...Array(10).fill(""), // ColourRef1-ColourRef10
-          "",             // Cost (leave blank)
-          "",             // Dimension Range
-          "",             // Dimension Code
-          "1",            // Style Level = 1 (colour row)
-          "",             // UOM
-        ];
-        csvRows.push(colourRow);
-
-        // ── Size rows (Style Level = 2) ─────────────────────────────────
+        // ── Size rows (Style Level = 2) — one row per size ─────────────────
         for (const sizeCode of sizes) {
           const sizeRow: string[] = [
-            productCode,    // Product Code
-            productDesc,    // Product Description
-            colourCode,     // Colour Code
-            colourDesc,     // Colour Description
-            sizeRange,      // Size Range (e.g. AU5-11)
-            sizeCode,       // Size Code (individual size)
-            "",             // EAN Code
-            "",             // Sell Price
-            "Y",            // Purchased
-            "N",            // Produced
-            "Y",            // Sold
-            "Y",            // Stocked
-            "N",            // Used In Production
-            "N",            // Include in MRP
-            "Y",            // Sold at Retail
-            ...Array(20).fill(""), // Ref1-Ref20
-            ...Array(10).fill(""), // ColourRef1-ColourRef10
-            "",             // Cost (leave blank)
-            "",             // Dimension Range
-            "",             // Dimension Code
-            "2",            // Style Level = 2 (size row)
-            "",             // UOM
+            productCode,      // 1  Product Code
+            productDesc,      // 2  Product Description
+            colourCode,       // 3  Colour Code
+            colourDescCsv,    // 4  Colour Description (colour name only)
+            sizeRangeLabel,   // 5  Size Range (e.g. "Shoes - AU (5-11)")
+            sizeCode,         // 6  Size Code
+            "",               // 7  EAN Code
+            "",               // 8  Sell Price
+            "Y",              // 9  Purchased
+            "N",              // 10 Produced
+            "Y",              // 11 Sold
+            "Y",              // 12 Stocked
+            "N",              // 13 Used In Production
+            "Y",              // 14 Include in MRP (Y per KKtest1)
+            "Y",              // 15 Sold at Retail
+            ref1,  ref2,  ref3,  ref4,  ref5,
+            ref6,  ref7,  ref8,  ref9,  ref10,
+            ref11, ref12, ref13, ref14, ref15,
+            ref16, ref17, ref18, ref19, ref20,
+            cr1, cr2, cr3, cr4, cr5,
+            cr6, cr7, cr8, cr9, cr10,
+            "",               // 46 Cost
+            "",               // 47 Dimension Range
+            "",               // 48 Dimension Code
+            "2",              // 49 Style Level = 2 (size row)
+            "Pair",           // 50 UOM (Pair per KKtest1)
           ];
           csvRows.push(sizeRow);
         }
@@ -306,7 +329,8 @@ export default function ExportPanel({ onClose }: Props) {
     }
 
     return csvRows;
-  }, [mergedRawSkus, mergedStyles, ap21Style, cancelledStyleSet, cancelledSkuSet, skuMetaMap, ap21SizeRangeMap]);
+  }, [mergedRawSkus, mergedStyles, ap21Style, cancelledStyleSet, cancelledSkuSet, skuMetaMap,
+      ap21SizeRangeMap, ap21StyleRefsMap, ap21ColourRefsAll, styleLookup, heelHeightMap]);
 
   function downloadCsvRows(csvRows: string[][], suffix: string) {
     const csvContent = csvRows
@@ -343,7 +367,7 @@ export default function ExportPanel({ onClose }: Props) {
         ? (mergedStyles as any[]).filter((s: any) => !cancelledStyleSet.has(s.style)).map((s: any) => s.style)
         : [ap21Style];
 
-      // Collect all unique colour descriptions needed
+      // Collect all unique colour descriptions needed (COLOUR LEATHER for code lookup)
       const neededDescriptions = new Set<string>();
       for (const styleName of stylesToExport) {
         const styleSkus = rawSkus.filter(
@@ -368,8 +392,6 @@ export default function ExportPanel({ onClose }: Props) {
         setPendingExportCallback(() => () => {
           // After codes are saved, re-fetch and then generate
           utils.colourCode.getAll.invalidate().then(() => {
-            // The colourCodeList will update via React Query; we need to re-run
-            // with the fresh data. We use a small timeout to let the query update.
             setTimeout(() => {
               doExportWithFreshCodes();
             }, 500);
@@ -446,8 +468,7 @@ export default function ExportPanel({ onClose }: Props) {
           const meta = skuMetaMap[key];
           const lastName = (styleLookup[sku.style]?.last ?? "").toUpperCase();
           const category = styleLookup[sku.style]?.category ?? "";
-          const isHeelCategory = HEEL_HEIGHT_CATEGORIES.has(category);
-          const heelHeight = isHeelCategory ? (heelHeightMap.get(lastName) ?? "") : "";
+          const heelHeight = heelHeightMap.get(lastName) ?? "";
           const allFields: Record<string, any> = {
             Style: sku.style,
             Category: category,
@@ -505,7 +526,7 @@ export default function ExportPanel({ onClose }: Props) {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm text-foreground">AP21 Product Import CSV</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Generates a 101836 BxB product import CSV. AU sizes 5–11 + PACK. Colour codes from DB with AI suggestion for new colours.
+                  Generates a 101836 BxB product import CSV (size rows only). Ref1–Ref20 and ColourRef1–10 populated from AP21 Refs panel. UOM = Pair.
                 </p>
                 <div className="flex items-center gap-2 mt-3">
                   <label className="text-xs text-muted-foreground font-medium flex-shrink-0">Style:</label>

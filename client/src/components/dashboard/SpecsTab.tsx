@@ -2381,6 +2381,24 @@ export default function SpecsTab({}: SpecsTabProps) {
     onSuccess: () => { refetchAp21SizeRanges(); toast.success("AP21 size range saved"); },
     onError: () => toast.error("Failed to save AP21 size range"),
   });
+  // AP21 refs — style-level and colour-level reference fields for AP21 export
+  const { data: ap21StyleRefsData, refetch: refetchAp21StyleRefs } = trpc.ap21Refs.getStyleRefs.useQuery(
+    { style: selectedStyle ?? "" },
+    { enabled: !!selectedStyle }
+  );
+  const { data: ap21ColourRefsData, refetch: refetchAp21ColourRefs } = trpc.ap21Refs.getColourRefs.useQuery(
+    { style: selectedStyle ?? "" },
+    { enabled: !!selectedStyle }
+  );
+  const upsertAp21StyleRefsMutation = trpc.ap21Refs.upsertStyleRefs.useMutation({
+    onSuccess: () => { refetchAp21StyleRefs(); toast.success("AP21 style refs saved"); },
+    onError: () => toast.error("Failed to save AP21 style refs"),
+  });
+  const upsertAp21ColourRefsMutation = trpc.ap21Refs.upsertColourRefs.useMutation({
+    onSuccess: () => { refetchAp21ColourRefs(); toast.success("AP21 colour refs saved"); },
+    onError: () => toast.error("Failed to save AP21 colour refs"),
+  });
+  const [showAp21RefsPanel, setShowAp21RefsPanel] = useState(false);
   // ── Derived data ──────────────────────────────────────────────────────────
   // specs: colour → component → value
   const specs: Record<string, Record<string, string>> = {};
@@ -3380,6 +3398,155 @@ export default function SpecsTab({}: SpecsTabProps) {
                 </SelectContent>
               </Select>
             </div>
+            {/* AP21 Refs panel toggle */}
+            <div className="flex items-center gap-2">
+              <button
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setShowAp21RefsPanel((v) => !v)}
+              >
+                <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAp21RefsPanel ? "rotate-90" : ""}`} />
+                <span className="font-medium">AP21 Reference Fields</span>
+                {ap21StyleRefsData && Object.values(ap21StyleRefsData).some(v => v && typeof v === 'string' && v.length > 0) && (
+                  <span className="text-xs text-green-600 dark:text-green-400">✓ saved</span>
+                )}
+              </button>
+            </div>
+            {showAp21RefsPanel && selectedStyle && (
+              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-4">
+                {/* Style-level refs */}
+                <div>
+                  <p className="text-xs font-semibold text-foreground mb-2">Style References (Ref2–Ref14)</p>
+                  {/* Ref3 Sub-category selector — also auto-determines Ref2 Division */}
+                  <div className="mb-3">
+                    <label className="text-xs text-muted-foreground block mb-1">Ref3 — Sub-category <span className="text-red-400">*</span> (also sets Ref2 Division)</label>
+                    <select
+                      className="h-7 text-xs w-full rounded-md border border-input bg-background px-2 py-0.5"
+                      value={ap21StyleRefsData?.subCategory ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value || null;
+                        upsertAp21StyleRefsMutation.mutate({ style: selectedStyle, subCategory: val });
+                      }}
+                    >
+                      <option value="">-- select sub-category --</option>
+                      <optgroup label="Dress">
+                        <option value="Dress Shoe">Dress Shoe</option>
+                        <option value="Dress Sandal">Dress Sandal</option>
+                      </optgroup>
+                      <optgroup label="Casual">
+                        <option value="Casual Shoe">Casual Shoe</option>
+                        <option value="Casual Flat">Casual Flat</option>
+                      </optgroup>
+                      <optgroup label="Sandals">
+                        <option value="Casual Sandal">Casual Sandal</option>
+                        <option value="Flat Sandal">Flat Sandal</option>
+                      </optgroup>
+                      <optgroup label="Boots">
+                        <option value="Dress Boot Ankle">Dress Boot Ankle</option>
+                        <option value="Casual Boot Ankle">Casual Boot Ankle</option>
+                        <option value="Dress Boot Calf">Dress Boot Calf</option>
+                        <option value="Casual Boot Calf">Casual Boot Calf</option>
+                        <option value="Dress Boot Long">Dress Boot Long</option>
+                        <option value="Casual Boot Long">Casual Boot Long</option>
+                      </optgroup>
+                      <optgroup label="Wedges">
+                        <option value="Dress Wedge">Dress Wedge</option>
+                        <option value="Casual Wedge">Casual Wedge</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                    {([
+                      { key: 'rangeType', label: 'Ref4 — Range Type', placeholder: 'e.g. Core, Fashion' },
+                      { key: 'toeShape', label: 'Ref8 — Toe Shape', placeholder: 'e.g. Open, Closed, Peep' },
+                      { key: 'upperHeight', label: 'Ref9 — Upper Height', placeholder: 'e.g. Ankle, Calf' },
+                      { key: 'countryOfOrigin', label: 'Ref12 — Country of Origin', placeholder: 'e.g. China' },
+                      { key: 'supplier', label: 'Ref13 — Supplier', placeholder: 'Factory name' },
+                      { key: 'hsCode', label: 'Ref14 — HS Code', placeholder: 'HS code / barcode prefix' },
+                      { key: 'season', label: 'Season (default for ColourRef4)', placeholder: 'e.g. Summer 2026' },
+                    ] as { key: keyof typeof ap21StyleRefsData; label: string; placeholder: string }[]).map(({ key, label, placeholder }) => (
+                      <div key={key} className="flex flex-col gap-1">
+                        <label className="text-xs text-muted-foreground">{label}</label>
+                        <Input
+                          className="h-7 text-xs"
+                          placeholder={placeholder}
+                          defaultValue={(ap21StyleRefsData as any)?.[key] ?? ""}
+                          onBlur={(e) => {
+                            const val = e.target.value.trim() || null;
+                            upsertAp21StyleRefsMutation.mutate({ style: selectedStyle, [key]: val });
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    <span className="font-medium">Auto-filled constants:</span> Ref1=Footwear, Ref2=Division (derived from Ref3), Ref5=Tony Bianco, Ref6=Last, Ref7=Heel Height, Ref10=Product, Ref11=FG
+                  </p>
+                </div>
+                {/* Per-colour refs */}
+                {selectedEntry && selectedEntry.colours.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-foreground mb-2">Colour References (ColourRef1–ColourRef10) — per colour</p>
+                    <div className="overflow-x-auto">
+                      <table className="text-xs w-full border-collapse">
+                        <thead>
+                          <tr className="border-b border-border">
+                            <th className="text-left py-1 pr-3 text-muted-foreground font-medium w-32">Colour</th>
+                            <th className="text-left py-1 pr-2 text-muted-foreground font-medium">CR1 Upper Material</th>
+                            <th className="text-left py-1 pr-2 text-muted-foreground font-medium">CR2 Sole Material</th>
+                            <th className="text-left py-1 pr-2 text-muted-foreground font-medium">CR3 Lining Material</th>
+                            <th className="text-left py-1 pr-2 text-muted-foreground font-medium">CR4 Season</th>
+                            <th className="text-left py-1 pr-2 text-muted-foreground font-medium">CR5 Product Status</th>
+                            <th className="text-left py-1 pr-2 text-muted-foreground font-medium">CR6 Fabrication</th>
+                            <th className="text-left py-1 pr-2 text-muted-foreground font-medium">CR7 Iconic</th>
+                            <th className="text-left py-1 pr-2 text-muted-foreground font-medium">CR8 Web Colour Group</th>
+                            <th className="text-left py-1 pr-2 text-muted-foreground font-medium">CR9 Occasion</th>
+                            <th className="text-left py-1 text-muted-foreground font-medium">CR10 Web</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedEntry.colours.map((colour, ci) => {
+                            const label = selectedEntry.colourLabels[ci] ?? colour;
+                            // colourKey for DB = colour name only (first word if compound)
+                            const colourKey = colour;
+                            const saved = (ap21ColourRefsData as any)?.[colourKey] ?? {};
+                            const fields: { key: string; placeholder: string }[] = [
+                              { key: 'upperMaterial', placeholder: 'e.g. Leather' },
+                              { key: 'soleMaterial', placeholder: 'e.g. Rubber' },
+                              { key: 'liningMaterial', placeholder: 'e.g. Man Made' },
+                              { key: 'season', placeholder: ap21StyleRefsData?.season ?? 'e.g. Summer 2026' },
+                              { key: 'productStatus', placeholder: '' },
+                              { key: 'fabrication', placeholder: '' },
+                              { key: 'iconic', placeholder: '' },
+                              { key: 'webColourGroup', placeholder: '' },
+                              { key: 'occasion', placeholder: '' },
+                              { key: 'web', placeholder: '' },
+                            ];
+                            return (
+                              <tr key={colour} className="border-b border-border/50">
+                                <td className="py-1 pr-3 font-medium text-foreground">{label}</td>
+                                {fields.map(({ key, placeholder }) => (
+                                  <td key={key} className="py-1 pr-2">
+                                    <Input
+                                      className="h-6 text-xs min-w-[80px]"
+                                      placeholder={placeholder}
+                                      defaultValue={saved[key] ?? ""}
+                                      onBlur={(e) => {
+                                        const val = e.target.value.trim() || null;
+                                        upsertAp21ColourRefsMutation.mutate({ style: selectedStyle, colourKey, [key]: val });
+                                      }}
+                                    />
+                                  </td>
+                                ))}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             {/* Import preview banner */}
             {importParsed && (
               <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 p-4 space-y-3">

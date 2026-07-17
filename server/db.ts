@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns, customLasts, lastMeasurements } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns, customLasts, lastMeasurements, ap21StyleRefs, ap21ColourRefs } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1803,6 +1803,92 @@ export async function getAllAp21SizeRanges(): Promise<Record<string, Ap21SizeRan
   const result: Record<string, Ap21SizeRange> = {};
   for (const r of rows) {
     if (r.ap21SizeRange) result[r.style] = r.ap21SizeRange as Ap21SizeRange;
+  }
+  return result;
+}
+
+// ── AP21 Style Refs ──────────────────────────────────────────────────────────
+
+export async function getAp21StyleRefs(style: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(ap21StyleRefs).where(eq(ap21StyleRefs.style, style)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function upsertAp21StyleRefs(style: string, data: {
+  subCategory?: string | null;
+  rangeType?: string | null;
+  toeShape?: string | null;
+  upperHeight?: string | null;
+  countryOfOrigin?: string | null;
+  supplier?: string | null;
+  hsCode?: string | null;
+  season?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(ap21StyleRefs).values({ style, ...data }).onDuplicateKeyUpdate({
+    set: { ...data, updatedAt: new Date() },
+  });
+}
+
+export async function getAllAp21StyleRefs(): Promise<Record<string, typeof ap21StyleRefs.$inferSelect>> {
+  const db = await getDb();
+  if (!db) return {};
+  const rows = await db.select().from(ap21StyleRefs);
+  const result: Record<string, typeof ap21StyleRefs.$inferSelect> = {};
+  for (const r of rows) result[r.style] = r;
+  return result;
+}
+
+// ── AP21 Colour Refs ─────────────────────────────────────────────────────────
+
+export async function getAp21ColourRefs(style: string, colourKey: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(ap21ColourRefs)
+    .where(and(eq(ap21ColourRefs.style, style), eq(ap21ColourRefs.colourKey, colourKey)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function upsertAp21ColourRefs(style: string, colourKey: string, data: {
+  upperMaterial?: string | null;
+  soleMaterial?: string | null;
+  liningMaterial?: string | null;
+  season?: string | null;
+  productStatus?: string | null;
+  fabrication?: string | null;
+  iconic?: string | null;
+  webColourGroup?: string | null;
+  occasion?: string | null;
+  web?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(ap21ColourRefs).values({ style, colourKey, ...data }).onDuplicateKeyUpdate({
+    set: { ...data, updatedAt: new Date() },
+  });
+}
+
+export async function getAllAp21ColourRefsForStyle(style: string): Promise<Record<string, typeof ap21ColourRefs.$inferSelect>> {
+  const db = await getDb();
+  if (!db) return {};
+  const rows = await db.select().from(ap21ColourRefs).where(eq(ap21ColourRefs.style, style));
+  const result: Record<string, typeof ap21ColourRefs.$inferSelect> = {};
+  for (const r of rows) result[r.colourKey] = r;
+  return result;
+}
+
+export async function getAllAp21ColourRefsAll(): Promise<Record<string, Record<string, typeof ap21ColourRefs.$inferSelect>>> {
+  const db = await getDb();
+  if (!db) return {};
+  const rows = await db.select().from(ap21ColourRefs);
+  const result: Record<string, Record<string, typeof ap21ColourRefs.$inferSelect>> = {};
+  for (const r of rows) {
+    if (!result[r.style]) result[r.style] = {};
+    result[r.style][r.colourKey] = r;
   }
   return result;
 }

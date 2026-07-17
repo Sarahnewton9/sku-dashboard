@@ -71,6 +71,13 @@ import {
   setAp21SizeRange,
   getAllAp21SizeRanges,
   type Ap21SizeRange,
+  getAp21StyleRefs,
+  upsertAp21StyleRefs,
+  getAllAp21StyleRefs,
+  getAp21ColourRefs,
+  upsertAp21ColourRefs,
+  getAllAp21ColourRefsForStyle,
+  getAllAp21ColourRefsAll,
 } from "./db";
 import { fetchSaleProducts } from "./markdownScanner";
 import { storagePut } from "./storage";
@@ -2357,6 +2364,66 @@ Respond with ONLY the code, nothing else. No explanation.`,
           return { code: `${colourPart}-${materialPart}` };
         }
         return { code: parts[0].slice(0, 6) };
+      }),
+  }),
+
+  // AP21 reference fields — Ref1-Ref20 and ColourRef1-10 for AP21 Product Import CSV
+  ap21Refs: router({
+    // Get style-level refs for a single style
+    getStyleRefs: publicProcedure
+      .input(z.object({ style: z.string() }))
+      .query(async ({ input }) => getAp21StyleRefs(input.style)),
+
+    // Get all style-level refs (for export)
+    getAllStyleRefs: publicProcedure.query(async () => getAllAp21StyleRefs()),
+
+    // Upsert style-level refs
+    upsertStyleRefs: publicProcedure
+      .input(z.object({
+        style: z.string(),
+        subCategory: z.string().nullable().optional(),
+        rangeType: z.string().nullable().optional(),
+        toeShape: z.string().nullable().optional(),
+        upperHeight: z.string().nullable().optional(),
+        countryOfOrigin: z.string().nullable().optional(),
+        supplier: z.string().nullable().optional(),
+        hsCode: z.string().nullable().optional(),
+        season: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { style, ...data } = input;
+        await upsertAp21StyleRefs(style, data);
+        return { ok: true };
+      }),
+
+    // Get colour refs for a single style (all colours)
+    getColourRefs: publicProcedure
+      .input(z.object({ style: z.string() }))
+      .query(async ({ input }) => getAllAp21ColourRefsForStyle(input.style)),
+
+    // Get ALL colour refs across all styles (for export)
+    getAllColourRefs: publicProcedure.query(async () => getAllAp21ColourRefsAll()),
+
+    // Upsert colour refs for a specific colour
+    upsertColourRefs: publicProcedure
+      .input(z.object({
+        style: z.string(),
+        colourKey: z.string(),
+        upperMaterial: z.string().nullable().optional(),
+        soleMaterial: z.string().nullable().optional(),
+        liningMaterial: z.string().nullable().optional(),
+        season: z.string().nullable().optional(),
+        productStatus: z.string().nullable().optional(),
+        fabrication: z.string().nullable().optional(),
+        iconic: z.string().nullable().optional(),
+        webColourGroup: z.string().nullable().optional(),
+        occasion: z.string().nullable().optional(),
+        web: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { style, colourKey, ...data } = input;
+        await upsertAp21ColourRefs(style, colourKey, data);
+        return { ok: true };
       }),
   }),
 

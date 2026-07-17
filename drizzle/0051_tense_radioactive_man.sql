@@ -1,0 +1,1 @@
+ALTER TABLE `ap21_style_refs` ADD `subCategory` varchar(64);

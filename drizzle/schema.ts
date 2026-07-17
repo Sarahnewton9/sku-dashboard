@@ -675,3 +675,75 @@ export const colourCodes = mysqlTable("colour_codes", {
 });
 export type ColourCode = typeof colourCodes.$inferSelect;
 export type InsertColourCode = typeof colourCodes.$inferInsert;
+
+/**
+ * AP21 style-level reference fields (Ref1–Ref20).
+ * Ref1 (Footwear), Ref5 (Tony Bianco), Ref10 (Product), Ref11 (FG) are constants — not stored here.
+ * Stored here: Ref4 rangeType, Ref8 toeShape, Ref9 upperHeight, Ref12 countryOfOrigin,
+ *              Ref13 supplier, Ref14 hsCode, and per-style season (used in ColourRef4 default).
+ */
+export const ap21StyleRefs = mysqlTable("ap21_style_refs", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull().unique(),
+  /**
+   * Ref3 — AP21 Sub-category (also auto-determines Ref2 Division).
+   * Options: "Dress Shoe"|"Dress Sandal"|"Casual Shoe"|"Casual Flat"|"Casual Sandal"|
+   *   "Flat Sandal"|"Dress Boot Ankle"|"Casual Boot Ankle"|"Dress Boot Calf"|
+   *   "Casual Boot Calf"|"Dress Boot Long"|"Casual Boot Long"|"Dress Wedge"|"Casual Wedge"
+   */
+  subCategory: varchar("subCategory", { length: 64 }),
+  /** Ref4 — Range Type e.g. "Core", "Fashion" */
+  rangeType: varchar("rangeType", { length: 64 }),
+  /** Ref8 — Toe Shape e.g. "Open", "Closed", "Peep" */
+  toeShape: varchar("toeShape", { length: 64 }),
+  /** Ref9 — Upper Height e.g. "Ankle", "Calf", "Knee" */
+  upperHeight: varchar("upperHeight", { length: 64 }),
+  /** Ref12 — Country of origin e.g. "China" */
+  countryOfOrigin: varchar("countryOfOrigin", { length: 64 }),
+  /** Ref13 — Supplier / factory name */
+  supplier: varchar("supplier", { length: 128 }),
+  /** Ref14 — HS Code / barcode prefix */
+  hsCode: varchar("hsCode", { length: 64 }),
+  /** Default season for ColourRef4 e.g. "Summer 2026" */
+  season: varchar("season", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Ap21StyleRefs = typeof ap21StyleRefs.$inferSelect;
+export type InsertAp21StyleRefs = typeof ap21StyleRefs.$inferInsert;
+
+/**
+ * AP21 per-colour reference fields (ColourRef1–ColourRef10).
+ * All optional. Can vary by colour within the same style.
+ * colourKey = colour name only (e.g. "BLACK"), not the compound "BLACK CAPRETTO".
+ */
+export const ap21ColourRefs = mysqlTable("ap21_colour_refs", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull(),
+  /** Colour name only — e.g. "BLACK" (not "BLACK CAPRETTO") */
+  colourKey: varchar("colourKey", { length: 64 }).notNull(),
+  /** ColourRef1 — Upper Material e.g. "Leather", "PVC" */
+  upperMaterial: varchar("upperMaterial", { length: 64 }),
+  /** ColourRef2 — Sole Material */
+  soleMaterial: varchar("soleMaterial", { length: 64 }),
+  /** ColourRef3 — Lining Material */
+  liningMaterial: varchar("liningMaterial", { length: 64 }),
+  /** ColourRef4 — Season e.g. "Summer 2026" */
+  season: varchar("season", { length: 64 }),
+  /** ColourRef5 — Product Status */
+  productStatus: varchar("productStatus", { length: 64 }),
+  /** ColourRef6 — Fabrication */
+  fabrication: varchar("fabrication", { length: 64 }),
+  /** ColourRef7 — Iconic */
+  iconic: varchar("iconic", { length: 64 }),
+  /** ColourRef8 — Web Colour Group */
+  webColourGroup: varchar("webColourGroup", { length: 64 }),
+  /** ColourRef9 — Occasion */
+  occasion: varchar("occasion", { length: 64 }),
+  /** ColourRef10 — Web */
+  web: varchar("web", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => [uniqueIndex("ap21_colour_refs_idx").on(t.style, t.colourKey)]);
+export type Ap21ColourRefs = typeof ap21ColourRefs.$inferSelect;
+export type InsertAp21ColourRefs = typeof ap21ColourRefs.$inferInsert;

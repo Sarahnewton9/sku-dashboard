@@ -449,3 +449,63 @@
 - [x] Add ap21SizeRange.set and ap21SizeRange.getAll tRPC procedures
 - [x] Add size range selector to Specs tab header (below spec status badge)
 - [x] Wire AP21 export to use per-style sizeRange from DB; AU ranges support PACK; EU ranges never get PACK; default AU5-11
+
+## AP21 Export — Full KKtest1 Format (Jul 2026)
+
+### Field mapping from reference image:
+- Ref1  = DEPT (Department) — mandatory — always "Footwear"
+- Ref2  = Category — mandatory — Division (e.g. "Dress", "Casual")
+- Ref3  = Sub Cat (Sub Category) — mandatory — e.g. "Dress Sandal"
+- Ref4  = RangeTyp (Range Type) — optional — e.g. "Core", "Fashion"
+- Ref5  = Brand — optional — always "Tony Bianco"
+- Ref6  = Last — optional — last name
+- Ref7  = Heel (Heel Height) — optional — e.g. "7.5 cm"
+- Ref8  = Toe (Toe Shape) — optional — e.g. "Open", "Closed", "Peep"
+- Ref9  = Upper H (Upper Height) — optional — e.g. "Ankle", "Calf"
+- Ref10 = StkType (Stock type for Purchasing) — optional — always "Product"
+- Ref11 = Comp Grp (Component Group) — MANDATORY (internal AP21) — always "FG"
+- Ref12 = Country (Country of origin) — optional — e.g. "China"
+- Ref13 = Supplier — optional — factory name
+- Ref14 = HS Code — optional — barcode prefix / HS code
+- Ref15-20 = blank
+- ColourRef1  = Upper M (Upper Material) — optional, per-colour — e.g. "Leather", "PVC"
+- ColourRef2  = Sole M (Sole Material) — optional, per-colour
+- ColourRef3  = Lining M (Lining Material) — optional, per-colour
+- ColourRef4  = Season — optional, per-colour — e.g. "Summer 2025"
+- ColourRef5  = PStatus (Product Status) — optional, per-colour
+- ColourRef6  = Fab (Fabrication) — optional, per-colour
+- ColourRef7  = Iconic — optional, per-colour
+- ColourRef8  = ColGrp (Web Colour Group) — optional, per-colour
+- ColourRef9  = Occasion — optional, per-colour
+- ColourRef10 = Web — optional, per-colour
+
+### Format changes vs current export:
+- Style Level: size rows ONLY (Style Level = 2), no style-level (0) or colour-level (1) rows
+- Product Code: STYLE + YEAR (e.g. KASSY2026)
+- Product Description: Title Case + " - " + YEAR (e.g. "Kassy - 2026")
+- Size Range: full label e.g. "Shoes - AU (5-11)" not "AU5-11"
+- UOM: "Pair" not "Each"
+- Include in MRP: "Y" not "N"
+- Colour Description: colour name only (not "Black Capretto", just "Black")
+- Sell Price: from DB (rrp field on style_meta)
+
+### DB changes:
+- [x] Add ap21_style_refs table: style, season, rangeType, toeShape, upperHeight, countryOfOrigin, supplier, hsCode, subCategory
+- [x] Add ap21_colour_refs table: style, colourKey, upperMaterial, soleMaterial, liningMaterial, season, productStatus, fabrication, iconic, webColourGroup, occasion, web
+- [x] Run pnpm db:push (migrations 0050, 0051 applied)
+- [x] Add DB helpers: getAp21StyleRefs, upsertAp21StyleRefs, getAp21ColourRefs, upsertAp21ColourRefs, getAllAp21StyleRefs, getAllAp21ColourRefs
+
+### tRPC + UI:
+- [x] Add ap21Refs tRPC router: getStyleRefs, upsertStyleRefs, getColourRefs, upsertColourRefs, getAllStyleRefs, getAllColourRefs
+- [x] Build AP21 Refs panel in Specs tab: sub-category dropdown (Ref3, auto-derives Ref2 Division) + style-level fields + per-colour material table
+- [x] Auto-populate Ref1 (Footwear), Ref5 (Tony Bianco), Ref10 (Product), Ref11 (FG) as constants
+
+### Export rewrite:
+- [x] Rewrite AP21 export: size rows ONLY (Style Level 2), no style/colour-level rows
+- [x] Size Range label: "Shoes - AU (5-11)" format (derived from ap21SizeRange key)
+- [x] UOM = "Pair", Include in MRP = "Y"
+- [x] Populate Ref1-Ref10 from style data + ap21_style_refs (Ref2=Division derived from Ref3 sub-category)
+- [x] Populate Ref11-Ref20 from ap21_style_refs (Ref11 always "FG")
+- [x] Populate ColourRef1-10 from ap21_colour_refs (per-colour, with style-level season fallback for CR4)
+- [x] Colour Description = colour name only (strip leather)
+- [x] Colour code lookup still uses full COLOUR+LEATHER description for accuracy
