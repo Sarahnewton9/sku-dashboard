@@ -518,3 +518,4 @@
 - [x] In Export tab AP21 section: multi-select checklist of unexported styles (all pre-ticked by default)
 - [x] On Generate CSV: mark selected styles as exported, then download CSV; styles disappear from list
 - [x] Show "Reset" link per exported style to bring it back to unexported list
+- [x] Fix: winter carry-over custom styles (ELLIDY, ESTELLE, EVA, etc.) incorrectly appearing in Specs tab — filter now only allows custom styles with totalSKUs === 0 (brand-new) through when they have 0 new colours

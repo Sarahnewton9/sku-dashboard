@@ -63,6 +63,7 @@ interface StyleEntry {
   hasNew: boolean;
   totalSKUs: number;
   newSKUs: number;
+  _isCustomStyle?: boolean;
 }
 
 
@@ -2033,8 +2034,9 @@ export default function SpecsTab({}: SpecsTabProps) {
           _isCustomStyle: !!(s as any)._isCustomStyle,
         };
       })
-      // Custom styles appear even with 0 colours (they can have specs added)
-      .filter((s) => s.colours.length > 0 || s._isCustomStyle)
+      // Custom styles with 0 new colours only appear if they have NO SKUs at all (brand-new).
+      // Carry-over custom styles (totalSKUs > 0 but newSKUs = 0) are excluded.
+      .filter((s) => s.colours.length > 0 || (s._isCustomStyle && s.totalSKUs === 0))
       .sort((a, b) => a.style.localeCompare(b.style));
   }, [mergedStyles, NEW_COLOURS_PER_STYLE, COLOUR_LEATHER_MAP, TOE_CAP_MAP, seasonNewLasts]);
 
@@ -2191,7 +2193,8 @@ export default function SpecsTab({}: SpecsTabProps) {
         };
       })
       // Custom styles always appear even with 0 colours (same rule as baseStyleList)
-      .filter((s) => s.colours.length > 0 || (s as any)._isCustomStyle);
+      // Carry-over custom styles excluded here too (totalSKUs > 0 but newSKUs = 0).
+      .filter((s) => s.colours.length > 0 || ((s as any)._isCustomStyle && (s as any).totalSKUs === 0));
   }, [baseStyleList, cancelledSet, cancelledColourKeySet]);
 
   const filtered = styleList.filter((s) => {
