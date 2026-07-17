@@ -2190,7 +2190,8 @@ export default function SpecsTab({}: SpecsTabProps) {
           toeCapsPerColour: filteredToeCaps,
         };
       })
-      .filter((s) => s.colours.length > 0);
+      // Custom styles always appear even with 0 colours (same rule as baseStyleList)
+      .filter((s) => s.colours.length > 0 || (s as any)._isCustomStyle);
   }, [baseStyleList, cancelledSet, cancelledColourKeySet]);
 
   const filtered = styleList.filter((s) => {
