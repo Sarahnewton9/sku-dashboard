@@ -1887,6 +1887,12 @@ interface SpecsTabProps {}
 export default function SpecsTab({}: SpecsTabProps) {
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
   const { season } = useSeason();
+  // Spec counts for all styles — needed early for baseStyleList filter
+  const { data: specCounts = [] } = trpc.specs.getCounts.useQuery();
+  const specCountMap = useMemo(
+    () => Object.fromEntries(specCounts.map((r) => [r.style, r.filledCount])),
+    [specCounts]
+  );
 
   // Build colour+leather lookup from live merged raw SKUs
   // For styles with duplicate colours (different leathers), the key is "COLOUR LEATHER"
@@ -2034,11 +2040,11 @@ export default function SpecsTab({}: SpecsTabProps) {
           _isCustomStyle: !!(s as any)._isCustomStyle,
         };
       })
-      // Custom styles with 0 new colours only appear if they have NO SKUs at all (brand-new).
-      // Carry-over custom styles (totalSKUs > 0 but newSKUs = 0) are excluded.
-      .filter((s) => s.colours.length > 0 || (s._isCustomStyle && s.totalSKUs === 0))
+      // Custom styles with 0 new colours only appear if they have no spec data yet (brand-new, no spec).
+      // Carry-over custom styles already have specs saved — specCountMap[style] > 0 — so they are excluded.
+      .filter((s) => s.colours.length > 0 || (s._isCustomStyle && !(specCountMap[s.style] > 0)))
       .sort((a, b) => a.style.localeCompare(b.style));
-  }, [mergedStyles, NEW_COLOURS_PER_STYLE, COLOUR_LEATHER_MAP, TOE_CAP_MAP, seasonNewLasts]);
+  }, [mergedStyles, NEW_COLOURS_PER_STYLE, COLOUR_LEATHER_MAP, TOE_CAP_MAP, seasonNewLasts, specCountMap]);
 
   const utils = trpc.useUtils();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
@@ -2193,8 +2199,8 @@ export default function SpecsTab({}: SpecsTabProps) {
         };
       })
       // Custom styles always appear even with 0 colours (same rule as baseStyleList)
-      // Carry-over custom styles excluded here too (totalSKUs > 0 but newSKUs = 0).
-      .filter((s) => s.colours.length > 0 || ((s as any)._isCustomStyle && (s as any).totalSKUs === 0));
+      // Carry-over custom styles excluded here too (already have spec data).
+      .filter((s) => s.colours.length > 0 || ((s as any)._isCustomStyle && !(specCountMap[s.style] > 0)));
   }, [baseStyleList, cancelledSet, cancelledColourKeySet]);
 
   const filtered = styleList.filter((s) => {
@@ -2371,9 +2377,7 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   const { data: rawDropdownOptions = [], refetch: refetchDropdowns } = trpc.specs.getAllDropdownOptions.useQuery();
 
-  // Spec counts for all styles (for sidebar completion dots)
-  const { data: specCounts = [] } = trpc.specs.getCounts.useQuery();
-  const specCountMap = Object.fromEntries(specCounts.map((r) => [r.style, r.filledCount]));
+  // Spec counts moved up — see declaration near top of component
   // Spec status for all styles (for sidebar status badges)
     const { data: allSpecMeta = [], refetch: refetchAllSpecMeta } = trpc.specs.getAllMeta.useQuery();
   const specStatusMap = Object.fromEntries(
