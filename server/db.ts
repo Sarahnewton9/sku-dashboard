@@ -1892,3 +1892,53 @@ export async function getAllAp21ColourRefsAll(): Promise<Record<string, Record<s
   }
   return result;
 }
+
+// ─── AP21 Export — Style Selector Helpers ────────────────────────────────────
+
+/** Returns all styles that have never been exported to AP21 (ap21ExportedAt IS NULL). */
+export async function getAp21UnexportedStyles(): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({ style: styleMeta.style })
+    .from(styleMeta)
+    .where(sql`${styleMeta.ap21ExportedAt} IS NULL`);
+  return rows.map((r) => r.style);
+}
+
+/** Marks the given styles as exported to AP21 by setting ap21ExportedAt to now. */
+export async function markStylesAsAp21Exported(styles: string[]): Promise<void> {
+  if (!styles.length) return;
+  const db = await getDb();
+  if (!db) return;
+  const now = new Date();
+  for (const style of styles) {
+    await db
+      .insert(styleMeta)
+      .values({ style, ap21ExportedAt: now })
+      .onDuplicateKeyUpdate({ set: { ap21ExportedAt: now } });
+  }
+}
+
+/** Resets ap21ExportedAt to NULL for a style so it re-appears in the export checklist. */
+export async function resetAp21ExportedAt(style: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(styleMeta)
+    .set({ ap21ExportedAt: null as any })
+    .where(eq(styleMeta.style, style));
+}
+
+/** Returns a map of style → ap21ExportedAt for all styles that have been exported. */
+export async function getAp21ExportedStyles(): Promise<Record<string, Date>> {
+  const db = await getDb();
+  if (!db) return {};
+  const rows = await db
+    .select({ style: styleMeta.style, ap21ExportedAt: styleMeta.ap21ExportedAt })
+    .from(styleMeta)
+    .where(sql`${styleMeta.ap21ExportedAt} IS NOT NULL`);
+  const result: Record<string, Date> = {};
+  for (const r of rows) if (r.ap21ExportedAt) result[r.style] = r.ap21ExportedAt;
+  return result;
+}

@@ -72,6 +72,8 @@ export const styleMeta = mysqlTable("style_meta", {
    * EU35-41 = EU 35–41
    */
   ap21SizeRange: mysqlEnum("ap21SizeRange", ["AU5-11", "AU6-9", "AU5-10", "EU35-42", "EU35-41"]).default("AU5-11"),
+  /** Timestamp when this style was last exported to AP21. Null = never exported (appears in AP21 export checklist). */
+  ap21ExportedAt: timestamp("ap21ExportedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

@@ -78,6 +78,10 @@ import {
   upsertAp21ColourRefs,
   getAllAp21ColourRefsForStyle,
   getAllAp21ColourRefsAll,
+  getAp21UnexportedStyles,
+  markStylesAsAp21Exported,
+  resetAp21ExportedAt,
+  getAp21ExportedStyles,
 } from "./db";
 import { fetchSaleProducts } from "./markdownScanner";
 import { storagePut } from "./storage";
@@ -2438,6 +2442,35 @@ Respond with ONLY the code, nothing else. No explanation.`,
       }))
       .mutation(async ({ input }) => {
         await setAp21SizeRange(input.style, input.sizeRange as Ap21SizeRange);
+        return { ok: true };
+      }),
+  }),
+
+  // ─── AP21 Export — Style Selector ────────────────────────────────────────────
+  ap21Export: router({
+    /** Returns styles not yet exported to AP21 (ap21ExportedAt IS NULL). */
+    getUnexported: publicProcedure.query(async () => {
+      return getAp21UnexportedStyles();
+    }),
+
+    /** Returns all styles that have been exported, with their export timestamp. */
+    getExported: publicProcedure.query(async () => {
+      return getAp21ExportedStyles();
+    }),
+
+    /** Marks the given styles as exported to AP21. Called after CSV generation. */
+    markExported: publicProcedure
+      .input(z.object({ styles: z.array(z.string()) }))
+      .mutation(async ({ input }) => {
+        await markStylesAsAp21Exported(input.styles);
+        return { ok: true, count: input.styles.length };
+      }),
+
+    /** Resets a style so it re-appears in the export checklist. */
+    resetExported: publicProcedure
+      .input(z.object({ style: z.string() }))
+      .mutation(async ({ input }) => {
+        await resetAp21ExportedAt(input.style);
         return { ok: true };
       }),
   }),

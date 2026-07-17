@@ -509,3 +509,12 @@
 - [x] Populate ColourRef1-10 from ap21_colour_refs (per-colour, with style-level season fallback for CR4)
 - [x] Colour Description = colour name only (strip leather)
 - [x] Colour code lookup still uses full COLOUR+LEATHER description for accuracy
+
+## AP21 Export — Style Selector (Jul 2026)
+- [x] Add ap21ExportedAt column (datetime nullable) to style_meta table (migration 0052)
+- [x] Run pnpm db:push
+- [x] Add DB helpers: markStylesAsAp21Exported(styles[]), resetAp21ExportedAt(style), getAp21UnexportedStyles(), getAp21ExportedStyles()
+- [x] Add tRPC procedures: ap21Export.getUnexported, ap21Export.markExported, ap21Export.resetExported, ap21Export.getExported
+- [x] In Export tab AP21 section: multi-select checklist of unexported styles (all pre-ticked by default)
+- [x] On Generate CSV: mark selected styles as exported, then download CSV; styles disappear from list
+- [x] Show "Reset" link per exported style to bring it back to unexported list

@@ -4,7 +4,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
-import { FileDown, X, Upload, FileText } from "lucide-react";
+import { FileDown, X, Upload, FileText, RotateCcw, CheckSquare, Square } from "lucide-react";
 import { useSeason } from "@/contexts/SeasonContext";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
@@ -21,7 +21,7 @@ const AP21_HEADERS = [
   "Product Code",       // 1  - style name in CAPS
   "Product Description",// 2  - style name in Title Case
   "Colour Code",        // 3  - short code from colour_codes table
-  "Colour Description", // 4  - colour name only (not leather)
+  "Colour Description", // 4  - colour + leather in Title Case
   "Size Range",         // 5  - e.g. "Shoes - AU (5-11)"
   "Size Code",          // 6  - individual size e.g. "7.5"
   "EAN Code",           // 7
@@ -98,9 +98,12 @@ export default function ExportPanel({ onClose }: Props) {
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
   const { season } = useSeason();
   const [exporting, setExporting] = useState<string | null>(null);
-  const [ap21Style, setAp21Style] = useState<string>("ALL");
   const [showPptxSync, setShowPptxSync] = useState(false);
   const [fullExportCols, setFullExportCols] = useState<Set<string>>(FULL_EXPORT_DEFAULT_COLS);
+
+  // AP21 style multi-select state
+  const [selectedAp21Styles, setSelectedAp21Styles] = useState<Set<string>>(new Set());
+  const [showExportedStyles, setShowExportedStyles] = useState(false);
 
   // Missing colour code modal state
   const [missingColourDescriptions, setMissingColourDescriptions] = useState<string[]>([]);
@@ -123,6 +126,23 @@ export default function ExportPanel({ onClose }: Props) {
   const { data: ap21StyleRefsMap = {} } = trpc.ap21Refs.getAllStyleRefs.useQuery();
   // Load all AP21 colour refs (ColourRef1-ColourRef10)
   const { data: ap21ColourRefsAll = {} } = trpc.ap21Refs.getAllColourRefs.useQuery();
+  // Load unexported styles (ap21ExportedAt IS NULL)
+  const { data: unexportedStylesList = [], refetch: refetchUnexported } = trpc.ap21Export.getUnexported.useQuery();
+  // Load exported styles (for the "already exported" section)
+  const { data: exportedStylesMap = {}, refetch: refetchExported } = trpc.ap21Export.getExported.useQuery();
+
+  const markExportedMutation = trpc.ap21Export.markExported.useMutation({
+    onSuccess: () => {
+      refetchUnexported();
+      refetchExported();
+    },
+  });
+  const resetExportedMutation = trpc.ap21Export.resetExported.useMutation({
+    onSuccess: () => {
+      refetchUnexported();
+      refetchExported();
+    },
+  });
 
   const heelHeightMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -168,32 +188,40 @@ export default function ExportPanel({ onClose }: Props) {
     return s;
   }, [cancelledSkuList]);
 
-  // Sorted style list for AP21 selector (excluding cancelled, uses mergedStyles)
-  const ap21StyleOptions = useMemo(() => {
-    const styles = (mergedStyles as any[])
-      .filter((s: any) => !cancelledStyleSet.has(s.style))
+  // Unexported styles — sorted, excluding cancelled
+  const unexportedStyles = useMemo(() => {
+    const unexported = new Set(unexportedStylesList as string[]);
+    return (mergedStyles as any[])
+      .filter((s: any) => !cancelledStyleSet.has(s.style) && unexported.has(s.style))
       .map((s: any) => s.style)
       .sort();
-    return ["ALL", ...styles];
-  }, [mergedStyles, cancelledStyleSet]);
+  }, [unexportedStylesList, mergedStyles, cancelledStyleSet]);
+
+  // Exported styles — sorted, excluding cancelled
+  const exportedStyles = useMemo(() => {
+    const exported = exportedStylesMap as Record<string, Date>;
+    return (mergedStyles as any[])
+      .filter((s: any) => !cancelledStyleSet.has(s.style) && s.style in exported)
+      .map((s: any) => s.style)
+      .sort();
+  }, [exportedStylesMap, mergedStyles, cancelledStyleSet]);
+
+  // Initialise selection to all unexported styles when the list loads
+  const [selectionInitialised, setSelectionInitialised] = useState(false);
+  if (!selectionInitialised && unexportedStyles.length > 0) {
+    setSelectedAp21Styles(new Set(unexportedStyles));
+    setSelectionInitialised(true);
+  }
 
   // ── AP21 CSV generator (101836 BxB format — KKtest1 structure) ────────────
-  // Produces SIZE-LEVEL rows only (Style Level = 2).
-  // Each size row contains all Ref1-Ref20 and ColourRef1-10 fields.
-  const generateAP21CsvRows = useCallback((codeMap: Map<string, string>): string[][] => {
+  const generateAP21CsvRows = useCallback((codeMap: Map<string, string>, stylesToExport: string[]): string[][] => {
     type RawSku = { style: string; colour: string; leather: string; is_new: boolean };
     const rawSkus = mergedRawSkus as unknown as RawSku[];
-
-    // Determine which styles to export
-    const stylesToExport = ap21Style === "ALL"
-      ? (mergedStyles as any[]).filter((s: any) => !cancelledStyleSet.has(s.style)).map((s: any) => s.style)
-      : [ap21Style];
 
     const csvRows: string[][] = [];
     csvRows.push(AP21_HEADERS);
 
     for (const styleName of stylesToExport) {
-      // Get all active (non-cancelled) SKUs for this style
       const allStyleSkus = rawSkus.filter(
         (r) =>
           r.style === styleName &&
@@ -204,47 +232,37 @@ export default function ExportPanel({ onClose }: Props) {
       const productCode = styleName.toUpperCase();
       const productDesc = toTitleCase(styleName);
 
-      // Style-level data
       const styleInfo = styleLookup[styleName] ?? { category: "", last: "" };
       const lastName = styleInfo.last?.toUpperCase() ?? "";
       const heelHeightVal = heelHeightMap.get(lastName);
       const heelHeightStr = heelHeightVal != null ? `${heelHeightVal} cm` : "";
 
-      // AP21 style refs from DB
       const styleRefs = (ap21StyleRefsMap as any)[styleName] ?? {};
       const subCategory = styleRefs.subCategory ?? "";
       const division = subCategory ? (SUB_CATEGORY_TO_DIVISION[subCategory] ?? "") : "";
 
-      // Ref fields (constants + DB values)
-      const ref1  = "Footwear";                     // always
-      const ref2  = division;                        // derived from subCategory
-      const ref3  = subCategory;                     // Ref3 — Sub-category
-      const ref4  = styleRefs.rangeType ?? "";       // Range Type
-      const ref5  = "Tony Bianco";                   // always
-      const ref6  = styleInfo.last ?? "";            // Last
-      const ref7  = heelHeightStr;                   // Heel Height
-      const ref8  = styleRefs.toeShape ?? "";        // Toe Shape
-      const ref9  = styleRefs.upperHeight ?? "";     // Upper Height
-      const ref10 = "Product";                       // always
-      // Component refs (Ref11-Ref20)
-      const ref11 = "FG";                            // always mandatory
-      const ref12 = styleRefs.countryOfOrigin ?? ""; // Country of Origin
-      const ref13 = styleRefs.supplier ?? "";        // Supplier
-      const ref14 = styleRefs.hsCode ?? "";          // HS Code
-      const ref15 = "";
-      const ref16 = "";
-      const ref17 = "";
-      const ref18 = "";
-      const ref19 = "";
-      const ref20 = "";
+      const ref1  = "Footwear";
+      const ref2  = division;
+      const ref3  = subCategory;
+      const ref4  = styleRefs.rangeType ?? "";
+      const ref5  = "Tony Bianco";
+      const ref6  = styleInfo.last ?? "";
+      const ref7  = heelHeightStr;
+      const ref8  = styleRefs.toeShape ?? "";
+      const ref9  = styleRefs.upperHeight ?? "";
+      const ref10 = "Product";
+      const ref11 = "FG";
+      const ref12 = styleRefs.countryOfOrigin ?? "";
+      const ref13 = styleRefs.supplier ?? "";
+      const ref14 = styleRefs.hsCode ?? "";
+      const ref15 = ""; const ref16 = ""; const ref17 = "";
+      const ref18 = ""; const ref19 = ""; const ref20 = "";
 
-      // Determine size range for this style (per-style DB setting, default AU5-11)
       const styleRangeKey = (ap21SizeRangeMap as Record<string, string>)[styleName] ?? "AU5-11";
       const rangeConfig = SIZE_RANGE_CONFIG[styleRangeKey] ?? SIZE_RANGE_CONFIG["AU5-11"];
       const isAuRange = styleRangeKey.startsWith("AU");
       const sizeRangeLabel = rangeConfig.label;
 
-      // Collect unique colour/leather combos, sorted alphabetically
       const seenColours = new Set<string>();
       const orderedColours: { colour: string; leather: string }[] = [];
       for (const sku of allStyleSkus) {
@@ -257,24 +275,17 @@ export default function ExportPanel({ onClose }: Props) {
       orderedColours.sort((a, b) => a.colour.localeCompare(b.colour));
 
       for (const { colour, leather } of orderedColours) {
-        // Colour code lookup uses full "COLOUR LEATHER" description
         const colourDescFull = leather ? `${colour} ${leather}` : colour;
         const colourDescUpper = colourDescFull.toUpperCase();
         const colourCode = codeMap.get(colourDescUpper) ?? "";
 
-        // Colour Description in the CSV = Title Case colour + leather
-        // e.g. "Black Vintage", "Nude Capretto" — matches the spec description
         const colourDescCsv = leather
           ? `${toTitleCase(colour)} ${toTitleCase(leather)}`
           : toTitleCase(colour);
 
-        // Per-colour AP21 refs from DB
-        // colourKey = colour name only (uppercase, as stored)
         const colourKey = colour.toUpperCase();
         const colourRefsForStyle = (ap21ColourRefsAll as any)[styleName] ?? {};
         const colourRefs = colourRefsForStyle[colourKey] ?? {};
-
-        // Default season for ColourRef4: per-colour override, else style-level default
         const seasonDefault = styleRefs.season ?? "";
 
         const cr1  = colourRefs.upperMaterial ?? "";
@@ -288,42 +299,27 @@ export default function ExportPanel({ onClose }: Props) {
         const cr9  = colourRefs.occasion ?? "";
         const cr10 = colourRefs.web ?? "";
 
-        // Determine sizes (AU ranges: add PACK if isSize11; EU ranges: never PACK)
         const skuMeta = skuMetaMap[`${styleName}|${colour}|${leather}`];
         const hasSize11 = skuMeta?.isSize11 === true;
         const sizes = (hasSize11 && isAuRange)
           ? [...rangeConfig.sizes, "PACK"]
           : rangeConfig.sizes;
 
-        // ── Size rows (Style Level = 2) — one row per size ─────────────────
         for (const sizeCode of sizes) {
           const sizeRow: string[] = [
-            productCode,      // 1  Product Code
-            productDesc,      // 2  Product Description
-            colourCode,       // 3  Colour Code
-            colourDescCsv,    // 4  Colour Description (colour name only)
-            sizeRangeLabel,   // 5  Size Range (e.g. "Shoes - AU (5-11)")
-            sizeCode,         // 6  Size Code
-            "",               // 7  EAN Code
-            "",               // 8  Sell Price
-            "Y",              // 9  Purchased
-            "N",              // 10 Produced
-            "Y",              // 11 Sold
-            "Y",              // 12 Stocked
-            "N",              // 13 Used In Production
-            "Y",              // 14 Include in MRP (Y per KKtest1)
-            "Y",              // 15 Sold at Retail
+            productCode, productDesc, colourCode, colourDescCsv,
+            sizeRangeLabel, sizeCode,
+            "", "",           // EAN, Sell Price
+            "Y", "N", "Y", "Y", "N", "Y", "Y",  // Purchased..Sold at Retail
             ref1,  ref2,  ref3,  ref4,  ref5,
             ref6,  ref7,  ref8,  ref9,  ref10,
             ref11, ref12, ref13, ref14, ref15,
             ref16, ref17, ref18, ref19, ref20,
             cr1, cr2, cr3, cr4, cr5,
             cr6, cr7, cr8, cr9, cr10,
-            "",               // 46 Cost
-            "",               // 47 Dimension Range
-            "",               // 48 Dimension Code
-            "2",              // 49 Style Level = 2 (size row)
-            "Pair",           // 50 UOM (Pair per KKtest1)
+            "", "", "",       // Cost, Dimension Range, Dimension Code
+            "2",              // Style Level = 2 (size row)
+            "Pair",           // UOM
           ];
           csvRows.push(sizeRow);
         }
@@ -331,7 +327,7 @@ export default function ExportPanel({ onClose }: Props) {
     }
 
     return csvRows;
-  }, [mergedRawSkus, mergedStyles, ap21Style, cancelledStyleSet, cancelledSkuSet, skuMetaMap,
+  }, [mergedRawSkus, cancelledSkuSet, skuMetaMap,
       ap21SizeRangeMap, ap21StyleRefsMap, ap21ColourRefsAll, styleLookup, heelHeightMap]);
 
   function downloadCsvRows(csvRows: string[][], suffix: string) {
@@ -359,17 +355,16 @@ export default function ExportPanel({ onClose }: Props) {
   }
 
   async function exportAP21Csv() {
+    if (selectedAp21Styles.size === 0) {
+      toast.error("No styles selected for export");
+      return;
+    }
     setExporting("ap21");
     try {
+      const stylesToExport = Array.from(selectedAp21Styles).sort();
       type RawSku = { style: string; colour: string; leather: string; is_new: boolean };
       const rawSkus = mergedRawSkus as unknown as RawSku[];
 
-      // Determine which styles to export
-      const stylesToExport = ap21Style === "ALL"
-        ? (mergedStyles as any[]).filter((s: any) => !cancelledStyleSet.has(s.style)).map((s: any) => s.style)
-        : [ap21Style];
-
-      // Collect all unique colour descriptions needed (COLOUR LEATHER for code lookup)
       const neededDescriptions = new Set<string>();
       for (const styleName of stylesToExport) {
         const styleSkus = rawSkus.filter(
@@ -383,19 +378,14 @@ export default function ExportPanel({ onClose }: Props) {
         }
       }
 
-      // Check which descriptions are missing from the colour code map
-      const missing = Array.from(neededDescriptions).filter(
-        (d) => !colourCodeMap.has(d)
-      );
+      const missing = Array.from(neededDescriptions).filter((d) => !colourCodeMap.has(d));
 
       if (missing.length > 0) {
-        // Show the missing colour code modal
         setMissingColourDescriptions(missing);
         setPendingExportCallback(() => () => {
-          // After codes are saved, re-fetch and then generate
           utils.colourCode.getAll.invalidate().then(() => {
             setTimeout(() => {
-              doExportWithFreshCodes();
+              doExportWithFreshCodes(stylesToExport);
             }, 500);
           });
         });
@@ -404,8 +394,7 @@ export default function ExportPanel({ onClose }: Props) {
         return;
       }
 
-      // All codes present — generate and download
-      doExportWithCurrentCodes();
+      doExportWithCurrentCodes(stylesToExport);
     } catch (e) {
       console.error(e);
       toast.error("Failed to generate AP21 CSV");
@@ -413,12 +402,14 @@ export default function ExportPanel({ onClose }: Props) {
     }
   }
 
-  function doExportWithCurrentCodes() {
+  function doExportWithCurrentCodes(stylesToExport: string[]) {
     try {
-      const csvRows = generateAP21CsvRows(colourCodeMap);
-      const suffix = ap21Style === "ALL" ? "all" : ap21Style.toLowerCase();
+      const csvRows = generateAP21CsvRows(colourCodeMap, stylesToExport);
+      const suffix = stylesToExport.length === 1 ? stylesToExport[0].toLowerCase() : `${stylesToExport.length}_styles`;
       const filename = downloadCsvRows(csvRows, suffix);
-      const rowCount = csvRows.length - 1; // exclude header
+      const rowCount = csvRows.length - 1;
+      // Mark exported
+      markExportedMutation.mutate({ styles: stylesToExport });
       toast.success(`AP21 CSV exported: ${filename} (${rowCount} rows)`);
     } catch (e) {
       console.error(e);
@@ -428,19 +419,19 @@ export default function ExportPanel({ onClose }: Props) {
     }
   }
 
-  async function doExportWithFreshCodes() {
+  async function doExportWithFreshCodes(stylesToExport: string[]) {
     setExporting("ap21");
     try {
-      // Re-fetch the latest colour codes
       const freshCodes = await utils.colourCode.getAll.fetch();
       const freshMap = new Map<string, string>();
       for (const row of freshCodes as Array<{ colourDescription: string; colourCode: string }>) {
         freshMap.set(row.colourDescription.toUpperCase(), row.colourCode);
       }
-      const csvRows = generateAP21CsvRows(freshMap);
-      const suffix = ap21Style === "ALL" ? "all" : ap21Style.toLowerCase();
+      const csvRows = generateAP21CsvRows(freshMap, stylesToExport);
+      const suffix = stylesToExport.length === 1 ? stylesToExport[0].toLowerCase() : `${stylesToExport.length}_styles`;
       const filename = downloadCsvRows(csvRows, suffix);
       const rowCount = csvRows.length - 1;
+      markExportedMutation.mutate({ styles: stylesToExport });
       toast.success(`AP21 CSV exported: ${filename} (${rowCount} rows)`);
     } catch (e) {
       console.error(e);
@@ -460,7 +451,6 @@ export default function ExportPanel({ onClose }: Props) {
   function exportFullData() {
     setExporting("full");
     try {
-      // Build full row, then pick only selected columns in definition order
       const selectedKeys = FULL_EXPORT_ALL_COLS.map(c => c.key).filter(k => fullExportCols.has(k));
 
       const rows = (mergedRawSkus as any[])
@@ -482,7 +472,6 @@ export default function ExportPanel({ onClose }: Props) {
             "Size 11": meta?.isSize11 ? "Yes" : "No",
             "Sample Status": meta?.sampleStatus === "received" ? "Received" : meta?.sampleStatus === "fitting_sample" ? "Fitting Sample" : "Waiting",
           };
-          // Return only selected columns in order
           const filtered: Record<string, any> = {};
           for (const k of selectedKeys) filtered[k] = allFields[k];
           return filtered;
@@ -499,10 +488,22 @@ export default function ExportPanel({ onClose }: Props) {
     }
   }
 
+  const toggleStyle = (style: string) => {
+    setSelectedAp21Styles(prev => {
+      const next = new Set(prev);
+      if (next.has(style)) next.delete(style);
+      else next.add(style);
+      return next;
+    });
+  };
+
+  const selectAll = () => setSelectedAp21Styles(new Set(unexportedStyles));
+  const selectNone = () => setSelectedAp21Styles(new Set());
+
   return (
     <>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.4)" }} onClick={onClose}>
-      <div className="w-[480px] max-w-full rounded-2xl shadow-2xl bg-card flex flex-col" style={{ border: "1px solid var(--border)", maxHeight: "90vh" }} onClick={e => e.stopPropagation()}>
+      <div className="w-[520px] max-w-full rounded-2xl shadow-2xl bg-card flex flex-col" style={{ border: "1px solid var(--border)", maxHeight: "90vh" }} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "var(--border)" }}>
           <h2 className="font-display font-bold text-lg text-foreground">Export Data</h2>
@@ -528,30 +529,95 @@ export default function ExportPanel({ onClose }: Props) {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm text-foreground">AP21 Product Import CSV</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Generates a 101836 BxB product import CSV (size rows only). Ref1–Ref20 and ColourRef1–10 populated from AP21 Refs panel. UOM = Pair.
+                  Generates a 101836 BxB product import CSV. Only styles not yet in AP21 are shown. Exported styles are automatically marked and hidden.
                 </p>
-                <div className="flex items-center gap-2 mt-3">
-                  <label className="text-xs text-muted-foreground font-medium flex-shrink-0">Style:</label>
-                  <select
-                    value={ap21Style}
-                    onChange={(e) => setAp21Style(e.target.value)}
-                    disabled={exporting !== null}
-                    className="flex-1 text-xs rounded-md border bg-background px-2 py-1.5 focus:outline-none focus:ring-2 text-foreground"
-                    style={{ borderColor: "oklch(0.80 0.12 280)" }}
-                  >
-                    {ap21StyleOptions.map((s) => (
-                      <option key={s} value={s}>{s === "ALL" ? "All Styles" : s}</option>
-                    ))}
-                  </select>
+
+                {/* Style checklist */}
+                <div className="mt-3 border rounded-lg overflow-hidden" style={{ borderColor: "oklch(0.80 0.12 280)" }}>
+                  {/* Checklist header */}
+                  <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: "oklch(0.80 0.12 280)", background: "oklch(0.94 0.04 280)" }}>
+                    <span className="text-xs font-semibold text-foreground">
+                      New styles ({unexportedStyles.length})
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button onClick={selectAll} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                        <CheckSquare className="w-3 h-3" />All
+                      </button>
+                      <span className="text-muted-foreground text-xs">·</span>
+                      <button onClick={selectNone} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+                        <Square className="w-3 h-3" />None
+                      </button>
+                    </div>
+                  </div>
+
+                  {unexportedStyles.length === 0 ? (
+                    <div className="px-3 py-4 text-center">
+                      <p className="text-xs text-muted-foreground">All styles have been exported to AP21.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Use the reset button below to re-export a style.</p>
+                    </div>
+                  ) : (
+                    <div className="max-h-40 overflow-y-auto">
+                      {unexportedStyles.map((style) => (
+                        <label key={style} className="flex items-center gap-2.5 px-3 py-1.5 cursor-pointer hover:bg-white/40 transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={selectedAp21Styles.has(style)}
+                            onChange={() => toggleStyle(style)}
+                            className="w-3.5 h-3.5 flex-shrink-0"
+                            style={{ accentColor: "oklch(0.40 0.14 280)" }}
+                          />
+                          <span className="text-xs font-medium text-foreground">{style}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Generate button */}
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-muted-foreground">
+                    {selectedAp21Styles.size} style{selectedAp21Styles.size !== 1 ? "s" : ""} selected
+                  </span>
                   <button
                     onClick={exportAP21Csv}
-                    disabled={exporting !== null}
-                    className="flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-semibold transition-all disabled:opacity-50"
+                    disabled={exporting !== null || selectedAp21Styles.size === 0}
+                    className="px-3 py-1.5 rounded-md text-xs font-semibold transition-all disabled:opacity-50"
                     style={{ background: "oklch(0.40 0.14 280)", color: "white" }}
                   >
                     {exporting === "ap21" ? "Generating…" : "Generate CSV"}
                   </button>
                 </div>
+
+                {/* Already exported section */}
+                {exportedStyles.length > 0 && (
+                  <div className="mt-3">
+                    <button
+                      onClick={() => setShowExportedStyles(v => !v)}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      {showExportedStyles ? "Hide" : "Show"} already exported ({exportedStyles.length})
+                    </button>
+                    {showExportedStyles && (
+                      <div className="mt-1.5 border rounded-lg overflow-hidden max-h-32 overflow-y-auto" style={{ borderColor: "oklch(0.80 0.12 280)" }}>
+                        {exportedStyles.map((style) => (
+                          <div key={style} className="flex items-center justify-between px-3 py-1.5 hover:bg-white/30 transition-colors">
+                            <span className="text-xs text-muted-foreground line-through">{style}</span>
+                            <button
+                              onClick={() => resetExportedMutation.mutate({ style })}
+                              disabled={resetExportedMutation.isPending}
+                              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 ml-2 flex-shrink-0"
+                              title="Reset — re-add to export list"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              Reset
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -576,7 +642,6 @@ export default function ExportPanel({ onClose }: Props) {
 
           {/* Full Data Export */}
           <div className="w-full rounded-xl border overflow-hidden" style={{ borderColor: "var(--border)" }}>
-            {/* Header row */}
             <div className="flex items-start gap-4 p-4">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "var(--muted)" }}>
                 <FileDown className="w-5 h-5 text-muted-foreground" />
@@ -586,7 +651,6 @@ export default function ExportPanel({ onClose }: Props) {
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Choose which columns to include, then export all SKUs to Excel.
                 </p>
-                {/* Select All / None row */}
                 <div className="flex items-center gap-3 mt-3">
                   <button
                     onClick={() => setFullExportCols(new Set(FULL_EXPORT_ALL_COLS.map(c => c.key)))}
@@ -602,7 +666,6 @@ export default function ExportPanel({ onClose }: Props) {
                 </div>
               </div>
             </div>
-            {/* Column checkboxes */}
             <div className="px-4 pb-3 border-t grid grid-cols-2 gap-x-4 gap-y-1.5 pt-3" style={{ borderColor: "var(--border)" }}>
               {FULL_EXPORT_ALL_COLS.map((col) => (
                 <label key={col.key} className="flex items-center gap-2 cursor-pointer group">
@@ -628,7 +691,6 @@ export default function ExportPanel({ onClose }: Props) {
                 </label>
               ))}
             </div>
-            {/* Export button */}
             <div className="px-4 pb-4 pt-2">
               <button
                 onClick={exportFullData}
