@@ -262,9 +262,9 @@ export default function ExportPanel({ onClose }: Props) {
         const colourDescUpper = colourDescFull.toUpperCase();
         const colourCode = codeMap.get(colourDescUpper) ?? "";
 
-        // Colour Description in the CSV = colour name only (not leather)
-        // This matches the KKtest1 sample format
-        const colourDescCsv = toTitleCase(colour);
+        // Colour Description in the CSV = blank
+        // AP21 pulls the colour description from the spec, not the import CSV
+        const colourDescCsv = "";
 
         // Per-colour AP21 refs from DB
         // colourKey = colour name only (uppercase, as stored)
