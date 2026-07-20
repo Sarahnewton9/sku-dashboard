@@ -1008,7 +1008,6 @@ function StickyScrollBar({ tableScrollRef }: StickyScrollBarProps) {
 }
 
 // ─── Cross-Style Copy Panel ──────────────────────────────────────────────────
-
 interface CrossStyleCopyPanelProps {
   currentStyle: string;
   currentColours: string[];
@@ -1017,12 +1016,14 @@ interface CrossStyleCopyPanelProps {
   template: SpecComponent[];
   onCopy: (sourceColour: string, targetColours: string[], sourceSpecs: Record<string, string>, sourceCustomRows: CustomRowData[]) => void;
 }
-
 function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels, allStyleEntries, template, onCopy }: CrossStyleCopyPanelProps) {
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"single" | "full">("single");
   const [sourceStyle, setSourceStyle] = useState<string | null>(null);
   const [sourceColour, setSourceColour] = useState<string | null>(null);
   const [targets, setTargets] = useState<Set<string>>(new Set());
+  // Full-style mode: mapping from source colour label → target colour label (or "" to skip)
+  const [colourMap, setColourMap] = useState<Record<string, string>>({});
 
   const sourceEntry = allStyleEntries.find((s) => s.style === sourceStyle);
 
@@ -1031,14 +1032,12 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
     { style: sourceStyle! },
     { enabled: !!sourceStyle }
   );
-
   // Fetch custom rows for the selected source style
   const { data: sourceCustomRowsRaw = [] } = trpc.specCustomRow.getByStyle.useQuery(
     { style: sourceStyle! },
     { enabled: !!sourceStyle }
   );
-
-  // Build a colour → component → value map from raw specs (keyed by full colour label)
+  // Build a colour → component → value map from raw specs (keyed by raw colour key)
   const sourceSpecsMap = useMemo(() => {
     const map: Record<string, Record<string, string>> = {};
     for (const row of sourceSpecsRaw as any[]) {
@@ -1048,6 +1047,28 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
     return map;
   }, [sourceSpecsRaw]);
 
+  // Auto-build colour map when source style changes in full mode
+  useEffect(() => {
+    if (mode !== "full" || !sourceEntry) { setColourMap({}); return; }
+    const newMap: Record<string, string> = {};
+    for (let i = 0; i < sourceEntry.colours.length; i++) {
+      const srcLabel = sourceEntry.colourLabels[i] ?? sourceEntry.colours[i];
+      // Try to find a matching target colour by label (case-insensitive)
+      const match = currentColourLabels.find((tl) => tl.toLowerCase() === srcLabel.toLowerCase());
+      newMap[srcLabel] = match ?? "";
+    }
+    setColourMap(newMap);
+  }, [sourceEntry, mode, currentColourLabels]);
+
+  function reset() {
+    setOpen(false);
+    setSourceStyle(null);
+    setSourceColour(null);
+    setTargets(new Set());
+    setColourMap({});
+    setMode("single");
+  }
+
   function toggleTarget(colour: string) {
     setTargets((prev) => {
       const next = new Set(prev);
@@ -1056,14 +1077,30 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
     });
   }
 
-  function handleCopy() {
+  function handleSingleCopy() {
     if (!sourceStyle || !sourceColour || targets.size === 0) return;
     const sourceValues = sourceSpecsMap[sourceColour] ?? {};
     onCopy(sourceColour, Array.from(targets), sourceValues, sourceCustomRowsRaw as CustomRowData[]);
-    setOpen(false);
-    setSourceStyle(null);
-    setSourceColour(null);
-    setTargets(new Set());
+    reset();
+  }
+
+  function handleFullCopy() {
+    if (!sourceEntry) return;
+    let copiedCount = 0;
+    for (let i = 0; i < sourceEntry.colours.length; i++) {
+      const srcColourKey = sourceEntry.colours[i];
+      const srcLabel = sourceEntry.colourLabels[i] ?? srcColourKey;
+      const targetLabel = colourMap[srcLabel];
+      if (!targetLabel) continue; // skipped
+      const sourceValues = sourceSpecsMap[srcColourKey] ?? {};
+      onCopy(srcColourKey, [targetLabel], sourceValues, sourceCustomRowsRaw as CustomRowData[]);
+      copiedCount++;
+    }
+    if (copiedCount === 0) {
+      toast.error("No colour mappings set — nothing to copy");
+      return;
+    }
+    reset();
   }
 
   if (!open) {
@@ -1081,8 +1118,20 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
     <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800 text-xs space-y-3">
       <div className="flex items-center justify-between">
         <span className="font-medium text-amber-900 dark:text-amber-200">Copy specs from another style</span>
-        <button onClick={() => { setOpen(false); setSourceStyle(null); setSourceColour(null); setTargets(new Set()); }} className="text-muted-foreground hover:text-foreground text-sm leading-none">×</button>
+        <button onClick={reset} className="text-muted-foreground hover:text-foreground text-sm leading-none">×</button>
       </div>
+      {/* Mode toggle */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setMode("single")}
+          className={`px-2 py-1 rounded border text-xs transition-colors ${mode === "single" ? "bg-amber-600 text-white border-amber-600" : "bg-background border-border hover:bg-muted"}`}
+        >Single colour</button>
+        <button
+          onClick={() => setMode("full")}
+          className={`px-2 py-1 rounded border text-xs transition-colors ${mode === "full" ? "bg-amber-600 text-white border-amber-600" : "bg-background border-border hover:bg-muted"}`}
+        >Entire style</button>
+      </div>
+      {/* Source style picker */}
       <div className="flex flex-wrap gap-2 items-center">
         <span className="text-muted-foreground whitespace-nowrap">Source style:</span>
         <Select value={sourceStyle ?? ""} onValueChange={(v) => { setSourceStyle(v); setSourceColour(null); setTargets(new Set()); }}>
@@ -1095,7 +1144,8 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
             ))}
           </SelectContent>
         </Select>
-        {sourceEntry && (
+        {/* Single mode: source colour picker */}
+        {mode === "single" && sourceEntry && (
           <>
             <span className="text-muted-foreground">colour:</span>
             <Select value={sourceColour ?? ""} onValueChange={(v) => { setSourceColour(v); setTargets(new Set()); }}>
@@ -1104,24 +1154,23 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
               </SelectTrigger>
               <SelectContent>
                 {sourceEntry.colours.map((c, i) => {
-                  // Use the full label as the value so sourceSpecsMap lookup works correctly
                   const label = sourceEntry.colourLabels[i] ?? c;
-                  return <SelectItem key={label} value={label} className="text-xs">{label}</SelectItem>;
+                  return <SelectItem key={c} value={c} className="text-xs">{label}</SelectItem>;
                 })}
               </SelectContent>
             </Select>
           </>
         )}
       </div>
-      {sourceColour && (
+      {/* Single mode: target colour picker */}
+      {mode === "single" && sourceColour && (
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-muted-foreground whitespace-nowrap">Copy into:</span>
           {currentColours.map((c, i) => {
-            // Use full label as the target key
             const label = currentColourLabels[i] ?? c;
             return (
               <button
-                key={label}
+                key={c}
                 onClick={() => toggleTarget(label)}
                 className={`px-2 py-1 rounded border text-xs transition-colors ${
                   targets.has(label)
@@ -1135,15 +1184,50 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
           })}
         </div>
       )}
-      {targets.size > 0 && (
-        <Button size="sm" onClick={handleCopy} className="h-7 text-xs bg-amber-600 hover:bg-amber-700">
+      {/* Full mode: colour mapping table */}
+      {mode === "full" && sourceEntry && Object.keys(colourMap).length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-muted-foreground">Map source colours → target colours (leave blank to skip):</p>
+          {sourceEntry.colours.map((srcKey, i) => {
+            const srcLabel = sourceEntry.colourLabels[i] ?? srcKey;
+            return (
+              <div key={srcKey} className="flex items-center gap-2">
+                <span className="w-36 truncate font-medium">{srcLabel}</span>
+                <span className="text-muted-foreground">→</span>
+                <Select
+                  value={colourMap[srcLabel] ?? ""}
+                  onValueChange={(v) => setColourMap((prev) => ({ ...prev, [srcLabel]: v }))}
+                >
+                  <SelectTrigger className="h-6 w-44 text-xs">
+                    <SelectValue placeholder="— skip —" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="" className="text-xs text-muted-foreground">— skip —</SelectItem>
+                    {currentColours.map((tc, ti) => {
+                      const tl = currentColourLabels[ti] ?? tc;
+                      return <SelectItem key={tc} value={tl} className="text-xs">{tl}</SelectItem>;
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {/* Action buttons */}
+      {mode === "single" && targets.size > 0 && (
+        <Button size="sm" onClick={handleSingleCopy} className="h-7 text-xs bg-amber-600 hover:bg-amber-700">
           Copy {targets.size} colour{targets.size > 1 ? "s" : ""}
+        </Button>
+      )}
+      {mode === "full" && sourceEntry && Object.values(colourMap).some((v) => v) && (
+        <Button size="sm" onClick={handleFullCopy} className="h-7 text-xs bg-amber-600 hover:bg-amber-700">
+          Copy entire style ({Object.values(colourMap).filter((v) => v).length} colour{Object.values(colourMap).filter((v) => v).length !== 1 ? "s" : ""})
         </Button>
       )}
     </div>
   );
 }
-
 // ─── Unified Row type for drag-and-drop ──────────────────────────────────────
 type UnifiedRow =
   | { kind: "template"; id: string; comp: SpecComponent }
