@@ -75,7 +75,7 @@ const SIZE_RANGE_CONFIG: Record<string, { label: string; sizes: string[] }> = {
   "AU6-9":   { label: "Shoes - AU (6-9)",   sizes: ["6","6.5","7","7.5","8","8.5","9"] },
   "AU5-10":  { label: "Shoes - AU (5-10)",  sizes: ["5","6","7","8","9","10"] },
   "EU35-42": { label: "Shoes - EU (35-42)", sizes: ["35","36","37","38","39","40","41","42"] },
-  "EU35-41": { label: "Shoes - EU (35-41)", sizes: ["35","36","37","38","39","40","41"] },
+  "EU35-41": { label: "Shoes - EU (36-41)", sizes: ["36","37","38","39","40","41"] },
 };
 
 // All available columns for the Full Data Export

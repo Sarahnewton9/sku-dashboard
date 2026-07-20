@@ -3405,7 +3405,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                   <SelectItem value="AU6-9" className="text-xs">AU 6–9 (half sizes)</SelectItem>
                   <SelectItem value="AU5-10" className="text-xs">AU 5–10 (full sizes)</SelectItem>
                   <SelectItem value="EU35-42" className="text-xs">EU 35–42</SelectItem>
-                  <SelectItem value="EU35-41" className="text-xs">EU 35–41</SelectItem>
+                  <SelectItem value="EU35-41" className="text-xs">EU 36–41</SelectItem>
                 </SelectContent>
               </Select>
             </div>
