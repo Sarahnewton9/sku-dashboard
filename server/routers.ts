@@ -21,7 +21,7 @@ import {
   addFittingSessionImage, deleteFittingSessionImage,
   upsertStyleImageOverride, deleteStyleImageOverride, getAllStyleImageOverrides,
   cancelStyle, restoreStyle, listCancelledStyles,
-  addCustomSku, getAllCustomSkus, deleteCustomSku,
+  addCustomSku, getAllCustomSkus, deleteCustomSku, updateCustomSku,
   unlockBuySession,
   renameBuySession,
   cancelSku, restoreSku, listCancelledSkus,
@@ -965,6 +965,12 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await deleteCustomSku(input.id);
+        return { success: true };
+      }),
+    update: publicProcedure
+      .input(z.object({ id: z.number(), colour: z.string(), leather: z.string() }))
+      .mutation(async ({ input }) => {
+        await updateCustomSku(input.id, input.colour, input.leather);
         return { success: true };
       }),
   }),

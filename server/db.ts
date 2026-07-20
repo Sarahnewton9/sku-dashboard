@@ -849,6 +849,11 @@ export async function deleteCustomSku(id: number): Promise<void> {
   if (!db) throw new Error("Database not available");
   await db.delete(customSkus).where(eq(customSkus.id, id));
 }
+export async function updateCustomSku(id: number, colour: string, leather: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(customSkus).set({ colour, leather }).where(eq(customSkus.id, id));
+}
 
 // ─── Custom Styles ────────────────────────────────────────────────────────────
 export async function getAllCustomStyles(season = "SS26"): Promise<{ id: number; style: string; lastName: string; category: string | null; createdAt: Date }[]> {
