@@ -1243,6 +1243,9 @@ function SpecForm({
   onRegisterReplaceRowKey,
 }: SpecFormProps) {
   const [showAddSku, setShowAddSku] = useState(false);
+  const [hideEmptyRows, setHideEmptyRows] = useState(true); // hide rows with no values by default
+  const [showSettings, setShowSettings] = useState(false); // collapse settings panel by default
+  const [showCopyPanel, setShowCopyPanel] = useState(false); // collapse copy panel by default
   const [newSkuColour, setNewSkuColour] = useState("");
   const [newSkuLeather, setNewSkuLeather] = useState("");
   // Edit custom SKU inline
@@ -1394,6 +1397,36 @@ function SpecForm({
   }, [template, customRepMap, rowOrderData, localRowKeys]);
 
   const unifiedRowIds = useMemo(() => unifiedRows.map((r) => r.id), [unifiedRows]);
+  // Compute which rows have at least one value filled (for hide-empty-rows toggle)
+  const rowHasValue = useMemo(() => {
+    const result: Record<string, boolean> = {};
+    for (const uRow of unifiedRows) {
+      if (uRow.kind === "template") {
+        const comp = uRow.comp;
+        const isPinned = comp.key === "upper_1";
+        if (isPinned) { result[uRow.id] = true; continue; }
+        const hasVal = entry.colours.some((colour, i) => {
+          const colourKey = entry.colourLabels[i] ?? colour;
+          return !!(specs[colourKey]?.[comp.key]?.trim());
+        });
+        result[uRow.id] = hasVal;
+      } else {
+        // Custom rows: check if any colour has a value
+        const hasVal = entry.colours.some((colour) => {
+          const row = uRow.rowGroup.get(colour) ?? uRow.rowGroup.get("__all__");
+          return !!(row?.value?.trim());
+        });
+        result[uRow.id] = hasVal;
+      }
+    }
+    return result;
+  }, [unifiedRows, specs, entry.colours, entry.colourLabels]);
+  // Rows to render (filtered when hideEmptyRows is on)
+  const visibleRows = useMemo(() => {
+    if (!hideEmptyRows) return unifiedRows;
+    return unifiedRows.filter((r) => rowHasValue[r.id]);
+  }, [unifiedRows, rowHasValue, hideEmptyRows]);
+  const hiddenEmptyCount = unifiedRows.length - visibleRows.length;
   const activeRow = activeId ? unifiedRows.find((r) => r.id === activeId) ?? null : null;
 
   // Register a swapRowKey function with the parent so SpecsTab can replace old/temp row keys
@@ -1596,8 +1629,16 @@ function SpecForm({
         </div>
       )}
 
-      {/* Style-level settings */}
-      <div className="flex flex-wrap gap-6 items-start p-3 bg-muted/30 rounded-lg border">
+      {/* Style-level settings — collapsible */}
+      <div className="border rounded-lg overflow-hidden">
+        <button
+          onClick={() => setShowSettings(v => !v)}
+          className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/30 transition-colors"
+        >
+          <span>Settings (Category, Sub-type, Notes)</span>
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showSettings ? "rotate-180" : ""}`} />
+        </button>
+      {showSettings && <div className="flex flex-wrap gap-6 items-start p-3 bg-muted/30">
         {/* Category selector */}
         <div className="flex items-center gap-2">
           <Label className="text-sm font-medium whitespace-nowrap">Category:</Label>
@@ -1647,10 +1688,19 @@ function SpecForm({
             className="text-xs min-h-[60px] resize-none"
           />
         </div>
-      </div>
+      </div>}{/* end showSettings */}
+      </div>{/* end settings border */}
 
-      {/* Selective colour-to-colour copy */}
-      <div className="flex flex-col gap-2">
+      {/* Copy panels — collapsible */}
+      <div className="border rounded-lg overflow-hidden">
+        <button
+          onClick={() => setShowCopyPanel(v => !v)}
+          className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/30 transition-colors"
+        >
+          <span>Copy specs from another colour or style</span>
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showCopyPanel ? "rotate-180" : ""}`} />
+        </button>
+      {showCopyPanel && <div className="flex flex-col gap-2 p-3">
         {entry.colours.length > 1 && (
           <ColourCopyPanel
             colours={entry.colours}
@@ -1696,7 +1746,8 @@ function SpecForm({
             toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s) (Upper 1 kept per-colour)`);
           }}
         />
-      </div>
+      </div>}{/* end showCopyPanel */}
+      </div>{/* end copy panel */}
 
       {/* Spec grid — unified drag-and-drop for ALL rows (template + custom) */}
       <DndContext
@@ -1724,7 +1775,18 @@ function SpecForm({
         <table ref={tableRef} className="w-full text-xs border-collapse">
           <thead>
             <tr className="bg-muted/50">
-              <th className="text-left px-3 py-2 font-medium text-muted-foreground w-40 border-b">Colour</th>
+              <th className="text-left px-3 py-2 font-medium text-muted-foreground w-40 border-b">
+                <div className="flex items-center gap-2">
+                  <span>Component</span>
+                  <button
+                    onClick={() => setHideEmptyRows(v => !v)}
+                    title={hideEmptyRows ? "Show all rows (including empty)" : "Hide empty rows"}
+                    className={`text-xs px-1.5 py-0.5 rounded border transition-colors ${hideEmptyRows ? "bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700" : "bg-muted text-muted-foreground border-border hover:bg-amber-50"}`}
+                  >
+                    {hideEmptyRows ? `${hiddenEmptyCount} hidden` : "Hide empty"}
+                  </button>
+                </div>
+              </th>
               {entry.colours.map((colour, i) => (
                 <th key={`${colour}-${i}`} className="text-left px-3 py-2 font-medium border-b min-w-[160px] group/col relative">
                   <div className="flex items-center gap-1 justify-between">
@@ -1839,7 +1901,7 @@ function SpecForm({
           </thead>
           <tbody>
             <SortableContext items={unifiedRowIds} strategy={verticalListSortingStrategy}>
-              {unifiedRows.map((uRow) => {
+              {visibleRows.map((uRow) => {
                 if (uRow.kind === "template") {
                   const comp = uRow.comp;
                   return (
@@ -3818,6 +3880,7 @@ export default function SpecsTab({}: SpecsTabProps) {
             {/* Scrollable spec grid body */}
             <div className="flex-1 overflow-y-auto px-6 pb-6">
             <SpecForm
+              key={selectedEntry.style}
               tableScrollRef={specTableScrollRef}
               entry={selectedEntry}
               toeCapsPerColour={selectedEntry.toeCapsPerColour}
