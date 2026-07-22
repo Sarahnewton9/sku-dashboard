@@ -1419,9 +1419,11 @@ export async function bulkCopyCustomRows(data: {
     value: string;
     sortOrder: number;
   }>;
-}): Promise<void> {
+}): Promise<Array<{ section: string; title: string; newId: number }>> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  // Returns section+title → row ID mapping so the caller can remap row order keys
+  const rowIds: Array<{ section: string; title: string; newId: number }> = [];
 
   for (const row of data.rows) {
     if (!row.value) continue;
@@ -1437,7 +1439,7 @@ export async function bulkCopyCustomRows(data: {
 
     if (existing.length === 0) {
       // No rows yet — insert a single __all__ row with the source value
-      await db.insert(specCustomRows).values({
+      const [inserted] = await db.insert(specCustomRows).values({
         style: data.targetStyle,
         colour: "__all__",
         section: row.section,
@@ -1445,6 +1447,9 @@ export async function bulkCopyCustomRows(data: {
         value: row.value,
         sortOrder: row.sortOrder,
       });
+      if ((inserted as any)?.insertId) {
+        rowIds.push({ section: row.section, title: row.title, newId: Number((inserted as any).insertId) });
+      }
     } else {
       // Rows exist — update all of them (both __all__ and per-colour) to the source value
       await db.update(specCustomRows)
@@ -1456,8 +1461,12 @@ export async function bulkCopyCustomRows(data: {
             eq(specCustomRows.title, row.title),
           )
         );
+      // Use the representative (lowest id) for order remapping
+      const repId = Math.min(...existing.map((r) => r.id));
+      rowIds.push({ section: row.section, title: row.title, newId: repId });
     }
   }
+  return rowIds;
 }
 
 // ─── Last Measurements ───────────────────────────────────────────────────────

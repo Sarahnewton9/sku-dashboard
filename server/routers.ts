@@ -1984,8 +1984,8 @@ If the request is unclear or is a question, use no_action.`;
         })),
       }))
       .mutation(async ({ input }) => {
-        await bulkCopyCustomRows(input);
-        return { success: true };
+        const rowIds = await bulkCopyCustomRows(input);
+        return { success: true, rowIds };
       }),
   }),
   // ─── Spec Hidden Columns (hide individual colour columns per style) ───────────
