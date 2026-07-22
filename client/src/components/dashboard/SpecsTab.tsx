@@ -923,6 +923,8 @@ interface SpecFormProps {
    * If localRowKeys is null (no saved order yet), it initialises from the current unifiedRowIds first
    * so the row stays in its current position instead of jumping to the bottom. */
   onRegisterReplaceRowKey?: (swapFn: (oldKey: string, newKey: string) => void) => void;
+  /** Called once on mount so SpecsTab can register a getter that returns the current localRowKeys (or unifiedRowIds if null). */
+  onRegisterGetRowKeys?: (getFn: () => string[]) => void;
 }
 
 const STYLE_CATEGORIES = [
@@ -1241,6 +1243,7 @@ function SpecForm({
   tableScrollRef: externalTableScrollRef,
   onBulkCopyCustomRowsFromStyle,
   onRegisterReplaceRowKey,
+  onRegisterGetRowKeys,
 }: SpecFormProps) {
   const [showAddSku, setShowAddSku] = useState(false);
   const [hideEmptyRows, setHideEmptyRows] = useState(true); // hide rows with no values by default
@@ -1436,6 +1439,9 @@ function SpecForm({
   // IMPORTANT: must be declared AFTER unifiedRowIds to avoid temporal dead zone errors.
   const unifiedRowIdsRef = useRef<string[]>([]);
   useEffect(() => { unifiedRowIdsRef.current = unifiedRowIds; }, [unifiedRowIds]);
+  // Keep a ref to localRowKeys so the parent can read the current value synchronously
+  const localRowKeysRef = useRef<string[] | null>(null);
+  useEffect(() => { localRowKeysRef.current = localRowKeys; }, [localRowKeys]);
   useEffect(() => {
     onRegisterReplaceRowKey?.((oldKey: string, newKey: string) => {
       setLocalRowKeys((prev) => {
@@ -1444,6 +1450,7 @@ function SpecForm({
         return base.map((k) => k === oldKey ? newKey : k);
       });
     });
+    onRegisterGetRowKeys?.(() => localRowKeysRef.current ?? unifiedRowIdsRef.current);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -2707,6 +2714,8 @@ export default function SpecsTab({}: SpecsTabProps) {
   function swapLocalRowKey(oldKey: string, newKey: string) {
     replaceRowKeySetterRef.current?.(oldKey, newKey);
   }
+  // Ref to SpecForm's getRowKeys function — returns the current in-memory row order (localRowKeys or unifiedRowIds)
+  const getRowKeysRef = useRef<(() => string[]) | null>(null);
 
   const { data: rawCustomRows = [], refetch: refetchCustomRows } = trpc.specCustomRow.getByStyle.useQuery(
     { style: selectedStyle! },
@@ -3574,7 +3583,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                       imageUrl: imageOverrides[selectedEntry.style] ?? selectedEntry.imageUrl,
                       customRows: rawCustomRows as any[],
                       // Pass saved row order so export respects on-screen order and omits deleted rows
-                      rowKeys: exportRowOrderData?.rowKeys ?? null,
+                      rowKeys: getRowKeysRef.current?.() ?? exportRowOrderData?.rowKeys ?? null,
                     });
                     toast.success(`Exported ${selectedEntry.style} spec sheet`);
                   }}
@@ -3927,6 +3936,9 @@ export default function SpecsTab({}: SpecsTabProps) {
               }}
               onRegisterReplaceRowKey={(swapFn) => {
                 replaceRowKeySetterRef.current = swapFn;
+              }}
+              onRegisterGetRowKeys={(getFn) => {
+                getRowKeysRef.current = getFn;
               }}
             />
             </div>{/* end scrollable body */}
