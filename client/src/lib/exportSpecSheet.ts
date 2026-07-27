@@ -50,6 +50,10 @@ interface ExportSpecSheetParams {
   customRows?: CustomRow[];
   /** Saved row order from spec_row_order.rowKeys — used to preserve on-screen order and omit deleted rows */
   rowKeys?: string[] | null;
+  /** Fit rating for this style: 'tts' | 'runs_small' | 'runs_large' */
+  fitRating?: string | null;
+  /** Free-text fitting notes, e.g. "Recommend half size down" */
+  fittingNotes?: string | null;
 }
 
 async function getImageNaturalSize(base64: string, mimeType: string): Promise<{ width: number; height: number }> {
@@ -144,7 +148,17 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     imageUrl,
     customRows = [],
     rowKeys,
+    fitRating,
+    fittingNotes,
   } = params;
+
+  // Build a human-readable fit label for the export header
+  const FIT_LABEL_MAP: Record<string, string> = {
+    tts: "True to Size",
+    runs_small: "Runs Small — Recommend Half Size Up",
+    runs_large: "Runs Large — Recommend Half Size Down",
+  };
+  const fitLabel = fitRating ? (FIT_LABEL_MAP[fitRating] ?? fitRating) : null;
 
   // Build custom rows lookup: repId → {title, section, valuesByColour}
   // Per-colour rows share the same title but have different ids. We group them by title,
@@ -400,6 +414,8 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
         ["STYLE NAME:", style.toUpperCase()],
         ["BRAND:", "Tony Bianco"],
         ["SEASON:", season],
+        ...(fitLabel ? [["FIT:", fitLabel] as [string, string]] : []),
+        ...(fittingNotes ? [["FIT NOTES:", fittingNotes] as [string, string]] : []),
       ];
       for (const [label, value] of headerRows) {
         ws.getRow(currentRow).height = 14;

@@ -3593,6 +3593,9 @@ export default function SpecsTab({}: SpecsTabProps) {
                       customRows: rawCustomRows as any[],
                       // Pass saved row order so export respects on-screen order and omits deleted rows
                       rowKeys: getRowKeysRef.current?.() ?? exportRowOrderData?.rowKeys ?? null,
+                      // Fitting info from style meta
+                      fitRating: styleMetaMap[selectedEntry.style]?.fitRating ?? null,
+                      fittingNotes: styleMetaMap[selectedEntry.style]?.fittingNotes ?? null,
                     });
                     toast.success(`Exported ${selectedEntry.style} spec sheet`);
                   }}
