@@ -89,6 +89,7 @@ const FULL_EXPORT_ALL_COLS: Array<{ key: string; label: string }> = [
   { key: "Status",            label: "New / Existing" },
   { key: "Size 11",           label: "Size 11" },
   { key: "Sample Status",     label: "Sample Status" },
+  { key: "Fit Rating",         label: "Fit Rating" },
 ];
 // These columns are always included and cannot be deselected
 const FULL_EXPORT_REQUIRED_COLS = ["Style", "Colour", "Leather"];
@@ -445,7 +446,7 @@ export default function ExportPanel({ onClose }: Props) {
   const FULL_EXPORT_COL_WIDTHS: Record<string, number> = {
     "Style": 14, "Category": 16, "Last": 14, "Heel Height (cm)": 14,
     "Colour": 16, "Leather": 22, "Status": 10, "Size 11": 8,
-    "Sample Status": 14,
+    "Sample Status": 14, "Fit Rating": 18,
   };
 
   function exportFullData() {
@@ -471,6 +472,14 @@ export default function ExportPanel({ onClose }: Props) {
             Status: sku.is_new ? "New" : "Existing",
             "Size 11": meta?.isSize11 ? "Yes" : "No",
             "Sample Status": meta?.sampleStatus === "received" ? "Received" : meta?.sampleStatus === "fitting_sample" ? "Fitting Sample" : "Waiting",
+            "Fit Rating": (() => {
+              const fr = (styleMetaMap as any)[sku.style]?.fitRating;
+              if (!fr) return "";
+              if (fr === "tts") return "True to Size";
+              if (fr === "runs_large") return "Runs Large";
+              if (fr === "runs_small") return "Runs Small";
+              return fr;
+            })(),
           };
           const filtered: Record<string, any> = {};
           for (const k of selectedKeys) filtered[k] = allFields[k];
