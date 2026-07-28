@@ -869,7 +869,16 @@ export async function addCustomStyle(style: string, lastName: string, category?:
     .insert(customStyles)
     .values({ style, lastName, category: category ?? null, season })
     .onDuplicateKeyUpdate({ set: { lastName, category: category ?? null } });
-  return (result[0] as any).insertId as number;
+  const insertId = (result[0] as any).insertId as number;
+  // When adding a style in SS26, automatically carry it forward to W27 as a core/carry-over style.
+  // This means it will appear in W27 without the "New" tag, just like any other carry-over.
+  if (season === "SS26") {
+    await db
+      .insert(customStyles)
+      .values({ style, lastName, category: category ?? null, season: "W27" })
+      .onDuplicateKeyUpdate({ set: { lastName, category: category ?? null } });
+  }
+  return insertId;
 }
 
 export async function deleteCustomStyle(id: number): Promise<void> {

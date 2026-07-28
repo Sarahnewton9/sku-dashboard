@@ -295,7 +295,7 @@ export default function StylesTab() {
       setNewStyleImageFile(null);
       setNewStyleImagePreview(null);
       setIsAddingStyle(false);
-      toast.success("Style added successfully");
+      toast.success(season === "SS26" ? "Style added to SS26 and carried forward to W27" : "Style added successfully");
     },
     onError: (err) => {
       setIsAddingStyle(false);
@@ -360,7 +360,7 @@ export default function StylesTab() {
         const base64 = (reader.result as string).split(",")[1];
         // Add the style first, then upload the image
         addCustomStyleMutation.mutate(
-          { style: name, lastName, category: newStyleCategory.trim().toUpperCase() || undefined },
+          { style: name, lastName, category: newStyleCategory.trim().toUpperCase() || undefined, season },
           {
             onSuccess: () => {
               // Upload the image after style is created
@@ -371,7 +371,7 @@ export default function StylesTab() {
       };
       reader.readAsDataURL(newStyleImageFile);
     } else {
-      addCustomStyleMutation.mutate({ style: name, lastName, category: newStyleCategory.trim().toUpperCase() || undefined });
+      addCustomStyleMutation.mutate({ style: name, lastName, category: newStyleCategory.trim().toUpperCase() || undefined, season });
     }
   }
   const unlockSessionMutation = trpc.buy.unlock.useMutation({
@@ -2119,6 +2119,16 @@ export default function StylesTab() {
                 )}
               </div>
             </div>
+
+            {/* W27 carry-over note — only show when in SS26 */}
+            {season === "SS26" && (
+              <div className="flex items-start gap-2 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 px-3 py-2.5">
+                <span className="text-blue-500 mt-0.5 text-base leading-none">ℹ️</span>
+                <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                  This style will also be added to <strong>W27</strong> as a core/carry-over style automatically.
+                </p>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="flex gap-3 justify-end pt-1">
