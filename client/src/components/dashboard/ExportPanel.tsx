@@ -90,6 +90,7 @@ const FULL_EXPORT_ALL_COLS: Array<{ key: string; label: string }> = [
   { key: "Size 11",           label: "Size 11" },
   { key: "Sample Status",     label: "Sample Status" },
   { key: "Fit Rating",         label: "Fit Rating" },
+  { key: "Fitting Notes",       label: "Fitting Notes" },
 ];
 // These columns are always included and cannot be deselected
 const FULL_EXPORT_REQUIRED_COLS = ["Style", "Colour", "Leather"];
@@ -446,7 +447,7 @@ export default function ExportPanel({ onClose }: Props) {
   const FULL_EXPORT_COL_WIDTHS: Record<string, number> = {
     "Style": 14, "Category": 16, "Last": 14, "Heel Height (cm)": 14,
     "Colour": 16, "Leather": 22, "Status": 10, "Size 11": 8,
-    "Sample Status": 14, "Fit Rating": 18,
+    "Sample Status": 14, "Fit Rating": 18, "Fitting Notes": 24,
   };
 
   function exportFullData() {
@@ -479,6 +480,23 @@ export default function ExportPanel({ onClose }: Props) {
               if (fr === "runs_large") return "Runs Large";
               if (fr === "runs_small") return "Runs Small";
               return fr;
+            })(),
+            "Fitting Notes": (() => {
+              const sm = (styleMetaMap as any)[sku.style];
+              const parts: string[] = [];
+              if (sm?.fitRating && sm.fitRating !== "tts") {
+                parts.push(sm.fitRating === "runs_large" ? "Runs Large" : sm.fitRating === "runs_small" ? "Runs Small" : sm.fitRating);
+              }
+              if (sm?.sizeRecommendation) {
+                const sr = sm.sizeRecommendation === "half_size_down" ? "Half Size Down"
+                  : sm.sizeRecommendation === "full_size_down" ? "Full Size Down"
+                  : sm.sizeRecommendation === "half_size_up" ? "Half Size Up"
+                  : sm.sizeRecommendation === "full_size_up" ? "Full Size Up"
+                  : sm.sizeRecommendation;
+                parts.push(sr);
+              }
+              if (sm?.fittingNotes) parts.push(sm.fittingNotes);
+              return parts.join(" — ");
             })(),
           };
           const filtered: Record<string, any> = {};

@@ -463,7 +463,7 @@ export default function StylesTab() {
 
   // Build lookup maps
   type SkuMetaItem = { style: string; colour: string; leather: string; sampleStatus?: string | null; orderQty?: number | null; isSize11?: boolean | null; costPrice?: number | null; fitRating?: string | null; fittingNotes?: string | null; };
-  type StyleMetaItem = { style: string; rrp?: number | null; fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; websiteImageUrl?: string | null; };
+  type StyleMetaItem = { style: string; rrp?: number | null; fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; websiteImageUrl?: string | null; sizeRecommendation?: string | null; };
 
   const skuMetaMap = useMemo(() => {
     const map: Record<string, SkuMetaItem> = {};
@@ -1409,11 +1409,15 @@ export default function StylesTab() {
                                   if (!sm?.fitApproved) return null;
                                   const fitLabel = sm.fitRating === "tts" ? "True to Size" : sm.fitRating === "runs_small" ? "Runs Small" : sm.fitRating === "runs_large" ? "Runs Large" : null;
                                   const fitColourClass = sm.fitRating === "tts" ? "bg-green-100 text-green-800 border-green-200" : sm.fitRating === "runs_small" ? "bg-amber-100 text-amber-800 border-amber-200" : sm.fitRating === "runs_large" ? "bg-blue-100 text-blue-800 border-blue-200" : "";
+                                  const sizeRecLabel2 = (sm as any).sizeRecommendation === "half_size_down" ? "Half Size Down" : (sm as any).sizeRecommendation === "full_size_down" ? "Full Size Down" : (sm as any).sizeRecommendation === "half_size_up" ? "Half Size Up" : (sm as any).sizeRecommendation === "full_size_up" ? "Full Size Up" : null;
                                   return (
                                     <div className="mb-3 flex items-start gap-3 p-3 rounded-lg border" style={{ background: "oklch(0.97 0.03 155 / 0.3)", borderColor: "oklch(0.85 0.06 155)" }}>
                                       <span className="text-xs font-semibold text-green-700 flex items-center gap-1 shrink-0">✓ Fit Approved</span>
                                       {fitLabel && (
                                         <span className={`text-xs px-2 py-0.5 rounded border font-medium ${fitColourClass}`}>{fitLabel}</span>
+                                      )}
+                                      {sizeRecLabel2 && (
+                                        <span className="text-xs px-2 py-0.5 rounded border font-medium bg-orange-50 text-orange-700 border-orange-200">{sizeRecLabel2}</span>
                                       )}
                                       {sm.fittingNotes && (
                                         <span className="text-xs italic text-muted-foreground">{sm.fittingNotes}</span>
@@ -1794,6 +1798,7 @@ export default function StylesTab() {
                 const isExpanded = expandedApprovedStyle === style.style;
                 const fitLabel = sm?.fitRating === "tts" ? "True to Size" : sm?.fitRating === "runs_small" ? "Runs Small" : sm?.fitRating === "runs_large" ? "Runs Large" : null;
                 const fitBadgeClass = sm?.fitRating === "tts" ? "bg-green-100 text-green-800 border-green-200" : sm?.fitRating === "runs_small" ? "bg-amber-100 text-amber-800 border-amber-200" : sm?.fitRating === "runs_large" ? "bg-blue-100 text-blue-800 border-blue-200" : "";
+                const sizeRecLabel = sm?.sizeRecommendation === "half_size_down" ? "Half Size Down" : sm?.sizeRecommendation === "full_size_down" ? "Full Size Down" : sm?.sizeRecommendation === "half_size_up" ? "Half Size Up" : sm?.sizeRecommendation === "full_size_up" ? "Full Size Up" : null;
                 return (
                   <div key={style.style}>
                     {/* Style row */}
@@ -1810,6 +1815,9 @@ export default function StylesTab() {
                           <span className="text-xs text-muted-foreground">{style.last}</span>
                           {fitLabel && (
                             <span className={`text-xs px-2 py-0.5 rounded border font-medium ${fitBadgeClass}`}>{fitLabel}</span>
+                          )}
+                          {sizeRecLabel && (
+                            <span className="text-xs px-2 py-0.5 rounded border font-medium bg-orange-50 text-orange-700 border-orange-200">{sizeRecLabel}</span>
                           )}
                         </div>
                         {sm?.fittingNotes && !isExpanded && (
