@@ -2798,6 +2798,15 @@ export default function SpecsTab({}: SpecsTabProps) {
       const tempId = ctx?.tempId;
       if (tempId !== undefined && realRow?.id && realRow.id !== tempId) {
         swapLocalRowKey(`c:${tempId}`, `c:${realRow.id}`);
+        // Persist the updated row order to the DB so position survives a page reload.
+        // Use a short timeout to let the state update from swapLocalRowKey propagate first.
+        setTimeout(() => {
+          const currentKeys = getRowKeysRef.current?.();
+          if (currentKeys && selectedStyle) {
+            const updatedKeys = currentKeys.map((k) => k === `c:${tempId}` ? `c:${realRow.id}` : k);
+            upsertRowOrderForColourExplosionMutation.mutate({ style: selectedStyle, rowKeys: updatedKeys });
+          }
+        }, 50);
       }
     },
     onError: (_err, newRow, ctx) => {
