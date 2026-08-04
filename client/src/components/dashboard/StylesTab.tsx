@@ -80,6 +80,9 @@ export default function StylesTab() {
   const [newStyleCategory, setNewStyleCategory] = useState("");
   const [newStyleColour, setNewStyleColour] = useState("");
   const [newStyleLeather, setNewStyleLeather] = useState("");
+  const [newStyleHasUpper2, setNewStyleHasUpper2] = useState(false);
+  const [newStyleColour2, setNewStyleColour2] = useState("");
+  const [newStyleLeather2, setNewStyleLeather2] = useState("");
   const [newStyleImageFile, setNewStyleImageFile] = useState<File | null>(null);
   const [newStyleImagePreview, setNewStyleImagePreview] = useState<string | null>(null);
   const [newStyleDragging, setNewStyleDragging] = useState(false);
@@ -262,8 +265,8 @@ export default function StylesTab() {
   // Category overrides (sub-categories + trend flags from DB)
   const { getCategory, getTrendFlag, getTrends, allTrends } = useStyleCategories();
 
-  // Add colour inline form state: key = style name, value = { colour, leather } draft
-  const [addColourDraft, setAddColourDraft] = useState<Record<string, { colour: string; leather: string }>>({});
+  // Add colour inline form state: key = style name, value = { colour, leather, colour2, leather2, hasUpper2 } draft
+  const [addColourDraft, setAddColourDraft] = useState<Record<string, { colour: string; leather: string; colour2: string; leather2: string; hasUpper2: boolean }>>({});
 
   const addCustomSkuMutation = trpc.customSku.add.useMutation({
     onSuccess: (_data, vars) => {
@@ -284,7 +287,13 @@ export default function StylesTab() {
       utils.customStyle.getAll.invalidate();
       // If a colour was provided, add it as a custom SKU
       if (newStyleColour.trim()) {
-        addCustomSkuMutation.mutate({ style: vars.style, colour: newStyleColour.trim().toUpperCase(), leather: newStyleLeather.trim().toUpperCase() });
+        addCustomSkuMutation.mutate({
+          style: vars.style,
+          colour: newStyleColour.trim().toUpperCase(),
+          leather: newStyleLeather.trim().toUpperCase(),
+          colour2: newStyleHasUpper2 && newStyleColour2.trim() ? newStyleColour2.trim().toUpperCase() : undefined,
+          leather2: newStyleHasUpper2 && newStyleLeather2.trim() ? newStyleLeather2.trim().toUpperCase() : undefined,
+        });
       }
       setShowAddStyleModal(false);
       setNewStyleName("");
@@ -292,6 +301,9 @@ export default function StylesTab() {
       setNewStyleCategory("");
       setNewStyleColour("");
       setNewStyleLeather("");
+      setNewStyleHasUpper2(false);
+      setNewStyleColour2("");
+      setNewStyleLeather2("");
       setNewStyleImageFile(null);
       setNewStyleImagePreview(null);
       setIsAddingStyle(false);
@@ -1444,51 +1456,94 @@ export default function StylesTab() {
                                 {/* Add Colour button + inline form — always visible */}
                                 {(() => {
                                   const draft = addColourDraft[style.style];
+                                  const submitDraft = () => {
+                                    if (!draft?.colour.trim()) return;
+                                    addCustomSkuMutation.mutate({
+                                      style: style.style,
+                                      colour: draft.colour.trim(),
+                                      leather: draft.leather.trim(),
+                                      colour2: draft.hasUpper2 && draft.colour2.trim() ? draft.colour2.trim() : undefined,
+                                      leather2: draft.hasUpper2 && draft.leather2.trim() ? draft.leather2.trim() : undefined,
+                                    });
+                                  };
                                   return (
                                     <div className="mb-3">
                                       {draft ? (
-                                        <div className="flex items-center gap-2 p-2 rounded-lg border" style={{ borderColor: "oklch(0.80 0.10 65)", background: "oklch(0.98 0.02 65 / 0.5)" }}>
-                                          <input
-                                            type="text"
-                                            placeholder="Colour (e.g. DOVE)"
-                                            value={draft.colour}
-                                            onChange={(e) => setAddColourDraft((prev) => ({ ...prev, [style.style]: { ...prev[style.style], colour: e.target.value.toUpperCase() } }))}
-                                            onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter" && draft.colour.trim()) addCustomSkuMutation.mutate({ style: style.style, colour: draft.colour.trim(), leather: draft.leather.trim() }); if (e.key === "Escape") setAddColourDraft((prev) => { const n = { ...prev }; delete n[style.style]; return n; }); }}
-                                            className="flex-1 px-2 py-1 rounded border text-xs bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                                            onClick={(e) => e.stopPropagation()}
-                                            autoFocus
-                                          />
-                                          <input
-                                            type="text"
-                                            placeholder="Leather (e.g. NAPPA)"
-                                            value={draft.leather}
-                                            onChange={(e) => setAddColourDraft((prev) => ({ ...prev, [style.style]: { ...prev[style.style], leather: e.target.value.toUpperCase() } }))}
-                                            onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter" && draft.colour.trim()) addCustomSkuMutation.mutate({ style: style.style, colour: draft.colour.trim(), leather: draft.leather.trim() }); if (e.key === "Escape") setAddColourDraft((prev) => { const n = { ...prev }; delete n[style.style]; return n; }); }}
-                                            className="flex-1 px-2 py-1 rounded border text-xs bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                                            onClick={(e) => e.stopPropagation()}
-                                          />
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              if (!draft.colour.trim()) return;
-                                              addCustomSkuMutation.mutate({ style: style.style, colour: draft.colour.trim(), leather: draft.leather.trim() });
-                                            }}
-                                            disabled={!draft.colour.trim() || addCustomSkuMutation.isPending}
-                                            className="px-3 py-1 rounded text-xs font-semibold text-white disabled:opacity-50"
-                                            style={{ background: "oklch(0.65 0.16 65)" }}
-                                          >
-                                            {addCustomSkuMutation.isPending ? "Adding..." : "Add"}
-                                          </button>
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); setAddColourDraft((prev) => { const n = { ...prev }; delete n[style.style]; return n; }); }}
-                                            className="px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground"
-                                          >
-                                            Cancel
-                                          </button>
+                                        <div className="flex flex-col gap-2 p-2 rounded-lg border" style={{ borderColor: "oklch(0.80 0.10 65)", background: "oklch(0.98 0.02 65 / 0.5)" }}>
+                                          {/* Upper 1 row */}
+                                          <div className="flex items-center gap-2">
+                                            <input
+                                              type="text"
+                                              placeholder="Colour (e.g. DOVE)"
+                                              value={draft.colour}
+                                              onChange={(e) => setAddColourDraft((prev) => ({ ...prev, [style.style]: { ...prev[style.style], colour: e.target.value.toUpperCase() } }))}
+                                              onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter" && draft.colour.trim()) submitDraft(); if (e.key === "Escape") setAddColourDraft((prev) => { const n = { ...prev }; delete n[style.style]; return n; }); }}
+                                              className="flex-1 px-2 py-1 rounded border text-xs bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                              onClick={(e) => e.stopPropagation()}
+                                              autoFocus
+                                            />
+                                            <input
+                                              type="text"
+                                              placeholder="Leather (e.g. NAPPA)"
+                                              value={draft.leather}
+                                              onChange={(e) => setAddColourDraft((prev) => ({ ...prev, [style.style]: { ...prev[style.style], leather: e.target.value.toUpperCase() } }))}
+                                              onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter" && draft.colour.trim()) submitDraft(); if (e.key === "Escape") setAddColourDraft((prev) => { const n = { ...prev }; delete n[style.style]; return n; }); }}
+                                              className="flex-1 px-2 py-1 rounded border text-xs bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                              onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); submitDraft(); }}
+                                              disabled={!draft.colour.trim() || addCustomSkuMutation.isPending}
+                                              className="px-3 py-1 rounded text-xs font-semibold text-white disabled:opacity-50"
+                                              style={{ background: "oklch(0.65 0.16 65)" }}
+                                            >
+                                              {addCustomSkuMutation.isPending ? "Adding..." : "Add"}
+                                            </button>
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setAddColourDraft((prev) => { const n = { ...prev }; delete n[style.style]; return n; }); }}
+                                              className="px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground"
+                                            >
+                                              Cancel
+                                            </button>
+                                          </div>
+                                          {/* Upper 2 toggle */}
+                                          {draft.colour.trim() && (
+                                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                              <input
+                                                type="checkbox"
+                                                id={`upper2-${style.style}`}
+                                                checked={draft.hasUpper2}
+                                                onChange={(e) => setAddColourDraft((prev) => ({ ...prev, [style.style]: { ...prev[style.style], hasUpper2: e.target.checked, colour2: "", leather2: "" } }))}
+                                                className="w-3.5 h-3.5 accent-purple-500 cursor-pointer"
+                                              />
+                                              <label htmlFor={`upper2-${style.style}`} className="text-xs text-muted-foreground cursor-pointer select-none">Add Upper 2</label>
+                                            </div>
+                                          )}
+                                          {/* Upper 2 inputs */}
+                                          {draft.hasUpper2 && draft.colour.trim() && (
+                                            <div className="flex items-center gap-2 pl-3 border-l-2" style={{ borderColor: "oklch(0.75 0.12 295)" }} onClick={(e) => e.stopPropagation()}>
+                                              <input
+                                                type="text"
+                                                placeholder="Upper 2 Colour"
+                                                value={draft.colour2}
+                                                onChange={(e) => setAddColourDraft((prev) => ({ ...prev, [style.style]: { ...prev[style.style], colour2: e.target.value.toUpperCase() } }))}
+                                                onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter" && draft.colour.trim()) submitDraft(); }}
+                                                className="flex-1 px-2 py-1 rounded border text-xs bg-background focus:outline-none focus:ring-2 focus:ring-purple-400/40"
+                                              />
+                                              <input
+                                                type="text"
+                                                placeholder="Upper 2 Leather"
+                                                value={draft.leather2}
+                                                onChange={(e) => setAddColourDraft((prev) => ({ ...prev, [style.style]: { ...prev[style.style], leather2: e.target.value.toUpperCase() } }))}
+                                                onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter" && draft.colour.trim()) submitDraft(); }}
+                                                className="flex-1 px-2 py-1 rounded border text-xs bg-background focus:outline-none focus:ring-2 focus:ring-purple-400/40"
+                                              />
+                                            </div>
+                                          )}
                                         </div>
                                       ) : (
                                         <button
-                                          onClick={(e) => { e.stopPropagation(); setAddColourDraft((prev) => ({ ...prev, [style.style]: { colour: "", leather: "" } })); }}
+                                          onClick={(e) => { e.stopPropagation(); setAddColourDraft((prev) => ({ ...prev, [style.style]: { colour: "", leather: "", colour2: "", leather2: "", hasUpper2: false } })); }}
                                           className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted/50 transition-colors"
                                         >
                                           <Plus className="w-3 h-3" />
@@ -1534,9 +1589,15 @@ export default function StylesTab() {
                                         }}
                                       >
                                         {/* Colour */}
-                                        <span className="text-sm font-medium text-foreground truncate">{displayColour(sku.colour, sku.leather)}</span>
+                                        <span className="text-sm font-medium text-foreground truncate">
+                                          {displayColour(sku.colour, sku.leather)}
+                                          {(sku as any).colour2 && <span className="text-muted-foreground"> / {displayColour((sku as any).colour2, (sku as any).leather2 ?? "")}</span>}
+                                        </span>
                                         {/* Leather */}
-                                        <span className="text-xs text-muted-foreground truncate">{displayLeather(sku.leather || "", sku.style) || "—"}</span>
+                                        <span className="text-xs text-muted-foreground truncate">
+                                          {displayLeather(sku.leather || "", sku.style) || "—"}
+                                          {(sku as any).leather2 && <span> / {displayLeather((sku as any).leather2, sku.style)}</span>}
+                                        </span>
                                         {/* Size 11 — only show badge if YES */}
                                         <span className="text-xs text-center">
                                           {styleSize11 ? (
@@ -2068,7 +2129,7 @@ export default function StylesTab() {
               </select>
             </div>
 
-            {/* Colour + Leather */}
+            {/* Colour + Leather (Upper 1) */}
             <div className="flex gap-3">
               <div className="flex flex-col gap-1.5 flex-1">
                 <label className="text-sm font-medium text-foreground">Colour <span className="text-muted-foreground text-xs">(optional)</span></label>
@@ -2093,6 +2154,50 @@ export default function StylesTab() {
                 />
               </div>
             </div>
+
+            {/* Upper 2 toggle */}
+            {newStyleColour.trim() && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="newStyleHasUpper2"
+                  checked={newStyleHasUpper2}
+                  onChange={(e) => { setNewStyleHasUpper2(e.target.checked); if (!e.target.checked) { setNewStyleColour2(""); setNewStyleLeather2(""); } }}
+                  className="w-4 h-4 rounded accent-purple-500 cursor-pointer"
+                />
+                <label htmlFor="newStyleHasUpper2" className="text-sm text-muted-foreground cursor-pointer select-none">
+                  Add Upper 2 (secondary leather)
+                </label>
+              </div>
+            )}
+
+            {/* Upper 2 Colour + Leather */}
+            {newStyleHasUpper2 && newStyleColour.trim() && (
+              <div className="flex gap-3 pl-3 border-l-2" style={{ borderColor: "oklch(0.75 0.12 295)" }}>
+                <div className="flex flex-col gap-1.5 flex-1">
+                  <label className="text-sm font-medium text-foreground">Upper 2 Colour</label>
+                  <input
+                    type="text"
+                    value={newStyleColour2}
+                    onChange={(e) => setNewStyleColour2(e.target.value.toUpperCase())}
+                    placeholder="e.g. BLACK"
+                    className="px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-400/40"
+                    style={{ borderColor: "var(--border)" }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5 flex-1">
+                  <label className="text-sm font-medium text-foreground">Upper 2 Leather</label>
+                  <input
+                    type="text"
+                    value={newStyleLeather2}
+                    onChange={(e) => setNewStyleLeather2(e.target.value.toUpperCase())}
+                    placeholder="e.g. VINTAGE"
+                    className="px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-400/40"
+                    style={{ borderColor: "var(--border)" }}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Image Upload */}
             <div className="flex flex-col gap-1.5">

@@ -343,6 +343,9 @@ export const customSkus = mysqlTable("custom_skus", {
   style: varchar("style", { length: 64 }).notNull(),
   colour: varchar("colour", { length: 64 }).notNull(),
   leather: varchar("leather", { length: 64 }).notNull().default(""),
+  /** Optional Upper 2 secondary leather — when set, display as "COLOUR LEATHER / COLOUR2 LEATHER2" */
+  colour2: varchar("colour2", { length: 64 }),
+  leather2: varchar("leather2", { length: 64 }),
   isNew: boolean("is_new").notNull().default(true),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   imageUrl: text("image_url"),

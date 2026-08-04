@@ -947,12 +947,12 @@ export const appRouter = router({
       .query(async ({ input }) => getAllCustomSkus(input.season)),
 
     add: publicProcedure
-      .input(z.object({ style: z.string(), colour: z.string(), leather: z.string(), season: z.string().default("SS26") }))
+      .input(z.object({ style: z.string(), colour: z.string(), leather: z.string(), colour2: z.string().optional(), leather2: z.string().optional(), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
-        const { style, colour, leather, season } = input;
+        const { style, colour, leather, colour2, leather2, season } = input;
         // If the SKU already exists in custom_skus, just make sure it's visible:
         // un-cancel it and un-hide it so it reappears in the spec sheet.
-        const id = await addCustomSku(style, colour, leather, season);
+        const id = await addCustomSku(style, colour, leather, season, colour2, leather2);
         // Also clear any hidden-column entry and cancelled-sku entry for this colour key.
         // Build the compound colour key the same way the spec sheet does.
         const colourKey = leather ? `${colour} ${leather}` : colour;
@@ -968,9 +968,9 @@ export const appRouter = router({
         return { success: true };
       }),
     update: publicProcedure
-      .input(z.object({ id: z.number(), colour: z.string(), leather: z.string() }))
+      .input(z.object({ id: z.number(), colour: z.string(), leather: z.string(), colour2: z.string().optional(), leather2: z.string().optional() }))
       .mutation(async ({ input }) => {
-        await updateCustomSku(input.id, input.colour, input.leather);
+        await updateCustomSku(input.id, input.colour, input.leather, input.colour2, input.leather2);
         return { success: true };
       }),
   }),

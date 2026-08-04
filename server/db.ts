@@ -826,7 +826,7 @@ export async function listCancelledStyles(): Promise<{ style: string; cancelledA
 }
 
 // ─── Custom SKUs ───────────────────────────────────────────────────────────────
-export async function addCustomSku(style: string, colour: string, leather: string, season = "SS26"): Promise<number> {
+export async function addCustomSku(style: string, colour: string, leather: string, season = "SS26", colour2?: string, leather2?: string): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   // If this exact style/colour/leather already exists for this season, return the existing id
@@ -834,11 +834,11 @@ export async function addCustomSku(style: string, colour: string, leather: strin
     .where(and(eq(customSkus.style, style), eq(customSkus.colour, colour), eq(customSkus.leather, leather), eq(customSkus.season, season)))
     .limit(1);
   if (existing.length > 0) return existing[0].id;
-  const result = await db.insert(customSkus).values({ style, colour, leather, season });
+  const result = await db.insert(customSkus).values({ style, colour, leather, season, colour2: colour2 ?? null, leather2: leather2 ?? null });
   return (result[0] as any).insertId as number;
 }
 
-export async function getAllCustomSkus(season = "SS26"): Promise<{ id: number; style: string; colour: string; leather: string; isNew: boolean; createdAt: Date }[]> {
+export async function getAllCustomSkus(season = "SS26"): Promise<{ id: number; style: string; colour: string; leather: string; colour2: string | null; leather2: string | null; isNew: boolean; createdAt: Date }[]> {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(customSkus).where(eq(customSkus.season, season));
@@ -849,10 +849,10 @@ export async function deleteCustomSku(id: number): Promise<void> {
   if (!db) throw new Error("Database not available");
   await db.delete(customSkus).where(eq(customSkus.id, id));
 }
-export async function updateCustomSku(id: number, colour: string, leather: string): Promise<void> {
+export async function updateCustomSku(id: number, colour: string, leather: string, colour2?: string, leather2?: string): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(customSkus).set({ colour, leather }).where(eq(customSkus.id, id));
+  await db.update(customSkus).set({ colour, leather, colour2: colour2 ?? null, leather2: leather2 ?? null }).where(eq(customSkus.id, id));
 }
 
 // ─── Custom Styles ────────────────────────────────────────────────────────────

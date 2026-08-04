@@ -8,6 +8,8 @@ export type CustomSkuRow = {
   style: string;
   colour: string;
   leather: string;
+  colour2?: string | null;
+  leather2?: string | null;
   isNew: boolean;
   createdAt: Date;
 };
@@ -114,6 +116,8 @@ export function useCustomSkus() {
       style: c.style as string,
       colour: c.colour as string,
       leather: c.leather as string,
+      colour2: (c as any).colour2 as string | null | undefined,
+      leather2: (c as any).leather2 as string | null | undefined,
       is_new: resolveIsNew(c.style, c.colour, c.leather ?? "", (c.isNew ?? true) as boolean),
       _customId: c.id,
     }));

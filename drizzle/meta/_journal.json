@@ -372,6 +372,13 @@
       "when": 1784248006506,
       "tag": "0052_lyrical_rockslide",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "5",
+      "when": 1785815082944,
+      "tag": "0053_spicy_sumo",
+      "breakpoints": true
     }
   ]
 }
