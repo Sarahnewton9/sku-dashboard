@@ -39,11 +39,12 @@ export const skuMeta = mysqlTable("sku_meta", {
   costPrice: float("costPrice"),
   fitRating: mysqlEnum("fitRating", ["tts", "runs_small", "runs_large"]),
   fittingNotes: text("fittingNotes"),
-  sampleType: varchar("sampleType", { length: 64 }),
+    sampleType: varchar("sampleType", { length: 64 }),
+  colour2: varchar("colour2", { length: 64 }),
+  leather2: varchar("leather2", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
-
 export type SkuMeta = typeof skuMeta.$inferSelect;
 export type InsertSkuMeta = typeof skuMeta.$inferInsert;
 

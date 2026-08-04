@@ -474,7 +474,7 @@ export default function StylesTab() {
   }
 
   // Build lookup maps
-  type SkuMetaItem = { style: string; colour: string; leather: string; sampleStatus?: string | null; orderQty?: number | null; isSize11?: boolean | null; costPrice?: number | null; fitRating?: string | null; fittingNotes?: string | null; };
+  type SkuMetaItem = { style: string; colour: string; leather: string; sampleStatus?: string | null; orderQty?: number | null; isSize11?: boolean | null; costPrice?: number | null; fitRating?: string | null; fittingNotes?: string | null; colour2?: string | null; leather2?: string | null; };
   type StyleMetaItem = { style: string; rrp?: number | null; fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; websiteImageUrl?: string | null; sizeRecommendation?: string | null; };
 
   const skuMetaMap = useMemo(() => {
@@ -1591,12 +1591,12 @@ export default function StylesTab() {
                                         {/* Colour */}
                                         <span className="text-sm font-medium text-foreground truncate">
                                           {displayColour(sku.colour, sku.leather)}
-                                          {(sku as any).colour2 && <span className="text-muted-foreground"> / {displayColour((sku as any).colour2, (sku as any).leather2 ?? "")}</span>}
+                                          {((sku as any).colour2 || dbMeta?.colour2) && <span className="text-muted-foreground"> / {displayColour(((sku as any).colour2 || dbMeta?.colour2)!, ((sku as any).leather2 || dbMeta?.leather2) ?? "")}</span>}
                                         </span>
                                         {/* Leather */}
                                         <span className="text-xs text-muted-foreground truncate">
                                           {displayLeather(sku.leather || "", sku.style) || "—"}
-                                          {(sku as any).leather2 && <span> / {displayLeather((sku as any).leather2, sku.style)}</span>}
+                                          {((sku as any).leather2 || dbMeta?.leather2) && <span> / {displayLeather(((sku as any).leather2 || dbMeta?.leather2)!, sku.style)}</span>}
                                         </span>
                                         {/* Size 11 — only show badge if YES */}
                                         <span className="text-xs text-center">
