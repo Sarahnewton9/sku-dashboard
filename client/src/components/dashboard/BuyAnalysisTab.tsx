@@ -14,7 +14,7 @@ import { displayColour, displayLeather } from "@/lib/utils";
 
 type SortField = "style" | "colour" | "leather" | "category" | "last" | "au" | "usa" | "nyc" | "la" | "total";
 type SortDir = "asc" | "desc";
-type ViewTab = "summary" | "sku-table" | "not-bought" | "pairs-breakdown";
+type ViewTab = "summary" | "sku-table" | "not-bought" | "pairs-breakdown" | "style-search";
 
 export default function BuyAnalysisTab() {
   const [selectedSessionIds, setSelectedSessionIds] = useState<number[]>([]);
@@ -26,6 +26,7 @@ export default function BuyAnalysisTab() {
   const [lastFilter, setLastFilter] = useState<string>("All");
   const [notBoughtMarket, setNotBoughtMarket] = useState<"all" | "au" | "usa" | "nyc" | "la">("all");
   const [expandedStyles, setExpandedStyles] = useState<Set<string>>(new Set());
+  const [styleSearch, setStyleSearch] = useState<string>("");
 
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
   const { cancelledSet: cancelledStyleSet } = useCancelledStyles();
@@ -431,6 +432,7 @@ export default function BuyAnalysisTab() {
           { id: "pairs-breakdown", label: "Pairs Breakdown" },
           { id: "sku-table", label: `SKU Breakdown${boughtItems.length > 0 ? ` (${boughtItems.length})` : ""}` },
           { id: "not-bought", label: `Not Yet Bought (${notBoughtRows.length})` },
+          { id: "style-search", label: "Style Search" },
         ] as Array<{ id: ViewTab; label: string }>).map((tab) => (
           <button
             key={tab.id}
@@ -816,6 +818,261 @@ export default function BuyAnalysisTab() {
             </>
           )}
         </>
+      )}
+
+      {/* ─── STYLE SEARCH TAB ─── */}
+      {viewTab === "style-search" && (
+        <div className="space-y-5">
+          {/* Search input */}
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 max-w-sm">
+              <input
+                type="text"
+                placeholder="Search style name..."
+                value={styleSearch}
+                onChange={(e) => setStyleSearch(e.target.value.toUpperCase())}
+                className="w-full px-4 py-2.5 rounded-xl border text-sm font-medium"
+                style={{ borderColor: "var(--border)", background: "var(--card)", color: "var(--foreground)", outline: "none" }}
+                autoFocus
+              />
+              {styleSearch && (
+                <button
+                  onClick={() => setStyleSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            {styleSearch && (() => {
+              const matchedStyles = Array.from(new Set(
+                (mergedRawSkus as any[]).map((s: any) => s.style as string)
+              )).filter((s) => s.includes(styleSearch)).sort();
+              return matchedStyles.length > 0 && styleSearch.length < 3 ? (
+                <span className="text-xs text-muted-foreground">{matchedStyles.length} styles match</span>
+              ) : null;
+            })()}
+          </div>
+
+          {!styleSearch ? (
+            <div className="rounded-xl border p-12 text-center" style={{ borderColor: "var(--border)", borderStyle: "dashed" }}>
+              <Package className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-sm font-medium text-foreground">Search for a style</p>
+              <p className="text-xs text-muted-foreground mt-1">Type a style name above to see all buy data across every session.</p>
+            </div>
+          ) : (() => {
+            // Find all SKUs for the searched style across ALL sessions
+            const allSessionsList = allSessions as Array<{ id: number; name: string; createdAt: Date; isLocked: boolean }>;
+            const allQtys = allSessionQtys as Record<string, { total: number; totalAu: number; totalUsa: number; totalNyc: number; totalLa: number }>;
+
+            // Get all SKUs for this style from the full range
+            const styleSkus = (mergedRawSkus as any[]).filter((s: any) => s.style === styleSearch);
+
+            if (styleSkus.length === 0) {
+              // Try partial match suggestions
+              const suggestions = Array.from(new Set(
+                (mergedRawSkus as any[]).map((s: any) => s.style as string)
+              )).filter((s) => s.includes(styleSearch)).sort();
+              return (
+                <div className="space-y-3">
+                  {suggestions.length > 0 ? (
+                    <>
+                      <p className="text-sm text-muted-foreground">No exact match for <strong>{styleSearch}</strong>. Did you mean:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {suggestions.map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setStyleSearch(s)}
+                            className="px-3 py-1.5 rounded-lg text-sm font-medium border hover:bg-muted/50 transition-colors"
+                            style={{ borderColor: "var(--border)", background: "var(--card)", color: "var(--foreground)" }}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-xl border p-8 text-center" style={{ borderColor: "var(--border)", borderStyle: "dashed" }}>
+                      <p className="text-sm text-muted-foreground">No style found matching <strong>{styleSearch}</strong></p>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Build per-SKU totals across all sessions
+            const skuRows = styleSkus.map((sku: any) => {
+              const key = `${sku.style}|${sku.colour}|${sku.leather}`;
+              const totals = allQtys[key] ?? { totalAu: 0, totalUsa: 0, totalNyc: 0, totalLa: 0, total: 0 };
+              return {
+                colour: sku.colour,
+                leather: sku.leather,
+                is_new: sku.is_new,
+                au: totals.totalAu,
+                usa: totals.totalUsa,
+                nyc: totals.totalNyc,
+                la: totals.totalLa,
+                total: totals.total,
+              };
+            }).sort((a: any, b: any) => b.total - a.total);
+
+            const styleTotalAu = skuRows.reduce((s: number, r: any) => s + r.au, 0);
+            const styleTotalUsa = skuRows.reduce((s: number, r: any) => s + r.usa, 0);
+            const styleTotalNyc = skuRows.reduce((s: number, r: any) => s + r.nyc, 0);
+            const styleTotalLa = skuRows.reduce((s: number, r: any) => s + r.la, 0);
+            const styleTotal = styleTotalAu + styleTotalUsa + styleTotalNyc + styleTotalLa;
+
+            // Build per-session breakdown for this style
+            const sessionBreakdowns = allSessionsList.map((session) => {
+              // Find items for this session from sessionQueries if selected, otherwise from allSessionQtys
+              // We need to fetch per-session data — use the merged items for selected sessions
+              const sessionItems = mergedItems.filter(
+                (item) => item.style === styleSearch &&
+                  item.sessionBreakdown.some((sb) => sb.sessionId === session.id)
+              );
+              const sessionAu = sessionItems.reduce((s, item) => {
+                const sb = item.sessionBreakdown.find((x) => x.sessionId === session.id);
+                return s + (sb?.au ?? 0);
+              }, 0);
+              const sessionUsa = sessionItems.reduce((s, item) => {
+                const sb = item.sessionBreakdown.find((x) => x.sessionId === session.id);
+                return s + (sb?.usa ?? 0);
+              }, 0);
+              const sessionNyc = sessionItems.reduce((s, item) => {
+                const sb = item.sessionBreakdown.find((x) => x.sessionId === session.id);
+                return s + (sb?.nyc ?? 0);
+              }, 0);
+              const sessionLa = sessionItems.reduce((s, item) => {
+                const sb = item.sessionBreakdown.find((x) => x.sessionId === session.id);
+                return s + (sb?.la ?? 0);
+              }, 0);
+              return { session, au: sessionAu, usa: sessionUsa, nyc: sessionNyc, la: sessionLa, total: sessionAu + sessionUsa + sessionNyc + sessionLa };
+            }).filter((sb) => sb.total > 0);
+
+            const styleInfo = styleInfoMap[styleSearch];
+
+            return (
+              <div className="space-y-5">
+                {/* Style header */}
+                <div className="rounded-xl border p-5" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div>
+                      <h3 className="text-xl font-bold text-foreground">{styleSearch}</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {styleInfo?.category ?? ""}{styleInfo?.last ? ` · Last: ${styleInfo.last}` : ""} · {styleSkus.length} colour{styleSkus.length !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                    {/* Total summary pills */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {[
+                        { label: "Total", value: styleTotal, color: "oklch(0.50 0.14 55)" },
+                        { label: "AU", value: styleTotalAu, color: "#f59e0b" },
+                        { label: "USA", value: styleTotalUsa, color: "oklch(0.60 0.14 200)" },
+                        { label: "NYC", value: styleTotalNyc, color: "oklch(0.55 0.18 300)" },
+                        { label: "LA", value: styleTotalLa, color: "oklch(0.55 0.18 140)" },
+                      ].filter((p) => p.label === "Total" || p.value > 0).map((pill) => (
+                        <div key={pill.label} className="rounded-lg px-3 py-2 text-center" style={{ background: "var(--muted)" }}>
+                          <p className="text-lg font-bold tabular-nums" style={{ color: pill.color }}>{pill.value}</p>
+                          <p className="text-xs text-muted-foreground">{pill.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Per-session breakdown (only shows sessions that have been selected + have data) */}
+                {sessionBreakdowns.length > 0 && (
+                  <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+                    <div className="px-5 py-3 border-b" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                      <h4 className="text-sm font-bold text-foreground">By Session</h4>
+                      <p className="text-xs text-muted-foreground">Only showing sessions selected in the session picker above</p>
+                    </div>
+                    <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+                      {sessionBreakdowns.map(({ session, au, usa, nyc, la, total }) => (
+                        <div key={session.id} className="flex items-center gap-4 px-5 py-3 flex-wrap">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-foreground truncate">{session.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(session.createdAt).toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" })}
+                              {session.isLocked && <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>Locked</span>}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3 text-sm tabular-nums">
+                            {au > 0 && <span className="font-bold" style={{ color: "#f59e0b" }}>{au} AU</span>}
+                            {usa > 0 && <span className="font-bold" style={{ color: "oklch(0.60 0.14 200)" }}>{usa} USA</span>}
+                            {nyc > 0 && <span className="font-bold" style={{ color: "oklch(0.55 0.18 300)" }}>{nyc} NYC</span>}
+                            {la > 0 && <span className="font-bold" style={{ color: "oklch(0.55 0.18 140)" }}>{la} LA</span>}
+                            <span className="font-bold text-foreground border-l pl-3" style={{ borderColor: "var(--border)" }}>{total} total</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Per-colour/SKU breakdown */}
+                <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--border)" }}>
+                  <div className="px-5 py-3 border-b" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                    <h4 className="text-sm font-bold text-foreground">By Colour — All Sessions Combined</h4>
+                    <p className="text-xs text-muted-foreground">Total units bought across every buy session</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr style={{ background: "var(--muted)" }}>
+                          <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Colour</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Leather</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide" style={{ color: "#f59e0b" }}>AU</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide" style={{ color: "oklch(0.60 0.14 200)" }}>USA</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide" style={{ color: "oklch(0.55 0.18 300)" }}>NYC</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide" style={{ color: "oklch(0.55 0.18 140)" }}>LA</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {skuRows.map((row: any, idx: number) => (
+                          <tr
+                            key={`${row.colour}|${row.leather}`}
+                            style={{ background: idx % 2 === 0 ? "var(--card)" : "oklch(0.98 0.01 65 / 0.3)" }}
+                            className="hover:bg-muted/40 transition-colors"
+                          >
+                            <td className="px-4 py-2.5 font-medium text-foreground">{displayColour(row.colour, row.leather)}</td>
+                            <td className="px-4 py-2.5 text-muted-foreground">{displayLeather(row.leather || "", styleSearch) || "—"}</td>
+                            <td className="px-4 py-2.5">
+                              {row.is_new ? (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}>NEW</span>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground">Existing</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-2.5 text-right font-mono font-bold" style={{ color: "#f59e0b" }}>{row.au > 0 ? row.au : "—"}</td>
+                            <td className="px-4 py-2.5 text-right font-mono font-bold" style={{ color: "oklch(0.60 0.14 200)" }}>{row.usa > 0 ? row.usa : "—"}</td>
+                            <td className="px-4 py-2.5 text-right font-mono font-bold" style={{ color: "oklch(0.55 0.18 300)" }}>{row.nyc > 0 ? row.nyc : "—"}</td>
+                            <td className="px-4 py-2.5 text-right font-mono font-bold" style={{ color: "oklch(0.55 0.18 140)" }}>{row.la > 0 ? row.la : "—"}</td>
+                            <td className="px-4 py-2.5 text-right font-mono font-bold" style={{ color: row.total > 0 ? "oklch(0.50 0.14 55)" : "var(--muted-foreground)" }}>
+                              {row.total > 0 ? row.total : <span className="text-xs">Not bought</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr style={{ background: "var(--muted)", borderTop: "2px solid var(--border)" }}>
+                          <td colSpan={3} className="px-4 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wide">Total</td>
+                          <td className="px-4 py-2 text-right font-mono font-bold" style={{ color: "#f59e0b" }}>{styleTotalAu > 0 ? styleTotalAu : "—"}</td>
+                          <td className="px-4 py-2 text-right font-mono font-bold" style={{ color: "oklch(0.60 0.14 200)" }}>{styleTotalUsa > 0 ? styleTotalUsa : "—"}</td>
+                          <td className="px-4 py-2 text-right font-mono font-bold" style={{ color: "oklch(0.55 0.18 300)" }}>{styleTotalNyc > 0 ? styleTotalNyc : "—"}</td>
+                          <td className="px-4 py-2 text-right font-mono font-bold" style={{ color: "oklch(0.55 0.18 140)" }}>{styleTotalLa > 0 ? styleTotalLa : "—"}</td>
+                          <td className="px-4 py-2 text-right font-mono font-bold" style={{ color: "oklch(0.50 0.14 55)" }}>{styleTotal}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
       )}
 
       {/* ─── NOT YET BOUGHT TAB ─── */}
