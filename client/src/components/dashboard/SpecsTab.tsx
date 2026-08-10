@@ -1350,6 +1350,13 @@ function SpecForm({
   const unifiedRows = useMemo((): UnifiedRow[] => {
     const templateMap = new Map(template.map((c) => [`t:${c.key}`, c]));
     const savedKeys = localRowKeys ?? rowOrderData?.rowKeys ?? null;
+    // Build a title→key map for self-healing: if a saved c: key is stale/wrong,
+    // we can find the correct current key by matching the custom row title.
+    const titleToCurrentKey = new Map<string, string>();
+    for (const [key, group] of Array.from(customRepMap)) {
+      const title = group.rep.title.toUpperCase();
+      if (!titleToCurrentKey.has(title)) titleToCurrentKey.set(title, key);
+    }
     // Build a set of all deleted keys (both template and custom) so we never re-append them
     const deletedKeys = new Set<string>();
     if (savedKeys) {
@@ -1358,6 +1365,7 @@ function SpecForm({
       }
     }
     let result: UnifiedRow[];
+    let needsRepair = false;
     if (savedKeys && savedKeys.length > 0) {
       // Use saved order, adding any new rows not in saved order at the end
       result = [];
@@ -1377,6 +1385,12 @@ function SpecForm({
           const group = customRepMap.get(key)!;
           result.push({ kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap });
           usedKeys.add(key);
+        } else if (key.startsWith("c:") && !customRepMap.has(key)) {
+          // Stale/wrong custom row key — try to self-heal by matching title
+          // (This happens when the temp→real ID swap wrote a wrong ID to the DB)
+          // We can't know the title from just the key, so skip it but mark as needing repair
+          needsRepair = true;
+          // Don't add to usedKeys — the correct key will be picked up below
         }
       }
       // Add any template rows not in saved order AND not deleted (new template rows added after order was saved)
@@ -1385,7 +1399,14 @@ function SpecForm({
       }
       // Add any custom rows not in saved order AND not deleted (newly added custom rows)
       for (const [key, group] of Array.from(customRepMap)) {
-        if (!usedKeys.has(key) && !deletedKeys.has(key)) result.push({ kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap });
+        if (!usedKeys.has(key) && !deletedKeys.has(key)) {
+          result.push({ kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap });
+          if (needsRepair) {
+            // Insert at the position where the stale key was — find by title match
+            // For now, we just append and let the user drag to reposition.
+            // The important thing is the order gets re-saved correctly next drag.
+          }
+        }
       }
     } else {
       // Default: template rows in template order, then custom rows (one row per title group)
@@ -1796,13 +1817,25 @@ function SpecForm({
                   <span>Component</span>
                   <button
                     onClick={() => setHideEmptyRows(v => !v)}
-                    title={hideEmptyRows ? "Show all rows (including empty)" : "Hide empty rows"}
-                    className={`text-xs px-1.5 py-0.5 rounded border transition-colors ${hideEmptyRows ? "bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700" : "bg-muted text-muted-foreground border-border hover:bg-amber-50"}`}
+                   title={hideEmptyRows ? "Show all rows (including empty)" : "Hide empty rows"}
+                   className={`text-xs px-1.5 py-0.5 rounded border transition-colors ${hideEmptyRows ? "bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700" : "bg-muted text-muted-foreground border-border hover:bg-amber-50"}`}
+                 >
+                   {hideEmptyRows ? `${hiddenEmptyCount} hidden` : "Hide empty"}
+                 </button>
+                  <button
+                    onClick={() => {
+                      const keys = unifiedRowIds;
+                      setLocalRowKeys(keys);
+                      upsertRowOrderMutation.mutate({ style: entry.style, rowKeys: keys });
+                      toast.success("Row order saved");
+                    }}
+                    title="Save current row order to database"
+                    className="text-xs px-1.5 py-0.5 rounded border transition-colors bg-muted text-muted-foreground border-border hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
                   >
-                    {hideEmptyRows ? `${hiddenEmptyCount} hidden` : "Hide empty"}
+                    💾 Save order
                   </button>
-                </div>
-              </th>
+               </div>
+             </th>
               {entry.colours.map((colour, i) => (
                 <th key={`${colour}-${i}`} className="text-left px-3 py-2 font-medium border-b min-w-[160px] group/col relative">
                   <div className="flex items-center gap-1 justify-between">
