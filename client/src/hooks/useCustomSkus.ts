@@ -2,6 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { useMemo } from "react";
 import { useSeason } from "@/contexts/SeasonContext";
+import { buildMarkdownSkuSet, isMarkdownSku } from "@shared/markdownSku";
 
 export type CustomSkuRow = {
   id: number;
@@ -36,6 +37,18 @@ export function useCustomSkus() {
   const { data: customSkus = [], isLoading, refetch } = trpc.customSku.getAll.useQuery({ season }, {
     staleTime: 30_000,
   });
+
+  // Markdown SKUs are a global, reversible exclusion list. A deleted record
+  // must be removed before every tab builds its range data, not only from the
+  // By Style table, so it stays hidden in both SS26 and W27 everywhere.
+  const { data: markdownSkuList = [] } = trpc.markdown.list.useQuery({}, {
+    staleTime: 60_000,
+  });
+
+  const markdownSkuSet = useMemo(
+    () => buildMarkdownSkuSet(markdownSkuList as Array<{ styleCode: string; colour: string; status: string }>),
+    [markdownSkuList],
+  );
 
   // Fetch DB image overrides so they take precedence over static CDN URLs everywhere
   const { data: imageOverrides = [], refetch: refetchImageOverrides } = trpc.styleImage.getAll.useQuery(undefined, {
@@ -100,10 +113,12 @@ export function useCustomSkus() {
   }
 
   // Merge custom SKUs into rawSkus — same shape as skuData.rawSkus entries
-  const mergedRawSkus = useMemo(() => {
+  const mergedRawSkus = useMemo<Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean; _customId?: number }>>(() => {
     // Apply overrides to static SKUs
     // For W27 (and any non-SS26 season), all static SKUs are carry-overs — force is_new=false
-    const baseSkus = (skuData.rawSkus as Array<{ style: string; colour: string; leather: string; is_new: boolean }>).map((sku) => {
+    const baseSkus = (skuData.rawSkus as unknown as ReadonlyArray<{ style: string; colour: string; leather: string; is_new: boolean }>)
+      .filter((sku) => !isMarkdownSku(markdownSkuSet, sku.style, sku.colour, sku.leather ?? ""))
+      .map((sku) => {
       const staticIsNew = season === "SS26" ? sku.is_new : false;
       const effectiveIsNew = resolveIsNew(sku.style, sku.colour, sku.leather ?? "", staticIsNew);
       if (effectiveIsNew === sku.is_new) return sku;
@@ -112,7 +127,9 @@ export function useCustomSkus() {
 
     if (customSkus.length === 0) return baseSkus;
 
-    const extra = customSkus.map((c) => ({
+    const extra = customSkus
+      .filter((c) => !isMarkdownSku(markdownSkuSet, c.style, c.colour, c.leather ?? ""))
+      .map((c) => ({
       style: c.style as string,
       colour: c.colour as string,
       leather: c.leather as string,
@@ -126,55 +143,44 @@ export function useCustomSkus() {
     const existing = new Set(baseSkus.map((s) => `${s.style}|${s.colour}|${s.leather}`));
     const filtered = extra.filter((e) => !existing.has(`${e.style}|${e.colour}|${e.leather}`));
 
-    return [...(baseSkus as unknown as typeof extra), ...filtered];
-  }, [customSkus, skuNewOverrideMap]);
+    return [...baseSkus, ...filtered];
+  }, [customSkus, markdownSkuSet, season, skuNewOverrideMap]);
+
+  const activeSkusByStyle = useMemo(() => {
+    const groups: Record<string, Array<{ style: string; colour: string; leather: string; is_new: boolean }>> = {};
+    for (const sku of mergedRawSkus as Array<{ style: string; colour: string; leather: string; is_new: boolean }>) {
+      if (!groups[sku.style]) groups[sku.style] = [];
+      groups[sku.style].push(sku);
+    }
+    return groups;
+  }, [mergedRawSkus]);
 
   // Merge custom SKUs into styles — update colours/leathers arrays
-  const mergedStyles = useMemo(() => {
-    // Build a map of style -> extra {colour, leather, isNew} pairs from custom SKUs
-    const extras: Record<string, Array<{ colour: string; leather: string; isNew: boolean }>> = {};
-    for (const c of customSkus) {
-      if (!extras[c.style]) extras[c.style] = [];
-      extras[c.style].push({
-        colour: c.colour,
-        leather: c.leather,
-        isNew: resolveIsNew(c.style, c.colour, c.leather ?? "", c.isNew ?? true),
-      });
-    }
-
-    // Static styles enriched with custom SKUs
+  const mergedStyles = useMemo<any[]>(() => {
+    // Build static style entries from the active SKU set. This removes a style
+    // entirely when every one of its SKUs has been marked down.
     const staticStyles = skuData.styles.map((s) => {
-      const extra = extras[s.style] ?? [];
+      const activeSkus = activeSkusByStyle[s.style] ?? [];
+      if (activeSkus.length === 0) return null;
       // Priority: manual upload override > Tony Bianco website image > static CDN URL
       const overrideUrl = imageOverrideMap[s.style.toUpperCase()] ?? websiteImageMap[s.style.toUpperCase()];
 
-      // Re-compute new SKU counts for static SKUs of this style using overrides
-      // For W27 (and any non-SS26 season), all static SKUs are carry-overs — force is_new=false
-      const staticNewCount = season === "SS26"
-        ? (skuData.rawSkus as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)
-            .filter((r) => r.style === s.style)
-            .filter((r) => resolveIsNew(r.style, r.colour, r.leather ?? "", r.is_new))
-            .length
-        : 0;
-
-      const customNewCount = extra.filter((e) => e.isNew).length;
-      const totalNewSKUs = staticNewCount + customNewCount;
-      const totalSKUs = s.totalSKUs + extra.length;
-
-      const newColours = Array.from(new Set(extra.map((e) => e.colour).filter((c) => !(s.colours as string[]).includes(c)))) as any[];
-      const newLeathers = Array.from(new Set(extra.map((e) => e.leather).filter((l) => l && !(s.leathers as string[]).includes(l)))) as any[];
+      const totalNewSKUs = activeSkus.filter((sku) => sku.is_new).length;
+      const totalSKUs = activeSkus.length;
+      const activeColours = Array.from(new Set(activeSkus.map((sku) => sku.colour))) as any[];
+      const activeLeathers = Array.from(new Set(activeSkus.map((sku) => sku.leather).filter(Boolean))) as any[];
 
       return {
         ...s,
         ...(overrideUrl ? { imageUrl: overrideUrl } : {}),
-        colours: [...s.colours, ...newColours],
-        leathers: [...s.leathers, ...newLeathers],
+        colours: activeColours,
+        leathers: activeLeathers,
         totalSKUs,
         newSKUs: totalNewSKUs,
         hasNew: totalNewSKUs > 0,
         isAllNew: totalNewSKUs === totalSKUs && totalSKUs > 0,
       };
-    });
+    }).filter((style): style is NonNullable<typeof style> => style !== null);
 
     // Synthetic style entries for custom styles (brand-new, not in static data)
     const staticStyleNames = new Set(skuData.styles.map((s) => s.style.toUpperCase()));
@@ -183,16 +189,16 @@ export function useCustomSkus() {
       .map((cs) => {
         // Priority: manual upload override > Tony Bianco website image
         const overrideUrl = imageOverrideMap[cs.style.toUpperCase()] ?? websiteImageMap[cs.style.toUpperCase()];
-        // Custom SKUs for this style
-        const extra = extras[cs.style] ?? [];
-        const customNewCount = extra.filter((e) => e.isNew).length;
-        const totalSKUs = extra.length;
+        const activeSkus = activeSkusByStyle[cs.style] ?? [];
+        if (activeSkus.length === 0) return null;
+        const customNewCount = activeSkus.filter((sku) => sku.is_new).length;
+        const totalSKUs = activeSkus.length;
         return {
           style: cs.style,
           last: cs.lastName,
           category: cs.category ?? "",
-          colours: extra.map((e) => e.colour) as any[],
-          leathers: extra.map((e) => e.leather).filter(Boolean) as any[],
+          colours: Array.from(new Set(activeSkus.map((sku) => sku.colour))) as any[],
+          leathers: Array.from(new Set(activeSkus.map((sku) => sku.leather).filter(Boolean))) as any[],
           totalSKUs,
           newSKUs: customNewCount,
           existingSKUs: totalSKUs - customNewCount,
@@ -201,10 +207,10 @@ export function useCustomSkus() {
           imageUrl: overrideUrl ?? undefined,
           _isCustomStyle: true,
         };
-      });
+      }).filter((style): style is NonNullable<typeof style> => style !== null);
 
     return [...staticStyles, ...syntheticStyles];
-  }, [customSkus, customStyleRows, imageOverrideMap, websiteImageMap, skuNewOverrideMap]);
+  }, [activeSkusByStyle, customStyleRows, imageOverrideMap, websiteImageMap]);
 
   return {
     customSkus: customSkus as CustomSkuRow[],

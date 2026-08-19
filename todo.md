@@ -352,6 +352,7 @@
 - [x] Filter markdown SKUs out of By Style and By Category tabs
 - [x] §5c patches not needed — §4a project-level Heartbeat does not require cron auth patches
 - [x] Register weekly Heartbeat schedule — task_uid: cW4pFgYKXTVRJHDHCi3KeY, runs Mondays 02:00 UTC
+- [x] Remove the user-provided markdown SKU list from both SS26 and W27 dashboard views, and verify every requested style/colour–leather combination is matched
 
 ## Handbags Section (Jun 2026)
 - [x] Create handbag_styles, handbag_buy_sessions, handbag_buy_items DB tables
