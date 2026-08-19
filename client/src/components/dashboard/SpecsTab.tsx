@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { displayColourLeather } from "@/lib/utils";
+import { buildEditableCustomSkuColumns } from "@shared/specSkuColumns";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -900,8 +901,8 @@ interface SpecFormProps {
   onEditDropdownOption: (id: number, newValue: string) => void;
   onMetaChange: (meta: Partial<{ hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null }>) => void;
   onAddSku: (colour: string, leather: string) => void;
-  /** Map from raw colour key → custom SKU id (only for custom SKUs that can be edited) */
-  customSkuIds: Record<string, number>;
+  /** Map from Specs column key → editable custom SKU details. */
+  editableCustomSkus: Record<string, { id: number; colour: string; leather: string | null | undefined }>;
   onEditSku: (id: number, colour: string, leather: string) => void;
   onAddCustomRow: (section: string, afterSortOrder?: number) => void;
   onUpdateCustomRow: (id: number, title: string, value: string) => void;
@@ -1001,10 +1002,10 @@ function StickyScrollBar({ tableScrollRef }: StickyScrollBarProps) {
   return (
     <div
       ref={phantomRef}
-      className="flex-shrink-0 overflow-x-auto border-t border-border/40 [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-track]:bg-muted/20 [&::-webkit-scrollbar-thumb]:bg-muted-foreground/40 [&::-webkit-scrollbar-thumb]:rounded-full"
+      className="h-4 flex-shrink-0 overflow-x-scroll border-t border-border/40 [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-track]:bg-muted/20 [&::-webkit-scrollbar-thumb]:bg-muted-foreground/40 [&::-webkit-scrollbar-thumb]:rounded-full"
       style={{ scrollbarWidth: "thin" }}
     >
-      <div ref={innerRef} style={{ height: "1px" }} />
+      <div ref={innerRef} style={{ height: "2px" }} />
     </div>
   );
 }
@@ -1243,7 +1244,7 @@ type UnifiedRow =
 
 function SpecForm({
   entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allDropdownOptionIds, allColourLeatherOptions, imageOverride, customRows,
-  onUpsert, onBulkAutoFill, onBulkCopy, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption, onMetaChange, onAddSku, customSkuIds, onEditSku, onAddCustomRow, onUpdateCustomRow, onUpdateCustomRowForColour, onDeleteCustomRow, onReorderCustomRows,
+  onUpsert, onBulkAutoFill, onBulkCopy, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption, onMetaChange, onAddSku, editableCustomSkus, onEditSku, onAddCustomRow, onUpdateCustomRow, onUpdateCustomRowForColour, onDeleteCustomRow, onReorderCustomRows,
   dbCategory, onSetCategory, allCustomRowTitles, allStyleEntries,
   onHideColumn, hiddenColumns, showHiddenColumns, onShowColumn, onResetColour,
   tableScrollRef: externalTableScrollRef,
@@ -1808,8 +1809,8 @@ function SpecForm({
         }}
         onDragCancel={() => setActiveId(null)}
       >
-      <div ref={tableScrollRef} className="overflow-x-auto [&::-webkit-scrollbar]:hidden">
-        <table ref={tableRef} className="w-full text-xs border-collapse">
+      <div ref={tableScrollRef} className="overflow-x-auto [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-track]:bg-muted/40 [&::-webkit-scrollbar-thumb]:bg-muted-foreground/50 [&::-webkit-scrollbar-thumb]:rounded-full">
+        <table ref={tableRef} className="w-max min-w-full text-xs border-collapse">
           <thead>
             <tr className="bg-muted/50">
               <th className="text-left px-3 py-2 font-medium text-muted-foreground w-40 border-b">
@@ -1860,9 +1861,9 @@ function SpecForm({
                           className="w-20 px-1.5 py-0.5 text-xs rounded border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
-                              const id = customSkuIds[colour];
-                              if (id !== undefined && editSkuColour.trim()) {
-                                onEditSku(id, editSkuColour.trim(), editSkuLeather.trim());
+                              const sku = editableCustomSkus[colour];
+                              if (sku && editSkuColour.trim()) {
+                                onEditSku(sku.id, editSkuColour.trim(), editSkuLeather.trim());
                                 setEditingSkuColour(null);
                               }
                             }
@@ -1876,9 +1877,9 @@ function SpecForm({
                           className="w-20 px-1.5 py-0.5 text-xs rounded border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
-                              const id = customSkuIds[colour];
-                              if (id !== undefined && editSkuColour.trim()) {
-                                onEditSku(id, editSkuColour.trim(), editSkuLeather.trim());
+                              const sku = editableCustomSkus[colour];
+                              if (sku && editSkuColour.trim()) {
+                                onEditSku(sku.id, editSkuColour.trim(), editSkuLeather.trim());
                                 setEditingSkuColour(null);
                               }
                             }
@@ -1887,9 +1888,9 @@ function SpecForm({
                         />
                         <button
                           onClick={() => {
-                            const id = customSkuIds[colour];
-                            if (id !== undefined && editSkuColour.trim()) {
-                              onEditSku(id, editSkuColour.trim(), editSkuLeather.trim());
+                            const sku = editableCustomSkus[colour];
+                            if (sku && editSkuColour.trim()) {
+                              onEditSku(sku.id, editSkuColour.trim(), editSkuLeather.trim());
                               setEditingSkuColour(null);
                             }
                           }}
@@ -1905,16 +1906,13 @@ function SpecForm({
                     ) : (
                       // Reset + Hide buttons — only visible on hover; Edit also shown for custom SKUs
                       <div className="flex items-center gap-0.5 opacity-0 group-hover/col:opacity-100 transition-all">
-                        {customSkuIds[colour] !== undefined && (
+                        {editableCustomSkus[colour] !== undefined && (
                           <button
                             onClick={() => {
-                              const label = entry.colourLabels[entry.colours.indexOf(colour)] ?? colour;
-                              const parts = label.split(" ");
-                              // Try to split "COLOUR LEATHER" — last word is leather if multiple words
-                              const rawColour = parts.length > 1 ? parts.slice(0, -1).join(" ") : colour;
-                              const rawLeather = parts.length > 1 ? parts[parts.length - 1] : "";
-                              setEditSkuColour(colour);
-                              setEditSkuLeather(rawLeather);
+                              const sku = editableCustomSkus[colour];
+                              if (!sku) return;
+                              setEditSkuColour(sku.colour);
+                              setEditSkuLeather(sku.leather ?? "");
                               setEditingSkuColour(colour);
                             }}
                             title={`Edit colour/leather for ${colour}`}
@@ -2642,17 +2640,16 @@ export default function SpecsTab({}: SpecsTabProps) {
     }
     return { ...selectedEntryRaw, colours: filteredColours, colourLabels: filteredLabels, toeCapsPerColour: filteredToeCaps };
   }, [selectedEntryRaw, hiddenColumnsSet, showHiddenColumns]);
-  // Map from raw colour key → custom SKU id for the selected style (used by edit button)
-  const customSkuIds = useMemo<Record<string, number>>(() => {
-    if (!selectedStyle) return {};
-    const map: Record<string, number> = {};
-    for (const sku of customSkus) {
-      if (sku.style === selectedStyle) {
-        map[sku.colour] = sku.id;
-      }
-    }
-    return map;
-  }, [customSkus, selectedStyle]);
+  // Match editable custom SKUs to the exact Specs column key. Styles such as
+  // TAMMY can have both BLACK NAPPA and BLACK MESH, which must edit separately.
+  const editableCustomSkus = useMemo(
+    () => buildEditableCustomSkuColumns(
+      selectedStyle,
+      mergedRawSkus as Array<{ style: string; colour: string; leather: string | null | undefined }>,
+      customSkus as Array<{ id: number; style: string; colour: string; leather: string | null | undefined }>,
+    ),
+    [customSkus, mergedRawSkus, selectedStyle],
+  );
 
   // ── Data queries ──────────────────────────────────────────────────────────
   const { data: rawSpecs = [], refetch: refetchSpecs } = trpc.specs.getForStyle.useQuery(
@@ -3961,7 +3958,7 @@ export default function SpecsTab({}: SpecsTabProps) {
               onDeleteDropdownOption={handleDeleteDropdownOption}
               onEditDropdownOption={handleEditDropdownOption}
               onAddSku={handleAddSku}
-              customSkuIds={customSkuIds}
+              editableCustomSkus={editableCustomSkus}
               onEditSku={handleEditSku}
               onMetaChange={handleMetaChange}
               onAddCustomRow={handleAddCustomRow}
