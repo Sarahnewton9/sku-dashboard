@@ -357,6 +357,8 @@
 - [x] Allow colour-name editing for every applicable SKU in the Specs table
 - [x] Run a fresh tonybianco.com.au markdown scan and make matched SKUs available for review and deletion
 - [x] Verify that pending and deleted markdown SKUs are excluded from the Full Data Export
+- [x] Investigate and correct the missing FLUKE markdown flag from the live sale scan
+- [x] Reconcile the supplied markdown document with dashboard SKU names and queue missing exact matches for review
 
 ## Handbags Section (Jun 2026)
 - [x] Create handbag_styles, handbag_buy_sessions, handbag_buy_items DB tables
