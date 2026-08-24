@@ -355,6 +355,8 @@
 - [x] Remove the user-provided markdown SKU list from both SS26 and W27 dashboard views, and verify every requested style/colour–leather combination is matched
 - [x] Restore the missing horizontal scrollbar in the Specs table
 - [x] Allow colour-name editing for every applicable SKU in the Specs table
+- [x] Run a fresh tonybianco.com.au markdown scan and make matched SKUs available for review and deletion
+- [x] Verify that pending and deleted markdown SKUs are excluded from the Full Data Export
 
 ## Handbags Section (Jun 2026)
 - [x] Create handbag_styles, handbag_buy_sessions, handbag_buy_items DB tables

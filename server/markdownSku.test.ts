@@ -19,6 +19,14 @@ describe("markdown SKU exclusions", () => {
     expect(isMarkdownSku(set, "GLACIER", "BLACK", "VINTAGE")).toBe(true);
   });
 
+  it("hides pending markdown records before they are confirmed for deletion", () => {
+    const set = buildMarkdownSkuSet([
+      { styleCode: "TAMMY", colour: "BLACK MESH", status: "pending" },
+    ]);
+
+    expect(isMarkdownSku(set, "TAMMY", "BLACK", "MESH")).toBe(true);
+  });
+
   it("keeps restored markdown records visible", () => {
     const set = buildMarkdownSkuSet([
       { styleCode: "CITY", colour: "BLACK NAPPA", status: "restored" },
