@@ -360,6 +360,7 @@
 - [x] Investigate and correct the missing FLUKE markdown flag from the live sale scan
 - [x] Reconcile the supplied markdown document with dashboard SKU names and queue missing exact matches for review
 - [x] Make Overview SKU and style counts respect pending and deleted markdown exclusions
+- [x] Make Last the first Full Data Export column and sort exported SKU rows alphabetically by Style
 
 ## Handbags Section (Jun 2026)
 - [x] Create handbag_styles, handbag_buy_sessions, handbag_buy_items DB tables

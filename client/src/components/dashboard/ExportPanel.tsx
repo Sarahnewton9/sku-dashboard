@@ -8,6 +8,11 @@ import { FileDown, X, Upload, FileText, RotateCcw, CheckSquare, Square } from "l
 import { useSeason } from "@/contexts/SeasonContext";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import {
+  FULL_EXPORT_REQUIRED_COLS,
+  getSelectedFullExportColumns,
+  sortFullExportRowsByStyle,
+} from "@shared/fullExportOrder";
 import PptxSyncModal from "./PptxSyncModal";
 import AP21ColourCodeModal from "./AP21ColourCodeModal";
 
@@ -80,9 +85,9 @@ const SIZE_RANGE_CONFIG: Record<string, { label: string; sizes: string[] }> = {
 
 // All available columns for the Full Data Export
 const FULL_EXPORT_ALL_COLS: Array<{ key: string; label: string }> = [
+  { key: "Last",              label: "Last" },
   { key: "Style",             label: "Style" },
   { key: "Category",          label: "Category" },
-  { key: "Last",              label: "Last" },
   { key: "Heel Height (cm)",  label: "Heel Height (cm)" },
   { key: "Colour",            label: "Colour" },
   { key: "Leather",           label: "Leather" },
@@ -93,7 +98,6 @@ const FULL_EXPORT_ALL_COLS: Array<{ key: string; label: string }> = [
   { key: "Fitting Notes",       label: "Fitting Notes" },
 ];
 // These columns are always included and cannot be deselected
-const FULL_EXPORT_REQUIRED_COLS = ["Style", "Colour", "Leather"];
 const FULL_EXPORT_DEFAULT_COLS = new Set(FULL_EXPORT_ALL_COLS.map(c => c.key));
 
 export default function ExportPanel({ onClose }: Props) {
@@ -453,11 +457,15 @@ export default function ExportPanel({ onClose }: Props) {
   function exportFullData() {
     setExporting("full");
     try {
-      const selectedKeys = FULL_EXPORT_ALL_COLS.map(c => c.key).filter(k => fullExportCols.has(k));
+      const selectedKeys = getSelectedFullExportColumns(
+        FULL_EXPORT_ALL_COLS.map((column) => column.key),
+        fullExportCols,
+      );
 
-      const rows = (mergedRawSkus as any[])
-        .filter((sku: any) => !cancelledStyleSet.has(sku.style) && !cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`))
-        .map((sku: any) => {
+      const rows = sortFullExportRowsByStyle(
+        (mergedRawSkus as any[])
+          .filter((sku: any) => !cancelledStyleSet.has(sku.style) && !cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`))
+          .map((sku: any) => {
           const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
           const meta = skuMetaMap[key];
           const lastName = (styleLookup[sku.style]?.last ?? "").toUpperCase();
@@ -501,8 +509,9 @@ export default function ExportPanel({ onClose }: Props) {
           };
           const filtered: Record<string, any> = {};
           for (const k of selectedKeys) filtered[k] = allFields[k];
-          return filtered;
-        });
+            return filtered;
+          }),
+      );
 
       const ws = XLSX.utils.json_to_sheet(rows);
       ws["!cols"] = selectedKeys.map(k => ({ wch: FULL_EXPORT_COL_WIDTHS[k] ?? 14 }));
