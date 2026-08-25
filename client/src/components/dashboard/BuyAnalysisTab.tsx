@@ -11,10 +11,14 @@ import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { useSeason } from "@/contexts/SeasonContext";
 import { BarChart3, ChevronDown, Package, Check, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { displayColour, displayLeather } from "@/lib/utils";
+import {
+  groupBoughtStylesByLocation,
+  type BuyLocation,
+} from "@shared/buyLocationAnalysis";
 
 type SortField = "style" | "colour" | "leather" | "category" | "last" | "au" | "usa" | "nyc" | "la" | "total";
 type SortDir = "asc" | "desc";
-type ViewTab = "summary" | "sku-table" | "not-bought" | "pairs-breakdown" | "style-search";
+type ViewTab = "summary" | "sku-table" | "not-bought" | "pairs-breakdown" | "style-search" | "location";
 
 export default function BuyAnalysisTab() {
   const [selectedSessionIds, setSelectedSessionIds] = useState<number[]>([]);
@@ -27,6 +31,8 @@ export default function BuyAnalysisTab() {
   const [notBoughtMarket, setNotBoughtMarket] = useState<"all" | "au" | "usa" | "nyc" | "la">("all");
   const [expandedStyles, setExpandedStyles] = useState<Set<string>>(new Set());
   const [styleSearch, setStyleSearch] = useState<string>("");
+  const [locationMarket, setLocationMarket] = useState<BuyLocation>("la");
+  const [expandedLocationStyles, setExpandedLocationStyles] = useState<Set<string>>(new Set());
 
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
   const { cancelledSet: cancelledStyleSet } = useCancelledStyles();
@@ -161,6 +167,27 @@ export default function BuyAnalysisTab() {
       .map(([style, v]) => ({ style, au: v.au, usa: v.usa, nyc: v.nyc, la: v.la, total: v.au + v.usa + v.nyc + v.la }))
       .sort((a, b) => b.total - a.total);
   }, [boughtItems]);
+
+  const locationStyleRows = useMemo(() => {
+    return groupBoughtStylesByLocation(boughtItems, locationMarket).map((group) => ({
+      style: group.style,
+      quantity: group.quantity,
+      category: styleInfoMap[group.style]?.category ?? "Unknown",
+      last: styleInfoMap[group.style]?.last ?? "Unknown",
+      colours: group.items
+        .map((item) => ({
+          colour: displayColour(item.colour, item.leather),
+          leather: displayLeather(item.leather || "", item.style) || "—",
+          quantity: locationMarket === "au" ? item.auQty : locationMarket === "usa" ? item.usaQty : locationMarket === "nyc" ? item.nycQty : item.laQty,
+        }))
+        .sort((a, b) => b.quantity - a.quantity || a.colour.localeCompare(b.colour)),
+    }));
+  }, [boughtItems, locationMarket, styleInfoMap]);
+
+  const locationTotalPairs = useMemo(
+    () => locationStyleRows.reduce((total, row) => total + row.quantity, 0),
+    [locationStyleRows],
+  );
 
   // By leather
   const byLeather = useMemo(() => {
@@ -432,6 +459,7 @@ export default function BuyAnalysisTab() {
           { id: "pairs-breakdown", label: "Pairs Breakdown" },
           { id: "sku-table", label: `SKU Breakdown${boughtItems.length > 0 ? ` (${boughtItems.length})` : ""}` },
           { id: "not-bought", label: `Not Yet Bought (${notBoughtRows.length})` },
+          { id: "location", label: "By Location" },
           { id: "style-search", label: "Style Search" },
         ] as Array<{ id: ViewTab; label: string }>).map((tab) => (
           <button
@@ -818,6 +846,111 @@ export default function BuyAnalysisTab() {
             </>
           )}
         </>
+      )}
+
+      {/* ─── LOCATION TAB ─── */}
+      {viewTab === "location" && (
+        <div className="space-y-5">
+          <div className="rounded-xl border p-5" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h3 className="text-base font-bold text-foreground">Styles Bought by Location</h3>
+                <p className="text-xs text-muted-foreground mt-1">Choose a store to see every style bought for that location across the selected sessions.</p>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {([
+                  { key: "au", label: "AU", colour: "#f59e0b" },
+                  { key: "usa", label: "USA", colour: "oklch(0.60 0.14 200)" },
+                  { key: "nyc", label: "NYC", colour: "oklch(0.55 0.18 300)" },
+                  { key: "la", label: "LA", colour: "oklch(0.55 0.18 140)" },
+                ] as Array<{ key: BuyLocation; label: string; colour: string }>).map((location) => (
+                  <button
+                    key={location.key}
+                    onClick={() => setLocationMarket(location.key)}
+                    className="px-3.5 py-2 rounded-lg text-sm font-bold transition-colors"
+                    style={locationMarket === location.key
+                      ? { background: location.colour, color: "white" }
+                      : { background: "var(--muted)", color: "var(--muted-foreground)" }}
+                  >
+                    {location.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-3 max-w-md">
+              <div className="rounded-lg p-3" style={{ background: "var(--muted)" }}>
+                <p className="text-xl font-bold tabular-nums text-foreground">{locationTotalPairs.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Pairs bought for {locationMarket.toUpperCase()}</p>
+              </div>
+              <div className="rounded-lg p-3" style={{ background: "var(--muted)" }}>
+                <p className="text-xl font-bold tabular-nums text-foreground">{locationStyleRows.length.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Styles bought</p>
+              </div>
+            </div>
+          </div>
+
+          {selectedSessionIds.length === 0 ? (
+            <div className="rounded-xl border p-12 text-center" style={{ borderColor: "var(--border)", borderStyle: "dashed" }}>
+              <Package className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-sm font-medium text-foreground">No session selected</p>
+              <p className="text-xs text-muted-foreground mt-1">Select one or more buy sessions above to see location buys.</p>
+            </div>
+          ) : locationStyleRows.length === 0 ? (
+            <div className="rounded-xl border p-12 text-center" style={{ borderColor: "var(--border)", borderStyle: "dashed" }}>
+              <Package className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-sm font-medium text-foreground">No {locationMarket.toUpperCase()} buy quantities yet</p>
+              <p className="text-xs text-muted-foreground mt-1">No styles have quantities recorded for this location in the selected sessions.</p>
+            </div>
+          ) : (
+            <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+              <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-0 px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                <span>Style</span>
+                <span className="text-right w-28">Category</span>
+                <span className="text-right w-24">Last</span>
+                <span className="text-right w-20">SKUs</span>
+                <span className="text-right w-24">{locationMarket.toUpperCase()} pairs</span>
+              </div>
+              <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+                {locationStyleRows.map((row) => {
+                  const isExpanded = expandedLocationStyles.has(row.style);
+                  return (
+                    <div key={row.style}>
+                      <button
+                        onClick={() => setExpandedLocationStyles((previous) => {
+                          const next = new Set(previous);
+                          if (next.has(row.style)) next.delete(row.style); else next.add(row.style);
+                          return next;
+                        })}
+                        className="w-full grid grid-cols-[1fr_auto_auto_auto_auto] gap-0 px-5 py-3 text-left items-center hover:bg-muted/40 transition-colors"
+                      >
+                        <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground transition-transform" style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(-90deg)" }} />
+                          {row.style}
+                        </span>
+                        <span className="text-xs text-muted-foreground text-right w-28 truncate">{row.category}</span>
+                        <span className="text-xs text-muted-foreground text-right w-24 truncate">{row.last}</span>
+                        <span className="text-sm tabular-nums text-right w-20 text-muted-foreground">{row.colours.length}</span>
+                        <span className="text-sm tabular-nums font-bold text-right w-24" style={{ color: "oklch(0.55 0.18 140)" }}>{row.quantity.toLocaleString()}</span>
+                      </button>
+                      {isExpanded && (
+                        <div className="border-t px-10 py-2.5" style={{ borderColor: "var(--border)", background: "oklch(0.98 0.01 65 / 0.4)" }}>
+                          {row.colours.map((colour) => (
+                            <div key={`${colour.colour}|${colour.leather}`} className="grid grid-cols-[1fr_auto_auto] gap-3 py-1.5 text-sm">
+                              <span className="text-foreground">{colour.colour}</span>
+                              <span className="text-muted-foreground text-right">{colour.leather}</span>
+                              <span className="font-bold tabular-nums text-right w-20" style={{ color: "oklch(0.55 0.18 140)" }}>{colour.quantity}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* ─── STYLE SEARCH TAB ─── */}
