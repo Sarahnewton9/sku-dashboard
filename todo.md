@@ -365,6 +365,7 @@
 - [x] Add missing DYNASTY parent-style records in SS26 and W27 with Last Diamond and Category Dress Sandal
 - [x] Add a Buy Analysis view that lists styles and quantities by selected store location, including LA
 - [x] Fix the Buy Analysis location view returning zero quantities for every location
+- [x] Reclassify existing SKU Dash buy quantities as LA and validate them against the supplied backup workbook
 
 ## Handbags Section (Jun 2026)
 - [x] Create handbag_styles, handbag_buy_sessions, handbag_buy_items DB tables
