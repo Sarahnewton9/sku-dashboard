@@ -361,6 +361,8 @@
 - [x] Reconcile the supplied markdown document with dashboard SKU names and queue missing exact matches for review
 - [x] Make Overview SKU and style counts respect pending and deleted markdown exclusions
 - [x] Make Last the first Full Data Export column and sort exported SKU rows alphabetically by Style
+- [x] Locate DYNASTY across SS26 and W27 and identify any status preventing it from appearing
+- [x] Add missing DYNASTY parent-style records in SS26 and W27 with Last Diamond and Category Dress Sandal
 
 ## Handbags Section (Jun 2026)
 - [x] Create handbag_styles, handbag_buy_sessions, handbag_buy_items DB tables
