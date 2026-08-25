@@ -366,6 +366,7 @@
 - [x] Add a Buy Analysis view that lists styles and quantities by selected store location, including LA
 - [x] Fix the Buy Analysis location view returning zero quantities for every location
 - [x] Reclassify existing SKU Dash buy quantities as LA and validate them against the supplied backup workbook
+- [x] Add direct colour-name editing to By Style so SKU colours can be corrected without deletion
 
 ## Handbags Section (Jun 2026)
 - [x] Create handbag_styles, handbag_buy_sessions, handbag_buy_items DB tables

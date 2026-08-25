@@ -1,0 +1,1 @@
+ALTER TABLE `sku_meta` ADD `colourOverride` varchar(64);

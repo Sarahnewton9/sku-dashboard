@@ -15,7 +15,7 @@ import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
 import { useSeason } from "@/contexts/SeasonContext";
-import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock, FileSpreadsheet, X, Camera, ImageOff, Ruler } from "lucide-react";
+import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock, FileSpreadsheet, X, Camera, ImageOff, Ruler, Pencil, Check } from "lucide-react";
 import { LastMeasurementsPanel } from "./LastMeasurementsPanel";
 import * as XLSX from "xlsx";
 import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
@@ -73,6 +73,16 @@ export default function StylesTab() {
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
   const [fitApprovedSectionOpen, setFitApprovedSectionOpen] = useState(false);
   const [expandedApprovedStyle, setExpandedApprovedStyle] = useState<string | null>(null);
+  const [colourEdit, setColourEdit] = useState<{
+    rowKey: string;
+    customId?: number;
+    style: string;
+    sourceColour: string;
+    leather: string;
+    colour2?: string | null;
+    leather2?: string | null;
+    draft: string;
+  } | null>(null);
   // Add Style modal state
   const [showAddStyleModal, setShowAddStyleModal] = useState(false);
   const [newStyleName, setNewStyleName] = useState("");
@@ -281,6 +291,49 @@ export default function StylesTab() {
     onError: (err) => toast.error(`Failed to add colour: ${err.message}`),
   });
 
+  const updateCustomSkuMutation = trpc.customSku.update.useMutation({
+    onSuccess: () => {
+      refetchCustomSkus();
+      setColourEdit(null);
+      toast.success("Colour updated");
+    },
+    onError: (err) => toast.error(`Failed to update colour: ${err.message}`),
+  });
+
+  const updateStaticColourMutation = trpc.sku.update.useMutation({
+    onSuccess: () => {
+      refetchSkuMeta();
+      setColourEdit(null);
+      toast.success("Colour updated");
+    },
+    onError: (err) => toast.error(`Failed to update colour: ${err.message}`),
+  });
+
+  const saveColourEdit = useCallback(() => {
+    if (!colourEdit) return;
+    const nextColour = colourEdit.draft.trim().toUpperCase();
+    if (!nextColour) {
+      toast.error("Enter a colour name first");
+      return;
+    }
+    if (colourEdit.customId) {
+      updateCustomSkuMutation.mutate({
+        id: colourEdit.customId,
+        colour: nextColour,
+        leather: colourEdit.leather,
+        colour2: colourEdit.colour2 ?? undefined,
+        leather2: colourEdit.leather2 ?? undefined,
+      });
+      return;
+    }
+    updateStaticColourMutation.mutate({
+      style: colourEdit.style,
+      colour: colourEdit.sourceColour,
+      leather: colourEdit.leather,
+      colourOverride: nextColour,
+    });
+  }, [colourEdit, updateCustomSkuMutation, updateStaticColourMutation]);
+
   // Add Style mutation
   const addCustomStyleMutation = trpc.customStyle.add.useMutation({
     onSuccess: (_data, vars) => {
@@ -474,7 +527,7 @@ export default function StylesTab() {
   }
 
   // Build lookup maps
-  type SkuMetaItem = { style: string; colour: string; leather: string; sampleStatus?: string | null; orderQty?: number | null; isSize11?: boolean | null; costPrice?: number | null; fitRating?: string | null; fittingNotes?: string | null; colour2?: string | null; leather2?: string | null; };
+  type SkuMetaItem = { style: string; colour: string; leather: string; sampleStatus?: string | null; orderQty?: number | null; isSize11?: boolean | null; costPrice?: number | null; fitRating?: string | null; fittingNotes?: string | null; colourOverride?: string | null; colour2?: string | null; leather2?: string | null; };
   type StyleMetaItem = { style: string; rrp?: number | null; fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; websiteImageUrl?: string | null; sizeRecommendation?: string | null; };
 
   const skuMetaMap = useMemo(() => {
@@ -1561,8 +1614,13 @@ export default function StylesTab() {
                                   const newSkus = allSkus.filter((s) => s.is_new);
 
                                   const renderRow = (sku: typeof allSkus[0], isNew: boolean) => {
-                                    const skuKey2 = `${sku.style}|${sku.colour}|${sku.leather}`;
+                                    const sourceColour = (sku as any)._sourceColour ?? sku.colour;
+                                    const skuKey2 = `${sku.style}|${sourceColour}|${sku.leather}`;
                                     const dbMeta = skuMetaMap[skuKey2];
+                                    const colourEditKey = (sku as any)._customId
+                                      ? `custom:${(sku as any)._customId}`
+                                      : `static:${skuKey2}`;
+                                    const isEditingColour = colourEdit?.rowKey === colourEditKey;
                                     const sessionQtyObj = sessionItemMap[skuKey2] ?? { auQty: 0, usaQty: 0, nycQty: 0, laQty: 0 };
                                     const sessionAuQty = sessionQtyObj.auQty;
                                     const sessionUsaQty = sessionQtyObj.usaQty;
@@ -1589,10 +1647,41 @@ export default function StylesTab() {
                                         }}
                                       >
                                         {/* Colour */}
-                                        <span className="text-sm font-medium text-foreground truncate">
-                                          {displayColour(sku.colour, sku.leather)}
-                                          {((sku as any).colour2 || dbMeta?.colour2) && <span className="text-muted-foreground"> / {displayColour(((sku as any).colour2 || dbMeta?.colour2)!, ((sku as any).leather2 || dbMeta?.leather2) ?? "")}</span>}
-                                        </span>
+                                        <div className="flex min-w-0 items-center gap-1">
+                                          {isEditingColour ? (
+                                            <>
+                                              <input
+                                                autoFocus
+                                                value={colourEdit.draft}
+                                                onChange={(event) => setColourEdit((previous) => previous ? { ...previous, draft: event.target.value.toUpperCase() } : previous)}
+                                                onClick={(event) => event.stopPropagation()}
+                                                onKeyDown={(event) => {
+                                                  event.stopPropagation();
+                                                  if (event.key === "Escape") setColourEdit(null);
+                                                  if (event.key === "Enter") saveColourEdit();
+                                                }}
+                                                className="min-w-0 flex-1 rounded border px-1.5 py-1 text-xs font-medium uppercase bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                              />
+                                              <button onClick={(event) => { event.stopPropagation(); saveColourEdit(); }} className="p-1 rounded text-emerald-600 hover:bg-emerald-50" title="Save colour"><Check className="w-3.5 h-3.5" /></button>
+                                              <button onClick={(event) => { event.stopPropagation(); setColourEdit(null); }} className="p-1 rounded text-muted-foreground hover:bg-muted" title="Cancel"><X className="w-3.5 h-3.5" /></button>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <span className="min-w-0 truncate text-sm font-medium text-foreground">
+                                                {displayColour(sku.colour, sku.leather)}
+                                                {((sku as any).colour2 || dbMeta?.colour2) && <span className="text-muted-foreground"> / {displayColour(((sku as any).colour2 || dbMeta?.colour2)!, ((sku as any).leather2 || dbMeta?.leather2) ?? "")}</span>}
+                                              </span>
+                                              <button
+                                                onClick={(event) => {
+                                                  event.stopPropagation();
+                                                  setColourEdit({ rowKey: colourEditKey, customId: (sku as any)._customId, style: sku.style, sourceColour, leather: sku.leather, colour2: (sku as any).colour2, leather2: (sku as any).leather2, draft: sku.colour });
+                                                }}
+                                                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted flex-shrink-0"
+                                                title="Edit colour name"
+                                              ><Pencil className="w-3 h-3" /></button>
+                                            </>
+                                          )}
+                                        </div>
                                         {/* Leather */}
                                         <span className="text-xs text-muted-foreground truncate">
                                           {displayLeather(sku.leather || "", sku.style) || "—"}
@@ -1608,7 +1697,7 @@ export default function StylesTab() {
                                         {isNew && (
                                           <span className="text-xs text-center" onClick={(e) => e.stopPropagation()}>
                                             <button
-                                              onClick={(e) => { e.stopPropagation(); handleSampleToggle(sku.style, sku.colour, sku.leather, dbMeta?.sampleStatus); }}
+                                              onClick={(e) => { e.stopPropagation(); handleSampleToggle(sku.style, sourceColour, sku.leather, dbMeta?.sampleStatus); }}
                               title={
                                 dbMeta?.sampleStatus === "received" ? "Sample received — click to reset to waiting" :
                                 dbMeta?.sampleStatus === "fitting_sample" ? "Fitting sample received (set via Fittings tab)" :
@@ -1663,8 +1752,8 @@ export default function StylesTab() {
                                                     disabled={!canEdit}
                                                     defaultValue={sessionAuQty || ""}
                                                     key={`au-${selectedSessionId}-${skuKey2}-${sessionAuQty}`}
-                                                    onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, 'au', e.target.value)}
-                                                    onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, 'au')}
+                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sku.leather, 'au', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sku.leather, 'au')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
                                                     className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
@@ -1679,8 +1768,8 @@ export default function StylesTab() {
                                                     disabled={!canEdit}
                                                     defaultValue={sessionUsaQty || ""}
                                                     key={`usa-${selectedSessionId}-${skuKey2}-${sessionUsaQty}`}
-                                                    onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, 'usa', e.target.value)}
-                                                    onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, 'usa')}
+                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sku.leather, 'usa', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sku.leather, 'usa')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
                                                     className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-blue-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
@@ -1695,8 +1784,8 @@ export default function StylesTab() {
                                                     disabled={!canEdit}
                                                     defaultValue={sessionNycQty || ""}
                                                     key={`nyc-${selectedSessionId}-${skuKey2}-${sessionNycQty}`}
-                                                    onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, 'nyc', e.target.value)}
-                                                    onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, 'nyc')}
+                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sku.leather, 'nyc', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sku.leather, 'nyc')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
                                                     className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-purple-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
@@ -1711,8 +1800,8 @@ export default function StylesTab() {
                                                     disabled={!canEdit}
                                                     defaultValue={sessionLaQty || ""}
                                                     key={`la-${selectedSessionId}-${skuKey2}-${sessionLaQty}`}
-                                                    onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, 'la', e.target.value)}
-                                                    onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, 'la')}
+                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sku.leather, 'la', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sku.leather, 'la')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
                                                     className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-green-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"

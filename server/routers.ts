@@ -121,6 +121,7 @@ export const appRouter = router({
         fitRating: z.enum(["tts", "runs_small", "runs_large"]).nullable().optional(),
         fittingNotes: z.string().nullable().optional(),
         sampleType: z.string().nullable().optional(),
+        colourOverride: z.string().nullable().optional(),
       }))
       .mutation(async ({ input }) => {
         await upsertSkuMeta(input);
@@ -2484,5 +2485,4 @@ Respond with ONLY the code, nothing else. No explanation.`,
 // Patch buy.unlock into the existing buy router by re-exporting
 // (We add it inline here since the buy router is defined earlier in this file)
 export type AppRouter = typeof appRouter;
-
 

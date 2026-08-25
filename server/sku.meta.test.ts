@@ -70,6 +70,17 @@ describe("sku.update", () => {
     });
     expect(result).toEqual({ success: true });
   });
+
+  it("accepts a colour override for a static dashboard SKU", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    const result = await caller.sku.update({
+      style: "ALYX",
+      colour: "BLACK",
+      leather: "COMO",
+      colourOverride: "BLACK PATENT",
+    });
+    expect(result).toEqual({ success: true });
+  });
 });
 
 describe("sku.importCosts", () => {

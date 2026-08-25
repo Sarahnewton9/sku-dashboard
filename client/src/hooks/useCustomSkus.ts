@@ -60,6 +60,23 @@ export function useCustomSkus() {
     staleTime: 30_000,
   });
 
+  // Static SKU descriptions originate in the compiled range data. A colour
+  // override preserves that stable source key while showing a corrected colour
+  // name across every dashboard view.
+  const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery(undefined, {
+    staleTime: 30_000,
+  });
+
+  const colourOverrideMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const meta of skuMetaList as Array<{ style: string; colour: string; leather: string; colourOverride?: string | null }>) {
+      if (meta.colourOverride?.trim()) {
+        map[`${meta.style}|${meta.colour}|${meta.leather}`] = meta.colourOverride.trim().toUpperCase();
+      }
+    }
+    return map;
+  }, [skuMetaList]);
+
   // Fetch custom styles (brand-new styles added manually, not in static skuData)
   const { data: customStyleRows = [], refetch: refetchCustomStyles } = trpc.customStyle.getAll.useQuery({ season }, {
     staleTime: 30_000,
@@ -113,7 +130,7 @@ export function useCustomSkus() {
   }
 
   // Merge custom SKUs into rawSkus — same shape as skuData.rawSkus entries
-  const mergedRawSkus = useMemo<Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean; _customId?: number }>>(() => {
+  const mergedRawSkus = useMemo<Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean; _customId?: number; _sourceColour?: string }>>(() => {
     // Apply overrides to static SKUs
     // For W27 (and any non-SS26 season), all static SKUs are carry-overs — force is_new=false
     const baseSkus = (skuData.rawSkus as unknown as ReadonlyArray<{ style: string; colour: string; leather: string; is_new: boolean }>)
@@ -121,8 +138,13 @@ export function useCustomSkus() {
       .map((sku) => {
       const staticIsNew = season === "SS26" ? sku.is_new : false;
       const effectiveIsNew = resolveIsNew(sku.style, sku.colour, sku.leather ?? "", staticIsNew);
-      if (effectiveIsNew === sku.is_new) return sku;
-      return { ...sku, is_new: effectiveIsNew };
+      const colourOverride = colourOverrideMap[`${sku.style}|${sku.colour}|${sku.leather ?? ""}`];
+      if (effectiveIsNew === sku.is_new && !colourOverride) return sku;
+      return {
+        ...sku,
+        ...(colourOverride ? { colour: colourOverride, _sourceColour: sku.colour } : {}),
+        is_new: effectiveIsNew,
+      };
     });
 
     if (customSkus.length === 0) return baseSkus;
@@ -144,7 +166,7 @@ export function useCustomSkus() {
     const filtered = extra.filter((e) => !existing.has(`${e.style}|${e.colour}|${e.leather}`));
 
     return [...baseSkus, ...filtered];
-  }, [customSkus, markdownSkuSet, season, skuNewOverrideMap]);
+  }, [customSkus, markdownSkuSet, season, skuNewOverrideMap, colourOverrideMap]);
 
   const activeSkusByStyle = useMemo(() => {
     const groups: Record<string, Array<{ style: string; colour: string; leather: string; is_new: boolean }>> = {};

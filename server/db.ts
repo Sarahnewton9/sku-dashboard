@@ -115,6 +115,7 @@ export async function upsertSkuMeta(data: {
   fitRating?: "tts" | "runs_small" | "runs_large" | null;
   fittingNotes?: string | null;
   sampleType?: string | null;
+  colourOverride?: string | null;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -128,6 +129,7 @@ export async function upsertSkuMeta(data: {
     if (data.fitRating !== undefined) updateSet.fitRating = data.fitRating;
     if (data.fittingNotes !== undefined) updateSet.fittingNotes = data.fittingNotes;
     if (data.sampleType !== undefined) updateSet.sampleType = data.sampleType;
+    if (data.colourOverride !== undefined) updateSet.colourOverride = data.colourOverride;
     await db.update(skuMeta)
       .set(updateSet)
       .where(and(eq(skuMeta.style, data.style), eq(skuMeta.colour, data.colour), eq(skuMeta.leather, data.leather)));
@@ -143,6 +145,7 @@ export async function upsertSkuMeta(data: {
       fitRating: data.fitRating ?? null,
       fittingNotes: data.fittingNotes ?? null,
       sampleType: data.sampleType ?? null,
+      colourOverride: data.colourOverride ?? null,
     });
   }
 }

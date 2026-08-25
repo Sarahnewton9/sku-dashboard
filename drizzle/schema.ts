@@ -39,7 +39,10 @@ export const skuMeta = mysqlTable("sku_meta", {
   costPrice: float("costPrice"),
   fitRating: mysqlEnum("fitRating", ["tts", "runs_small", "runs_large"]),
   fittingNotes: text("fittingNotes"),
-    sampleType: varchar("sampleType", { length: 64 }),
+  sampleType: varchar("sampleType", { length: 64 }),
+  // Keeps the static range-data key intact while allowing the displayed colour
+  // description to be corrected from the By Style view.
+  colourOverride: varchar("colourOverride", { length: 64 }),
   colour2: varchar("colour2", { length: 64 }),
   leather2: varchar("leather2", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
