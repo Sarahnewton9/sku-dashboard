@@ -168,8 +168,29 @@ export default function BuyAnalysisTab() {
       .sort((a, b) => b.total - a.total);
   }, [boughtItems]);
 
+  const allSessionLocationItems = useMemo(() => {
+    const totalsBySku = allSessionQtys as Record<string, {
+      totalAu?: number;
+      totalUsa?: number;
+      totalNyc?: number;
+      totalLa?: number;
+    }>;
+    return Object.entries(totalsBySku).map(([skuKey, totals]) => {
+      const [style, colour, leather] = skuKey.split("|");
+      return {
+        style,
+        colour,
+        leather,
+        auQty: totals.totalAu ?? 0,
+        usaQty: totals.totalUsa ?? 0,
+        nycQty: totals.totalNyc ?? 0,
+        laQty: totals.totalLa ?? 0,
+      };
+    });
+  }, [allSessionQtys]);
+
   const locationStyleRows = useMemo(() => {
-    return groupBoughtStylesByLocation(boughtItems, locationMarket).map((group) => ({
+    return groupBoughtStylesByLocation(allSessionLocationItems, locationMarket).map((group) => ({
       style: group.style,
       quantity: group.quantity,
       category: styleInfoMap[group.style]?.category ?? "Unknown",
@@ -182,7 +203,7 @@ export default function BuyAnalysisTab() {
         }))
         .sort((a, b) => b.quantity - a.quantity || a.colour.localeCompare(b.colour)),
     }));
-  }, [boughtItems, locationMarket, styleInfoMap]);
+  }, [allSessionLocationItems, locationMarket, styleInfoMap]);
 
   const locationTotalPairs = useMemo(
     () => locationStyleRows.reduce((total, row) => total + row.quantity, 0),
@@ -855,7 +876,7 @@ export default function BuyAnalysisTab() {
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
                 <h3 className="text-base font-bold text-foreground">Styles Bought by Location</h3>
-                <p className="text-xs text-muted-foreground mt-1">Choose a store to see every style bought for that location across the selected sessions.</p>
+                <p className="text-xs text-muted-foreground mt-1">Choose a store to see every style bought for that location across all {season} buy sessions.</p>
               </div>
               <div className="flex gap-2 flex-wrap">
                 {([
@@ -890,13 +911,7 @@ export default function BuyAnalysisTab() {
             </div>
           </div>
 
-          {selectedSessionIds.length === 0 ? (
-            <div className="rounded-xl border p-12 text-center" style={{ borderColor: "var(--border)", borderStyle: "dashed" }}>
-              <Package className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-              <p className="text-sm font-medium text-foreground">No session selected</p>
-              <p className="text-xs text-muted-foreground mt-1">Select one or more buy sessions above to see location buys.</p>
-            </div>
-          ) : locationStyleRows.length === 0 ? (
+          {locationStyleRows.length === 0 ? (
             <div className="rounded-xl border p-12 text-center" style={{ borderColor: "var(--border)", borderStyle: "dashed" }}>
               <Package className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
               <p className="text-sm font-medium text-foreground">No {locationMarket.toUpperCase()} buy quantities yet</p>
