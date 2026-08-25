@@ -67,11 +67,13 @@ export function useCustomSkus() {
     staleTime: 30_000,
   });
 
-  const colourOverrideMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    for (const meta of skuMetaList as Array<{ style: string; colour: string; leather: string; colourOverride?: string | null }>) {
-      if (meta.colourOverride?.trim()) {
-        map[`${meta.style}|${meta.colour}|${meta.leather}`] = meta.colourOverride.trim().toUpperCase();
+  const skuDescriptionOverrideMap = useMemo(() => {
+    const map: Record<string, { colour?: string; leather?: string }> = {};
+    for (const meta of skuMetaList as Array<{ style: string; colour: string; leather: string; colourOverride?: string | null; leatherOverride?: string | null }>) {
+      const colour = meta.colourOverride?.trim().toUpperCase();
+      const leather = meta.leatherOverride?.trim().toUpperCase();
+      if (colour || leather) {
+        map[`${meta.style}|${meta.colour}|${meta.leather}`] = { colour, leather };
       }
     }
     return map;
@@ -130,7 +132,7 @@ export function useCustomSkus() {
   }
 
   // Merge custom SKUs into rawSkus — same shape as skuData.rawSkus entries
-  const mergedRawSkus = useMemo<Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean; _customId?: number; _sourceColour?: string }>>(() => {
+  const mergedRawSkus = useMemo<Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean; _customId?: number; _sourceColour?: string; _sourceLeather?: string }>>(() => {
     // Apply overrides to static SKUs
     // For W27 (and any non-SS26 season), all static SKUs are carry-overs — force is_new=false
     const baseSkus = (skuData.rawSkus as unknown as ReadonlyArray<{ style: string; colour: string; leather: string; is_new: boolean }>)
@@ -138,11 +140,16 @@ export function useCustomSkus() {
       .map((sku) => {
       const staticIsNew = season === "SS26" ? sku.is_new : false;
       const effectiveIsNew = resolveIsNew(sku.style, sku.colour, sku.leather ?? "", staticIsNew);
-      const colourOverride = colourOverrideMap[`${sku.style}|${sku.colour}|${sku.leather ?? ""}`];
-      if (effectiveIsNew === sku.is_new && !colourOverride) return sku;
+      const descriptionOverride = skuDescriptionOverrideMap[`${sku.style}|${sku.colour}|${sku.leather ?? ""}`];
+      if (effectiveIsNew === sku.is_new && !descriptionOverride) return sku;
       return {
         ...sku,
-        ...(colourOverride ? { colour: colourOverride, _sourceColour: sku.colour } : {}),
+        ...(descriptionOverride ? {
+          colour: descriptionOverride.colour ?? sku.colour,
+          leather: descriptionOverride.leather ?? sku.leather,
+          _sourceColour: sku.colour,
+          _sourceLeather: sku.leather,
+        } : {}),
         is_new: effectiveIsNew,
       };
     });
@@ -166,7 +173,7 @@ export function useCustomSkus() {
     const filtered = extra.filter((e) => !existing.has(`${e.style}|${e.colour}|${e.leather}`));
 
     return [...baseSkus, ...filtered];
-  }, [customSkus, markdownSkuSet, season, skuNewOverrideMap, colourOverrideMap]);
+  }, [customSkus, markdownSkuSet, season, skuNewOverrideMap, skuDescriptionOverrideMap]);
 
   const activeSkusByStyle = useMemo(() => {
     const groups: Record<string, Array<{ style: string; colour: string; leather: string; is_new: boolean }>> = {};

@@ -367,6 +367,7 @@
 - [x] Fix the Buy Analysis location view returning zero quantities for every location
 - [x] Reclassify existing SKU Dash buy quantities as LA and validate them against the supplied backup workbook
 - [x] Add direct colour-name editing to By Style so SKU colours can be corrected without deletion
+- [x] Extend By Style inline editing so colour and leather can be corrected together in one save
 
 ## Handbags Section (Jun 2026)
 - [x] Create handbag_styles, handbag_buy_sessions, handbag_buy_items DB tables

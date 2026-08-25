@@ -116,6 +116,7 @@ export async function upsertSkuMeta(data: {
   fittingNotes?: string | null;
   sampleType?: string | null;
   colourOverride?: string | null;
+  leatherOverride?: string | null;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -130,6 +131,7 @@ export async function upsertSkuMeta(data: {
     if (data.fittingNotes !== undefined) updateSet.fittingNotes = data.fittingNotes;
     if (data.sampleType !== undefined) updateSet.sampleType = data.sampleType;
     if (data.colourOverride !== undefined) updateSet.colourOverride = data.colourOverride;
+    if (data.leatherOverride !== undefined) updateSet.leatherOverride = data.leatherOverride;
     await db.update(skuMeta)
       .set(updateSet)
       .where(and(eq(skuMeta.style, data.style), eq(skuMeta.colour, data.colour), eq(skuMeta.leather, data.leather)));
@@ -146,6 +148,7 @@ export async function upsertSkuMeta(data: {
       fittingNotes: data.fittingNotes ?? null,
       sampleType: data.sampleType ?? null,
       colourOverride: data.colourOverride ?? null,
+      leatherOverride: data.leatherOverride ?? null,
     });
   }
 }

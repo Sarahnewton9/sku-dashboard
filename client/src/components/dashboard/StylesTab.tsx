@@ -78,10 +78,11 @@ export default function StylesTab() {
     customId?: number;
     style: string;
     sourceColour: string;
-    leather: string;
+    sourceLeather: string;
     colour2?: string | null;
     leather2?: string | null;
-    draft: string;
+    colourDraft: string;
+    leatherDraft: string;
   } | null>(null);
   // Add Style modal state
   const [showAddStyleModal, setShowAddStyleModal] = useState(false);
@@ -295,7 +296,7 @@ export default function StylesTab() {
     onSuccess: () => {
       refetchCustomSkus();
       setColourEdit(null);
-      toast.success("Colour updated");
+      toast.success("Colour and leather updated");
     },
     onError: (err) => toast.error(`Failed to update colour: ${err.message}`),
   });
@@ -304,23 +305,24 @@ export default function StylesTab() {
     onSuccess: () => {
       refetchSkuMeta();
       setColourEdit(null);
-      toast.success("Colour updated");
+      toast.success("Colour and leather updated");
     },
     onError: (err) => toast.error(`Failed to update colour: ${err.message}`),
   });
 
   const saveColourEdit = useCallback(() => {
     if (!colourEdit) return;
-    const nextColour = colourEdit.draft.trim().toUpperCase();
-    if (!nextColour) {
-      toast.error("Enter a colour name first");
+    const nextColour = colourEdit.colourDraft.trim().toUpperCase();
+    const nextLeather = colourEdit.leatherDraft.trim().toUpperCase();
+    if (!nextColour || !nextLeather) {
+      toast.error("Enter both a colour and leather");
       return;
     }
     if (colourEdit.customId) {
       updateCustomSkuMutation.mutate({
         id: colourEdit.customId,
         colour: nextColour,
-        leather: colourEdit.leather,
+        leather: nextLeather,
         colour2: colourEdit.colour2 ?? undefined,
         leather2: colourEdit.leather2 ?? undefined,
       });
@@ -329,8 +331,9 @@ export default function StylesTab() {
     updateStaticColourMutation.mutate({
       style: colourEdit.style,
       colour: colourEdit.sourceColour,
-      leather: colourEdit.leather,
+      leather: colourEdit.sourceLeather,
       colourOverride: nextColour,
+      leatherOverride: nextLeather,
     });
   }, [colourEdit, updateCustomSkuMutation, updateStaticColourMutation]);
 
@@ -1615,7 +1618,8 @@ export default function StylesTab() {
 
                                   const renderRow = (sku: typeof allSkus[0], isNew: boolean) => {
                                     const sourceColour = (sku as any)._sourceColour ?? sku.colour;
-                                    const skuKey2 = `${sku.style}|${sourceColour}|${sku.leather}`;
+                                    const sourceLeather = (sku as any)._sourceLeather ?? sku.leather;
+                                    const skuKey2 = `${sku.style}|${sourceColour}|${sourceLeather}`;
                                     const dbMeta = skuMetaMap[skuKey2];
                                     const colourEditKey = (sku as any)._customId
                                       ? `custom:${(sku as any)._customId}`
@@ -1652,8 +1656,8 @@ export default function StylesTab() {
                                             <>
                                               <input
                                                 autoFocus
-                                                value={colourEdit.draft}
-                                                onChange={(event) => setColourEdit((previous) => previous ? { ...previous, draft: event.target.value.toUpperCase() } : previous)}
+                                                value={colourEdit.colourDraft}
+                                                onChange={(event) => setColourEdit((previous) => previous ? { ...previous, colourDraft: event.target.value.toUpperCase() } : previous)}
                                                 onClick={(event) => event.stopPropagation()}
                                                 onKeyDown={(event) => {
                                                   event.stopPropagation();
@@ -1674,19 +1678,34 @@ export default function StylesTab() {
                                               <button
                                                 onClick={(event) => {
                                                   event.stopPropagation();
-                                                  setColourEdit({ rowKey: colourEditKey, customId: (sku as any)._customId, style: sku.style, sourceColour, leather: sku.leather, colour2: (sku as any).colour2, leather2: (sku as any).leather2, draft: sku.colour });
+                                                  setColourEdit({ rowKey: colourEditKey, customId: (sku as any)._customId, style: sku.style, sourceColour, sourceLeather, colour2: (sku as any).colour2, leather2: (sku as any).leather2, colourDraft: sku.colour, leatherDraft: sku.leather });
                                                 }}
                                                 className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted flex-shrink-0"
-                                                title="Edit colour name"
+                                                title="Edit colour and leather"
                                               ><Pencil className="w-3 h-3" /></button>
                                             </>
                                           )}
                                         </div>
                                         {/* Leather */}
-                                        <span className="text-xs text-muted-foreground truncate">
-                                          {displayLeather(sku.leather || "", sku.style) || "—"}
-                                          {((sku as any).leather2 || dbMeta?.leather2) && <span> / {displayLeather(((sku as any).leather2 || dbMeta?.leather2)!, sku.style)}</span>}
-                                        </span>
+                                        {isEditingColour ? (
+                                          <input
+                                            value={colourEdit.leatherDraft}
+                                            onChange={(event) => setColourEdit((previous) => previous ? { ...previous, leatherDraft: event.target.value.toUpperCase() } : previous)}
+                                            onClick={(event) => event.stopPropagation()}
+                                            onKeyDown={(event) => {
+                                              event.stopPropagation();
+                                              if (event.key === "Escape") setColourEdit(null);
+                                              if (event.key === "Enter") saveColourEdit();
+                                            }}
+                                            placeholder="Leather"
+                                            className="min-w-0 w-full rounded border px-1.5 py-1 text-xs font-medium uppercase bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                          />
+                                        ) : (
+                                          <span className="text-xs text-muted-foreground truncate">
+                                            {displayLeather(sku.leather || "", sku.style) || "—"}
+                                            {((sku as any).leather2 || dbMeta?.leather2) && <span> / {displayLeather(((sku as any).leather2 || dbMeta?.leather2)!, sku.style)}</span>}
+                                          </span>
+                                        )}
                                         {/* Size 11 — only show badge if YES */}
                                         <span className="text-xs text-center">
                                           {styleSize11 ? (
@@ -1697,7 +1716,7 @@ export default function StylesTab() {
                                         {isNew && (
                                           <span className="text-xs text-center" onClick={(e) => e.stopPropagation()}>
                                             <button
-                                              onClick={(e) => { e.stopPropagation(); handleSampleToggle(sku.style, sourceColour, sku.leather, dbMeta?.sampleStatus); }}
+                                              onClick={(e) => { e.stopPropagation(); handleSampleToggle(sku.style, sourceColour, sourceLeather, dbMeta?.sampleStatus); }}
                               title={
                                 dbMeta?.sampleStatus === "received" ? "Sample received — click to reset to waiting" :
                                 dbMeta?.sampleStatus === "fitting_sample" ? "Fitting sample received (set via Fittings tab)" :
@@ -1752,8 +1771,8 @@ export default function StylesTab() {
                                                     disabled={!canEdit}
                                                     defaultValue={sessionAuQty || ""}
                                                     key={`au-${selectedSessionId}-${skuKey2}-${sessionAuQty}`}
-                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sku.leather, 'au', e.target.value)}
-                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sku.leather, 'au')}
+                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sourceLeather, 'au', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sourceLeather, 'au')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
                                                     className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
@@ -1768,8 +1787,8 @@ export default function StylesTab() {
                                                     disabled={!canEdit}
                                                     defaultValue={sessionUsaQty || ""}
                                                     key={`usa-${selectedSessionId}-${skuKey2}-${sessionUsaQty}`}
-                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sku.leather, 'usa', e.target.value)}
-                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sku.leather, 'usa')}
+                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sourceLeather, 'usa', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sourceLeather, 'usa')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
                                                     className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-blue-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
@@ -1784,8 +1803,8 @@ export default function StylesTab() {
                                                     disabled={!canEdit}
                                                     defaultValue={sessionNycQty || ""}
                                                     key={`nyc-${selectedSessionId}-${skuKey2}-${sessionNycQty}`}
-                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sku.leather, 'nyc', e.target.value)}
-                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sku.leather, 'nyc')}
+                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sourceLeather, 'nyc', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sourceLeather, 'nyc')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
                                                     className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-purple-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
@@ -1800,8 +1819,8 @@ export default function StylesTab() {
                                                     disabled={!canEdit}
                                                     defaultValue={sessionLaQty || ""}
                                                     key={`la-${selectedSessionId}-${skuKey2}-${sessionLaQty}`}
-                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sku.leather, 'la', e.target.value)}
-                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sku.leather, 'la')}
+                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sourceLeather, 'la', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sourceLeather, 'la')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
                                                     className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-green-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
@@ -1837,7 +1856,7 @@ export default function StylesTab() {
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             if (confirm(`Cancel ${sku.colour} ${sku.leather} from ${sku.style}? It will be hidden from the range.`)) {
-                                              cancelSkuMutation.mutate({ style: sku.style, colour: sku.colour, leather: sku.leather });
+                                              cancelSkuMutation.mutate({ style: sku.style, colour: sourceColour, leather: sourceLeather });
                                             }
                                           }}
                                           className="p-1 rounded hover:bg-red-50 transition-colors flex-shrink-0"

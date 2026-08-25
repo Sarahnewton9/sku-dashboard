@@ -1,0 +1,1 @@
+ALTER TABLE `sku_meta` ADD `leatherOverride` varchar(64);

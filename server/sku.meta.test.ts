@@ -78,6 +78,7 @@ describe("sku.update", () => {
       colour: "BLACK",
       leather: "COMO",
       colourOverride: "BLACK PATENT",
+      leatherOverride: "PATENT",
     });
     expect(result).toEqual({ success: true });
   });
