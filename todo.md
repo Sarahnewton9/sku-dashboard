@@ -451,6 +451,7 @@
 - [x] Add ISLA, LUCKY, BAILEE, PRIYA, HOLLIE, PRYCE, FERGIE, VIVID, RAVE, KISS, NIKOH, JORJI, ESSA, and LENI to W27 Last Approvals
 - [x] Make W27 the default season when opening SKU Dash
 - [x] Create matching W27 styles for ISLA, LUCKY, BAILEE, PRIYA, HOLLIE, PRYCE, FERGIE, VIVID, RAVE, KISS, NIKOH, JORJI, ESSA, and LENI
+- [x] Make zero-colour W27 custom styles visible and searchable in By Style
 
 ## AP21 Product Import CSV — Colour Code Management (Jul 2026)
 - [x] Add colour_codes DB table (colourDescription, colourCode) with 544 seeded codes

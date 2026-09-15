@@ -3,6 +3,7 @@ import { skuData } from "@/lib/skuData";
 import { useMemo } from "react";
 import { useSeason } from "@/contexts/SeasonContext";
 import { buildMarkdownSkuSet, isMarkdownSku } from "@shared/markdownSku";
+import { summarizeCustomStyleSkus } from "@shared/customStyleSummary";
 
 export type CustomSkuRow = {
   id: number;
@@ -219,20 +220,12 @@ export function useCustomSkus() {
         // Priority: manual upload override > Tony Bianco website image
         const overrideUrl = imageOverrideMap[cs.style.toUpperCase()] ?? websiteImageMap[cs.style.toUpperCase()];
         const activeSkus = activeSkusByStyle[cs.style] ?? [];
-        if (activeSkus.length === 0) return null;
-        const customNewCount = activeSkus.filter((sku) => sku.is_new).length;
-        const totalSKUs = activeSkus.length;
+        const skuSummary = summarizeCustomStyleSkus(activeSkus);
         return {
           style: cs.style,
           last: cs.lastName,
           category: cs.category ?? "",
-          colours: Array.from(new Set(activeSkus.map((sku) => sku.colour))) as any[],
-          leathers: Array.from(new Set(activeSkus.map((sku) => sku.leather).filter(Boolean))) as any[],
-          totalSKUs,
-          newSKUs: customNewCount,
-          existingSKUs: totalSKUs - customNewCount,
-          hasNew: customNewCount > 0,
-          isAllNew: customNewCount === totalSKUs && totalSKUs > 0,
+          ...skuSummary,
           imageUrl: overrideUrl ?? undefined,
           _isCustomStyle: true,
         };
