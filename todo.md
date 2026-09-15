@@ -449,6 +449,7 @@
 - [x] Wire season filter to all data queries (buy sessions, analysis, fitting, specs, last approval)
 - [x] Verify all tabs respect active season
 - [x] Add ISLA, LUCKY, BAILEE, PRIYA, HOLLIE, PRYCE, FERGIE, VIVID, RAVE, KISS, NIKOH, JORJI, ESSA, and LENI to W27 Last Approvals
+- [x] Make W27 the default season when opening SKU Dash
 
 ## AP21 Product Import CSV — Colour Code Management (Jul 2026)
 - [x] Add colour_codes DB table (colourDescription, colourCode) with 544 seeded codes
