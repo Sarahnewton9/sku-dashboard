@@ -9,13 +9,15 @@
   "env_vars": {
     "DATABASE_URL": "mysql://2PKnJnyFBef7ny1.49968122eb9d:83pN3EpLdF7Fg2kzRY4n@gateway05.us-east-1.prod.aws.tidbcloud.com:4000/RGHTjKGQqzKd5FypxANQbT?ssl={\"rejectUnauthorized\":true}"
   },
-  "experiments": null,
+  "experiments": [
+    "no_db_push"
+  ],
   "git_remote": {
     "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663500263115/RGHTjKGQqzKd5FypxANQbT",
-    "access_key_id": "ASIAZV3A2ECZLSBSXHKO",
-    "secret_access_key": "7zvpIC2LrIEuNaLJAVll4x5yiiCLYBc3aTpexJ6V",
-    "session_token": "IQoJb3JpZ2luX2VjEJH//////////wEaCXVzLWVhc3QtMSJHMEUCIBZvaENS06i+9iD7ls8Iillr/D19YYs6SyHkUXJUjMyUAiEAljpkLkhbz4DUx1qm+wFx6ItOboRYuMVnFR/NHcfuYzQq9gMIWRAEGgw2NjUzODYwOTg4NjYiDO8PO9JuOF5HgmUaAyrTA4jRwV+4OcTWsuJ74PbbhhKBlbISvtuhFKqc+F/vi9WE9mhk+eFYsr2WKc9nGBx0ejVW7iEoAc9ft6cGgXLIMqNLU0ZWJoXO3B57mJyFP89eZaEzcHNeWqOLfBXEz3nV8G+KhR1jQ9C1rZ6MD7STUgV2DxouXJ7sa0UCqaHRPzP8xg9S7BTEn2eAre/AiL6jhhezdor1fMiUjvk7n/B3DoMD73a3GlMNrtX4mdhHkwtU3eRp6qEkmYnUV0gEeCoTrPS89n2742WN13FvYf5LGhmZZ/x5foiNw3vh8hpQWST4QFOx3wwWqPhiPYJQZKKBYWQrr7T9jhIaRqPweHIcoVHChjiU+PSY5mBb59Cq6e+l7QF3q6EEfL9YVyxE2DEB3DXK0RH4Z5pBRojziDnCZoINW6VSc9ijgLW3kbTfSWCSLI0S66s3p17HHalm4u9krDm1qJ/fMrEvd9ivCtqANw8f1EmiCWhdvMMgGtutCaAs+sFPwlcFZkZm4Ob1SucWF2Co3rXd+U0D3Xl2+R1ltLVZvt4toab+zmtkRE1k1o/PVxzoOoOrI6n2GmDxEDqbZ7Kpv/o25cysT8RG4dDAgoVWFuMhK/NQi17otLZg5RNYEFu6MLvpn9MGOp0BTbtam4JRQKvRCyHT9JNSvW0d5l5qvlJnIFIWQfmBQl/YDtTdeJi9gm4I5EKKWyoT+lI9LhMV0oEiJX697qAZThjbE3grqhqB9v09wNT1eKdkpOWK35u1mCmAsxmN7kJdcREoJvC/58aC5nlkbI+2dgBAv/80WrG02+Z5D81lex1XrpsCB4ygJ7TXdXgmzaplD+fKoJqZlJoxmXgFiA==",
-    "expiration": "2026-07-28T12:15:55.000Z",
+    "access_key_id": "ASIAZV3A2ECZFG7Y7SQP",
+    "secret_access_key": "X+I9ASS//vmNqXnGTpnGWpu9PHjw5ZR1dzd2MDU4",
+    "session_token": "IQoJb3JpZ2luX2VjEC4aCXVzLWVhc3QtMSJIMEYCIQDtiZJ6vhuQoduW0l1iI3CI2jTVaBXJT1cWymzlB7b4iQIhAP+H/3R2JmVt4RtAZfRv3WIYclgLH4I3CpB5SI8ScE3rKv8DCPb//////////wEQBBoMNjY1Mzg2MDk4ODY2IgyQxFUdZ57Unw4gFaEq0wNs914fCHKUk/gfOdqwNc2DsTiEVMS+CLCmo7rchDXWTnCYj+oe7mstgMgRcbOSGrS+4kW9rvuYcm8SokqEqgAYgmx91u369l8aRre4U2XyetXB090oWkLdqR6Bh0WD+NPJo0RLer+ORHA8jMNOJC8Dsu4pE7TgFyFaCKNd345lRcJjUdwJaUiysuiUY6aOUqO0BNw7Yuo7YvBUgRIFzcXGaGTqeiBV/4B3Q0KWTqyz6pA/MZ1pwymr3NXuW+lYpZO9GFjE2/Did+9yc+C60SQUa+s89yNS8jFM5olOCgkmOgFxqM5YwB0gww9I/wRGJ9DSnVRM9PKgL6GJKjBZa5zovS32SrNPJ6I9aJosUlULScXcGyZCFdzPadJcCBg9KdAGVDVOHDAAV8bY3YdzI+OlPId6JPilmZY16ImWz+IVqy0A50Gbs7to06EHwRSL8An7hfy94CqFQ7jAq8LXe/VS62B487ZDE/u/YPnhhsXjKCd2PQglxYekVFDZjp8LQOe0S7Tfe3cbvCMe8caaXf5yQm9z1goQUXTOXFEvVp/ZigT/TIq7pY5yzweQRpjA8jc2lEdoskXE5Zfc+JPmoqNZwakLLiHvCDVEAymnS5xFcDooaDClpKPVBjqcATshJrYDbVexetGa5fxARyOgCDKlqOCJxGlngPyb3K1k0+ch9E6v73VgprdHq/bBDogTapOFhGkyMUkOQ9RZYA6K7q9Z33AyAZyVkAcbbHy30pCdjY4MZy9HzPAH1d3JSt6seMGHC7jdgn7vmFYrIp01E+tpgrG0Yg28ooh4HB62iuZonfZ+F30ufJlxHHy5L16cQpUC3lvILNzLHw==",
+    "expiration": "2026-09-15T17:05:41.000Z",
     "backend": "GIT_BACKEND_S3"
   },
   "name": "sku-dashboard",
