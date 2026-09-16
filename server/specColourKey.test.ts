@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildSpecColourKeyLookup,
+  findSpecColourMapValue,
   getSpecSkuIdentity,
   normalizeStoredSpecColourKey,
   readSpecColourValue,
@@ -28,5 +29,12 @@ describe("normalized Specs colour keys", () => {
   it("normalizes persisted keys but preserves the shared custom-row key", () => {
     expect(normalizeStoredSpecColourKey("  black   mesh ")).toBe("BLACK MESH");
     expect(normalizeStoredSpecColourKey("__ALL__")).toBe("__all__");
+  });
+
+  it("reads custom-row map values through normalized current and legacy keys", () => {
+    const currentRows = new Map([["Blush Nubuck", { value: "matching" }]]);
+    const legacyRows = new Map([["Blush", { value: "matching" }]]);
+    expect(findSpecColourMapValue(currentRows, "BLUSH NUBUCK")?.value).toBe("matching");
+    expect(findSpecColourMapValue(legacyRows, "BLUSH CAPRETTO", "BLUSH")?.value).toBe("matching");
   });
 });

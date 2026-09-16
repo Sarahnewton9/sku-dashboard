@@ -414,14 +414,14 @@
 - [x] Add "X hidden rows" restore button below the table — popover lists all hidden rows with one-click restore
 
 ## Spec Tab - Uniform Colour Key Fix (Jul 2026)
-- [ ] Audit all spec data paths (save, display, copy, export) for colour key inconsistencies
-- [ ] Create a single normalised colour key helper used everywhere
-- [ ] Fix template row copy (onUpsert) to use normalised colour key
-- [ ] Fix template row display (specs lookup) to use normalised colour key
-- [ ] Fix custom row copy to use normalised colour key
-- [ ] Fix custom row display to use normalised colour key
-- [ ] Fix export to use normalised colour key
-- [ ] Run end-to-end tests to verify all paths
+- [x] Audit all spec data paths (save, display, copy, export) for colour key inconsistencies
+- [x] Create a single normalised colour key helper used everywhere
+- [x] Fix template row copy (onUpsert) to use normalised colour key
+- [x] Fix template row display (specs lookup) to use normalised colour key
+- [x] Fix custom row copy to use normalised colour key
+- [x] Fix custom row display to use normalised colour key
+- [x] Fix export to use normalised colour key
+- [x] Run end-to-end tests to verify all paths
 
 ## Upper 1 Pin + Toe Piece Always Available (Jul 2026)
 - [x] Pin Upper 1 row to always appear first in the spec table — cannot be dragged below other rows or deleted

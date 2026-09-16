@@ -78,3 +78,19 @@ export function readSpecColourValue(
   }
   return undefined;
 }
+
+export function findSpecColourMapValue<T>(
+  valuesByColour: ReadonlyMap<string, T>,
+  colour: string,
+  rawColour?: string,
+): T | undefined {
+  const valuesByNormalizedKey = new Map<string, T>();
+  for (const [storedKey, value] of Array.from(valuesByColour.entries())) {
+    valuesByNormalizedKey.set(normalizeSpecColourPart(storedKey), value);
+  }
+  for (const candidate of getSpecColourKeyCandidates(colour, rawColour)) {
+    const value = valuesByNormalizedKey.get(candidate);
+    if (value !== undefined) return value;
+  }
+  return undefined;
+}

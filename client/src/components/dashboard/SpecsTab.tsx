@@ -41,7 +41,7 @@ import { exportSpecSheet } from "@/lib/exportSpecSheet";
 import { parseSpecSheetFile, type ParsedSpecSheet } from "@/lib/importSpecSheet";
 import { getNewLastsForSeason } from "@shared/const";
 import { useSeason } from "@/contexts/SeasonContext";
-import { normalizeStoredSpecColourKey } from "@shared/specColourKey";
+import { findSpecColourMapValue, normalizeStoredSpecColourKey } from "@shared/specColourKey";
 import { shouldIncludeStyleInSpecs } from "@shared/specsStyleVisibility";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -684,8 +684,7 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForCol
         if (isAllRow) {
           cellValue = row.value ?? "";
         } else {
-          const colourRow = rowGroup.get(colour)
-            ?? rowGroup.get(colour.split(" ")[0]); // short-colour fallback
+          const colourRow = findSpecColourMapValue(rowGroup, colour);
           cellValue = colourRow ? (colourRow.value ?? "") : "";
         }
         // Normalise to lowercase so it matches the normalised allDropdownOptions keys
@@ -703,7 +702,7 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForCol
                   onUpdateForColour(row.id, row.title, colour, v, sharedValue, row.section, row.sortOrder);
                 } else {
                   // Try full colour key first, then short-colour fallback (legacy values stored under short name)
-                  const colourRow = rowGroup.get(colour) ?? rowGroup.get(colour.split(" ")[0]);
+                  const colourRow = findSpecColourMapValue(rowGroup, colour);
                   if (colourRow) {
                     onUpdate(colourRow.id, colourRow.title, v);
                   } else {
@@ -1523,11 +1522,8 @@ function SpecForm({
         // 1. exact raw source colour (e.g. "BLUSH")
         // 2. short colour name (first word, for legacy compound keys)
         // 3. __all__ (shared value row)
-        const sourceRow =
-          colourMap.get(rawSourceColour) ??
-          colourMap.get(shortSourceColour) ??
-          colourMap.get(sourceColour) ??
-          colourMap.get("__all__");
+        const sourceRow = findSpecColourMapValue(colourMap, sourceColour, rawSourceColour)
+          ?? colourMap.get("__all__");
         const sourceVal = sourceRow?.value ?? null;
         if (!sourceVal) continue; // nothing to copy
         // Current shared value (used by server to decide whether to explode __all__ row)
