@@ -34,9 +34,9 @@ export default function BuyAnalysisTab() {
   const [locationMarket, setLocationMarket] = useState<BuyLocation>("la");
   const [expandedLocationStyles, setExpandedLocationStyles] = useState<Set<string>>(new Set());
 
-  const { mergedRawSkus, mergedStyles } = useCustomSkus();
-  const { cancelledSet: cancelledStyleSet } = useCancelledStyles();
   const { season } = useSeason();
+  const { mergedRawSkus, mergedStyles } = useCustomSkus();
+  const { cancelledSet: cancelledStyleSet } = useCancelledStyles(season);
   const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery({ season });
   const cancelledSkuSet = useMemo(
     () => new Set((cancelledSkusRaw as any[]).map((r: any) => `${r.style}|${r.colour}|${r.leather}`)),

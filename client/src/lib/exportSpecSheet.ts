@@ -25,6 +25,7 @@
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { getTemplateForCategory } from "@shared/specTemplates";
+import { readSpecColourValue } from "@shared/specColourKey";
 
 interface CustomRow {
   id: number;
@@ -306,27 +307,8 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
       if (!isNaN(id)) {
         const cr = customRowById.get(id);
         if (cr) {
-          // Try colourLabel first
-          const byLabel = cr.valuesByColour[colour];
-          if (byLabel !== undefined && byLabel !== "") return byLabel;
-          // Try rawColour (may differ from label)
-          if (rawColour && rawColour !== colour) {
-            const byRaw = cr.valuesByColour[rawColour];
-            if (byRaw !== undefined && byRaw !== "") return byRaw;
-          }
-          // Try short colour name (first word) — handles legacy values stored before leather suffix was added
-          const shortColour = colour.split(" ")[0];
-          if (shortColour && shortColour !== colour) {
-            const byShort = cr.valuesByColour[shortColour];
-            if (byShort !== undefined && byShort !== "") return byShort;
-          }
-          if (rawColour) {
-            const shortRaw = rawColour.split(" ")[0];
-            if (shortRaw && shortRaw !== shortColour && shortRaw !== rawColour) {
-              const byShortRaw = cr.valuesByColour[shortRaw];
-              if (byShortRaw !== undefined && byShortRaw !== "") return byShortRaw;
-            }
-          }
+          const savedValue = readSpecColourValue(cr.valuesByColour, colour, rawColour);
+          if (savedValue !== undefined) return savedValue;
           // Fall back to __all__ shared value (empty string is valid — return it)
           return cr.valuesByColour["__all__"] ?? "";
         }

@@ -135,7 +135,7 @@ export default function Dashboard() {
 
   // Live SKU counts (includes custom SKUs from DB, excludes cancelled)
   const { mergedRawSkus } = useCustomSkus();
-  const { cancelledSet: cancelledStyleSet } = useCancelledStyles();
+  const { cancelledSet: cancelledStyleSet } = useCancelledStyles(season);
   const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery({ season });
   const cancelledSkuSet = useMemo(() => {
     const s = new Set<string>();

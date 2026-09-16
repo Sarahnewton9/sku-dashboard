@@ -15,9 +15,9 @@ import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils
 import { useSeason } from "@/contexts/SeasonContext";
 
 export default function BuySessionsPanel() {
-  const { mergedStyles } = useCustomSkus();
-  const { cancelledSet: cancelledStyleSet } = useCancelledStyles();
   const { season } = useSeason();
+  const { mergedStyles } = useCustomSkus();
+  const { cancelledSet: cancelledStyleSet } = useCancelledStyles(season);
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);

@@ -4,6 +4,7 @@ import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { displayColourLeather } from "@/lib/utils";
 import { buildEditableCustomSkuColumns } from "@shared/specSkuColumns";
+import { buildSpecColourKeyLookup, getSpecSkuIdentity, normalizeSpecColourPart } from "@shared/specColourKey";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ import { exportSpecSheet } from "@/lib/exportSpecSheet";
 import { parseSpecSheetFile, type ParsedSpecSheet } from "@/lib/importSpecSheet";
 import { getNewLastsForSeason } from "@shared/const";
 import { useSeason } from "@/contexts/SeasonContext";
+import { normalizeStoredSpecColourKey } from "@shared/specColourKey";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -2173,32 +2175,25 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   // Build colour+leather lookup from live merged raw SKUs
   // For styles with duplicate colours (different leathers), the key is "COLOUR LEATHER"
+  const SPEC_COLOUR_KEY_BY_SKU = useMemo(
+    () => buildSpecColourKeyLookup(mergedRawSkus as Array<{ style: string; colour: string; leather?: string | null }>),
+    [mergedRawSkus],
+  );
+
   const COLOUR_LEATHER_MAP = useMemo(() => {
-    // First pass: count leathers per colour per style
-    const leatherCount: Record<string, Record<string, Set<string>>> = {};
-    for (const sku of mergedRawSkus as any[]) {
-      const style = sku.style as string;
-      const colour = sku.colour as string;
-      const leather = (sku.leather as string) ?? "";
-      if (!leatherCount[style]) leatherCount[style] = {};
-      if (!leatherCount[style][colour]) leatherCount[style][colour] = new Set();
-      leatherCount[style][colour].add(leather);
-    }
-    // Second pass: build the map
     const map: Record<string, Record<string, string>> = {};
     for (const sku of mergedRawSkus as any[]) {
-      const style = sku.style as string;
-      const colour = sku.colour as string;
-      const leather = (sku.leather as string) ?? "";
+      const style = normalizeSpecColourPart(sku.style as string);
+      const colour = normalizeSpecColourPart(sku.colour as string);
+      const leather = normalizeSpecColourPart((sku.leather as string) ?? "");
       if (!map[style]) map[style] = {};
-      const hasDuplicates = (leatherCount[style]?.[colour]?.size ?? 0) > 1;
-      const key = hasDuplicates && leather ? `${colour} ${leather}` : colour;
+      const key = SPEC_COLOUR_KEY_BY_SKU.get(getSpecSkuIdentity(style, colour, leather)) ?? colour;
       if (!map[style][key]) {
         map[style][key] = leather ? displayColourLeather(colour, leather, style) : colour;
       }
     }
     return map;
-  }, [mergedRawSkus]);
+  }, [mergedRawSkus, SPEC_COLOUR_KEY_BY_SKU]);
 
   // All colour+leather combos (for upper_1 dropdown)
   const ALL_COLOUR_LEATHER_OPTIONS = useMemo(() => {
@@ -2215,31 +2210,19 @@ export default function SpecsTab({}: SpecsTabProps) {
   // Build toe cap map: style → colour key → toe cap leather
   // Uses the same colour key logic as NEW_COLOURS_PER_STYLE ("COLOUR LEATHER" for multi-leather styles)
   const TOE_CAP_MAP = useMemo(() => {
-    // First pass: detect multi-leather styles
-    const leatherCount: Record<string, Record<string, Set<string>>> = {};
-    for (const sku of mergedRawSkus as any[]) {
-      const style = sku.style as string;
-      const colour = sku.colour as string;
-      const leather = (sku.leather as string) ?? "";
-      if (!leatherCount[style]) leatherCount[style] = {};
-      if (!leatherCount[style][colour]) leatherCount[style][colour] = new Set();
-      leatherCount[style][colour].add(leather);
-    }
-    // Second pass: build map
     const map: Record<string, Record<string, string>> = {};
     for (const sku of mergedRawSkus as any[]) {
       const toeCap = (sku.toe_cap as string) ?? "";
       if (!toeCap) continue;
-      const style = sku.style as string;
-      const colour = sku.colour as string;
-      const leather = (sku.leather as string) ?? "";
-      const hasDuplicates = (leatherCount[style]?.[colour]?.size ?? 0) > 1;
-      const key = hasDuplicates && leather ? `${colour} ${leather}` : colour;
+      const style = normalizeSpecColourPart(sku.style as string);
+      const colour = normalizeSpecColourPart(sku.colour as string);
+      const leather = normalizeSpecColourPart((sku.leather as string) ?? "");
+      const key = SPEC_COLOUR_KEY_BY_SKU.get(getSpecSkuIdentity(style, colour, leather)) ?? colour;
       if (!map[style]) map[style] = {};
       map[style][key] = toeCap;
     }
     return map;
-  }, [mergedRawSkus]);
+  }, [mergedRawSkus, SPEC_COLOUR_KEY_BY_SKU]);
 
   // Build new colours per style from live merged raw SKUs
   // When a colour appears with multiple leathers (e.g. TILDA BLACK/CRINKLE + BLACK/SPECKLE),
@@ -2437,15 +2420,14 @@ export default function SpecsTab({}: SpecsTabProps) {
     // Now build a set of "style|colourKey" strings for cancelled SKUs
     const set = new Set<string>();
     for (const row of cancelledSkusRaw as any[]) {
-      const style = row.style as string;
-      const colour = row.colour as string;
-      const leather = (row.leather as string) ?? "";
-      const isMultiLeather = (leatherCount[style]?.[colour]?.size ?? 0) > 1;
-      const colourKey = isMultiLeather && leather ? `${colour} ${leather}` : colour;
+      const style = normalizeSpecColourPart(row.style as string);
+      const colour = normalizeSpecColourPart(row.colour as string);
+      const leather = normalizeSpecColourPart((row.leather as string) ?? "");
+      const colourKey = SPEC_COLOUR_KEY_BY_SKU.get(getSpecSkuIdentity(style, colour, leather)) ?? colour;
       set.add(`${style}|${colourKey}`);
     }
     return set;
-  }, [cancelledSkusRaw, mergedRawSkus]);
+  }, [cancelledSkusRaw, SPEC_COLOUR_KEY_BY_SKU]);
 
   // Filter cancelled styles + cancelled SKUs from the base list
   // (custom SKUs are already merged into baseStyleList via mergedRawSkus)
@@ -2695,8 +2677,9 @@ export default function SpecsTab({}: SpecsTabProps) {
   // specs: colour → component → value
   const specs: Record<string, Record<string, string>> = {};
   for (const row of rawSpecs) {
-    if (!specs[row.colour]) specs[row.colour] = {};
-    specs[row.colour][row.component] = row.value ?? "";
+    const colourKey = normalizeStoredSpecColourKey(row.colour);
+    if (!specs[colourKey]) specs[colourKey] = {};
+    specs[colourKey][row.component] = row.value ?? "";
   }
 
   // allDropdownOptions: component → string[]
@@ -2903,7 +2886,7 @@ export default function SpecsTab({}: SpecsTabProps) {
       upsertCustomRowMutation.mutate({
         id,
         style: (row as any).style,
-        colour: (row as any).colour,
+        colour: normalizeStoredSpecColourKey((row as any).colour),
         section: (row as any).section,
         title,
         value,
@@ -2979,7 +2962,7 @@ export default function SpecsTab({}: SpecsTabProps) {
       section,
       title,
       sortOrder,
-      targetColour: colour,
+      targetColour: normalizeStoredSpecColourKey(colour),
       newValue,
       currentSharedValue,
       // IMPORTANT: use the UNFILTERED colourLabels list so that hidden columns are still included
@@ -2987,7 +2970,7 @@ export default function SpecsTab({}: SpecsTabProps) {
       // hidden colours and cause their values to never be saved.
       // We use colourLabels (e.g. "BLACK CAPRI") not raw colours (e.g. "BLACK") because
       // spec values are stored keyed by the full colour label.
-      allColours: selectedEntryRaw?.colourLabels ?? selectedEntry?.colourLabels ?? [],
+      allColours: (selectedEntryRaw?.colourLabels ?? selectedEntry?.colourLabels ?? []).map(normalizeStoredSpecColourKey),
     });
   }
 
@@ -3136,10 +3119,10 @@ export default function SpecsTab({}: SpecsTabProps) {
   function handleUpsert(colour: string, component: string, value: string) {
     if (!selectedStyle) return;
     // Pass colours + rowKeys so server can auto-check completion status
-    const colours = selectedEntry?.colours ?? [];
+    const colours = (selectedEntry?.colours ?? []).map(normalizeStoredSpecColourKey);
     const rowKeys = exportRowOrderData?.rowKeys ?? [];
     upsertMutation.mutate(
-      { style: selectedStyle, colour, component, value, colours, rowKeys },
+      { style: selectedStyle, colour: normalizeStoredSpecColourKey(colour), component, value, colours, rowKeys },
       {
         onSettled: () => {
           // Refresh status after save (server may have auto-promoted to complete)
@@ -3153,7 +3136,7 @@ export default function SpecsTab({}: SpecsTabProps) {
   function handleBulkAutoFill(rows: Array<{ style: string; colour: string; component: string; value: string }>) {
     if (rows.length === 0) return;
     bulkUpsertMutation.mutate(
-      { rows, overwrite: false },
+      { rows: rows.map((row) => ({ ...row, colour: normalizeStoredSpecColourKey(row.colour) })), overwrite: false },
       {
         onSuccess: () => {
           utils.specs.getForStyle.invalidate({ style: rows[0].style });
@@ -3166,7 +3149,7 @@ export default function SpecsTab({}: SpecsTabProps) {
   function handleBulkCopy(rows: Array<{ style: string; colour: string; component: string; value: string }>) {
     if (rows.length === 0) return;
     bulkUpsertMutation.mutate(
-      { rows, overwrite: true },
+      { rows: rows.map((row) => ({ ...row, colour: normalizeStoredSpecColourKey(row.colour) })), overwrite: true },
       {
         onSuccess: () => {
           utils.specs.getForStyle.invalidate({ style: rows[0].style });

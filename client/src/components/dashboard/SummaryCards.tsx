@@ -110,7 +110,7 @@ export default function SummaryCards() {
   const { season } = useSeason();
   // Live data: custom SKUs from DB merged with static data
   const { mergedRawSkus } = useCustomSkus();
-  const { cancelledSet: cancelledStyleSet } = useCancelledStyles();
+  const { cancelledSet: cancelledStyleSet } = useCancelledStyles(season);
   const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery({ season });
 
   // Build cancelled SKU set

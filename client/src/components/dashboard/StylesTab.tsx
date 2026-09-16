@@ -103,6 +103,7 @@ export default function StylesTab() {
   const pendingQty = useRef<Record<string, number>>({});
 
   const utils = trpc.useUtils();
+  const { season } = useSeason();
 
   // Heel heights from DB (for Dress Shoe, Dress Sandal, Wedge categories)
   const { data: heelHeightData = [] } = trpc.heelHeight.getAll.useQuery(undefined, { staleTime: 300_000 });
@@ -116,7 +117,7 @@ export default function StylesTab() {
   const HEEL_HEIGHT_CATEGORIES = new Set(["DRESS SHOE", "DRESS SANDAL", "WEDGE", "DRESS WEDGE", "CASUAL WEDGE"]);
 
   // Cancelled styles
-  const { cancelledSet, raw: cancelledList } = useCancelledStyles();
+  const { cancelledSet, raw: cancelledList } = useCancelledStyles(season);
   const [cancelledSectionOpen, setCancelledSectionOpen] = useState(false);
 
   const cancelStyleMutation = trpc.styles.cancel.useMutation({
@@ -181,8 +182,6 @@ export default function StylesTab() {
 
   // Fitting images for approved styles
   const { data: allFitImages = [], refetch: refetchFitImages } = trpc.styleFitting.getAll.useQuery(undefined, { staleTime: 60_000 });
-
-  const { season } = useSeason();
 
   // All fitting sessions — used for the Fitting Status filter
   const { data: allFittingSessions = [] } = trpc.fittingSession.getAll.useQuery({ season }, { staleTime: 30_000 });
