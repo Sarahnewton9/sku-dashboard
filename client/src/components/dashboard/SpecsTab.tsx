@@ -42,6 +42,7 @@ import { parseSpecSheetFile, type ParsedSpecSheet } from "@/lib/importSpecSheet"
 import { getNewLastsForSeason } from "@shared/const";
 import { useSeason } from "@/contexts/SeasonContext";
 import { normalizeStoredSpecColourKey } from "@shared/specColourKey";
+import { shouldIncludeStyleInSpecs } from "@shared/specsStyleVisibility";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -2281,7 +2282,7 @@ export default function SpecsTab({}: SpecsTabProps) {
         const lastUpper = (s.last ?? "").toUpperCase();
         // Use season-specific new lasts so W27 shows empty specs list (no new lasts yet)
         const isOnNewLast = seasonNewLasts.some((nl) => lastUpper.includes(nl));
-        return isOnNewLast || s.isAllNew;
+        return shouldIncludeStyleInSpecs({ isOnNewLast, hasNewColours: s.hasNew });
       })
       .map((s) => {
         const newColours: string[] = NEW_COLOURS_PER_STYLE[s.style] ?? [];

@@ -454,6 +454,7 @@
 - [x] Make zero-colour W27 custom styles visible and searchable in By Style
 - [x] Clear all W27 cancelled style and SKU records, then restore ESSA visibility in By Style
 - [x] Fix production ReferenceError: Cannot access initialization variable before startup
+- [x] Show existing styles in Specs when they receive new colours, but display only new seasonal colour columns
 
 ## AP21 Product Import CSV — Colour Code Management (Jul 2026)
 - [x] Add colour_codes DB table (colourDescription, colourCode) with 544 seeded codes
