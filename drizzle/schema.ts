@@ -319,9 +319,12 @@ export type InsertStyleImageOverride = typeof styleImageOverrides.$inferInsert;
  */
 export const cancelledStyles = mysqlTable("cancelled_styles", {
   id: int("id").autoincrement().primaryKey(),
-  style: varchar("style", { length: 64 }).notNull().unique(),
+  style: varchar("style", { length: 64 }).notNull(),
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
   cancelledAt: timestamp("cancelledAt").defaultNow().notNull(),
-});
+}, (t) => ({
+  styleSeasonUniq: uniqueIndex("cancelled_styles_style_season_uniq").on(t.style, t.season),
+}));
 
 export type CancelledStyle = typeof cancelledStyles.$inferSelect;
 export type InsertCancelledStyle = typeof cancelledStyles.$inferInsert;
@@ -369,9 +372,10 @@ export const cancelledSkus = mysqlTable("cancelled_skus", {
   style: varchar("style", { length: 64 }).notNull(),
   colour: varchar("colour", { length: 64 }).notNull(),
   leather: varchar("leather", { length: 64 }).notNull().default(""),
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
   cancelledAt: timestamp("cancelledAt").defaultNow().notNull(),
 }, (t) => ({
-  uniq: uniqueIndex("cancelled_skus_uniq").on(t.style, t.colour, t.leather),
+  uniq: uniqueIndex("cancelled_skus_season_uniq").on(t.style, t.colour, t.leather, t.season),
 }));
 
 export type CancelledSku = typeof cancelledSkus.$inferSelect;

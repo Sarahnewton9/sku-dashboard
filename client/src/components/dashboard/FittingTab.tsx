@@ -1660,12 +1660,12 @@ export function FittingTab() {
   }, [customLastsData]);
 
   // ── Cancelled styles + cancelled SKUs ─────────────────────────────────────
-  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery(undefined, { staleTime: 30_000 });
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery({ season }, { staleTime: 30_000 });
   const cancelledStyleSet = useMemo(
     () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),
     [cancelledStylesRaw]
   );
-  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery(undefined, { staleTime: 30_000 });
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery({ season }, { staleTime: 30_000 });
   const cancelledSkuSet = useMemo(
     () => new Set((cancelledSkusRaw as any[]).map((r: any) => `${r.style}|${r.colour}` as string)),
     [cancelledSkusRaw]

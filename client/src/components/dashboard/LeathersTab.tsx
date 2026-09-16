@@ -8,6 +8,7 @@ import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { trpc } from "@/lib/trpc";
 import { Calculator } from "lucide-react";
 import { displayLeather, displayColour, displayColourLeather } from "@/lib/utils";
+import { useSeason } from "@/contexts/SeasonContext";
 
 type RawSku = { style: string; colour: string; leather: string; is_new: boolean };
 
@@ -28,6 +29,7 @@ export default function LeathersTab() {
   const [showNewOnly, setShowNewOnly] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
   const [useOrderQty, setUseOrderQty] = useState(false);
+  const { season } = useSeason();
 
   const { mergedRawSkus } = useCustomSkus();
 
@@ -35,8 +37,8 @@ export default function LeathersTab() {
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
 
   // Fetch cancelled styles and SKUs
-  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
-  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery({ season });
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery({ season });
 
   const cancelledStyleSet = useMemo(
     () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),

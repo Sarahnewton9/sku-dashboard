@@ -2404,14 +2404,14 @@ export default function SpecsTab({}: SpecsTabProps) {
   const bulkFileRef = React.useRef<HTMLInputElement>(null);
 
   // ── Cancelled styles + cancelled SKUs + custom SKUs ─────────────────────
-  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery({ season });
   const cancelledSet = useMemo(
     () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),
     [cancelledStylesRaw]
   );
 
   // Individually cancelled SKUs (style|colour|leather)
-  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery({ season });
   const cancelledSkuSet = useMemo(() => {
     const set = new Set<string>();
     for (const row of cancelledSkusRaw as any[]) {
@@ -2569,7 +2569,7 @@ export default function SpecsTab({}: SpecsTabProps) {
     onError: () => toast.error("Failed to restore colour"),
   });
   function handleRestoreCancelledColour(style: string, colour: string, leather: string) {
-    restoreCancelledSkuMutation.mutate({ style, colour, leather });
+    restoreCancelledSkuMutation.mutate({ style, colour, leather, season });
   }
   // ─── Spec Status ──────────────────────────────────────────────────────────
   // ─── Bulk Status ─────────────────────────────────────────────────────────────

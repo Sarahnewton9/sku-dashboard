@@ -11,6 +11,7 @@ import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { trpc } from "@/lib/trpc";
 import { displayColourLeather } from "@/lib/utils";
+import { useSeason } from "@/contexts/SeasonContext";
 
 interface ComboSku {
   style: string;
@@ -121,12 +122,13 @@ export default function ColourLeatherTab() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "new" | "existing">("all");
   const [openKeys, setOpenKeys] = useState<Set<string>>(new Set());
+  const { season } = useSeason();
 
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
 
   // Fetch cancelled styles and cancelled SKUs so they can be filtered out
-  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
-  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery({ season });
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery({ season });
 
   const cancelledStyleSet = useMemo(
     () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),

@@ -9,6 +9,7 @@ import { useState, useMemo } from "react";
 import { skuData } from "@/lib/skuData";
 import { trpc } from "@/lib/trpc";
 import { Search } from "lucide-react";
+import { useSeason } from "@/contexts/SeasonContext";
 
 type BucketType = "Well covered" | "Good coverage" | "Expand" | "Priority expand";
 
@@ -184,10 +185,11 @@ function BucketSection({ bucket, items }: { bucket: BucketType; items: Expansion
 
 export default function ExpansionTab() {
   const [search, setSearch] = useState("");
+  const { season } = useSeason();
 
   // Fetch cancelled styles and SKUs
-  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
-  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery({ season });
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery({ season });
 
   const cancelledStyleSet = useMemo(
     () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),

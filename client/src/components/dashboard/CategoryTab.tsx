@@ -10,6 +10,7 @@ import { skuData } from "@/lib/skuData";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { trpc } from "@/lib/trpc";
+import { useSeason } from "@/contexts/SeasonContext";
 
 const BOOT_COLOUR = "#290008";        // Back Bean — all boots
 const WEDGE_COLOUR = "#123622";       // Dark Green — all wedges
@@ -88,10 +89,11 @@ const TREND_ICONS: Record<string, string> = {
 export default function CategoryTab() {
   const { getCategory, getTrendFlag, getTrends, allTrends } = useStyleCategories();
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
+  const { season } = useSeason();
 
   // Fetch cancelled styles and SKUs
-  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
-  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery({ season });
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery({ season });
 
   const cancelledStyleSet = useMemo(
     () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),

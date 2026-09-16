@@ -5,6 +5,7 @@
 import { useState, useMemo } from "react";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { trpc } from "@/lib/trpc";
+import { useSeason } from "@/contexts/SeasonContext";
 
 // Map colour names to approximate hex values for visual swatches
 const COLOUR_SWATCHES: Record<string, string> = {
@@ -97,10 +98,11 @@ function ColourSwatch({ colour }: { colour: string }) {
 
 export default function ColoursTab() {
   const [showNewOnly, setShowNewOnly] = useState(false);
+  const { season } = useSeason();
 
   // Fetch cancelled styles and SKUs
-  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
-  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery();
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery({ season });
+  const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery({ season });
 
   const cancelledStyleSet = useMemo(
     () => new Set((cancelledStylesRaw as any[]).map((r: any) => r.style as string)),

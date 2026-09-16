@@ -130,7 +130,7 @@ export default function StylesTab() {
   });
 
   // Cancelled SKUs
-  const { data: cancelledSkuList = [], refetch: refetchCancelledSkus } = trpc.cancelledSku.list.useQuery(undefined, { staleTime: 30_000 });
+  const { data: cancelledSkuList = [], refetch: refetchCancelledSkus } = trpc.cancelledSku.list.useQuery({ season }, { staleTime: 30_000 });
   const [cancelledSkuSectionOpen, setCancelledSkuSectionOpen] = useState(false);
 
   const cancelledSkuSet = useMemo(() => {
@@ -211,7 +211,7 @@ export default function StylesTab() {
       const allCancelled = styleSkus.every((r) => cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`));
       if (allCancelled) {
         autoCancelledRef.current.add(s.style);
-        cancelStyleMutation.mutate({ style: s.style });
+        cancelStyleMutation.mutate({ style: s.style, season });
       }
     }
   }, [cancelledSkuSet, mergedStyles, mergedRawSkus, cancelledSet, cancelledSkuList]);
@@ -1434,7 +1434,7 @@ export default function StylesTab() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (confirm(`Cancel ${style.style}? It will be hidden across the dashboard. You can restore it later.`)) {
-                                    cancelStyleMutation.mutate({ style: style.style });
+                                    cancelStyleMutation.mutate({ style: style.style, season });
                                     toast.success(`${style.style} cancelled`);
                                   }
                                 }}
@@ -1856,7 +1856,7 @@ export default function StylesTab() {
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             if (confirm(`Cancel ${sku.colour} ${sku.leather} from ${sku.style}? It will be hidden from the range.`)) {
-                                              cancelSkuMutation.mutate({ style: sku.style, colour: sourceColour, leather: sourceLeather });
+                                              cancelSkuMutation.mutate({ style: sku.style, colour: sourceColour, leather: sourceLeather, season });
                                             }
                                           }}
                                           className="p-1 rounded hover:bg-red-50 transition-colors flex-shrink-0"
@@ -2084,7 +2084,7 @@ export default function StylesTab() {
                     </div>
                     <button
                       onClick={() => {
-                        restoreStyleMutation.mutate({ style: row.style });
+                        restoreStyleMutation.mutate({ style: row.style, season });
                         toast.success(`${row.style} restored`);
                       }}
                       className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-muted transition-colors text-muted-foreground"
@@ -2130,7 +2130,7 @@ export default function StylesTab() {
                   </div>
                   <button
                     onClick={() => {
-                      restoreSkuMutation.mutate({ style: row.style, colour: row.colour, leather: row.leather });
+                      restoreSkuMutation.mutate({ style: row.style, colour: row.colour, leather: row.leather, season });
                       toast.success(`${displayColourLeather(row.colour, row.leather, row.style)} restored to ${row.style}`);
                     }}
                     className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-muted transition-colors text-muted-foreground"

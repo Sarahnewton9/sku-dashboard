@@ -926,19 +926,20 @@ export const appRouter = router({
 
   styles: router({
     listCancelled: publicProcedure
-      .query(async () => listCancelledStyles()),
+      .input(z.object({ season: z.string().default("SS26") }))
+      .query(async ({ input }) => listCancelledStyles(input.season)),
 
     cancel: publicProcedure
-      .input(z.object({ style: z.string() }))
+      .input(z.object({ style: z.string(), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
-        await cancelStyle(input.style);
+        await cancelStyle(input.style, input.season);
         return { success: true };
       }),
 
     restore: publicProcedure
-      .input(z.object({ style: z.string() }))
+      .input(z.object({ style: z.string(), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
-        await restoreStyle(input.style);
+        await restoreStyle(input.style, input.season);
         return { success: true };
       }),
   }),
@@ -959,7 +960,7 @@ export const appRouter = router({
         // Build the compound colour key the same way the spec sheet does.
         const colourKey = leather ? `${colour} ${leather}` : colour;
         await showSpecColumn(style, colourKey);
-        await restoreSku(style, colour, leather);
+        await restoreSku(style, colour, leather, season);
         return { id, restored: false };
       }),
 
@@ -1018,19 +1019,21 @@ export const appRouter = router({
   }),
 
   cancelledSku: router({
-    list: publicProcedure.query(async () => listCancelledSkus()),
+    list: publicProcedure
+      .input(z.object({ season: z.string().default("SS26") }))
+      .query(async ({ input }) => listCancelledSkus(input.season)),
 
     cancel: publicProcedure
-      .input(z.object({ style: z.string(), colour: z.string(), leather: z.string() }))
+      .input(z.object({ style: z.string(), colour: z.string(), leather: z.string(), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
-        await cancelSku(input.style, input.colour, input.leather);
+        await cancelSku(input.style, input.colour, input.leather, input.season);
         return { success: true };
       }),
 
     restore: publicProcedure
-      .input(z.object({ style: z.string(), colour: z.string(), leather: z.string() }))
+      .input(z.object({ style: z.string(), colour: z.string(), leather: z.string(), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
-        await restoreSku(input.style, input.colour, input.leather);
+        await restoreSku(input.style, input.colour, input.leather, input.season);
         return { success: true };
       }),
   }),

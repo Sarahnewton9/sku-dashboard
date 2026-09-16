@@ -107,10 +107,11 @@ function MetricCard({ label, value, icon: Icon, accent, accentColor = "amber", s
 }
 
 export default function SummaryCards() {
+  const { season } = useSeason();
   // Live data: custom SKUs from DB merged with static data
   const { mergedRawSkus } = useCustomSkus();
   const { cancelledSet: cancelledStyleSet } = useCancelledStyles();
-  const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery();
+  const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery({ season });
 
   // Build cancelled SKU set
   const cancelledSkuSet = useMemo(() => {
@@ -188,7 +189,6 @@ export default function SummaryCards() {
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
 
   // Fetch last approval data — same sources as LastApprovalTab
-  const { season } = useSeason();
   const { data: lastApprovals = [] } = trpc.lastApproval.getAll.useQuery({ season });
   const { data: deletedLastsFromDb = [] } = trpc.lastApproval.getDeleted.useQuery({ season });
   const { data: customLastsFromDb = [] } = trpc.customLast.getAll.useQuery({ season });

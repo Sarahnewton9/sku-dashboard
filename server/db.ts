@@ -394,29 +394,30 @@ export async function upsertBuySessionItem(
 
 // ─── Cancelled SKUs ─────────────────────────────────────────────────────────────────────────────
 
-export async function cancelSku(style: string, colour: string, leather: string) {
+export async function cancelSku(style: string, colour: string, leather: string, season = "SS26") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(cancelledSkus).values({ style, colour, leather })
+  await db.insert(cancelledSkus).values({ style, colour, leather, season })
     .onDuplicateKeyUpdate({ set: { cancelledAt: new Date() } });
 }
 
-export async function restoreSku(style: string, colour: string, leather: string) {
+export async function restoreSku(style: string, colour: string, leather: string, season = "SS26") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(cancelledSkus).where(
     and(
       eq(cancelledSkus.style, style),
       eq(cancelledSkus.colour, colour),
-      eq(cancelledSkus.leather, leather)
+      eq(cancelledSkus.leather, leather),
+      eq(cancelledSkus.season, season)
     )
   );
 }
 
-export async function listCancelledSkus() {
+export async function listCancelledSkus(season = "SS26") {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(cancelledSkus);
+  return db.select().from(cancelledSkus).where(eq(cancelledSkus.season, season));
 }
 
 // ─── Style Sub-Categories ─────────────────────────────────────────────────────────────────────────
@@ -811,24 +812,26 @@ export async function getAllStyleImageOverrides(): Promise<{ style: string; imag
 
 // ─── Cancelled Styles ─────────────────────────────────────────────────────────
 
-export async function cancelStyle(style: string): Promise<void> {
+export async function cancelStyle(style: string, season = "SS26"): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.insert(cancelledStyles)
-    .values({ style })
-    .onDuplicateKeyUpdate({ set: { style } }); // idempotent
+    .values({ style, season })
+    .onDuplicateKeyUpdate({ set: { cancelledAt: new Date() } }); // idempotent
 }
 
-export async function restoreStyle(style: string): Promise<void> {
+export async function restoreStyle(style: string, season = "SS26"): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(cancelledStyles).where(eq(cancelledStyles.style, style));
+  await db.delete(cancelledStyles).where(and(eq(cancelledStyles.style, style), eq(cancelledStyles.season, season)));
 }
 
-export async function listCancelledStyles(): Promise<{ style: string; cancelledAt: Date }[]> {
+export async function listCancelledStyles(season = "SS26"): Promise<{ style: string; cancelledAt: Date }[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select({ style: cancelledStyles.style, cancelledAt: cancelledStyles.cancelledAt }).from(cancelledStyles);
+  return db.select({ style: cancelledStyles.style, cancelledAt: cancelledStyles.cancelledAt })
+    .from(cancelledStyles)
+    .where(eq(cancelledStyles.season, season));
 }
 
 // ─── Custom SKUs ───────────────────────────────────────────────────────────────

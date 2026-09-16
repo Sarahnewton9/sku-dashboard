@@ -82,7 +82,9 @@ export function useCustomSkus() {
 
   // Fetch custom styles (brand-new styles added manually, not in static skuData)
   const { data: customStyleRows = [], refetch: refetchCustomStyles } = trpc.customStyle.getAll.useQuery({ season }, {
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchInterval: 5_000,
   });
 
   // Fetch website images scraped from tonybianco.com.au (used as fallback when no manual override)

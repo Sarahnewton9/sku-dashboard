@@ -121,8 +121,8 @@ export default function ExportPanel({ onClose }: Props) {
 
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
   const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
-  const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery();
-  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery();
+  const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery({ season });
+  const { data: cancelledStylesRaw = [] } = trpc.styles.listCancelled.useQuery({ season });
   const { data: heelHeightData = [] } = trpc.heelHeight.getAll.useQuery();
   // Load all colour codes for AP21 lookup
   const { data: colourCodeList = [] } = trpc.colourCode.getAll.useQuery();
