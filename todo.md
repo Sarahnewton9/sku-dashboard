@@ -436,10 +436,10 @@
 - [x] BuyAnalysisTab.tsx UI: LA Pairs summary card (green), BarRow la prop (4th green segment), section subtitles updated, pairs breakdown table header/rows, SKU table header/rows/footer
 
 ## Winter Lasts Book Import Prep (Jul 2026)
-- [ ] Extract all lasts, styles, colours, and leathers from WINTERLASTS.pptx into a structured spreadsheet
-- [ ] Separate colour and leather into distinct columns for every extracted row
-- [ ] Validate the extracted spreadsheet against the slide deck and flag any ambiguous entries for review
-- [ ] Deliver the editable spreadsheet for user corrections before any DB upload
+- [x] Extract all lasts, styles, colours, and leathers from WINTERLASTS.pptx into a structured spreadsheet — not required; user confirmed only the supplied 14 new W27 lasts are needed
+- [x] Separate colour and leather into distinct columns for every extracted row — not required; user confirmed only the supplied 14 new W27 lasts are needed
+- [x] Validate the extracted spreadsheet against the slide deck and flag any ambiguous entries for review — not required; user confirmed only the supplied 14 new W27 lasts are needed
+- [x] Deliver the editable spreadsheet for user corrections before any DB upload — not required; user confirmed only the supplied 14 new W27 lasts are needed
 
 
 ## Winter 27 Season (Jul 2026)
