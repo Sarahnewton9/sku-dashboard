@@ -300,7 +300,7 @@ export default function Dashboard() {
               {activeTab === "buy-analysis" && "Breakdown of pairs bought per session by category, leather, and colour/leather combo"}
               {activeTab === "last-approval" && "16 new lasts — track approval status and notes per last"}
               {activeTab === "fitting" && "Style-level fit commentary and imagery for all styles on new lasts"}
-              {activeTab === "specs" && "Product specification sheets — per-colour component details for all new styles"}
+              {activeTab === "specs" && "Product specification sheets — search any active style and manage per-colour component details"}
             </p>
           </div>
           <div className="flex items-center gap-2">

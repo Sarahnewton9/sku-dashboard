@@ -456,6 +456,7 @@
 - [x] Fix production ReferenceError: Cannot access initialization variable before startup
 - [x] Show existing styles in Specs when they receive new colours, but display only new seasonal colour columns
 - [x] Reconcile all SS26 style and last records as W27 run-ons, retaining the 14 new W27 lasts
+- [x] Let Specs search and open all active core and run-on W27 styles so specifications can be added to any style
 
 ## AP21 Product Import CSV — Colour Code Management (Jul 2026)
 - [x] Add colour_codes DB table (colourDescription, colourCode) with 544 seeded codes

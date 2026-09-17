@@ -39,10 +39,9 @@ import {
 } from "@shared/specTemplates";
 import { exportSpecSheet } from "@/lib/exportSpecSheet";
 import { parseSpecSheetFile, type ParsedSpecSheet } from "@/lib/importSpecSheet";
-import { getNewLastsForSeason } from "@shared/const";
 import { useSeason } from "@/contexts/SeasonContext";
 import { findSpecColourMapValue, normalizeStoredSpecColourKey } from "@shared/specColourKey";
-import { shouldIncludeStyleInSpecs } from "@shared/specsStyleVisibility";
+import { selectSpecColourColumns } from "@shared/specsStyleVisibility";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -2267,28 +2266,38 @@ export default function SpecsTab({}: SpecsTabProps) {
     return result;
   }, [mergedRawSkus, mergedStyles]);
 
-  // Build base style list from live merged styles
-  const seasonNewLasts = useMemo(() => getNewLastsForSeason(season), [season]);
+  // Build all active colour columns from live merged raw SKUs. A style with new
+  // colours will use its new-only list below; carry-over/core styles use this
+  // full active list so a spec can be created or edited for any style.
+  const ACTIVE_COLOURS_PER_STYLE = useMemo(() => {
+    const result: Record<string, string[]> = {};
+    for (const sku of mergedRawSkus as any[]) {
+      const style = normalizeSpecColourPart(sku.style as string);
+      const colour = normalizeSpecColourPart(sku.colour as string);
+      const leather = normalizeSpecColourPart((sku.leather as string) ?? "");
+      const key = SPEC_COLOUR_KEY_BY_SKU.get(getSpecSkuIdentity(style, colour, leather)) ?? colour;
+      const colours = result[style] ?? [];
+      if (!colours.includes(key)) colours.push(key);
+      result[style] = colours;
+    }
+    return result;
+  }, [mergedRawSkus, SPEC_COLOUR_KEY_BY_SKU]);
+
+  // Build the Specs list from every active style in the current season.
   const baseStyleList = useMemo(() => {
     const allStyles = mergedStyles as Array<typeof skuData.styles[number] & { _isCustomStyle?: boolean }>;
     return allStyles
-      .filter((s) => {
-        // Custom styles always appear regardless of last name
-        if ((s as any)._isCustomStyle) return true;
-        const lastUpper = (s.last ?? "").toUpperCase();
-        // Use season-specific new lasts so W27 shows empty specs list (no new lasts yet)
-        const isOnNewLast = seasonNewLasts.some((nl) => lastUpper.includes(nl));
-        return shouldIncludeStyleInSpecs({ isOnNewLast, hasNewColours: s.hasNew });
-      })
       .map((s) => {
         const newColours: string[] = NEW_COLOURS_PER_STYLE[s.style] ?? [];
+        const activeColours: string[] = ACTIVE_COLOURS_PER_STYLE[s.style] ?? [];
+        const specColours = selectSpecColourColumns({ activeColours, newColours });
         return {
           style: s.style,
           last: s.last,
           category: s.category,
           imageUrl: (s as any).imageUrl,
-          colours: newColours,
-          colourLabels: newColours.map((c) => COLOUR_LEATHER_MAP[s.style]?.[c] ?? c),
+          colours: specColours,
+          colourLabels: specColours.map((c) => COLOUR_LEATHER_MAP[s.style]?.[c] ?? c),
           toeCapsPerColour: TOE_CAP_MAP[s.style] ?? {},
           isAllNew: s.isAllNew,
           hasNew: s.hasNew,
@@ -2297,11 +2306,10 @@ export default function SpecsTab({}: SpecsTabProps) {
           _isCustomStyle: !!(s as any)._isCustomStyle,
         };
       })
-      // Custom styles with 0 new colours only appear if they are genuinely brand-new (no spec data AND not marked complete).
-      // Carry-over custom styles are marked 'complete' or have spec values saved, so they are excluded.
-      .filter((s) => s.colours.length > 0 || (s._isCustomStyle && !(specCountMap[s.style] > 0) && specStatusMap[s.style] !== "complete"))
+      // Zero-colour custom styles stay available so specs can be prepared before colours are added.
+      .filter((s) => s.colours.length > 0 || s._isCustomStyle)
       .sort((a, b) => a.style.localeCompare(b.style));
-  }, [mergedStyles, NEW_COLOURS_PER_STYLE, COLOUR_LEATHER_MAP, TOE_CAP_MAP, seasonNewLasts, specCountMap, specStatusMap]);
+  }, [mergedStyles, NEW_COLOURS_PER_STYLE, ACTIVE_COLOURS_PER_STYLE, COLOUR_LEATHER_MAP, TOE_CAP_MAP]);
 
   const utils = trpc.useUtils();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
