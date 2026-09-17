@@ -3276,37 +3276,6 @@ export default function SpecsTab({}: SpecsTabProps) {
               {filtered.length} of {styleList.length} styles
             </p>
           </div>
-          {/* Drag-and-drop folder zone */}
-          <input
-            ref={bulkFileRef}
-            type="file"
-            accept=".xls,.xlsx"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files && e.target.files.length > 0) handleBulkImportFiles(e.target.files);
-              e.target.value = "";
-            }}
-          />
-          <div
-            className={`mt-2 rounded-lg border-2 border-dashed transition-colors cursor-pointer flex flex-col items-center justify-center gap-1 py-3 px-2 text-center ${
-              isDragOver
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-border text-muted-foreground hover:border-primary/50 hover:bg-muted/30"
-            }`}
-            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-            onDragLeave={() => setIsDragOver(false)}
-            onDrop={handleDrop}
-            onClick={() => bulkFileRef.current?.click()}
-          >
-            <Upload className="w-4 h-4" />
-            <p className="text-xs font-medium leading-tight">
-              {isDragOver ? "Drop to import" : "Bulk Import"}
-            </p>
-            <p className="text-[10px] leading-tight opacity-70">
-              Drop folder or click to select files
-            </p>
-          </div>
         </div>
         <div className="flex-1 overflow-y-auto">
           {(() => {
