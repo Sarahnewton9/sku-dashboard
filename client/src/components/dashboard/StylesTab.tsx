@@ -348,6 +348,7 @@ export default function StylesTab() {
           leather: newStyleLeather.trim().toUpperCase(),
           colour2: newStyleHasUpper2 && newStyleColour2.trim() ? newStyleColour2.trim().toUpperCase() : undefined,
           leather2: newStyleHasUpper2 && newStyleLeather2.trim() ? newStyleLeather2.trim().toUpperCase() : undefined,
+          season: vars.season,
         });
       }
       setShowAddStyleModal(false);
@@ -1519,6 +1520,7 @@ export default function StylesTab() {
                                       leather: draft.leather.trim(),
                                       colour2: draft.hasUpper2 && draft.colour2.trim() ? draft.colour2.trim() : undefined,
                                       leather2: draft.hasUpper2 && draft.leather2.trim() ? draft.leather2.trim() : undefined,
+                                      season,
                                     });
                                   };
                                   return (
