@@ -14,6 +14,7 @@ import {
   sortFullExportRowsByStyle,
 } from "@shared/fullExportOrder";
 import { getSeasonFileLabel } from "@shared/seasonLabel";
+import { formatSkuExportLabel, getSkuExportFields, toTitleCaseSkuExportLabel } from "@shared/skuExportLabel";
 import PptxSyncModal from "./PptxSyncModal";
 import AP21ColourCodeModal from "./AP21ColourCodeModal";
 
@@ -90,8 +91,7 @@ const FULL_EXPORT_ALL_COLS: Array<{ key: string; label: string }> = [
   { key: "Style",             label: "Style" },
   { key: "Category",          label: "Category" },
   { key: "Heel Height (cm)",  label: "Heel Height (cm)" },
-  { key: "Colour",            label: "Colour" },
-  { key: "Leather",           label: "Leather" },
+  { key: "Colour / Leather",  label: "Colour / Leather" },
   { key: "Status",            label: "New / Existing" },
   { key: "Size 11",           label: "Size 11" },
   { key: "Sample Status",     label: "Sample Status" },
@@ -222,7 +222,7 @@ export default function ExportPanel({ onClose }: Props) {
 
   // ── AP21 CSV generator (101836 BxB format — KKtest1 structure) ────────────
   const generateAP21CsvRows = useCallback((codeMap: Map<string, string>, stylesToExport: string[]): string[][] => {
-    type RawSku = { style: string; colour: string; leather: string; is_new: boolean };
+    type RawSku = { style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean };
     const rawSkus = mergedRawSkus as unknown as RawSku[];
 
     const csvRows: string[][] = [];
@@ -271,24 +271,29 @@ export default function ExportPanel({ onClose }: Props) {
       const sizeRangeLabel = rangeConfig.label;
 
       const seenColours = new Set<string>();
-      const orderedColours: { colour: string; leather: string }[] = [];
+      const orderedColours: RawSku[] = [];
       for (const sku of allStyleSkus) {
-        const key = `${sku.colour}|${sku.leather}`;
+        const skuMeta = skuMetaMap[`${styleName}|${sku.colour}|${sku.leather}`];
+        const exportSku = {
+          ...sku,
+          colour2: sku.colour2 ?? (skuMeta as any)?.colour2 ?? null,
+          leather2: sku.leather2 ?? (skuMeta as any)?.leather2 ?? null,
+        };
+        const key = `${exportSku.colour}|${exportSku.leather}|${exportSku.colour2 ?? ""}|${exportSku.leather2 ?? ""}`;
         if (!seenColours.has(key)) {
           seenColours.add(key);
-          orderedColours.push({ colour: sku.colour, leather: sku.leather });
+          orderedColours.push(exportSku);
         }
       }
-      orderedColours.sort((a, b) => a.colour.localeCompare(b.colour));
+      orderedColours.sort((a, b) => formatSkuExportLabel(a).localeCompare(formatSkuExportLabel(b)));
 
-      for (const { colour, leather } of orderedColours) {
-        const colourDescFull = leather ? `${colour} ${leather}` : colour;
+      for (const sku of orderedColours) {
+        const { colour, leather } = sku;
+        const colourDescFull = formatSkuExportLabel(sku);
         const colourDescUpper = colourDescFull.toUpperCase();
         const colourCode = codeMap.get(colourDescUpper) ?? "";
 
-        const colourDescCsv = leather
-          ? `${toTitleCase(colour)} ${toTitleCase(leather)}`
-          : toTitleCase(colour);
+        const colourDescCsv = toTitleCaseSkuExportLabel(colourDescFull);
 
         const colourKey = colour.toUpperCase();
         const colourRefsForStyle = (ap21ColourRefsAll as any)[styleName] ?? {};
@@ -380,7 +385,12 @@ export default function ExportPanel({ onClose }: Props) {
             !cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`)
         );
         for (const sku of styleSkus) {
-          const colourDesc = sku.leather ? `${sku.colour} ${sku.leather}` : sku.colour;
+          const skuMeta = skuMetaMap[`${sku.style}|${sku.colour}|${sku.leather}`];
+          const colourDesc = formatSkuExportLabel({
+            ...sku,
+            colour2: sku.colour2 ?? (skuMeta as any)?.colour2 ?? null,
+            leather2: sku.leather2 ?? (skuMeta as any)?.leather2 ?? null,
+          });
           neededDescriptions.add(colourDesc.toUpperCase());
         }
       }
@@ -451,7 +461,7 @@ export default function ExportPanel({ onClose }: Props) {
   // Column width map for the full export
   const FULL_EXPORT_COL_WIDTHS: Record<string, number> = {
     "Style": 14, "Category": 16, "Last": 14, "Heel Height (cm)": 14,
-    "Colour": 16, "Leather": 22, "Status": 10, "Size 11": 8,
+    "Colour / Leather": 32, "Status": 10, "Size 11": 8,
     "Sample Status": 14, "Fit Rating": 18, "Fitting Notes": 24,
   };
 
@@ -472,13 +482,21 @@ export default function ExportPanel({ onClose }: Props) {
           const lastName = (styleLookup[sku.style]?.last ?? "").toUpperCase();
           const category = styleLookup[sku.style]?.category ?? "";
           const heelHeight = heelHeightMap.get(lastName) ?? "";
+          const exportFields = getSkuExportFields({
+            style: sku.style,
+            colour: sku.colour,
+            leather: sku.leather,
+            colour2: (sku as any).colour2 ?? (meta as any)?.colour2 ?? null,
+            leather2: (sku as any).leather2 ?? (meta as any)?.leather2 ?? null,
+          });
           const allFields: Record<string, any> = {
             Style: sku.style,
             Category: category,
             Last: styleLookup[sku.style]?.last ?? "",
             "Heel Height (cm)": heelHeight,
-            Colour: ((sku as any).colour2 || (meta as any)?.colour2) ? `${sku.colour} / ${(sku as any).colour2 || (meta as any)?.colour2}` : sku.colour,
-            Leather: ((sku as any).leather2 || (meta as any)?.leather2) ? `${sku.leather} / ${(sku as any).leather2 || (meta as any)?.leather2}` : sku.leather,
+            // Always export the full upper construction as one ordered field.
+            // Example: BLACK VINTAGE/BLACK SUEDE (no spaces around the slash).
+            "Colour / Leather": exportFields.colourLeather,
             Status: sku.is_new ? "New" : "Existing",
             "Size 11": meta?.isSize11 ? "Yes" : "No",
             "Sample Status": meta?.sampleStatus === "received" ? "Received" : meta?.sampleStatus === "fitting_sample" ? "Fitting Sample" : "Waiting",

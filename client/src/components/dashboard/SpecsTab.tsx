@@ -2171,7 +2171,9 @@ export default function SpecsTab({}: SpecsTabProps) {
       if (!map[style]) map[style] = {};
       const key = SPEC_COLOUR_KEY_BY_SKU.get(getSpecSkuIdentity(style, colour, leather)) ?? colour;
       if (!map[style][key]) {
-        map[style][key] = leather ? displayColourLeather(colour, leather, style) : colour;
+        map[style][key] = leather
+          ? displayColourLeather(colour, leather, style, (sku as any).colour2, (sku as any).leather2)
+          : colour;
       }
     }
     return map;

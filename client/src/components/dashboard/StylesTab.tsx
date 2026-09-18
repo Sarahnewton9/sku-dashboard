@@ -10,6 +10,7 @@ import React, { useState, useMemo, useCallback, useRef, useEffect } from "react"
 import { skuData } from "@/lib/skuData";
 import { ALL_LASTS } from "@shared/const";
 import { getSeasonFileLabel } from "@shared/seasonLabel";
+import { getSkuExportFields } from "@shared/skuExportLabel";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
@@ -683,10 +684,10 @@ export default function StylesTab() {
 
   function exportToExcel() {
     const styleMetaLookup: Record<string, { category: string; last: string }> = {};
-    skuData.styles.forEach((s) => {
+    (mergedStyles as any[]).forEach((s) => {
       styleMetaLookup[s.style] = { category: s.category, last: s.last };
     });
-    const rows = skuData.rawSkus
+    const rows = (mergedRawSkus as any[])
       .filter((sku) => {
         if (cancelledSet.has(sku.style)) return false;
         if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) return false;
@@ -694,14 +695,22 @@ export default function StylesTab() {
         return categoryFilter === "All" || meta?.category === categoryFilter;
       })
       .map((sku) => {
-        const skuKey = `${sku.style}|${sku.colour}|${sku.leather}` as string;
+        const sourceColour = (sku as any)._sourceColour ?? sku.colour;
+        const sourceLeather = (sku as any)._sourceLeather ?? sku.leather;
+        const skuKey = `${sku.style}|${sourceColour}|${sourceLeather}` as string;
         const dbMeta = skuMetaMap[skuKey];
+        const exportFields = getSkuExportFields({
+          style: sku.style,
+          colour: sku.colour,
+          leather: sku.leather,
+          colour2: (sku as any).colour2 ?? dbMeta?.colour2 ?? null,
+          leather2: (sku as any).leather2 ?? dbMeta?.leather2 ?? null,
+        });
         return {
           Category: styleMetaLookup[sku.style]?.category ?? "",
           Style: sku.style,
           Last: styleMetaLookup[sku.style]?.last ?? "",
-          Colour: sku.colour,
-          Leather: sku.leather,
+          "Colour / Leather": exportFields.colourLeather,
           Status: sku.is_new ? "New" : "Existing",
           "Size 11": dbMeta?.isSize11 ? "Yes" : "No",
           "Sample Status": dbMeta?.sampleStatus ?? "waiting",

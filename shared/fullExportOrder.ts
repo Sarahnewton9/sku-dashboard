@@ -1,4 +1,4 @@
-export const FULL_EXPORT_REQUIRED_COLS = ["Last", "Style", "Colour", "Leather"] as const;
+export const FULL_EXPORT_REQUIRED_COLS = ["Last", "Style", "Colour / Leather"] as const;
 
 export function getSelectedFullExportColumns(
   allColumnKeys: readonly string[],
@@ -9,8 +9,7 @@ export function getSelectedFullExportColumns(
 
 type FullExportSortRow = {
   Style?: unknown;
-  Colour?: unknown;
-  Leather?: unknown;
+  "Colour / Leather"?: unknown;
 };
 
 function compareText(a: unknown, b: unknown): number {
@@ -23,7 +22,6 @@ function compareText(a: unknown, b: unknown): number {
 export function sortFullExportRowsByStyle<T extends FullExportSortRow>(rows: readonly T[]): T[] {
   return [...rows].sort((a, b) =>
     compareText(a.Style, b.Style)
-    || compareText(a.Colour, b.Colour)
-    || compareText(a.Leather, b.Leather),
+    || compareText(a["Colour / Leather"], b["Colour / Leather"]),
   );
 }

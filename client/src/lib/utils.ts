@@ -25,7 +25,7 @@ export function displayColour(colour: string, leather?: string): string {
 
 /**
  * Return the full display label for a colour+leather combo.
- * When colour2/leather2 are provided (Upper 2), returns combined label e.g. "BLACK SUEDE / BLACK VINTAGE".
+ * When colour2/leather2 are provided (Upper 2), returns combined label e.g. "BLACK SUEDE/BLACK VINTAGE".
  * e.g. "BLACK CAPRI", "CHOCOLATE VENICE"
  */
 export function displayColourLeather(
@@ -42,7 +42,7 @@ export function displayColourLeather(
     const c2 = colour2 ? displayColour(colour2, leather2 ?? "") : "";
     const l2 = leather2 ? displayLeather(leather2, style) : "";
     const secondary = `${c2} ${l2}`.trim();
-    if (secondary) return `${primary} / ${secondary}`;
+    if (secondary) return `${primary}/${secondary}`;
   }
   return primary;
 }

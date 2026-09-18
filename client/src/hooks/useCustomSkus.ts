@@ -74,12 +74,22 @@ export function useCustomSkus() {
   });
 
   const skuDescriptionOverrideMap = useMemo(() => {
-    const map: Record<string, { colour?: string; leather?: string }> = {};
-    for (const meta of skuMetaList as Array<{ style: string; colour: string; leather: string; colourOverride?: string | null; leatherOverride?: string | null }>) {
+    const map: Record<string, { colour?: string; leather?: string; colour2?: string; leather2?: string }> = {};
+    for (const meta of skuMetaList as Array<{
+      style: string;
+      colour: string;
+      leather: string;
+      colourOverride?: string | null;
+      leatherOverride?: string | null;
+      colour2?: string | null;
+      leather2?: string | null;
+    }>) {
       const colour = meta.colourOverride?.trim().toUpperCase();
       const leather = meta.leatherOverride?.trim().toUpperCase();
-      if (colour || leather) {
-        map[`${meta.style}|${meta.colour}|${meta.leather}`] = { colour, leather };
+      const colour2 = meta.colour2?.trim().toUpperCase();
+      const leather2 = meta.leather2?.trim().toUpperCase();
+      if (colour || leather || colour2 || leather2) {
+        map[`${meta.style}|${meta.colour}|${meta.leather}`] = { colour, leather, colour2, leather2 };
       }
     }
     return map;
@@ -155,6 +165,8 @@ export function useCustomSkus() {
         ...(descriptionOverride ? {
           colour: descriptionOverride.colour ?? sku.colour,
           leather: descriptionOverride.leather ?? sku.leather,
+          colour2: descriptionOverride.colour2 ?? (sku as any).colour2,
+          leather2: descriptionOverride.leather2 ?? (sku as any).leather2,
           _sourceColour: sku.colour,
           _sourceLeather: sku.leather,
         } : {}),

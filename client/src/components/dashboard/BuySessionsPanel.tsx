@@ -12,12 +12,13 @@ import { Lock, Download, Plus, Clock, CheckCircle, Package, Trash2, Pencil, File
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
+import { formatSkuExportLabel } from "@shared/skuExportLabel";
 import { useSeason } from "@/contexts/SeasonContext";
 import { getSeasonDisplayLabel, getSeasonFileLabel } from "@shared/seasonLabel";
 
 export default function BuySessionsPanel() {
   const { season } = useSeason();
-  const { mergedStyles } = useCustomSkus();
+  const { mergedStyles, mergedRawSkus } = useCustomSkus();
   const { cancelledSet: cancelledStyleSet } = useCancelledStyles(season);
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
@@ -125,6 +126,18 @@ export default function BuySessionsPanel() {
     return map;
   }, [mergedStyles]);
 
+  // Buy-session items store the primary colour and leather as their operational
+  // key. Look up the live SKU row so an export can preserve its Upper 2 pair.
+  const skuExportLabelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const sku of mergedRawSkus as Array<{
+      style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null;
+    }>) {
+      map[`${sku.style}|${sku.colour}|${sku.leather}`] = formatSkuExportLabel(sku);
+    }
+    return map;
+  }, [mergedRawSkus]);
+
   // Resolved category: sub-category override > trend flag (CASUAL FLAT) > static category
   const resolvedCategoryMap = useMemo(() => {
     const subCatMap: Record<string, string> = {};
@@ -205,7 +218,8 @@ export default function BuySessionsPanel() {
       })
       .map((item) => {
         const styleInfo = styleInfoMap[item.style];
-        const colourDesc = displayColourLeather(item.colour, item.leather, item.style);
+        const colourDesc = skuExportLabelMap[`${item.style}|${item.colour}|${item.leather}`]
+          ?? displayColourLeather(item.colour, item.leather, item.style);
         return {
           category: resolvedCategoryMap[item.style] ?? styleInfo?.category ?? "",
           last: styleInfo?.last ?? "",
@@ -418,7 +432,7 @@ export default function BuySessionsPanel() {
 
     // Section: New Colours Added
     rows.push(["NEW COLOURS ADDED", "", "", "", ""]);
-    rows.push(["Style", "Colour", "Category", "Last", "Date Added"]);
+    rows.push(["Style", "Colour / Leather", "Category", "Last", "Date Added"]);
     if (changesData.newColours.length === 0) {
       rows.push(["— None —", "", "", "", ""]);
     } else {
@@ -426,7 +440,7 @@ export default function BuySessionsPanel() {
         const info = (mergedStyles as any[]).find((m: any) => m.style === s.style);
         rows.push([
           s.style,
-          displayColourLeather(s.colour, s.leather, s.style),
+          formatSkuExportLabel(s),
           info?.category ?? "",
           info?.last ?? "",
           new Date(s.createdAt).toLocaleDateString("en-AU"),

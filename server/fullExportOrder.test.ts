@@ -7,24 +7,24 @@ import {
 describe("Full Data Export ordering", () => {
   it("keeps Last first when it is selected", () => {
     const ordered = getSelectedFullExportColumns(
-      ["Last", "Style", "Category", "Colour", "Leather"],
-      new Set(["Last", "Style", "Colour", "Leather"]),
+      ["Last", "Style", "Category", "Colour / Leather"],
+      new Set(["Last", "Style", "Colour / Leather"]),
     );
 
-    expect(ordered).toEqual(["Last", "Style", "Colour", "Leather"]);
+    expect(ordered).toEqual(["Last", "Style", "Colour / Leather"]);
   });
 
   it("sorts styles alphabetically and groups their colour rows together", () => {
     const rows = sortFullExportRowsByStyle([
-      { Style: "ZOE", Colour: "BLACK", Leather: "NAPPA" },
-      { Style: "ASTI", Colour: "TAUPE", Leather: "SUEDE" },
-      { Style: "ASTI", Colour: "BLACK", Leather: "PATENT" },
+      { Style: "ZOE", "Colour / Leather": "BLACK NAPPA" },
+      { Style: "ASTI", "Colour / Leather": "TAUPE SUEDE" },
+      { Style: "ASTI", "Colour / Leather": "BLACK PATENT" },
     ]);
 
-    expect(rows.map((row) => `${row.Style}|${row.Colour}`)).toEqual([
-      "ASTI|BLACK",
-      "ASTI|TAUPE",
-      "ZOE|BLACK",
+    expect(rows.map((row) => `${row.Style}|${row["Colour / Leather"]}`)).toEqual([
+      "ASTI|BLACK PATENT",
+      "ASTI|TAUPE SUEDE",
+      "ZOE|BLACK NAPPA",
     ]);
   });
 });

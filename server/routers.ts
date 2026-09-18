@@ -92,6 +92,7 @@ import * as path from "path";
 import * as os from "os";
 import nodemailer from "nodemailer";
 import { ENV } from "./_core/env";
+import { formatSkuExportLabel } from "@shared/skuExportLabel";
 
 export const appRouter = router({
   system: systemRouter,
@@ -1571,10 +1572,10 @@ export const appRouter = router({
         const today = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" });
 
         // Build HTML email body
-        function tableRows<T extends Record<string, unknown>>(items: T[], cols: Array<{ key: keyof T; label: string; fmt?: (v: unknown) => string }>): string {
+        function tableRows<T extends Record<string, unknown>>(items: T[], cols: Array<{ key: keyof T; label: string; fmt?: (v: unknown, item: T) => string }>): string {
           if (items.length === 0) return `<tr><td colspan="${cols.length}" style="padding:6px 8px;color:#888;">— None —</td></tr>`;
           return items.map(item =>
-            `<tr>${cols.map(c => `<td style="padding:6px 8px;border-bottom:1px solid #eee;">${c.fmt ? c.fmt(item[c.key]) : String(item[c.key] ?? "—")}</td>`).join("")}</tr>`
+            `<tr>${cols.map(c => `<td style="padding:6px 8px;border-bottom:1px solid #eee;">${c.fmt ? c.fmt(item[c.key], item) : String(item[c.key] ?? "—")}</td>`).join("")}</tr>`
           ).join("");
         }
 
@@ -1601,8 +1602,7 @@ export const appRouter = router({
 
         const newColourRows = tableRows(data.newColours, [
           { key: "style", label: "Style" },
-          { key: "colour", label: "Colour" },
-          { key: "leather", label: "Leather" },
+          { key: "colour", label: "Colour / Leather", fmt: (_v, item) => formatSkuExportLabel(item) },
           { key: "createdAt", label: "Date Added", fmt: v => new Date(v as Date).toLocaleDateString("en-AU") },
         ]);
 
@@ -1617,7 +1617,7 @@ export const appRouter = router({
   <hr style="border:none;border-top:2px solid #3d2b1f;margin-bottom:20px;">
   ${section("Cancelled Styles", "#8b1a1a", ["Style", "Date Cancelled"], cancelledStyleRows)}
   ${section("Cancelled Colours", "#8b1a1a", ["Style", "Colour", "Leather", "Date Cancelled"], cancelledSkuRows)}
-  ${section("New Colours Added", "#1a5c3a", ["Style", "Colour", "Leather", "Date Added"], newColourRows)}
+  ${section("New Colours Added", "#1a5c3a", ["Style", "Colour / Leather", "Date Added"], newColourRows)}
   <hr style="border:none;border-top:1px solid #eee;margin-top:32px;">
   <p style="font-size:11px;color:#aaa;margin-top:8px;">Sent from SKU Dashboard · Tony Bianco SS26</p>
 </body>
@@ -1655,7 +1655,7 @@ export const appRouter = router({
           "",
           `CANCELLED STYLES (${data.cancelledStyles.length}): ${data.cancelledStyles.map(s => s.style).join(", ") || "None"}`,
           `CANCELLED COLOURS (${data.cancelledSkus.length}): ${data.cancelledSkus.map(s => `${s.style} ${s.colour}`).join(", ") || "None"}`,
-          `NEW COLOURS ADDED (${data.newColours.length}): ${data.newColours.map(s => `${s.style} ${s.colour}`).join(", ") || "None"}`,
+          `NEW COLOURS ADDED (${data.newColours.length}): ${data.newColours.map(s => `${s.style} ${formatSkuExportLabel(s)}`).join(", ") || "None"}`,
         ].join("\n");
         await notifyOwner({ title: `SS26 Changes Report — ${input.sessionName}`, content: textBody });
         return { success: true, method: "notification" as const };

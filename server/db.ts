@@ -1216,7 +1216,7 @@ export async function upsertLastHeelHeight(lastName: string, heelHeightCm: numbe
 export async function getChangesReport(since: Date): Promise<{
   cancelledStyles: Array<{ style: string; cancelledAt: Date }>;
   cancelledSkus: Array<{ style: string; colour: string; leather: string; cancelledAt: Date }>;
-  newColours: Array<{ style: string; colour: string; leather: string; createdAt: Date }>;
+  newColours: Array<{ style: string; colour: string; leather: string; colour2: string | null; leather2: string | null; createdAt: Date }>;
 }> {
   const db = await getDb();
   if (!db) return { cancelledStyles: [], cancelledSkus: [], newColours: [] };
@@ -1227,7 +1227,14 @@ export async function getChangesReport(since: Date): Promise<{
     db.select({ style: cancelledSkus.style, colour: cancelledSkus.colour, leather: cancelledSkus.leather, cancelledAt: cancelledSkus.cancelledAt })
       .from(cancelledSkus)
       .where(gte(cancelledSkus.cancelledAt, since)),
-    db.select({ style: customSkus.style, colour: customSkus.colour, leather: customSkus.leather, createdAt: customSkus.createdAt })
+    db.select({
+      style: customSkus.style,
+      colour: customSkus.colour,
+      leather: customSkus.leather,
+      colour2: customSkus.colour2,
+      leather2: customSkus.leather2,
+      createdAt: customSkus.createdAt,
+    })
       .from(customSkus)
       .where(gte(customSkus.createdAt, since)),
   ]);
