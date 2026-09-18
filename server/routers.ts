@@ -36,7 +36,7 @@ import {
   getChangesReport,
   getAllSkuNewOverrides, upsertSkuNewOverride,
   batchReorderCustomRows,
-  getAllCustomStyles, addCustomStyle, deleteCustomStyle,
+  getAllCustomStyles, addCustomStyle, deleteCustomStyle, updateCustomStyleDetails,
   getSpecRowOrder, upsertSpecRowOrder,
   getSpecHiddenColumns, hideSpecColumn, showSpecColumn,
   getCustomLasts, addCustomLast, deleteCustomLast, resetSpecColour,
@@ -988,6 +988,38 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const id = await addCustomStyle(input.style, input.lastName, input.category, input.season);
         return { id };
+      }),
+
+    updateDetails: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        style: z.string(),
+        lastName: z.string().min(1).max(128),
+        category: z.string().nullable(),
+        isSize11: z.boolean(),
+        season: z.string().default("SS26"),
+      }))
+      .mutation(async ({ input }) => {
+        await updateCustomStyleDetails({
+          id: input.id,
+          lastName: input.lastName,
+          category: input.category,
+          isSize11: input.isSize11,
+          season: input.season,
+        });
+        // The explicit style-level Size 11 setting must agree with all existing
+        // colourways, while still remaining usable before a new style has SKUs.
+        const styleSkus = (await getAllCustomSkus(input.season))
+          .filter((sku) => sku.style === input.style);
+        for (const sku of styleSkus) {
+          await upsertSkuMeta({
+            style: sku.style,
+            colour: sku.colour,
+            leather: sku.leather,
+            isSize11: input.isSize11,
+          });
+        }
+        return { success: true, updatedSkus: styleSkus.length };
       }),
 
     delete: publicProcedure

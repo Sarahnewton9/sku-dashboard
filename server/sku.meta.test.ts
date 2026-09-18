@@ -16,6 +16,10 @@ vi.mock("./db", () => ({
     { id: 1, style: "ALYX", rrp: 299.95 },
   ]),
   upsertStyleRrp: vi.fn().mockResolvedValue(undefined),
+  getAllCustomSkus: vi.fn().mockResolvedValue([
+    { id: 1, style: "FERGIE", colour: "BLACK", leather: "SUEDE", season: "W27" },
+  ]),
+  updateCustomStyleDetails: vi.fn().mockResolvedValue(undefined),
   getFittingImages: vi.fn().mockResolvedValue([]),
   addFittingImage: vi.fn().mockResolvedValue({ id: 1 }),
   deleteFittingImage: vi.fn().mockResolvedValue(undefined),
@@ -115,6 +119,21 @@ describe("style.importRrp", () => {
     ]);
     expect(result).toHaveProperty("updated");
     expect(result.updated).toBe(2);
+  });
+});
+
+describe("customStyle.updateDetails", () => {
+  it("updates the new style details and applies Size 11 to its colourways", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    const result = await caller.customStyle.updateDetails({
+      id: 1,
+      style: "FERGIE",
+      lastName: "FERGIE",
+      category: "DRESS SHOE",
+      isSize11: true,
+      season: "W27",
+    });
+    expect(result).toEqual({ success: true, updatedSkus: 1 });
   });
 });
 

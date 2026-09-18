@@ -16,6 +16,7 @@ import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
 import { useSeason } from "@/contexts/SeasonContext";
 import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock, FileSpreadsheet, X, Camera, ImageOff, Ruler, Pencil, Check } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LastMeasurementsPanel } from "./LastMeasurementsPanel";
 import * as XLSX from "xlsx";
 import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
@@ -98,6 +99,14 @@ export default function StylesTab() {
   const [newStyleImagePreview, setNewStyleImagePreview] = useState<string | null>(null);
   const [newStyleDragging, setNewStyleDragging] = useState(false);
   const [isAddingStyle, setIsAddingStyle] = useState(false);
+  const [editingCustomStyle, setEditingCustomStyle] = useState<{
+    id: number;
+    style: string;
+    lastName: string;
+    category: string;
+    isSize11: boolean;
+    skuCount: number;
+  } | null>(null);
   const addStyleImageInputRef = useRef<HTMLInputElement>(null);
   // Pending qty changes (local before saving)
   const pendingQty = useRef<Record<string, number>>({});
@@ -195,7 +204,21 @@ export default function StylesTab() {
   });
 
   // Custom SKUs (added during buy)
-    const { mergedRawSkus, mergedStyles, customSkus, customStyleRows, refetch: refetchCustomSkus, refetchImageOverrides } = useCustomSkus();
+    const { mergedRawSkus, mergedStyles, customSkus, customStyleRows, refetch: refetchCustomSkus, refetchImageOverrides, refetchCustomStyles } = useCustomSkus();
+
+  const updateCustomStyleDetailsMutation = trpc.customStyle.updateDetails.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        utils.customStyle.getAll.invalidate({ season }),
+        refetchCustomStyles(),
+        refetchCustomSkus(),
+        refetchSkuMeta(),
+      ]);
+      setEditingCustomStyle(null);
+      toast.success("Style details saved");
+    },
+    onError: (err) => toast.error(`Failed to save style details: ${err.message}`),
+  });
 
   // Auto-cancel styles where every SKU has been individually cancelled
   const autoCancelledRef = useRef<Set<string>>(new Set());
@@ -620,6 +643,18 @@ export default function StylesTab() {
 
   // Toggle Size 11 for the entire style
   function handleStyleSize11Toggle(styleName: string) {
+    const customStyle = customStyleRows.find((row) => row.style === styleName);
+    if (customStyle) {
+      updateCustomStyleDetailsMutation.mutate({
+        id: customStyle.id,
+        style: customStyle.style,
+        lastName: customStyle.lastName,
+        category: customStyle.category,
+        isSize11: !getStyleSize11(styleName),
+        season,
+      });
+      return;
+    }
     const skus = getSkusForStyle(styleName);
     // Check if ANY sku in the style currently has size11 = true
     const anySize11 = skus.some((sku) => {
@@ -876,9 +911,43 @@ export default function StylesTab() {
 
   // Check if style has Size 11 enabled (any SKU in the style)
   function getStyleSize11(styleName: string) {
+    const customStyle = customStyleRows.find((row) => row.style === styleName);
+    if (customStyle?.isSize11 !== null && customStyle?.isSize11 !== undefined) {
+      return customStyle.isSize11;
+    }
     return getSkusForStyle(styleName).some((sku) => {
       const key = `${sku.style}|${sku.colour}|${sku.leather}`;
       return skuMetaMap[key]?.isSize11 === true;
+    });
+  }
+
+  function openCustomStyleDetails(style: { style: string; last: string; category: string; totalSKUs: number }) {
+    const customStyle = customStyleRows.find((row) => row.style === style.style);
+    if (!customStyle) return;
+    setEditingCustomStyle({
+      id: customStyle.id,
+      style: customStyle.style,
+      lastName: customStyle.lastName,
+      category: customStyle.category ?? style.category ?? "",
+      isSize11: customStyle.isSize11 ?? getStyleSize11(style.style),
+      skuCount: style.totalSKUs,
+    });
+  }
+
+  function saveCustomStyleDetails() {
+    if (!editingCustomStyle) return;
+    const lastName = editingCustomStyle.lastName.trim().toUpperCase();
+    if (!lastName) {
+      toast.error("Last is required");
+      return;
+    }
+    updateCustomStyleDetailsMutation.mutate({
+      id: editingCustomStyle.id,
+      style: editingCustomStyle.style,
+      lastName,
+      category: editingCustomStyle.category.trim().toUpperCase() || null,
+      isSize11: editingCustomStyle.isSize11,
+      season,
     });
   }
 
@@ -1320,6 +1389,16 @@ export default function StylesTab() {
                                   <span className="font-semibold text-foreground">{style.style}</span>
                                   {style.isAllNew && (
                                     <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}>NEW</span>
+                                  )}
+                                  {(style as any)._isCustomStyle && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); openCustomStyleDetails(style); }}
+                                      title={`Edit ${style.style} details`}
+                                      className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-amber-100 hover:text-amber-800"
+                                    >
+                                      <Pencil className="h-3 w-3" />
+                                      Edit details
+                                    </button>
                                   )}
                                 </div>
                               </div>
@@ -2175,6 +2254,91 @@ export default function StylesTab() {
           onDone={() => { refetchSkuMeta(); setShowInvoiceImport(false); }}
         />
       )}
+
+      {/* Custom style details modal — used to complete the operational data for new lasts/styles. */}
+      <Dialog open={editingCustomStyle !== null} onOpenChange={(open) => { if (!open) setEditingCustomStyle(null); }}>
+        <DialogContent className="sm:max-w-md">
+          {editingCustomStyle && (
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveCustomStyleDetails();
+              }}
+              className="space-y-5"
+            >
+              <DialogHeader>
+                <DialogTitle>Edit Details — {editingCustomStyle.style}</DialogTitle>
+                <DialogDescription>
+                  Update the new style’s last, category, and Size 11 availability. Size 11 will apply to all {editingCustomStyle.skuCount} current colourway{editingCustomStyle.skuCount === 1 ? "" : "s"}.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="grid gap-4">
+                <label className="grid gap-1.5 text-sm font-medium text-foreground">
+                  Last
+                  <select
+                    value={editingCustomStyle.lastName}
+                    onChange={(event) => setEditingCustomStyle((current) => current ? { ...current, lastName: event.target.value } : current)}
+                    className="h-10 rounded-lg border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    {allKnownLasts.map((lastName) => <option key={lastName} value={lastName}>{lastName}</option>)}
+                  </select>
+                </label>
+
+                <label className="grid gap-1.5 text-sm font-medium text-foreground">
+                  Category
+                  <select
+                    value={editingCustomStyle.category}
+                    onChange={(event) => setEditingCustomStyle((current) => current ? { ...current, category: event.target.value } : current)}
+                    className="h-10 rounded-lg border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    <option value="">Select a category…</option>
+                    {availableCategories.filter((category) => category !== "All").map((category) => <option key={category} value={category}>{category}</option>)}
+                  </select>
+                </label>
+
+                <div className="flex items-center justify-between rounded-lg border px-3 py-3" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Size 11 available</p>
+                    <p className="text-xs text-muted-foreground">Use this when the style comes in Size 11.</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={editingCustomStyle.isSize11}
+                    onClick={() => setEditingCustomStyle((current) => current ? { ...current, isSize11: !current.isSize11 } : current)}
+                    className={`relative h-7 w-12 rounded-full transition-colors ${editingCustomStyle.isSize11 ? "bg-blue-600" : "bg-muted-foreground/30"}`}
+                  >
+                    <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${editingCustomStyle.isSize11 ? "translate-x-6" : "translate-x-1"}`} />
+                    <span className="sr-only">Toggle Size 11 availability</span>
+                  </button>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <button
+                  type="button"
+                  onClick={() => setEditingCustomStyle(null)}
+                  className="rounded-lg border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateCustomStyleDetailsMutation.isPending || !editingCustomStyle.lastName.trim()}
+                  className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {updateCustomStyleDetailsMutation.isPending ? "Saving…" : "Save Details"}
+                </button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Add Style Modal */}
       {showAddStyleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddStyleModal(false)}>

@@ -496,6 +496,8 @@ export const customStyles = mysqlTable("custom_styles", {
   style: varchar("style", { length: 64 }).notNull(),
   lastName: varchar("last_name", { length: 128 }).notNull(),
   category: varchar("category", { length: 64 }),
+  /** Explicit style-level Size 11 setting for new styles; null falls back to existing SKU metadata. */
+  isSize11: boolean("isSize11"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   season: varchar("season", { length: 16 }).notNull().default("SS26"),
 }, (t) => ({

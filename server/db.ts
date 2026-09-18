@@ -865,7 +865,7 @@ export async function updateCustomSku(id: number, colour: string, leather: strin
 }
 
 // ─── Custom Styles ────────────────────────────────────────────────────────────
-export async function getAllCustomStyles(season = "SS26"): Promise<{ id: number; style: string; lastName: string; category: string | null; createdAt: Date }[]> {
+export async function getAllCustomStyles(season = "SS26"): Promise<{ id: number; style: string; lastName: string; category: string | null; isSize11: boolean | null; createdAt: Date }[]> {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(customStyles).where(eq(customStyles.season, season));
@@ -894,6 +894,22 @@ export async function deleteCustomStyle(id: number): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(customStyles).where(eq(customStyles.id, id));
+}
+
+
+/** Updates the operational details maintained directly on a newly created style. */
+export async function updateCustomStyleDetails(data: {
+  id: number;
+  lastName: string;
+  category: string | null;
+  isSize11: boolean;
+  season: string;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(customStyles)
+    .set({ lastName: data.lastName, category: data.category, isSize11: data.isSize11 })
+    .where(and(eq(customStyles.id, data.id), eq(customStyles.season, data.season)));
 }
 
 // ─── Unlock Buy Session ────────────────────────────────────────────────────────

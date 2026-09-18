@@ -221,7 +221,7 @@ export function useCustomSkus() {
 
     // Synthetic style entries for custom styles (brand-new, not in static data)
     const staticStyleNames = new Set(skuData.styles.map((s) => s.style.toUpperCase()));
-    const syntheticStyles = (customStyleRows as Array<{ id: number; style: string; lastName: string; category: string | null; createdAt: Date }>)
+    const syntheticStyles = (customStyleRows as Array<{ id: number; style: string; lastName: string; category: string | null; isSize11: boolean | null; createdAt: Date }>)
       .filter((cs) => !staticStyleNames.has(cs.style.toUpperCase()))
       .map((cs) => {
         // Priority: manual upload override > Tony Bianco website image
@@ -235,6 +235,8 @@ export function useCustomSkus() {
           ...skuSummary,
           imageUrl: overrideUrl ?? undefined,
           _isCustomStyle: true,
+          _customStyleId: cs.id,
+          _customStyleSize11: cs.isSize11,
         };
       }).filter((style): style is NonNullable<typeof style> => style !== null);
 
@@ -243,7 +245,7 @@ export function useCustomSkus() {
 
   return {
     customSkus: customSkus as CustomSkuRow[],
-    customStyleRows: customStyleRows as Array<{ id: number; style: string; lastName: string; category: string | null; createdAt: Date }>,
+    customStyleRows: customStyleRows as Array<{ id: number; style: string; lastName: string; category: string | null; isSize11: boolean | null; createdAt: Date }>,
     mergedRawSkus,
     mergedStyles,
     isLoading,

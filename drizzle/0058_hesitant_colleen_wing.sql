@@ -1,0 +1,1 @@
+ALTER TABLE `custom_styles` ADD `isSize11` boolean;
