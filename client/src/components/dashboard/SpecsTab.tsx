@@ -38,6 +38,7 @@ import { parseSpecSheetFile, type ParsedSpecSheet } from "@/lib/importSpecSheet"
 import { useSeason } from "@/contexts/SeasonContext";
 import { findSpecColourMapValue, normalizeStoredSpecColourKey } from "@shared/specColourKey";
 import { selectSpecColourColumns } from "@shared/specsStyleVisibility";
+import { getSeasonDisplayLabel } from "@shared/seasonLabel";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -3422,6 +3423,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                       style: selectedEntry.style,
                       last: selectedEntry.last,
                       category: selectedEntry.category,
+                      season: getSeasonDisplayLabel(season),
                       // Export uses the unfiltered entry so hidden columns are still exported
                       colours: selectedEntryRaw?.colours ?? selectedEntry.colours,
                       colourLabels: selectedEntryRaw?.colourLabels ?? selectedEntry.colourLabels,

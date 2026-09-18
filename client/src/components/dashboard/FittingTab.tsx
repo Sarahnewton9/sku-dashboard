@@ -17,6 +17,7 @@ import { LastMeasurementsPanel } from "./LastMeasurementsPanel";
 import { toast } from "sonner";
 import { useSeason } from "@/contexts/SeasonContext";
 import { getNewLastsForSeason } from "@shared/const";
+import { getSeasonDisplayLabel, getSeasonFileLabel } from "@shared/seasonLabel";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -813,6 +814,7 @@ function ExportDialog({
   waitingToFitStyles,
   waitingRevisedStyles,
   approvedStyles,
+  season,
   onClose,
 }: {
   styleList: StyleEntry[];
@@ -822,6 +824,7 @@ function ExportDialog({
   waitingToFitStyles: StyleEntry[];
   waitingRevisedStyles: StyleEntry[];
   approvedStyles: StyleEntry[];
+  season: string;
   onClose: () => void;
 }) {
   const [exporting, setExporting] = useState(false);
@@ -959,7 +962,7 @@ function ExportDialog({
       merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: NCOLS - 1 } });
 
       // ── Row 2: Sub-header ─────────────────────────────────────────────────
-      push([`Season: SS26   ·   Exported: ${new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" })}   ·   ${stylesOnDate.length} style${stylesOnDate.length !== 1 ? "s" : ""}`, ...Array(NCOLS - 1).fill("")], "subHeader");
+      push([`Season: ${getSeasonDisplayLabel(season)}   ·   Exported: ${new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" })}   ·   ${stylesOnDate.length} style${stylesOnDate.length !== 1 ? "s" : ""}`, ...Array(NCOLS - 1).fill("")], "subHeader");
       merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: NCOLS - 1 } });
 
       // ── Spacer ─────────────────────────────────────────────────────────────
@@ -1113,7 +1116,7 @@ function ExportDialog({
       const wb = XLSX.utils.book_new();
       const sheetName = formatDateShort(selectedDate).replace(/[^a-z0-9 ]/gi, "").substring(0, 31);
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
-      const fileName = `Fitting_${selectedDate}.xlsx`;
+      const fileName = `${getSeasonFileLabel(season)}_Fitting_${selectedDate}.xlsx`;
       XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
       toast.success(`Exported ${stylesOnDate.length} styles to ${fileName}`);
       onClose();
@@ -1908,7 +1911,7 @@ export function FittingTab() {
     const wb = XLSX.utils.book_new();
     const aoa: (string | number)[][] = [];
     const exportDate = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "long", year: "numeric" });
-    aoa.push([`SS26 Fit Report - ${exportDate}`, ...Array(headers.length - 1).fill("")]);
+    aoa.push([`${getSeasonDisplayLabel(season)} Fit Report - ${exportDate}`, ...Array(headers.length - 1).fill("")]);
     aoa.push(Array(headers.length).fill(""));
     aoa.push(headers);
     rows.forEach((r) => aoa.push(r));
@@ -1973,10 +1976,10 @@ export function FittingTab() {
 
     XLSX.utils.book_append_sheet(wb, ws, "Fit Report");
     const today = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "-");
-    const fileName = `SS26_Fit_Report_${today}.xlsx`;
+    const fileName = `${getSeasonFileLabel(season)}_Fit_Report_${today}.xlsx`;
     XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
     toast.success(`Fit Report exported - ${fittedStyles.length} styles, ${rows.length} rows`);
-  }, [styleList, sessionsByStyle, styleMeta, mergedStyles, cancelledSkuSet]);
+  }, [styleList, sessionsByStyle, styleMeta, mergedStyles, cancelledSkuSet, season]);
 
   // Per-style session data — using individual queries
   // We render a sub-component that fetches its own sessions to avoid N+1 at top level
@@ -1994,6 +1997,7 @@ export function FittingTab() {
           waitingToFitStyles={waitingToFitStyles}
           waitingRevisedStyles={waitingRevisedStyles}
           approvedStyles={approvedStyles}
+          season={season}
           onClose={() => setExportOpen(false)}
         />
       )}

@@ -9,6 +9,7 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { skuData } from "@/lib/skuData";
 import { ALL_LASTS } from "@shared/const";
+import { getSeasonFileLabel } from "@shared/seasonLabel";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
@@ -705,7 +706,7 @@ export default function StylesTab() {
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "SKU Data");
-    XLSX.writeFile(wb, "SS26_SKU_Export.xlsx");
+    XLSX.writeFile(wb, `${getSeasonFileLabel(season)}_SKU_Export.xlsx`);
   }
 
   // Apply runtime category overrides (sub-categories + trend flags)

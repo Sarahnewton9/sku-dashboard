@@ -1,7 +1,7 @@
 /**
  * exportSpecSheet — generates an Excel file matching the ROXIE factory spec sheet format.
  *
- * Format (matching ROXIE-TONYBIANCODEVSUMMER2026.xls exactly):
+ * Format (matching the Tony Bianco specification workbook layout):
  * - A4 Landscape
  * - 7 colours per block; if >7 colours, a second block starts below the first on the same sheet
  * - Font: Arial throughout
@@ -140,7 +140,7 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
     style,
     last,
     category,
-    season = "DEV SUMMER 2026",
+    season = "Summer 26",
     colours,
     colourLabels,
     specs,

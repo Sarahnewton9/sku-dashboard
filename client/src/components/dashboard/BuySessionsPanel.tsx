@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 import { useSeason } from "@/contexts/SeasonContext";
+import { getSeasonDisplayLabel, getSeasonFileLabel } from "@shared/seasonLabel";
 
 export default function BuySessionsPanel() {
   const { season } = useSeason();
@@ -237,8 +238,8 @@ export default function BuySessionsPanel() {
     const hasNyc = rows.some((r) => r.nycQty > 0);
     const hasLa = rows.some((r) => r.laQty > 0);
 
-    // Filename uses session name
-    const fileName = `${sessionName} BUY.xlsx`;
+    // Filename includes the active range season and session name.
+    const fileName = `${getSeasonFileLabel(season)}_${sessionName}_BUY.xlsx`;
 
     // ── Layout ────────────────────────────────────────────────────────────────────
     // Columns: CATEGORY | LAST | SIZE 11 | STYLE | COLOUR | AU QTY [| USA QTY] [| NYC QTY]
@@ -253,7 +254,7 @@ export default function BuySessionsPanel() {
     const rowTypes: string[] = [];
 
     const emptyRow = Array(COLS).fill("") as string[];
-    const titleText = "TONY BIANCO — SUMMER 26 BUY SHEET";
+    const titleText = `TONY BIANCO — ${getSeasonDisplayLabel(season).toUpperCase()} BUY SHEET`;
 
     // Title
     sheetRows.push([titleText, ...Array(COLS - 1).fill("") as string[]]);
@@ -373,7 +374,7 @@ export default function BuySessionsPanel() {
     if (!changesData) return;
     const today = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "-");
     const sessionLabel = changesReportSession?.name ?? "Session";
-    const fileName = `SS26_Changes_Report_${sessionLabel}_${today}.xlsx`;
+    const fileName = `${getSeasonFileLabel(season)}_Changes_Report_${sessionLabel}_${today}.xlsx`;
 
     type Row = (string | number)[];
     const rows: Row[] = [];

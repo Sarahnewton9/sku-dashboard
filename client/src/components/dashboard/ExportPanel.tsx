@@ -13,6 +13,7 @@ import {
   getSelectedFullExportColumns,
   sortFullExportRowsByStyle,
 } from "@shared/fullExportOrder";
+import { getSeasonFileLabel } from "@shared/seasonLabel";
 import PptxSyncModal from "./PptxSyncModal";
 import AP21ColourCodeModal from "./AP21ColourCodeModal";
 
@@ -349,7 +350,7 @@ export default function ExportPanel({ onClose }: Props) {
       )
       .join("\r\n");
 
-    const filename = `AP21_products_${suffix}_${Date.now()}.csv`;
+    const filename = `AP21_products_${getSeasonFileLabel(season)}_${suffix}_${Date.now()}.csv`;
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -517,7 +518,7 @@ export default function ExportPanel({ onClose }: Props) {
       ws["!cols"] = selectedKeys.map(k => ({ wch: FULL_EXPORT_COL_WIDTHS[k] ?? 14 }));
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Full SKU Data");
-      XLSX.writeFile(wb, "SS26_Full_Export.xlsx");
+      XLSX.writeFile(wb, `${getSeasonFileLabel(season)}_Full_Export.xlsx`);
       toast.success(`Exported ${rows.length} SKUs · ${selectedKeys.length} columns`);
     } finally {
       setExporting(null);

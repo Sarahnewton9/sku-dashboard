@@ -15,6 +15,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useSeason } from "@/contexts/SeasonContext";
+import { getSeasonDisplayLabel, getSeasonFileLabel } from "@shared/seasonLabel";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -599,6 +601,7 @@ function HandbagSessionBar({
 
 export default function HandbagsTab() {
   const utils = trpc.useUtils();
+  const { season } = useSeason();
 
   // Data
   const { data: styles = [] } = trpc.handbag.listStyles.useQuery();
@@ -1342,7 +1345,7 @@ export default function HandbagsTab() {
     const emptyRow = Array(COLS).fill("") as string[];
 
     // Title
-    sheetRows.push(["TONY BIANCO — HANDBAGS SS26", ...Array(COLS - 1).fill("") as string[]]);
+    sheetRows.push([`TONY BIANCO — HANDBAGS ${getSeasonDisplayLabel(season).toUpperCase()}`, ...Array(COLS - 1).fill("") as string[]]);
     rowTypes.push("title");
     // Spacer
     sheetRows.push([...emptyRow]);
@@ -1420,7 +1423,7 @@ export default function HandbagsTab() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Handbags");
     const today = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "-");
-    XLSX.writeFile(wb, `Handbags_SS26_${today}.xlsx`, { bookType: "xlsx", cellStyles: true });
+    XLSX.writeFile(wb, `Handbags_${getSeasonFileLabel(season)}_${today}.xlsx`, { bookType: "xlsx", cellStyles: true });
     toast.success(`Exported ${sorted.length} colourways`);
   }
 
