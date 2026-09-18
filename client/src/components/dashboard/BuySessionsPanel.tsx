@@ -214,7 +214,11 @@ export default function BuySessionsPanel() {
         const usa = item.usaQty ?? 0;
         const nyc = item.nycQty ?? 0;
         const la = item.laQty ?? 0;
-        return (au + usa + nyc) > 0 && !cancelledStyleSet.has(item.style);
+        return (au + usa + nyc + la) > 0
+          && !cancelledStyleSet.has(item.style)
+          // Styles absent from the active range are intentionally excluded
+          // (including W27 Flat and Casual Sandals).
+          && Boolean(styleInfoMap[item.style]);
       })
       .map((item) => {
         const styleInfo = styleInfoMap[item.style];

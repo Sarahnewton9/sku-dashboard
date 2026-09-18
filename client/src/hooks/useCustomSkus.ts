@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useSeason } from "@/contexts/SeasonContext";
 import { buildMarkdownSkuSet, isMarkdownSku } from "@shared/markdownSku";
 import { summarizeCustomStyleSkus } from "@shared/customStyleSummary";
+import { isHiddenFromW27WorkingRange } from "@shared/w27SandalVisibility";
 
 export type CustomSkuRow = {
   id: number;
@@ -102,6 +103,23 @@ export function useCustomSkus() {
     refetchInterval: 5_000,
   });
 
+  // W27 is not developing Flat or Casual Sandals. Keep their records intact,
+  // but exclude them before any dashboard view builds its active range.
+  const styleCategoryMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const style of skuData.styles) map.set(style.style.toUpperCase(), style.category);
+    for (const style of customStyleRows as Array<{ style: string; category: string | null }>) {
+      if (!map.has(style.style.toUpperCase())) map.set(style.style.toUpperCase(), style.category ?? "");
+    }
+    return map;
+  }, [customStyleRows]);
+
+  const isWorkingRangeStyle = (style: string): boolean => !isHiddenFromW27WorkingRange(
+    season,
+    style,
+    styleCategoryMap.get(style.toUpperCase()),
+  );
+
   // Fetch website images scraped from tonybianco.com.au (used as fallback when no manual override)
   const { data: websiteImages = [] } = trpc.style.getImages.useQuery(undefined, {
     staleTime: 120_000,
@@ -154,6 +172,7 @@ export function useCustomSkus() {
     // Apply overrides to static SKUs
     // For W27 (and any non-SS26 season), all static SKUs are carry-overs — force is_new=false
     const baseSkus = (skuData.rawSkus as unknown as ReadonlyArray<{ style: string; colour: string; leather: string; is_new: boolean }>)
+      .filter((sku) => isWorkingRangeStyle(sku.style))
       .filter((sku) => !isMarkdownSku(markdownSkuSet, sku.style, sku.colour, sku.leather ?? ""))
       .map((sku) => {
       const staticIsNew = season === "SS26" ? sku.is_new : false;
@@ -177,6 +196,7 @@ export function useCustomSkus() {
     if (customSkus.length === 0) return baseSkus;
 
     const extra = customSkus
+      .filter((c) => isWorkingRangeStyle(c.style))
       .filter((c) => !isMarkdownSku(markdownSkuSet, c.style, c.colour, c.leather ?? ""))
       .map((c) => ({
       style: c.style as string,
@@ -193,7 +213,7 @@ export function useCustomSkus() {
     const filtered = extra.filter((e) => !existing.has(`${e.style}|${e.colour}|${e.leather}`));
 
     return [...baseSkus, ...filtered];
-  }, [customSkus, markdownSkuSet, season, skuNewOverrideMap, skuDescriptionOverrideMap]);
+  }, [customSkus, markdownSkuSet, season, skuNewOverrideMap, skuDescriptionOverrideMap, styleCategoryMap]);
 
   const activeSkusByStyle = useMemo(() => {
     const groups: Record<string, Array<{ style: string; colour: string; leather: string; is_new: boolean }>> = {};
@@ -235,6 +255,7 @@ export function useCustomSkus() {
     const staticStyleNames = new Set(skuData.styles.map((s) => s.style.toUpperCase()));
     const syntheticStyles = (customStyleRows as Array<{ id: number; style: string; lastName: string; category: string | null; isSize11: boolean | null; createdAt: Date }>)
       .filter((cs) => !staticStyleNames.has(cs.style.toUpperCase()))
+      .filter((cs) => isWorkingRangeStyle(cs.style))
       .map((cs) => {
         // Priority: manual upload override > Tony Bianco website image
         const overrideUrl = imageOverrideMap[cs.style.toUpperCase()] ?? websiteImageMap[cs.style.toUpperCase()];
@@ -253,7 +274,7 @@ export function useCustomSkus() {
       }).filter((style): style is NonNullable<typeof style> => style !== null);
 
     return [...staticStyles, ...syntheticStyles];
-  }, [activeSkusByStyle, customStyleRows, imageOverrideMap, websiteImageMap]);
+  }, [activeSkusByStyle, customStyleRows, imageOverrideMap, websiteImageMap, styleCategoryMap]);
 
   return {
     customSkus: customSkus as CustomSkuRow[],

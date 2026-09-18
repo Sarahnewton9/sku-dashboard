@@ -60,6 +60,14 @@ export default function BuyAnalysisTab() {
     selectedSessionIds.map((id) => t.buy.getItems({ sessionId: id }))
   );
 
+  // Saved buy lines can outlive a seasonal range decision. Use the central
+  // active range as the source of truth so hidden W27 Flat/Casual Sandals do
+  // not surface from previous sessions or location totals.
+  const activeRangeStyleSet = useMemo(
+    () => new Set((mergedStyles as Array<{ style: string }>).map((style) => style.style)),
+    [mergedStyles],
+  );
+
   // Merge all items across selected sessions, summing AU+USA qtys per SKU
   const mergedItems = useMemo(() => {
     const map = new Map<string, { style: string; colour: string; leather: string; auQty: number; usaQty: number; nycQty: number; laQty: number; sessionBreakdown: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number; la: number }> }>();
@@ -73,6 +81,7 @@ export default function BuyAnalysisTab() {
         const nyc = item.nycQty ?? 0;
         const la = item.laQty ?? 0;
         if (au === 0 && usa === 0 && nyc === 0 && la === 0) continue;
+        if (!activeRangeStyleSet.has(item.style)) continue;
         const key = `${item.style}|${item.colour}|${item.leather}`;
         const existing = map.get(key) ?? { style: item.style, colour: item.colour, leather: item.leather, auQty: 0, usaQty: 0, nycQty: 0, laQty: 0, sessionBreakdown: [] };
         existing.auQty += au;
@@ -84,7 +93,7 @@ export default function BuyAnalysisTab() {
       }
     }
     return Array.from(map.values());
-  }, [sessionQueries, selectedSessionIds, allSessions]);
+  }, [sessionQueries, selectedSessionIds, allSessions, activeRangeStyleSet]);
 
   // Build style info lookup with runtime category overrides (uses mergedStyles for custom styles)
   const styleInfoMap = useMemo((): Record<string, { category: string; last: string }> => {
@@ -175,19 +184,21 @@ export default function BuyAnalysisTab() {
       totalNyc?: number;
       totalLa?: number;
     }>;
-    return Object.entries(totalsBySku).map(([skuKey, totals]) => {
-      const [style, colour, leather] = skuKey.split("|");
-      return {
-        style,
-        colour,
-        leather,
-        auQty: totals.totalAu ?? 0,
-        usaQty: totals.totalUsa ?? 0,
-        nycQty: totals.totalNyc ?? 0,
-        laQty: totals.totalLa ?? 0,
-      };
-    });
-  }, [allSessionQtys]);
+    return Object.entries(totalsBySku)
+      .map(([skuKey, totals]) => {
+        const [style, colour, leather] = skuKey.split("|");
+        return {
+          style,
+          colour,
+          leather,
+          auQty: totals.totalAu ?? 0,
+          usaQty: totals.totalUsa ?? 0,
+          nycQty: totals.totalNyc ?? 0,
+          laQty: totals.totalLa ?? 0,
+        };
+      })
+      .filter((item) => activeRangeStyleSet.has(item.style));
+  }, [allSessionQtys, activeRangeStyleSet]);
 
   const locationStyleRows = useMemo(() => {
     return groupBoughtStylesByLocation(allSessionLocationItems, locationMarket).map((group) => ({
