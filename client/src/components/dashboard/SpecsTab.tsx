@@ -39,6 +39,7 @@ import { useSeason } from "@/contexts/SeasonContext";
 import { findSpecColourMapValue, normalizeStoredSpecColourKey } from "@shared/specColourKey";
 import { selectSpecColourColumns } from "@shared/specsStyleVisibility";
 import { getSeasonDisplayLabel } from "@shared/seasonLabel";
+import { buildNewSpecColourColumns } from "@shared/specSeasonalColumns";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -2205,51 +2206,17 @@ export default function SpecsTab({}: SpecsTabProps) {
     return map;
   }, [mergedRawSkus, SPEC_COLOUR_KEY_BY_SKU]);
 
-  // Build new colours per style from live merged raw SKUs
-  // When a colour appears with multiple leathers (e.g. TILDA BLACK/CRINKLE + BLACK/SPECKLE),
-  // emit "COLOUR LEATHER" as the unique key so both get their own spec row.
+  // Build new seasonal columns from the live merged SKU rows. This deliberately
+  // uses the same key logic as the rendered Specs grid, so new By Style colours
+  // remain visible even if an existing colour uses a different leather.
   const NEW_COLOURS_PER_STYLE = useMemo(() => {
-    // First pass: detect which styles have duplicate colours across different leathers
-    const colourLeatherMap: Record<string, Record<string, Set<string>>> = {}; // style → colour → Set<leather>
-    for (const sku of mergedRawSkus as any[]) {
-      if (!sku.is_new) continue;
-      const style = sku.style as string;
-      const colour = sku.colour as string;
-      const leather = (sku.leather as string) ?? "";
-      if (!colourLeatherMap[style]) colourLeatherMap[style] = {};
-      if (!colourLeatherMap[style][colour]) colourLeatherMap[style][colour] = new Set();
-      colourLeatherMap[style][colour].add(leather);
-    }
-
-    // Second pass: build ordered colour key list per style
-    const result: Record<string, string[]> = {};
-    for (const s of mergedStyles as typeof skuData.styles) {
-      const leathersByColour = colourLeatherMap[s.style];
-      if (!leathersByColour) { result[s.style] = []; continue; }
-      // Deduplicate colours first — custom styles can have duplicate colour entries
-      // when the same colour appears with multiple leathers (e.g. XENA BLACK NAPPA + BLACK TUSCON).
-      // The leathersByColour Set already captures all leathers, so we only need to visit each colour once.
-      const allColours: string[] = (s as any).colours ?? [];
-      const seenColours = new Set<string>();
-      const keys: string[] = [];
-      for (const colour of allColours) {
-        if (seenColours.has(colour)) continue; // skip duplicate colour entries
-        seenColours.add(colour);
-        const leathers = leathersByColour[colour];
-        if (!leathers) continue;
-        if (leathers.size > 1) {
-          // Multiple leathers for same colour — emit one key per leather
-          for (const leather of Array.from(leathers).sort()) {
-            keys.push(leather ? `${colour} ${leather}` : colour);
-          }
-        } else {
-          keys.push(colour);
-        }
-      }
-      result[s.style] = keys;
-    }
-    return result;
-  }, [mergedRawSkus, mergedStyles]);
+    return buildNewSpecColourColumns(mergedRawSkus as Array<{
+      style: string;
+      colour: string;
+      leather?: string | null;
+      is_new?: boolean;
+    }>);
+  }, [mergedRawSkus]);
 
   // Build all active colour columns from live merged raw SKUs. A style with new
   // colours will use its new-only list below; carry-over/core styles use this
@@ -2460,7 +2427,7 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   // ── Hidden columns (per-style, persisted in DB) ───────────────────────────
   const { data: hiddenColumnsData, refetch: refetchHiddenColumns } = trpc.specHiddenColumns.getHidden.useQuery(
-    { style: selectedStyle! },
+    { style: selectedStyle!, season },
     { enabled: !!selectedStyle }
   );
   const hiddenColumnsSet = useMemo(
@@ -2470,49 +2437,51 @@ export default function SpecsTab({}: SpecsTabProps) {
   const [showHiddenColumns, setShowHiddenColumns] = useState(false);
 
   const hideColumnMutation = trpc.specHiddenColumns.hide.useMutation({
-    onMutate: async ({ style, colour }) => {
-      await utils.specHiddenColumns.getHidden.cancel({ style });
-      const prev = utils.specHiddenColumns.getHidden.getData({ style });
-      utils.specHiddenColumns.getHidden.setData({ style }, (old) => ({
+    onMutate: async ({ style, colour, season: targetSeason }) => {
+      const input = { style, season: targetSeason };
+      await utils.specHiddenColumns.getHidden.cancel(input);
+      const prev = utils.specHiddenColumns.getHidden.getData(input);
+      utils.specHiddenColumns.getHidden.setData(input, (old) => ({
         hidden: [...(old?.hidden ?? []), colour],
       }));
       return { prev };
     },
-    onError: (_err, { style }, ctx) => {
-      if (ctx?.prev !== undefined) utils.specHiddenColumns.getHidden.setData({ style }, ctx.prev);
+    onError: (_err, { style, season: targetSeason }, ctx) => {
+      if (ctx?.prev !== undefined) utils.specHiddenColumns.getHidden.setData({ style, season: targetSeason }, ctx.prev);
       toast.error("Failed to hide column");
     },
-    onSettled: (_data, _err, { style }) => {
-      utils.specHiddenColumns.getHidden.invalidate({ style });
+    onSettled: (_data, _err, { style, season: targetSeason }) => {
+      utils.specHiddenColumns.getHidden.invalidate({ style, season: targetSeason });
     },
   });
 
   const showColumnMutation = trpc.specHiddenColumns.show.useMutation({
-    onMutate: async ({ style, colour }) => {
-      await utils.specHiddenColumns.getHidden.cancel({ style });
-      const prev = utils.specHiddenColumns.getHidden.getData({ style });
-      utils.specHiddenColumns.getHidden.setData({ style }, (old) => ({
+    onMutate: async ({ style, colour, season: targetSeason }) => {
+      const input = { style, season: targetSeason };
+      await utils.specHiddenColumns.getHidden.cancel(input);
+      const prev = utils.specHiddenColumns.getHidden.getData(input);
+      utils.specHiddenColumns.getHidden.setData(input, (old) => ({
         hidden: (old?.hidden ?? []).filter((c) => c !== colour),
       }));
       return { prev };
     },
-    onError: (_err, { style }, ctx) => {
-      if (ctx?.prev !== undefined) utils.specHiddenColumns.getHidden.setData({ style }, ctx.prev);
+    onError: (_err, { style, season: targetSeason }, ctx) => {
+      if (ctx?.prev !== undefined) utils.specHiddenColumns.getHidden.setData({ style, season: targetSeason }, ctx.prev);
       toast.error("Failed to restore column");
     },
-    onSettled: (_data, _err, { style }) => {
-      utils.specHiddenColumns.getHidden.invalidate({ style });
+    onSettled: (_data, _err, { style, season: targetSeason }) => {
+      utils.specHiddenColumns.getHidden.invalidate({ style, season: targetSeason });
     },
   });
 
   function handleHideColumn(colour: string) {
     if (!selectedStyle) return;
-    hideColumnMutation.mutate({ style: selectedStyle, colour });
+    hideColumnMutation.mutate({ style: selectedStyle, colour, season });
   }
 
   function handleShowColumn(colour: string) {
     if (!selectedStyle) return;
-    showColumnMutation.mutate({ style: selectedStyle, colour });
+    showColumnMutation.mutate({ style: selectedStyle, colour, season });
   }
 
   // ─── Reset Colour Column ──────────────────────────────────────────────────
@@ -3011,8 +2980,8 @@ export default function SpecsTab({}: SpecsTabProps) {
   const addCustomSkuMutation = trpc.customSku.add.useMutation({
     onSuccess: (_data, vars) => {
       utils.customSku.getAll.invalidate();
-      utils.specHiddenColumns.getHidden.invalidate({ style: vars.style });
-      utils.cancelledSku.list.invalidate();
+      utils.specHiddenColumns.getHidden.invalidate({ style: vars.style, season: vars.season });
+      utils.cancelledSku.list.invalidate({ season: vars.season });
       toast.success("Colour added to spec sheet");
     },
     onError: () => toast.error("Failed to add colour"),
@@ -3020,7 +2989,7 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   function handleAddSku(colour: string, leather: string) {
     if (!selectedStyle) return;
-    addCustomSkuMutation.mutate({ style: selectedStyle, colour, leather });
+    addCustomSkuMutation.mutate({ style: selectedStyle, colour, leather, season });
   }
   const updateCustomSkuMutation = trpc.customSku.update.useMutation({
     onSuccess: () => {

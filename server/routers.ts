@@ -959,7 +959,7 @@ export const appRouter = router({
         // Also clear any hidden-column entry and cancelled-sku entry for this colour key.
         // Build the compound colour key the same way the spec sheet does.
         const colourKey = leather ? `${colour} ${leather}` : colour;
-        await showSpecColumn(style, colourKey);
+        await showSpecColumn(style, colourKey, season);
         await restoreSku(style, colour, leather, season);
         return { id, restored: false };
       }),
@@ -2028,21 +2028,21 @@ If the request is unclear or is a question, use no_action.`;
   // ─── Spec Hidden Columns (hide individual colour columns per style) ───────────
   specHiddenColumns: router({
     getHidden: publicProcedure
-      .input(z.object({ style: z.string() }))
+      .input(z.object({ style: z.string(), season: z.string().default("SS26") }))
       .query(async ({ input }) => {
-        const hidden = await getSpecHiddenColumns(input.style);
+        const hidden = await getSpecHiddenColumns(input.style, input.season);
         return { hidden };
       }),
     hide: publicProcedure
-      .input(z.object({ style: z.string(), colour: z.string() }))
+      .input(z.object({ style: z.string(), colour: z.string(), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
-        await hideSpecColumn(input.style, input.colour);
+        await hideSpecColumn(input.style, input.colour, input.season);
         return { success: true };
       }),
       show: publicProcedure
-      .input(z.object({ style: z.string(), colour: z.string() }))
+      .input(z.object({ style: z.string(), colour: z.string(), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
-        await showSpecColumn(input.style, input.colour);
+        await showSpecColumn(input.style, input.colour, input.season);
         return { success: true };
       }),
   }),

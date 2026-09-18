@@ -303,8 +303,15 @@ export default function StylesTab() {
   const [addColourDraft, setAddColourDraft] = useState<Record<string, { colour: string; leather: string; colour2: string; leather2: string; hasUpper2: boolean }>>({});
 
   const addCustomSkuMutation = trpc.customSku.add.useMutation({
-    onSuccess: (_data, vars) => {
-      refetchCustomSkus();
+    onSuccess: async (_data, vars) => {
+      // This is the shared range query used by Specs as well as By Style.
+      // Invalidating it makes a new colour available as soon as the user opens Specs.
+      await Promise.all([
+        utils.customSku.getAll.invalidate({ season: vars.season }),
+        utils.specHiddenColumns.getHidden.invalidate({ style: vars.style, season: vars.season }),
+        utils.cancelledSku.list.invalidate({ season: vars.season }),
+        refetchCustomSkus(),
+      ]);
       // Also add to active buy session if one is selected and unlocked
       if (selectedSessionId && !isSessionLocked) {
         upsertItemMutation.mutate({ sessionId: selectedSessionId, style: vars.style, colour: vars.colour, leather: vars.leather, auQty: 0, usaQty: 0 });
@@ -316,8 +323,11 @@ export default function StylesTab() {
   });
 
   const updateCustomSkuMutation = trpc.customSku.update.useMutation({
-    onSuccess: () => {
-      refetchCustomSkus();
+    onSuccess: async () => {
+      await Promise.all([
+        utils.customSku.getAll.invalidate({ season }),
+        refetchCustomSkus(),
+      ]);
       setColourEdit(null);
       toast.success("Colour and leather updated");
     },

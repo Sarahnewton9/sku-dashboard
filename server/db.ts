@@ -1288,24 +1288,30 @@ export async function upsertSpecRowOrder(style: string, rowKeys: string[]): Prom
 
 // ── Spec Hidden Columns ─────────────────────────────────────────────────────
 
-export async function getSpecHiddenColumns(style: string): Promise<string[]> {
+export async function getSpecHiddenColumns(style: string, season = "SS26"): Promise<string[]> {
   const db = await getDb();
   if (!db) return [];
-  const rows = await db.select().from(specHiddenColumns).where(eq(specHiddenColumns.style, style));
+  const rows = await db.select().from(specHiddenColumns).where(
+    and(eq(specHiddenColumns.style, style), eq(specHiddenColumns.season, season))
+  );
   return rows.map((r) => r.colour);
 }
 
-export async function hideSpecColumn(style: string, colour: string): Promise<void> {
+export async function hideSpecColumn(style: string, colour: string, season = "SS26"): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(specHiddenColumns).values({ style, colour }).onDuplicateKeyUpdate({ set: { colour } });
+  await db.insert(specHiddenColumns).values({ style, colour, season }).onDuplicateKeyUpdate({ set: { colour } });
 }
 
-export async function showSpecColumn(style: string, colour: string): Promise<void> {
+export async function showSpecColumn(style: string, colour: string, season = "SS26"): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(specHiddenColumns).where(
-    and(eq(specHiddenColumns.style, style), eq(specHiddenColumns.colour, colour))
+    and(
+      eq(specHiddenColumns.style, style),
+      eq(specHiddenColumns.colour, colour),
+      eq(specHiddenColumns.season, season),
+    )
   );
 }
 
