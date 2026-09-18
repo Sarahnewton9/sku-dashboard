@@ -36,7 +36,12 @@ export function useCustomSkus() {
   const { season } = useSeason();
 
   const { data: customSkus = [], isLoading, refetch } = trpc.customSku.getAll.useQuery({ season }, {
-    staleTime: 30_000,
+    // Custom SKUs can also be corrected by seasonal imports and data repairs,
+    // not only through the visible form. Keep the live range in sync so a
+    // colourway does not remain invisible in an already-open By Style tab.
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchInterval: 5_000,
   });
 
   // Markdown SKUs are a global, reversible exclusion list. A deleted record
