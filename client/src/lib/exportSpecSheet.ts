@@ -26,6 +26,7 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { getTemplateForCategory } from "@shared/specTemplates";
 import { readSpecColourValue } from "@shared/specColourKey";
+import { getSpecExportFilename } from "@shared/specExportFilename";
 
 interface CustomRow {
   id: number;
@@ -556,6 +557,6 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
   const blob = new Blob([buffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
-  const filename = `${style.toUpperCase()} - TONY BIANCO ${season}.xlsx`;
+  const filename = getSpecExportFilename(style);
   saveAs(blob, filename);
 }
