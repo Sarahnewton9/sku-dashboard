@@ -12,6 +12,8 @@ import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Package, Sparkles, Archive, Layers, Star, RefreshCw, FlaskConical, CheckCircle2 } from "lucide-react";
 import { getNewLastsForSeason } from "@shared/const";
+import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
+import { formatSkuExportLabel } from "@shared/skuExportLabel";
 import { useSeason } from "@/contexts/SeasonContext";
 
 const CATEGORY_COLOURS: Record<string, string> = {
@@ -247,8 +249,8 @@ export default function SummaryCards() {
 
   // SKU lists for hover tooltips
   const sampleSkuLists = useMemo(() => {
-    const receivedSkus: string[] = [];
-    const waitingSkus: string[] = [];
+    const receivedSkus: Array<{ key: string; label: string }> = [];
+    const waitingSkus: Array<{ key: string; label: string }> = [];
 
     // Build a set of SKU keys that are in the DB with a status
     const skuStatusMap: Record<string, "waiting" | "fitting_sample" | "received"> = {};
@@ -261,14 +263,21 @@ export default function SummaryCards() {
       if (!sku.is_new) continue;
       if (cancelledStyleSet.has(sku.style)) continue;
       if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) continue;
-      const key = `${sku.style}|${sku.colour}|${sku.leather}`;
-      const label = `${sku.style} — ${sku.colour} ${sku.leather}`;
-      if (skuStatusMap[key] === "received") {
-        receivedSkus.push(label);
-      } else if (skuStatusMap[key] === "fitting_sample") {
-        receivedSkus.push(`${label} (fitting)`);
+      const statusKey = `${sku.style}|${sku.colour}|${sku.leather}`;
+      const key = getSkuCompositeIdentity(
+        sku.style,
+        sku.colour,
+        sku.leather,
+        (sku as any).colour2,
+        (sku as any).leather2,
+      );
+      const label = `${sku.style} — ${formatSkuExportLabel(sku)}`;
+      if (skuStatusMap[statusKey] === "received") {
+        receivedSkus.push({ key, label });
+      } else if (skuStatusMap[statusKey] === "fitting_sample") {
+        receivedSkus.push({ key, label: `${label} (fitting)` });
       } else {
-        waitingSkus.push(label);
+        waitingSkus.push({ key, label });
       }
     }
 
@@ -364,7 +373,7 @@ export default function SummaryCards() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Received Samples</p>
                   <ul className="space-y-1">
                     {sampleSkuLists.receivedSkus.map((sku) => (
-                      <li key={sku} className="text-xs text-foreground">{sku}</li>
+                      <li key={sku.key} className="text-xs text-foreground">{sku.label}</li>
                     ))}
                   </ul>
                 </div>
@@ -390,7 +399,7 @@ export default function SummaryCards() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Waiting on Samples</p>
                   <ul className="space-y-1">
                     {sampleSkuLists.waitingSkus.map((sku) => (
-                      <li key={sku} className="text-xs text-foreground">{sku}</li>
+                      <li key={sku.key} className="text-xs text-foreground">{sku.label}</li>
                     ))}
                   </ul>
                 </div>
