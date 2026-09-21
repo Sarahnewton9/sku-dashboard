@@ -5,6 +5,7 @@ import { useSeason } from "@/contexts/SeasonContext";
 import { buildMarkdownSkuSet, isMarkdownSku } from "@shared/markdownSku";
 import { summarizeCustomStyleSkus } from "@shared/customStyleSummary";
 import { isHiddenFromW27WorkingRange } from "@shared/w27SandalVisibility";
+import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 
 export type CustomSkuRow = {
   id: number;
@@ -208,9 +209,22 @@ export function useCustomSkus() {
       _customId: c.id,
     }));
 
-    // Deduplicate: don't add if already in static data
-    const existing = new Set(baseSkus.map((s) => `${s.style}|${s.colour}|${s.leather}`));
-    const filtered = extra.filter((e) => !existing.has(`${e.style}|${e.colour}|${e.leather}`));
+    // Deduplicate only an exact Upper 1 + Upper 2 combination. Two physical
+    // SKUs may share Upper 1 while using different Upper 2 constructions.
+    const existing = new Set(baseSkus.map((s) => getSkuCompositeIdentity(
+      s.style,
+      s.colour,
+      s.leather,
+      (s as any).colour2,
+      (s as any).leather2,
+    )));
+    const filtered = extra.filter((e) => !existing.has(getSkuCompositeIdentity(
+      e.style,
+      e.colour,
+      e.leather,
+      e.colour2,
+      e.leather2,
+    )));
 
     return [...baseSkus, ...filtered];
   }, [customSkus, markdownSkuSet, season, skuNewOverrideMap, skuDescriptionOverrideMap, styleCategoryMap]);

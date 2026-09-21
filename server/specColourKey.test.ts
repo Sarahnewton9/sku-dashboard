@@ -21,6 +21,18 @@ describe("normalized Specs colour keys", () => {
     expect(keys.get(getSpecSkuIdentity("TILDA", "BLACK", "CRINKLE"))).toBe("BLACK CRINKLE");
   });
 
+  it("keeps duplicate Upper 1 combinations separate when Upper 2 differs", () => {
+    const keys = buildSpecColourKeyLookup([
+      { style: "EMILY", colour: "ECRU", leather: "SNAKE", colour2: "ROYAL", leather2: "SUEDE" },
+      { style: "EMILY", colour: "ECRU", leather: "SNAKE", colour2: "LIPSTICK", leather2: "SUEDE" },
+    ]);
+
+    expect(keys.get(getSpecSkuIdentity("EMILY", "ECRU", "SNAKE", "ROYAL", "SUEDE")))
+      .toBe("ECRU SNAKE/ROYAL SUEDE");
+    expect(keys.get(getSpecSkuIdentity("EMILY", "ECRU", "SNAKE", "LIPSTICK", "SUEDE")))
+      .toBe("ECRU SNAKE/LIPSTICK SUEDE");
+  });
+
   it("reads current and legacy per-colour values despite casing and spacing differences", () => {
     expect(readSpecColourValue({ "black  speckle": "MATCHING" }, "BLACK SPECKLE")).toBe("MATCHING");
     expect(readSpecColourValue({ BLACK: "LEGACY" }, "BLACK SPECKLE", "BLACK")).toBe("LEGACY");

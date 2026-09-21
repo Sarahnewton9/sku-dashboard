@@ -11,6 +11,7 @@ import { skuData } from "@/lib/skuData";
 import { ALL_LASTS } from "@shared/const";
 import { getSeasonFileLabel } from "@shared/seasonLabel";
 import { getSkuExportFields } from "@shared/skuExportLabel";
+import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
@@ -1740,7 +1741,13 @@ export default function StylesTab() {
                                     const allTotal = allQtyData?.total ?? 0;
                                     return (
                                       <div
-                                        key={`${sku.colour}-${sku.leather}`}
+                                        key={getSkuCompositeIdentity(
+                                          sku.style,
+                                          sku.colour,
+                                          sku.leather,
+                                          (sku as any).colour2,
+                                          (sku as any).leather2,
+                                        )}
                                         className="grid items-center gap-2 px-3 py-2 rounded-lg"
                                         style={{
                                           gridTemplateColumns: isNew

@@ -20,4 +20,16 @@ describe("live Specs seasonal columns", () => {
 
     expect(columns.DEVYN).toEqual(["CLOUD"]);
   });
+
+  it("keeps new same-Upper-1 variants separate when Upper 2 differs", () => {
+    const columns = buildNewSpecColourColumns([
+      { style: "EMILY", colour: "ECRU", leather: "SNAKE", colour2: "ROYAL", leather2: "SUEDE", is_new: true },
+      { style: "EMILY", colour: "ECRU", leather: "SNAKE", colour2: "LIPSTICK", leather2: "SUEDE", is_new: true },
+    ]);
+
+    expect(columns.EMILY).toEqual([
+      "ECRU SNAKE/ROYAL SUEDE",
+      "ECRU SNAKE/LIPSTICK SUEDE",
+    ]);
+  });
 });

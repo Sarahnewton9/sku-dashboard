@@ -1,7 +1,11 @@
+import { buildSpecColourKeyLookup, getSpecSkuIdentity } from "./specColourKey";
+
 export type SkuColumnRow = {
   style: string;
   colour: string;
   leather: string | null | undefined;
+  colour2?: string | null | undefined;
+  leather2?: string | null | undefined;
 };
 
 export type EditableCustomSku = SkuColumnRow & {
@@ -10,8 +14,8 @@ export type EditableCustomSku = SkuColumnRow & {
 
 /**
  * Specs uses a compound column key only when a style has the same colour in
- * more than one leather. Build the same key for editable custom SKUs so, for
- * example, BLACK NAPPA and BLACK MESH can each open the correct edit form.
+ * more than one leather or Upper 2. Build the same key for editable custom
+ * SKUs so each physical SKU can open the correct edit form.
  */
 export function buildEditableCustomSkuColumns(
   selectedStyle: string | null,
@@ -20,21 +24,18 @@ export function buildEditableCustomSkuColumns(
 ): Record<string, EditableCustomSku> {
   if (!selectedStyle) return {};
 
-  const leathersByColour = new Map<string, Set<string>>();
-  for (const sku of allSkus) {
-    if (sku.style !== selectedStyle) continue;
-    const leathers = leathersByColour.get(sku.colour) ?? new Set<string>();
-    leathers.add(sku.leather ?? "");
-    leathersByColour.set(sku.colour, leathers);
-  }
+  const keyBySku = buildSpecColourKeyLookup(allSkus.filter((sku) => sku.style === selectedStyle));
 
   const columns: Record<string, EditableCustomSku> = {};
   for (const sku of customSkus) {
     if (sku.style !== selectedStyle) continue;
-    const hasMultipleLeathers = (leathersByColour.get(sku.colour)?.size ?? 0) > 1;
-    const columnKey = hasMultipleLeathers && sku.leather
-      ? `${sku.colour} ${sku.leather}`
-      : sku.colour;
+    const columnKey = keyBySku.get(getSpecSkuIdentity(
+      sku.style,
+      sku.colour,
+      sku.leather,
+      sku.colour2,
+      sku.leather2,
+    )) ?? sku.colour;
     columns[columnKey] = sku;
   }
   return columns;

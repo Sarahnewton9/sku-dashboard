@@ -20,4 +20,20 @@ describe("editable Specs SKU columns", () => {
     expect(columns["BLACK MESH"]?.id).toBe(2);
     expect(columns["PETAL"]?.id).toBe(3);
   });
+
+  it("maps matching Upper 1 rows with distinct Upper 2 values to separate columns", () => {
+    const allSkus = [
+      { style: "EMILY", colour: "ECRU", leather: "SNAKE", colour2: "ROYAL", leather2: "SUEDE" },
+      { style: "EMILY", colour: "ECRU", leather: "SNAKE", colour2: "LIPSTICK", leather2: "SUEDE" },
+    ];
+    const customSkus = [
+      { id: 1, ...allSkus[0] },
+      { id: 2, ...allSkus[1] },
+    ];
+
+    const columns = buildEditableCustomSkuColumns("EMILY", allSkus, customSkus);
+
+    expect(columns["ECRU SNAKE/ROYAL SUEDE"]?.id).toBe(1);
+    expect(columns["ECRU SNAKE/LIPSTICK SUEDE"]?.id).toBe(2);
+  });
 });

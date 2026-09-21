@@ -28,7 +28,13 @@ export function buildNewSpecColourColumns(
     const leather = normalizeSpecColourPart(sku.leather);
     if (!style || !colour) continue;
 
-    const key = keyBySku.get(getSpecSkuIdentity(style, colour, leather)) ?? colour;
+    const key = keyBySku.get(getSpecSkuIdentity(
+      style,
+      colour,
+      leather,
+      sku.colour2,
+      sku.leather2,
+    )) ?? colour;
     const columns = result[style] ?? [];
     if (!columns.includes(key)) columns.push(key);
     result[style] = columns;

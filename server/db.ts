@@ -2,6 +2,7 @@ import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns, customLasts, lastMeasurements, ap21StyleRefs, ap21ColourRefs } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { getSkuCompositeIdentity, normalizeSkuIdentityPart } from "../shared/skuCompositeIdentity";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -838,12 +839,55 @@ export async function listCancelledStyles(season = "SS26"): Promise<{ style: str
 export async function addCustomSku(style: string, colour: string, leather: string, season = "SS26", colour2?: string, leather2?: string): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  // If this exact style/colour/leather already exists for this season, return the existing id
-  const existing = await db.select({ id: customSkus.id }).from(customSkus)
-    .where(and(eq(customSkus.style, style), eq(customSkus.colour, colour), eq(customSkus.leather, leather), eq(customSkus.season, season)))
-    .limit(1);
-  if (existing.length > 0) return existing[0].id;
-  const result = await db.insert(customSkus).values({ style, colour, leather, season, colour2: colour2 ?? null, leather2: leather2 ?? null });
+  const normalized = {
+    style: normalizeSkuIdentityPart(style),
+    colour: normalizeSkuIdentityPart(colour),
+    leather: normalizeSkuIdentityPart(leather),
+    colour2: normalizeSkuIdentityPart(colour2),
+    leather2: normalizeSkuIdentityPart(leather2),
+    season: normalizeSkuIdentityPart(season),
+  };
+  const candidateIdentity = getSkuCompositeIdentity(
+    normalized.style,
+    normalized.colour,
+    normalized.leather,
+    normalized.colour2,
+    normalized.leather2,
+  );
+
+  // Upper 2 is part of the physical SKU identity. For example, ECRU
+  // SNAKE/ROYAL SUEDE and ECRU SNAKE/LIPSTICK SUEDE must both be addable.
+  const primaryMatches = await db.select({
+    id: customSkus.id,
+    style: customSkus.style,
+    colour: customSkus.colour,
+    leather: customSkus.leather,
+    colour2: customSkus.colour2,
+    leather2: customSkus.leather2,
+  }).from(customSkus)
+    .where(and(
+      eq(customSkus.style, normalized.style),
+      eq(customSkus.colour, normalized.colour),
+      eq(customSkus.leather, normalized.leather),
+      eq(customSkus.season, normalized.season),
+    ));
+  const existing = primaryMatches.find((sku) => getSkuCompositeIdentity(
+    sku.style,
+    sku.colour,
+    sku.leather,
+    sku.colour2,
+    sku.leather2,
+  ) === candidateIdentity);
+  if (existing) return existing.id;
+
+  const result = await db.insert(customSkus).values({
+    style: normalized.style,
+    colour: normalized.colour,
+    leather: normalized.leather,
+    season: normalized.season,
+    colour2: normalized.colour2 || null,
+    leather2: normalized.leather2 || null,
+  });
   return (result[0] as any).insertId as number;
 }
 

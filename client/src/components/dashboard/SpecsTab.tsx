@@ -2155,10 +2155,16 @@ export default function SpecsTab({}: SpecsTabProps) {
   const { mergedRawSkus, mergedStyles, customSkus } = useCustomSkus();
   const { season } = useSeason();
 
-  // Build colour+leather lookup from live merged raw SKUs
-  // For styles with duplicate colours (different leathers), the key is "COLOUR LEATHER"
+  // Build live Specs keys. Upper 2 is part of the SKU identity, so matching
+  // Upper 1 rows remain separate when their Upper 2 differs.
   const SPEC_COLOUR_KEY_BY_SKU = useMemo(
-    () => buildSpecColourKeyLookup(mergedRawSkus as Array<{ style: string; colour: string; leather?: string | null }>),
+    () => buildSpecColourKeyLookup(mergedRawSkus as Array<{
+      style: string;
+      colour: string;
+      leather?: string | null;
+      colour2?: string | null;
+      leather2?: string | null;
+    }>),
     [mergedRawSkus],
   );
 
@@ -2168,8 +2174,10 @@ export default function SpecsTab({}: SpecsTabProps) {
       const style = normalizeSpecColourPart(sku.style as string);
       const colour = normalizeSpecColourPart(sku.colour as string);
       const leather = normalizeSpecColourPart((sku.leather as string) ?? "");
+      const colour2 = normalizeSpecColourPart((sku.colour2 as string) ?? "");
+      const leather2 = normalizeSpecColourPart((sku.leather2 as string) ?? "");
       if (!map[style]) map[style] = {};
-      const key = SPEC_COLOUR_KEY_BY_SKU.get(getSpecSkuIdentity(style, colour, leather)) ?? colour;
+      const key = SPEC_COLOUR_KEY_BY_SKU.get(getSpecSkuIdentity(style, colour, leather, colour2, leather2)) ?? colour;
       if (!map[style][key]) {
         map[style][key] = leather
           ? displayColourLeather(colour, leather, style, (sku as any).colour2, (sku as any).leather2)
@@ -2201,7 +2209,9 @@ export default function SpecsTab({}: SpecsTabProps) {
       const style = normalizeSpecColourPart(sku.style as string);
       const colour = normalizeSpecColourPart(sku.colour as string);
       const leather = normalizeSpecColourPart((sku.leather as string) ?? "");
-      const key = SPEC_COLOUR_KEY_BY_SKU.get(getSpecSkuIdentity(style, colour, leather)) ?? colour;
+      const colour2 = normalizeSpecColourPart((sku.colour2 as string) ?? "");
+      const leather2 = normalizeSpecColourPart((sku.leather2 as string) ?? "");
+      const key = SPEC_COLOUR_KEY_BY_SKU.get(getSpecSkuIdentity(style, colour, leather, colour2, leather2)) ?? colour;
       if (!map[style]) map[style] = {};
       map[style][key] = toeCap;
     }
@@ -2216,6 +2226,8 @@ export default function SpecsTab({}: SpecsTabProps) {
       style: string;
       colour: string;
       leather?: string | null;
+      colour2?: string | null;
+      leather2?: string | null;
       is_new?: boolean;
     }>);
   }, [mergedRawSkus]);
@@ -2229,7 +2241,9 @@ export default function SpecsTab({}: SpecsTabProps) {
       const style = normalizeSpecColourPart(sku.style as string);
       const colour = normalizeSpecColourPart(sku.colour as string);
       const leather = normalizeSpecColourPart((sku.leather as string) ?? "");
-      const key = SPEC_COLOUR_KEY_BY_SKU.get(getSpecSkuIdentity(style, colour, leather)) ?? colour;
+      const colour2 = normalizeSpecColourPart((sku.colour2 as string) ?? "");
+      const leather2 = normalizeSpecColourPart((sku.leather2 as string) ?? "");
+      const key = SPEC_COLOUR_KEY_BY_SKU.get(getSpecSkuIdentity(style, colour, leather, colour2, leather2)) ?? colour;
       const colours = result[style] ?? [];
       if (!colours.includes(key)) colours.push(key);
       result[style] = colours;

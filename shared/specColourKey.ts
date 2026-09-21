@@ -2,6 +2,8 @@ export type SpecColourSku = {
   style: string;
   colour: string;
   leather?: string | null;
+  colour2?: string | null;
+  leather2?: string | null;
 };
 
 export function normalizeSpecColourPart(value: string | null | undefined): string {
@@ -13,11 +15,19 @@ export function normalizeStoredSpecColourKey(value: string | null | undefined): 
   return trimmed.toLowerCase() === "__all__" ? "__all__" : normalizeSpecColourPart(trimmed);
 }
 
-export function getSpecSkuIdentity(style: string, colour: string, leather?: string | null): string {
+export function getSpecSkuIdentity(
+  style: string,
+  colour: string,
+  leather?: string | null,
+  colour2?: string | null,
+  leather2?: string | null,
+): string {
   return [
     normalizeSpecColourPart(style),
     normalizeSpecColourPart(colour),
     normalizeSpecColourPart(leather),
+    normalizeSpecColourPart(colour2),
+    normalizeSpecColourPart(leather2),
   ].join("\u0000");
 }
 
@@ -27,10 +37,13 @@ export function getSpecSkuIdentity(style: string, colour: string, leather?: stri
  */
 export function buildSpecColourKeyLookup(skus: readonly SpecColourSku[]): Map<string, string> {
   const leatherCounts = new Map<string, Set<string>>();
+  const secondaryCounts = new Map<string, Set<string>>();
   const normalizedSkus = skus.map((sku) => ({
     style: normalizeSpecColourPart(sku.style),
     colour: normalizeSpecColourPart(sku.colour),
     leather: normalizeSpecColourPart(sku.leather),
+    colour2: normalizeSpecColourPart(sku.colour2),
+    leather2: normalizeSpecColourPart(sku.leather2),
   }));
 
   for (const sku of normalizedSkus) {
@@ -38,14 +51,27 @@ export function buildSpecColourKeyLookup(skus: readonly SpecColourSku[]): Map<st
     const leathers = leatherCounts.get(colourIdentity) ?? new Set<string>();
     leathers.add(sku.leather);
     leatherCounts.set(colourIdentity, leathers);
+
+    const primaryIdentity = getSpecSkuIdentity(sku.style, sku.colour, sku.leather);
+    const secondaries = secondaryCounts.get(primaryIdentity) ?? new Set<string>();
+    secondaries.add(`${sku.colour2}\u0000${sku.leather2}`);
+    secondaryCounts.set(primaryIdentity, secondaries);
   }
 
   const keys = new Map<string, string>();
   for (const sku of normalizedSkus) {
     const colourIdentity = `${sku.style}\u0000${sku.colour}`;
     const hasMultipleLeathers = (leatherCounts.get(colourIdentity)?.size ?? 0) > 1;
-    const key = hasMultipleLeathers && sku.leather ? `${sku.colour} ${sku.leather}` : sku.colour;
-    keys.set(getSpecSkuIdentity(sku.style, sku.colour, sku.leather), key);
+    const primaryIdentity = getSpecSkuIdentity(sku.style, sku.colour, sku.leather);
+    const hasMultipleSecondaryUppers = (secondaryCounts.get(primaryIdentity)?.size ?? 0) > 1;
+    const primaryKey = (hasMultipleLeathers || hasMultipleSecondaryUppers) && sku.leather
+      ? `${sku.colour} ${sku.leather}`
+      : sku.colour;
+    const secondaryKey = [sku.colour2, sku.leather2].filter(Boolean).join(" ");
+    const key = hasMultipleSecondaryUppers && secondaryKey
+      ? `${primaryKey}/${secondaryKey}`
+      : primaryKey;
+    keys.set(getSpecSkuIdentity(sku.style, sku.colour, sku.leather, sku.colour2, sku.leather2), key);
   }
   return keys;
 }
@@ -57,6 +83,8 @@ export function getSpecColourKeyCandidates(colour: string, rawColour?: string): 
   const candidates = [
     full,
     raw,
+    full.split("/")[0] ?? "",
+    raw.split("/")[0] ?? "",
     full.split(" ")[0] ?? "",
     raw.split(" ")[0] ?? "",
   ].filter(Boolean);
