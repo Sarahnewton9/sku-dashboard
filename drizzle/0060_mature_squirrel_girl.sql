@@ -1,0 +1,1 @@
+ALTER TABLE `handbag_styles` ADD `status` varchar(32) DEFAULT 'active' NOT NULL;

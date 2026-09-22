@@ -2,11 +2,13 @@ import { useMemo, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
+  Ban,
   Download,
   ImageIcon,
   PackagePlus,
   Pencil,
   Plus,
+  RotateCcw,
   Search,
   ShoppingBag,
   X,
@@ -36,6 +38,7 @@ type HandbagSku = {
   style: string;
   colour: string;
   material: string | null;
+  status: string;
   seasonality: string | null;
   section: string | null;
   notes: string | null;
@@ -240,6 +243,7 @@ export default function HandbagsTab() {
 
   const [search, setSearch] = useState("");
   const [seasonalityFilter, setSeasonalityFilter] = useState("All");
+  const [showCancelled, setShowCancelled] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
   const [newSessionName, setNewSessionName] = useState("");
   const [styleDialog, setStyleDialog] = useState<StyleDialogState>(null);
@@ -270,6 +274,28 @@ export default function HandbagsTab() {
       toast.success("Handbag SKU saved");
     },
     onError: (error) => toast.error(error.message || "Unable to save handbag SKU"),
+  });
+  const updateSku = trpc.handbag.updateSku.useMutation({
+    onSuccess: () => {
+      utils.handbag.listStyles.invalidate();
+      utils.handbag.listParents.invalidate();
+      utils.handbag.listBuyItems.invalidate();
+    },
+    onError: (error) => toast.error(error.message || "Unable to update handbag SKU"),
+  });
+  const cancelSku = trpc.handbag.cancelSku.useMutation({
+    onSuccess: () => {
+      utils.handbag.listStyles.invalidate();
+      toast.success("Handbag SKU cancelled");
+    },
+    onError: (error) => toast.error(error.message || "Unable to cancel handbag SKU"),
+  });
+  const restoreSku = trpc.handbag.restoreSku.useMutation({
+    onSuccess: () => {
+      utils.handbag.listStyles.invalidate();
+      toast.success("Handbag SKU restored");
+    },
+    onError: (error) => toast.error(error.message || "Unable to restore handbag SKU"),
   });
   const updateBuyItem = trpc.handbag.upsertBuyItem.useMutation({
     onSuccess: () => utils.handbag.listBuyItems.invalidate(),
@@ -322,7 +348,8 @@ export default function HandbagsTab() {
   const visibleGroups = useMemo(() => {
     const query = search.trim().toUpperCase();
     return groups.map((group) => {
-      const matchingSkus = group.skus.filter((sku) => {
+      const rangeSkus = showCancelled ? group.skus : group.skus.filter((sku) => sku.status !== "cancelled");
+      const matchingSkus = rangeSkus.filter((sku) => {
         const skuSeasonality = getHandbagSeasonality(sku, group.seasonality);
         const matchesSearch = !query || [group.style, sku.colour, sku.material ?? "", sku.notes ?? "", skuSeasonality]
           .some((value) => value.toUpperCase().includes(query));
@@ -333,10 +360,10 @@ export default function HandbagsTab() {
         .some((value) => value.toUpperCase().includes(query));
       const parentMatchesSeasonality = seasonalityFilter === "All" || group.seasonality === seasonalityFilter;
       if (matchingSkus.length > 0) return { ...group, skus: matchingSkus };
-      if (group.skus.length === 0 && styleMatchesSearch && parentMatchesSeasonality) return group;
+      if (rangeSkus.length === 0 && group.skus.length === 0 && styleMatchesSearch && parentMatchesSeasonality) return group;
       return null;
     }).filter((group): group is HandbagStyleGroup => group !== null);
-  }, [groups, search, seasonalityFilter]);
+  }, [groups, search, seasonalityFilter, showCancelled]);
 
   const buyTotals = useMemo(() => {
     const totals = new Map<string, { auQty: number; usaQty: number; nycQty: number; total: number }>();
@@ -416,14 +443,10 @@ export default function HandbagsTab() {
       toast.error("SKU colour is required");
       return;
     }
-    if (skuDialog.mode === "edit" && skuDialog.sku && skuDialog.sku.colour !== colour) {
-      toast.error("To keep buy history intact, edit an existing SKU colour name from the existing range first.");
-      return;
-    }
     const rrp = skuDraft.rrp.trim() ? Number.parseFloat(skuDraft.rrp) : null;
     const cost = skuDraft.cost.trim() ? Number.parseFloat(skuDraft.cost) : null;
     const material = skuDraft.material.trim().toUpperCase();
-    await upsertSku.mutateAsync({
+    const details = {
       style: skuDialog.style,
       colour,
       material: material || undefined,
@@ -431,7 +454,22 @@ export default function HandbagsTab() {
       notes: skuDraft.notes.trim() || undefined,
       rrp: Number.isFinite(rrp) ? rrp : null,
       cost: Number.isFinite(cost) ? cost : null,
-    });
+    };
+    if (skuDialog.mode === "edit" && skuDialog.sku) {
+      const result = await updateSku.mutateAsync({
+        ...details,
+        oldColour: skuDialog.sku.colour,
+        material: material || null,
+        notes: skuDraft.notes.trim() || null,
+      });
+      if (result.outcome === "duplicate_cancelled") {
+        toast.success(`${formatHandbagDisplayLabel(result.retainedColour)} was kept; ${formatHandbagDisplayLabel(result.sourceColour)} was cancelled and its buy quantities were retained.`);
+      } else {
+        toast.success("Handbag SKU updated");
+      }
+    } else {
+      await upsertSku.mutateAsync(details);
+    }
     setSkuDialog(null);
   }
 
@@ -532,6 +570,9 @@ export default function HandbagsTab() {
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={handleExport} disabled={visibleGroups.every((group) => group.skus.length === 0)}>
             <Download className="w-4 h-4 mr-2" /> Export Excel
+          </Button>
+          <Button variant={showCancelled ? "secondary" : "outline"} onClick={() => setShowCancelled((show) => !show)}>
+            <Ban className="w-4 h-4 mr-2" /> {showCancelled ? "Hide cancelled" : "Show cancelled"}
           </Button>
           <Button className="bg-amber-600 hover:bg-amber-700" onClick={openAddStyle}>
             <Plus className="w-4 h-4 mr-2" /> Add style
@@ -635,10 +676,11 @@ export default function HandbagsTab() {
                         const key = createTotalsKey(sku.style, sku.colour);
                         const totals = buyTotals.get(key) ?? { total: 0, auQty: 0, usaQty: 0, nycQty: 0 };
                         const active = activeBuyItems.get(key) ?? { auQty: 0, usaQty: 0, nycQty: 0 };
+                        const cancelled = sku.status === "cancelled";
                         return (
-                          <tr key={key} className="hover:bg-amber-50/30">
+                          <tr key={key} className={cancelled ? "bg-rose-50/50 opacity-75" : "hover:bg-amber-50/30"}>
                             <td className="px-4 py-3">
-                              <div className="flex items-center gap-3"><HandbagImage style={sku.style} colour={sku.colour} imageUrl={sku.imageUrl} kind="sku" /><span className="font-medium">{formatHandbagDisplayLabel(sku.colour)}</span></div>
+                              <div className="flex items-center gap-3"><HandbagImage style={sku.style} colour={sku.colour} imageUrl={sku.imageUrl} kind="sku" /><span className={cancelled ? "font-medium line-through" : "font-medium"}>{formatHandbagDisplayLabel(sku.colour)}</span>{cancelled && <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700">CANCELLED</span>}</div>
                             </td>
                             <td className="px-3 py-3 text-muted-foreground">{formatHandbagDisplayLabel(sku.material)}</td>
                             <td className="px-3 py-3"><span className="rounded-full bg-muted px-2 py-0.5 text-xs">{formatHandbagDisplayLabel(getHandbagSeasonality(sku, group.seasonality))}</span></td>
@@ -649,7 +691,7 @@ export default function HandbagsTab() {
                             <td className="px-3 py-3 text-center"><QtyInput value={active.auQty} disabled={selectedSessionId == null} onSave={(value) => saveQuantity(sku, "auQty", value)} /></td>
                             <td className="px-3 py-3 text-center"><QtyInput value={active.usaQty} disabled={selectedSessionId == null} onSave={(value) => saveQuantity(sku, "usaQty", value)} /></td>
                             <td className="px-3 py-3 text-center"><QtyInput value={active.nycQty} disabled={selectedSessionId == null} onSave={(value) => saveQuantity(sku, "nycQty", value)} /></td>
-                            <td className="px-3 py-3 text-right"><Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => openEditSku(sku, group.seasonality)} title="Edit SKU"><Pencil className="w-3.5 h-3.5" /></Button></td>
+                            <td className="px-3 py-3 text-right">{cancelled ? <Button size="sm" variant="outline" onClick={() => restoreSku.mutate({ style: sku.style, colour: sku.colour })} disabled={restoreSku.isPending}><RotateCcw className="w-3.5 h-3.5 mr-1" /> Restore</Button> : <Button size="icon" variant="ghost" className="w-8 h-8" onClick={() => openEditSku(sku, group.seasonality)} title="Edit SKU"><Pencil className="w-3.5 h-3.5" /></Button>}</td>
                           </tr>
                         );
                       })}
@@ -692,7 +734,7 @@ export default function HandbagsTab() {
           <div className="grid grid-cols-1 gap-4 py-2 sm:grid-cols-2">
             <div>
               <label className="text-xs font-medium text-muted-foreground">COLOUR / SKU *</label>
-              <Input autoFocus value={skuDraft.colour} disabled={skuDialog?.mode === "edit"} placeholder="e.g. BLACK PEBBLE" onChange={(event) => setSkuDraft((draft) => ({ ...draft, colour: event.target.value.toUpperCase() }))} />
+              <Input autoFocus value={skuDraft.colour} placeholder="e.g. BLACK PEBBLE" onChange={(event) => setSkuDraft((draft) => ({ ...draft, colour: event.target.value.toUpperCase() }))} />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">MATERIAL</label>
@@ -719,7 +761,7 @@ export default function HandbagsTab() {
               <Textarea value={skuDraft.notes} placeholder="Optional SKU notes" onChange={(event) => setSkuDraft((draft) => ({ ...draft, notes: event.target.value }))} />
             </div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setSkuDialog(null)}>Cancel</Button><Button className="bg-amber-600 hover:bg-amber-700" onClick={saveSku} disabled={upsertSku.isPending}>{skuDialog?.mode === "add" ? "Add SKU" : "Save SKU"}</Button></DialogFooter>
+          <DialogFooter>{skuDialog?.mode === "edit" && skuDialog.sku && <Button variant="destructive" onClick={async () => { await cancelSku.mutateAsync({ style: skuDialog.style, colour: skuDialog.sku!.colour }); setSkuDialog(null); }} disabled={cancelSku.isPending}>Cancel SKU</Button>}<Button variant="outline" onClick={() => setSkuDialog(null)}>Close</Button><Button className="bg-amber-600 hover:bg-amber-700" onClick={saveSku} disabled={upsertSku.isPending || updateSku.isPending}>{skuDialog?.mode === "add" ? "Add SKU" : "Save SKU"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

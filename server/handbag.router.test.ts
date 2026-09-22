@@ -6,6 +6,9 @@ const handbagDb = vi.hoisted(() => ({
   createHandbagStyleParent: vi.fn(),
   updateHandbagStyleParent: vi.fn(),
   upsertHandbagStyle: vi.fn(),
+  updateHandbagSku: vi.fn(),
+  cancelHandbagSku: vi.fn(),
+  restoreHandbagSku: vi.fn(),
 }));
 
 vi.mock("./db", () => ({
@@ -13,6 +16,9 @@ vi.mock("./db", () => ({
   createHandbagStyleParent: handbagDb.createHandbagStyleParent,
   updateHandbagStyleParent: handbagDb.updateHandbagStyleParent,
   upsertHandbagStyle: handbagDb.upsertHandbagStyle,
+  updateHandbagSku: handbagDb.updateHandbagSku,
+  cancelHandbagSku: handbagDb.cancelHandbagSku,
+  restoreHandbagSku: handbagDb.restoreHandbagSku,
 }));
 
 function createCtx(): TrpcContext {
@@ -29,6 +35,9 @@ describe("handbag range manager router", () => {
     handbagDb.createHandbagStyleParent.mockResolvedValue({ style: "ARIA" });
     handbagDb.updateHandbagStyleParent.mockResolvedValue(undefined);
     handbagDb.upsertHandbagStyle.mockResolvedValue(undefined);
+    handbagDb.updateHandbagSku.mockResolvedValue({ outcome: "updated", sourceColour: "VESTRA", retainedColour: "VINO" });
+    handbagDb.cancelHandbagSku.mockResolvedValue(undefined);
+    handbagDb.restoreHandbagSku.mockResolvedValue(undefined);
   });
 
   it("creates a handbag style before its first SKU", async () => {
@@ -60,5 +69,32 @@ describe("handbag range manager router", () => {
       colour: "BLACK PEBBLE",
       seasonality: "SS26",
     }));
+  });
+
+  it("edits an existing handbag SKU through the duplicate-safe API", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    await expect(caller.handbag.updateSku({
+      style: "ELARA",
+      oldColour: "VESTRA",
+      colour: "VINO",
+      material: "CROCO",
+      seasonality: "SS26",
+      rrp: 249.95,
+      cost: null,
+      notes: null,
+    })).resolves.toEqual({ outcome: "updated", sourceColour: "VESTRA", retainedColour: "VINO" });
+    expect(handbagDb.updateHandbagSku).toHaveBeenCalledWith(expect.objectContaining({
+      style: "ELARA",
+      oldColour: "VESTRA",
+      colour: "VINO",
+    }));
+  });
+
+  it("cancels and restores a single handbag SKU without deleting range data", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    await expect(caller.handbag.cancelSku({ style: "ELARA", colour: "VESTRA" })).resolves.toEqual({ success: true });
+    await expect(caller.handbag.restoreSku({ style: "ELARA", colour: "VESTRA" })).resolves.toEqual({ success: true });
+    expect(handbagDb.cancelHandbagSku).toHaveBeenCalledWith("ELARA", "VESTRA");
+    expect(handbagDb.restoreHandbagSku).toHaveBeenCalledWith("ELARA", "VESTRA");
   });
 });

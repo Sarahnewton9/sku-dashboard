@@ -421,6 +421,13 @@
       "when": 1790046549249,
       "tag": "0059_supreme_paibok",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "5",
+      "when": 1790049894672,
+      "tag": "0060_mature_squirrel_girl",
+      "breakpoints": true
     }
   ]
 }

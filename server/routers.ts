@@ -54,6 +54,9 @@ import {
   updateHandbagStyleParent,
   upsertHandbagStyle,
   deleteHandbagStyle,
+  updateHandbagSku,
+  cancelHandbagSku,
+  restoreHandbagSku,
   getHandbagBuySessions,
   createHandbagBuySession,
   deleteHandbagBuySession,
@@ -2160,6 +2163,36 @@ If the request is unclear or is a question, use no_action.`;
       }))
       .mutation(async ({ input }) => {
         await upsertHandbagStyle(input);
+        return { success: true };
+      }),
+
+    /** Edit a handbag SKU. A correction to an existing colour cancels only the source SKU. */
+    updateSku: protectedProcedure
+      .input(z.object({
+        style: z.string().min(1),
+        oldColour: z.string().min(1),
+        colour: z.string().min(1),
+        material: z.string().nullable().optional(),
+        seasonality: z.string().nullable().optional(),
+        notes: z.string().nullable().optional(),
+        rrp: z.number().nullable().optional(),
+        cost: z.number().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => updateHandbagSku(input)),
+
+    /** Hide a handbag SKU from the active range while retaining its history. */
+    cancelSku: protectedProcedure
+      .input(z.object({ style: z.string().min(1), colour: z.string().min(1) }))
+      .mutation(async ({ input }) => {
+        await cancelHandbagSku(input.style, input.colour);
+        return { success: true };
+      }),
+
+    /** Return a cancelled handbag SKU to the active range. */
+    restoreSku: protectedProcedure
+      .input(z.object({ style: z.string().min(1), colour: z.string().min(1) }))
+      .mutation(async ({ input }) => {
+        await restoreHandbagSku(input.style, input.colour);
         return { success: true };
       }),
 

@@ -4,6 +4,7 @@ import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, user
 import { ENV } from './_core/env';
 import { getSkuCompositeIdentity, normalizeSkuIdentityPart } from "../shared/skuCompositeIdentity";
 import { getCustomSkuCarryOverSeason } from "../shared/customSkuSeasonCarryOver";
+import { getHandbagSkuEditOutcome } from "../shared/handbagSkuEdit";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -1763,6 +1764,7 @@ export async function getHandbagStyles() {
     style: handbagStyles.style,
     colour: handbagStyles.colour,
     material: handbagStyles.material,
+    status: handbagStyles.status,
     seasonality: handbagStyles.seasonality,
     section: handbagStyles.section,
     notes: handbagStyles.notes,
@@ -1851,6 +1853,7 @@ export async function upsertHandbagStyle(item: {
     style,
     colour,
     material: item.material ?? null,
+    status: "active",
     seasonality: item.seasonality ?? null,
     section: item.section ?? null,
     notes: item.notes ?? null,
@@ -1868,6 +1871,101 @@ export async function deleteHandbagStyle(style: string, colour: string) {
   const { handbagStyles } = await import("../drizzle/schema");
   const { and, eq } = await import("drizzle-orm");
   await db.delete(handbagStyles).where(and(eq(handbagStyles.style, style), eq(handbagStyles.colour, colour)));
+}
+
+export async function updateHandbagSku(data: {
+  style: string;
+  oldColour: string;
+  colour: string;
+  material?: string | null;
+  seasonality?: string | null;
+  notes?: string | null;
+  rrp?: number | null;
+  cost?: number | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { handbagStyles, handbagBuyItems } = await import("../drizzle/schema");
+
+  const style = data.style.trim().toUpperCase();
+  const oldColour = data.oldColour.trim().toUpperCase();
+  const colour = data.colour.trim().toUpperCase();
+  if (!style || !oldColour || !colour) throw new Error("Style and SKU colour are required");
+
+  return db.transaction(async (tx) => {
+    const [source] = await tx.select().from(handbagStyles)
+      .where(and(eq(handbagStyles.style, style), eq(handbagStyles.colour, oldColour)))
+      .limit(1);
+    if (!source) throw new Error("The selected handbag SKU no longer exists");
+
+    const [target] = oldColour === colour
+      ? [undefined]
+      : await tx.select().from(handbagStyles)
+        .where(and(eq(handbagStyles.style, style), eq(handbagStyles.colour, colour)))
+        .limit(1);
+
+    const outcome = getHandbagSkuEditOutcome(Boolean(target));
+    if (outcome === "duplicate_cancelled") {
+      const sourceBuyItems = await tx.select().from(handbagBuyItems)
+        .where(and(eq(handbagBuyItems.style, style), eq(handbagBuyItems.colour, oldColour)));
+
+      for (const sourceBuy of sourceBuyItems) {
+        const [targetBuy] = await tx.select().from(handbagBuyItems)
+          .where(and(
+            eq(handbagBuyItems.sessionId, sourceBuy.sessionId),
+            eq(handbagBuyItems.style, style),
+            eq(handbagBuyItems.colour, colour),
+          ))
+          .limit(1);
+
+        if (targetBuy) {
+          await tx.update(handbagBuyItems).set({
+            auQty: targetBuy.auQty + sourceBuy.auQty,
+            usaQty: targetBuy.usaQty + sourceBuy.usaQty,
+            nycQty: targetBuy.nycQty + sourceBuy.nycQty,
+          }).where(eq(handbagBuyItems.id, targetBuy.id));
+          await tx.delete(handbagBuyItems).where(eq(handbagBuyItems.id, sourceBuy.id));
+        } else {
+          await tx.update(handbagBuyItems).set({ colour }).where(eq(handbagBuyItems.id, sourceBuy.id));
+        }
+      }
+
+      await tx.update(handbagStyles).set({ status: "cancelled" })
+        .where(eq(handbagStyles.id, source.id));
+      return { outcome, sourceColour: oldColour, retainedColour: colour };
+    }
+
+    await tx.update(handbagStyles).set({
+      colour,
+      material: data.material ?? null,
+      seasonality: data.seasonality ?? null,
+      notes: data.notes ?? null,
+      rrp: data.rrp ?? null,
+      cost: data.cost ?? null,
+    }).where(eq(handbagStyles.id, source.id));
+
+    if (oldColour !== colour) {
+      await tx.update(handbagBuyItems).set({ colour })
+        .where(and(eq(handbagBuyItems.style, style), eq(handbagBuyItems.colour, oldColour)));
+    }
+    return { outcome, sourceColour: oldColour, retainedColour: colour };
+  });
+}
+
+export async function cancelHandbagSku(style: string, colour: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { handbagStyles } = await import("../drizzle/schema");
+  await db.update(handbagStyles).set({ status: "cancelled" })
+    .where(and(eq(handbagStyles.style, style.trim().toUpperCase()), eq(handbagStyles.colour, colour.trim().toUpperCase())));
+}
+
+export async function restoreHandbagSku(style: string, colour: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { handbagStyles } = await import("../drizzle/schema");
+  await db.update(handbagStyles).set({ status: "active" })
+    .where(and(eq(handbagStyles.style, style.trim().toUpperCase()), eq(handbagStyles.colour, colour.trim().toUpperCase())));
 }
 
 export async function getHandbagBuySessions() {
