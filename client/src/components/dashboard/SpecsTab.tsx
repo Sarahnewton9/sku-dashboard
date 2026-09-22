@@ -40,6 +40,11 @@ import { findSpecColourMapValue, normalizeStoredSpecColourKey } from "@shared/sp
 import { selectSpecColourColumns } from "@shared/specsStyleVisibility";
 import { getSeasonDisplayLabel } from "@shared/seasonLabel";
 import { buildNewSpecColourColumns } from "@shared/specSeasonalColumns";
+import {
+  buildCrossStyleComponentCopies,
+  resolveCrossStyleSourceSpecs,
+  selectCrossStyleCustomRowCopies,
+} from "@shared/specCrossStyleCopy";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -1015,10 +1020,9 @@ interface CrossStyleCopyPanelProps {
   currentColours: string[];
   currentColourLabels: string[];
   allStyleEntries: StyleEntry[];
-  template: SpecComponent[];
-  onCopy: (sourceColour: string, targetColours: string[], sourceSpecs: Record<string, string>, sourceCustomRows: CustomRowData[], sourceRowKeys?: string[]) => void;
+  onCopy: (sourceColourLabel: string, sourceRawColour: string, targetColours: string[], sourceSpecs: Record<string, string>, sourceCustomRows: CustomRowData[], sourceRowKeys?: string[]) => void;
 }
-function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels, allStyleEntries, template, onCopy }: CrossStyleCopyPanelProps) {
+function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels, allStyleEntries, onCopy }: CrossStyleCopyPanelProps) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"single" | "full">("single");
   const [sourceStyle, setSourceStyle] = useState<string | null>(null);
@@ -1044,7 +1048,8 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
     { style: sourceStyle! },
     { enabled: !!sourceStyle }
   );
-  // Build a colour → component → value map from raw specs (keyed by raw colour key)
+  // Build a stored colour-label → component → value map. The stored key may be a
+  // full colour/leather label, while the picker exposes a raw colour key.
   const sourceSpecsMap = useMemo(() => {
     const map: Record<string, Record<string, string>> = {};
     for (const row of sourceSpecsRaw as any[]) {
@@ -1084,10 +1089,12 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
     });
   }
 
-    function handleSingleCopy() {
+  function handleSingleCopy() {
     if (!sourceStyle || !sourceColour || targets.size === 0) return;
-    const sourceValues = sourceSpecsMap[sourceColour] ?? {};
-    onCopy(sourceColour, Array.from(targets), sourceValues, sourceCustomRowsRaw as CustomRowData[], sourceRowOrderData?.rowKeys ?? undefined);
+    const sourceIndex = sourceEntry?.colours.indexOf(sourceColour) ?? -1;
+    const sourceLabel = sourceEntry?.colourLabels[sourceIndex] ?? sourceColour;
+    const sourceValues = resolveCrossStyleSourceSpecs(sourceSpecsMap, sourceLabel, sourceColour);
+    onCopy(sourceLabel, sourceColour, Array.from(targets), sourceValues, sourceCustomRowsRaw as CustomRowData[], sourceRowOrderData?.rowKeys ?? undefined);
     reset();
   }
   function handleFullCopy() {
@@ -1098,10 +1105,11 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
       const srcLabel = sourceEntry.colourLabels[i] ?? srcColourKey;
       const targetLabel = colourMap[srcLabel];
       if (!targetLabel) continue; // skipped
-      const sourceValues = sourceSpecsMap[srcColourKey] ?? {};
-      // Only pass sourceRowKeys on the first colour copy (row order is per-style, not per-colour)
-      const rowKeys = i === 0 ? (sourceRowOrderData?.rowKeys ?? undefined) : undefined;
-      onCopy(srcColourKey, [targetLabel], sourceValues, sourceCustomRowsRaw as CustomRowData[], rowKeys);
+      const sourceValues = resolveCrossStyleSourceSpecs(sourceSpecsMap, srcLabel, srcColourKey);
+      // Only pass sourceRowKeys on the first actual copy (row order is per-style,
+      // not per-colour). This also works when earlier source columns are skipped.
+      const rowKeys = copiedCount === 0 ? (sourceRowOrderData?.rowKeys ?? undefined) : undefined;
+      onCopy(srcLabel, srcColourKey, [targetLabel], sourceValues, sourceCustomRowsRaw as CustomRowData[], rowKeys);
       copiedCount++;
     }
     if (copiedCount === 0) {
@@ -1125,7 +1133,7 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
   return (
     <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800 text-xs space-y-3">
       <div className="flex items-center justify-between">
-        <span className="font-medium text-amber-900 dark:text-amber-200">Copy specs from another style</span>
+        <span className="font-medium text-amber-900 dark:text-amber-200">Copy components from another style</span>
         <button onClick={reset} className="text-muted-foreground hover:text-foreground text-sm leading-none">×</button>
       </div>
       {/* Mode toggle */}
@@ -1191,6 +1199,11 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
             );
           })}
         </div>
+      )}
+      {mode === "single" && sourceColour && (
+        <p className="text-muted-foreground">
+          Copies all populated components to the selected SKU columns. Upper 1 stays with each target SKU.
+        </p>
       )}
       {/* Full mode: colour mapping table */}
       {mode === "full" && sourceEntry && Object.keys(colourMap).length > 0 && (
@@ -1744,32 +1757,20 @@ function SpecForm({
           currentColours={entry.colours}
           currentColourLabels={entry.colourLabels}
           allStyleEntries={allStyleEntries}
-          template={template}
-          onCopy={(sourceColour, targetColours, sourceSpecs, sourceCustomRows, sourceRowKeys) => {
-            // Copy template rows for each target colour
-            for (const colour of targetColours) {
-              for (const comp of template) {
-                // Never copy Upper 1 — each colour has its own upper material
-                if (comp.key === "upper_1") continue;
-                const val = sourceSpecs[comp.key];
-                if (val) onUpsert(colour, comp.key, val);
-              }
-            }
+          onCopy={(sourceColourLabel, sourceRawColour, targetColours, sourceSpecs, sourceCustomRows, sourceRowKeys) => {
+            // Copy every populated component from the chosen source SKU into only
+            // the selected target SKU columns. Upper 1 is excluded by the helper.
+            const componentRows = buildCrossStyleComponentCopies(entry.style, targetColours, sourceSpecs);
+            if (componentRows.length > 0) onBulkCopy(componentRows);
+
             // Copy custom rows from source style using the dedicated bulk procedure
-            // This correctly handles rows that don't exist in the target style yet
+            // and preserves unselected target SKU columns.
             if (sourceCustomRows.length > 0) {
-              // Build a deduplicated list of rows (one per title, preferring the source colour's value)
-              const seen = new Map<string, { section: string; title: string; value: string; sortOrder: number }>();
-              for (const r of sourceCustomRows) {
-                const val = r.value;
-                if (!val) continue;
-                const key = `${r.section}||${r.title}`;
-                // Prefer the source colour's specific row over the __all__ row
-                if (!seen.has(key) || r.colour === sourceColour) {
-                  seen.set(key, { section: r.section, title: r.title, value: val, sortOrder: r.sortOrder });
-                }
-              }
-              const rowsToCopy = Array.from(seen.values());
+              const rowsToCopy = selectCrossStyleCustomRowCopies(
+                sourceCustomRows,
+                sourceColourLabel,
+                sourceRawColour,
+              );
               if (rowsToCopy.length > 0) {
                 onBulkCopyCustomRowsFromStyle(targetColours, rowsToCopy, sourceRowKeys);
               }
@@ -1777,7 +1778,7 @@ function SpecForm({
               // No custom rows but there is a row order to copy (template-only reorder)
               onBulkCopyCustomRowsFromStyle(targetColours, [], sourceRowKeys);
             }
-            toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s) (Upper 1 kept per-colour)`);
+            toast.success(`Copied specs from ${sourceColourLabel} to ${targetColours.length} colour(s) (Upper 1 kept per-colour)`);
           }}
         />
       </div>}{/* end showCopyPanel */}
@@ -3723,7 +3724,14 @@ export default function SpecsTab({}: SpecsTabProps) {
               onBulkCopyCustomRowsFromStyle={(targetColours, rows, sourceRowKeys) => {
                 if (!selectedStyle) return;
                 bulkCopyFromStyleMutation.mutate(
-                  { targetStyle: selectedStyle, targetColours, rows },
+                  {
+                    targetStyle: selectedStyle,
+                    targetColours,
+                    // Use the unfiltered style entry so hidden columns retain
+                    // their existing custom-row values during a selected-SKU copy.
+                    allColours: selectedEntryRaw?.colourLabels ?? selectedEntry.colourLabels,
+                    rows,
+                  },
                   {
                     onSuccess: (data) => {
                       // Remap source row order to target style using the returned new row IDs

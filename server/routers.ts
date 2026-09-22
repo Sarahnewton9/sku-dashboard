@@ -2014,6 +2014,7 @@ If the request is unclear or is a question, use no_action.`;
       .input(z.object({
         targetStyle: z.string(),
         targetColours: z.array(z.string()),
+        allColours: z.array(z.string()),
         rows: z.array(z.object({
           section: z.string(),
           title: z.string(),
