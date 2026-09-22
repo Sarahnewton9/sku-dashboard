@@ -33,9 +33,9 @@ describe("handbag range manager router", () => {
 
   it("creates a handbag style before its first SKU", async () => {
     const caller = appRouter.createCaller(createCtx());
-    await expect(caller.handbag.createStyle({ style: "ARIA", seasonality: "SS26", notes: "Campaign bag" }))
+    await expect(caller.handbag.createStyle({ style: "ARIA", seasonality: "W27", notes: "Campaign bag" }))
       .resolves.toEqual({ style: "ARIA" });
-    expect(handbagDb.createHandbagStyleParent).toHaveBeenCalledWith({ style: "ARIA", seasonality: "SS26", notes: "Campaign bag" });
+    expect(handbagDb.createHandbagStyleParent).toHaveBeenCalledWith({ style: "ARIA", seasonality: "W27", notes: "Campaign bag" });
   });
 
   it("saves handbag-only style seasonality", async () => {

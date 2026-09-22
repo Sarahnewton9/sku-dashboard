@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getHandbagSeasonality,
+  HANDBAG_SEASONALITY_OPTIONS,
   normalizeHandbagSeasonality,
 } from "@shared/handbagSeasonality";
 
@@ -22,5 +23,9 @@ describe("handbag seasonality", () => {
   it("normalizes blank inputs to null", () => {
     expect(normalizeHandbagSeasonality("  ")).toBeNull();
     expect(normalizeHandbagSeasonality(" SS26 ")).toBe("SS26");
+  });
+
+  it("offers W27 for new handbag styles and SKUs", () => {
+    expect(HANDBAG_SEASONALITY_OPTIONS).toContain("W27");
   });
 });

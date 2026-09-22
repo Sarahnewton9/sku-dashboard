@@ -243,8 +243,8 @@ export default function HandbagsTab() {
   const [newSessionName, setNewSessionName] = useState("");
   const [styleDialog, setStyleDialog] = useState<StyleDialogState>(null);
   const [skuDialog, setSkuDialog] = useState<SkuDialogState>(null);
-  const [styleDraft, setStyleDraft] = useState({ style: "", seasonality: "SS26", notes: "" });
-  const [skuDraft, setSkuDraft] = useState({ colour: "", material: "", seasonality: "SS26", rrp: "", cost: "", notes: "" });
+  const [styleDraft, setStyleDraft] = useState({ style: "", seasonality: "W27", notes: "" });
+  const [skuDraft, setSkuDraft] = useState({ colour: "", material: "", seasonality: "W27", rrp: "", cost: "", notes: "" });
 
   const createStyle = trpc.handbag.createStyle.useMutation({
     onSuccess: () => {
@@ -366,7 +366,7 @@ export default function HandbagsTab() {
   );
 
   function openAddStyle() {
-    setStyleDraft({ style: "", seasonality: "SS26", notes: "" });
+    setStyleDraft({ style: "", seasonality: "W27", notes: "" });
     setStyleDialog({ mode: "add" });
   }
 
@@ -376,7 +376,7 @@ export default function HandbagsTab() {
   }
 
   function openAddSku(style: string, defaultSeasonality: string) {
-    setSkuDraft({ colour: "", material: "", seasonality: defaultSeasonality === "Unassigned" ? "SS26" : defaultSeasonality, rrp: "", cost: "", notes: "" });
+    setSkuDraft({ colour: "", material: "", seasonality: defaultSeasonality === "Unassigned" ? "W27" : defaultSeasonality, rrp: "", cost: "", notes: "" });
     setSkuDialog({ mode: "add", style });
   }
 
