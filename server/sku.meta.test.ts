@@ -135,6 +135,26 @@ describe("customStyle.updateDetails", () => {
     });
     expect(result).toEqual({ success: true, updatedSkus: 1 });
   });
+
+  it("passes the style identity needed to synchronise the W27 carry-over parent", async () => {
+    const db = await import("./db");
+    const caller = appRouter.createCaller(createCtx());
+
+    await caller.customStyle.updateDetails({
+      id: 1,
+      style: "FERGIE",
+      lastName: "FERGIE",
+      category: "DRESS SHOE",
+      isSize11: false,
+      season: "SS26",
+    });
+
+    expect(db.updateCustomStyleDetails).toHaveBeenLastCalledWith(expect.objectContaining({
+      id: 1,
+      style: "FERGIE",
+      season: "SS26",
+    }));
+  });
 });
 
 describe("fitting.getImages", () => {

@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns, customLasts, lastMeasurements, ap21StyleRefs, ap21ColourRefs } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { getSkuCompositeIdentity, normalizeSkuIdentityPart } from "../shared/skuCompositeIdentity";
+import { getCustomSkuCarryOverSeason } from "../shared/customSkuSeasonCarryOver";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -836,6 +837,70 @@ export async function listCancelledStyles(season = "SS26"): Promise<{ style: str
 }
 
 // ─── Custom SKUs ───────────────────────────────────────────────────────────────
+async function upsertCustomSkuForSeason(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  values: {
+    style: string;
+    colour: string;
+    leather: string;
+    colour2: string;
+    leather2: string;
+    season: string;
+  },
+  isNew: boolean,
+): Promise<number> {
+  const candidateIdentity = getSkuCompositeIdentity(
+    values.style,
+    values.colour,
+    values.leather,
+    values.colour2,
+    values.leather2,
+  );
+
+  const primaryMatches = await db.select({
+    id: customSkus.id,
+    style: customSkus.style,
+    colour: customSkus.colour,
+    leather: customSkus.leather,
+    colour2: customSkus.colour2,
+    leather2: customSkus.leather2,
+    isNew: customSkus.isNew,
+  }).from(customSkus)
+    .where(and(
+      eq(customSkus.style, values.style),
+      eq(customSkus.colour, values.colour),
+      eq(customSkus.leather, values.leather),
+      eq(customSkus.season, values.season),
+    ));
+  const existing = primaryMatches.find((sku) => getSkuCompositeIdentity(
+    sku.style,
+    sku.colour,
+    sku.leather,
+    sku.colour2,
+    sku.leather2,
+  ) === candidateIdentity);
+
+  if (existing) {
+    // A colourway that already existed in SS26 is a W27 carry-over, even if
+    // an earlier partial import initially labelled the W27 row as new.
+    if (existing.isNew !== isNew) {
+      await db.update(customSkus).set({ isNew }).where(eq(customSkus.id, existing.id));
+    }
+    return existing.id;
+  }
+
+  const result = await db.insert(customSkus).values({
+    style: values.style,
+    colour: values.colour,
+    leather: values.leather,
+    season: values.season,
+    colour2: values.colour2 || null,
+    leather2: values.leather2 || null,
+    isNew,
+  });
+  return (result[0] as any).insertId as number;
+}
+
 export async function addCustomSku(style: string, colour: string, leather: string, season = "SS26", colour2?: string, leather2?: string): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -847,48 +912,19 @@ export async function addCustomSku(style: string, colour: string, leather: strin
     leather2: normalizeSkuIdentityPart(leather2),
     season: normalizeSkuIdentityPart(season),
   };
-  const candidateIdentity = getSkuCompositeIdentity(
-    normalized.style,
-    normalized.colour,
-    normalized.leather,
-    normalized.colour2,
-    normalized.leather2,
-  );
-
   // Upper 2 is part of the physical SKU identity. For example, ECRU
   // SNAKE/ROYAL SUEDE and ECRU SNAKE/LIPSTICK SUEDE must both be addable.
-  const primaryMatches = await db.select({
-    id: customSkus.id,
-    style: customSkus.style,
-    colour: customSkus.colour,
-    leather: customSkus.leather,
-    colour2: customSkus.colour2,
-    leather2: customSkus.leather2,
-  }).from(customSkus)
-    .where(and(
-      eq(customSkus.style, normalized.style),
-      eq(customSkus.colour, normalized.colour),
-      eq(customSkus.leather, normalized.leather),
-      eq(customSkus.season, normalized.season),
-    ));
-  const existing = primaryMatches.find((sku) => getSkuCompositeIdentity(
-    sku.style,
-    sku.colour,
-    sku.leather,
-    sku.colour2,
-    sku.leather2,
-  ) === candidateIdentity);
-  if (existing) return existing.id;
+  const id = await upsertCustomSkuForSeason(db, normalized, true);
 
-  const result = await db.insert(customSkus).values({
-    style: normalized.style,
-    colour: normalized.colour,
-    leather: normalized.leather,
-    season: normalized.season,
-    colour2: normalized.colour2 || null,
-    leather2: normalized.leather2 || null,
-  });
-  return (result[0] as any).insertId as number;
+  // W27 treats SS26 as its carry-over range. Mirror each SS26 custom
+  // colourway as an existing W27 record so it reaches every W27 view and
+  // export, rather than only copying the custom parent style.
+  const carryOverSeason = getCustomSkuCarryOverSeason(normalized.season);
+  if (carryOverSeason) {
+    await upsertCustomSkuForSeason(db, { ...normalized, season: carryOverSeason }, false);
+  }
+
+  return id;
 }
 
 export async function getAllCustomSkus(season = "SS26"): Promise<{ id: number; style: string; colour: string; leather: string; colour2: string | null; leather2: string | null; isNew: boolean; createdAt: Date }[]> {
@@ -944,6 +980,7 @@ export async function deleteCustomStyle(id: number): Promise<void> {
 /** Updates the operational details maintained directly on a newly created style. */
 export async function updateCustomStyleDetails(data: {
   id: number;
+  style: string;
   lastName: string;
   category: string | null;
   isSize11: boolean;
@@ -954,6 +991,15 @@ export async function updateCustomStyleDetails(data: {
   await db.update(customStyles)
     .set({ lastName: data.lastName, category: data.category, isSize11: data.isSize11 })
     .where(and(eq(customStyles.id, data.id), eq(customStyles.season, data.season)));
+
+  // SS26 custom styles are W27 carry-overs. Keep their operational parent
+  // details aligned so category, last, and Size 11 exports stay consistent.
+  const carryOverSeason = getCustomSkuCarryOverSeason(data.season);
+  if (carryOverSeason) {
+    await db.update(customStyles)
+      .set({ lastName: data.lastName, category: data.category, isSize11: data.isSize11 })
+      .where(and(eq(customStyles.style, data.style), eq(customStyles.season, carryOverSeason)));
+  }
 }
 
 // ─── Unlock Buy Session ────────────────────────────────────────────────────────

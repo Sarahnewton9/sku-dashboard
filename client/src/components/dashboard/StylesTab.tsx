@@ -1006,6 +1006,12 @@ export default function StylesTab() {
   }
 
   const totalFilteredStyles = filtered.length;
+  // The denominator must use the live merged range, not the static SS26
+  // source. This includes custom W27 carry-overs and zero-colour custom
+  // styles, so the count stays truthful after seasonal reconciliation.
+  const totalAvailableStyles = stylesWithCategories.filter(
+    (style) => style.totalSKUs > 0 || (style as any)._isCustomStyle,
+  ).length;
 
   return (
     <div className="space-y-4">
@@ -1110,7 +1116,7 @@ export default function StylesTab() {
             </button>
           )}
 
-          <span className="text-sm text-muted-foreground">{totalFilteredStyles} of {skuData.styles.length} styles</span>
+          <span className="text-sm text-muted-foreground">{totalFilteredStyles} of {totalAvailableStyles} styles</span>
         </div>
 
         {/* Expanded filter panel */}

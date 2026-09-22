@@ -1003,6 +1003,7 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         await updateCustomStyleDetails({
           id: input.id,
+          style: input.style,
           lastName: input.lastName,
           category: input.category,
           isSize11: input.isSize11,
