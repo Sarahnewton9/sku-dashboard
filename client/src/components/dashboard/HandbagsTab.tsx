@@ -29,6 +29,7 @@ import {
   HANDBAG_SEASONALITY_OPTIONS,
   normalizeHandbagSeasonality,
 } from "@shared/handbagSeasonality";
+import { formatHandbagDisplayLabel } from "@shared/handbagDisplayLabel";
 
 type HandbagSku = {
   id: number;
@@ -421,10 +422,11 @@ export default function HandbagsTab() {
     }
     const rrp = skuDraft.rrp.trim() ? Number.parseFloat(skuDraft.rrp) : null;
     const cost = skuDraft.cost.trim() ? Number.parseFloat(skuDraft.cost) : null;
+    const material = skuDraft.material.trim().toUpperCase();
     await upsertSku.mutateAsync({
       style: skuDialog.style,
       colour,
-      material: skuDraft.material.trim() || undefined,
+      material: material || undefined,
       seasonality: normalizeHandbagSeasonality(skuDraft.seasonality),
       notes: skuDraft.notes.trim() || undefined,
       rrp: Number.isFinite(rrp) ? rrp : null,
@@ -450,11 +452,11 @@ export default function HandbagsTab() {
     const exportRows = visibleGroups.flatMap((group) => group.skus.map((sku) => {
       const totals = buyTotals.get(createTotalsKey(sku.style, sku.colour)) ?? { auQty: 0, usaQty: 0, nycQty: 0, total: 0 };
       return {
-        style: group.style,
-        styleSeasonality: group.seasonality,
-        colour: sku.colour,
-        material: sku.material ?? "",
-        skuSeasonality: getHandbagSeasonality(sku, group.seasonality),
+        style: formatHandbagDisplayLabel(group.style, ""),
+        styleSeasonality: formatHandbagDisplayLabel(group.seasonality, ""),
+        colour: formatHandbagDisplayLabel(sku.colour, ""),
+        material: formatHandbagDisplayLabel(sku.material, ""),
+        skuSeasonality: formatHandbagDisplayLabel(getHandbagSeasonality(sku, group.seasonality), ""),
         rrp: sku.rrp ?? "",
         cost: sku.cost ?? "",
         notes: sku.notes ?? "",
@@ -548,7 +550,7 @@ export default function HandbagsTab() {
           className="h-10 rounded-md border border-input bg-background px-3 text-sm"
         >
           <option value="All">All seasonalities</option>
-          {HANDBAG_SEASONALITY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+          {HANDBAG_SEASONALITY_OPTIONS.map((option) => <option key={option} value={option}>{formatHandbagDisplayLabel(option)}</option>)}
           <option value="Unassigned">Unassigned</option>
         </select>
         <div className="h-10 px-3 rounded-md bg-amber-50 border border-amber-200 flex items-center text-sm text-amber-800 whitespace-nowrap">
@@ -594,8 +596,8 @@ export default function HandbagsTab() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-base font-semibold tracking-tight">{group.style}</h2>
-                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">{group.seasonality}</span>
-                    <span className="text-xs text-muted-foreground">{group.skus.length} SKU{group.skus.length === 1 ? "" : "s"}</span>
+                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">{formatHandbagDisplayLabel(group.seasonality)}</span>
+                    <span className="text-xs text-muted-foreground">{group.skus.length} SKU{group.skus.length === 1 ? "" : "S"}</span>
                   </div>
                   {group.notes && <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{group.notes}</p>}
                 </div>
@@ -636,10 +638,10 @@ export default function HandbagsTab() {
                         return (
                           <tr key={key} className="hover:bg-amber-50/30">
                             <td className="px-4 py-3">
-                              <div className="flex items-center gap-3"><HandbagImage style={sku.style} colour={sku.colour} imageUrl={sku.imageUrl} kind="sku" /><span className="font-medium">{sku.colour}</span></div>
+                              <div className="flex items-center gap-3"><HandbagImage style={sku.style} colour={sku.colour} imageUrl={sku.imageUrl} kind="sku" /><span className="font-medium">{formatHandbagDisplayLabel(sku.colour)}</span></div>
                             </td>
-                            <td className="px-3 py-3 text-muted-foreground">{sku.material || "—"}</td>
-                            <td className="px-3 py-3"><span className="rounded-full bg-muted px-2 py-0.5 text-xs">{getHandbagSeasonality(sku, group.seasonality)}</span></td>
+                            <td className="px-3 py-3 text-muted-foreground">{formatHandbagDisplayLabel(sku.material)}</td>
+                            <td className="px-3 py-3"><span className="rounded-full bg-muted px-2 py-0.5 text-xs">{formatHandbagDisplayLabel(getHandbagSeasonality(sku, group.seasonality))}</span></td>
                             <td className="px-3 py-3 text-right tabular-nums">{money(sku.rrp)}</td>
                             <td className="px-3 py-3 text-right tabular-nums">{money(sku.cost)}</td>
                             <td className="px-3 py-3 max-w-48 truncate text-muted-foreground" title={sku.notes ?? ""}>{sku.notes || "—"}</td>
@@ -672,7 +674,7 @@ export default function HandbagsTab() {
               <label className="text-xs font-medium text-muted-foreground">SEASONALITY</label>
               <select value={styleDraft.seasonality} onChange={(event) => setStyleDraft((draft) => ({ ...draft, seasonality: event.target.value }))} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
                 <option value="">Unassigned</option>
-                {HANDBAG_SEASONALITY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                {HANDBAG_SEASONALITY_OPTIONS.map((option) => <option key={option} value={option}>{formatHandbagDisplayLabel(option)}</option>)}
               </select>
             </div>
             <div>
@@ -694,13 +696,13 @@ export default function HandbagsTab() {
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">MATERIAL</label>
-              <Input value={skuDraft.material} placeholder="e.g. Pebble" onChange={(event) => setSkuDraft((draft) => ({ ...draft, material: event.target.value }))} />
+              <Input value={skuDraft.material} placeholder="e.g. PEBBLE" onChange={(event) => setSkuDraft((draft) => ({ ...draft, material: event.target.value.toUpperCase() }))} />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">SEASONALITY</label>
               <select value={skuDraft.seasonality} onChange={(event) => setSkuDraft((draft) => ({ ...draft, seasonality: event.target.value }))} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
                 <option value="">Unassigned</option>
-                {HANDBAG_SEASONALITY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                {HANDBAG_SEASONALITY_OPTIONS.map((option) => <option key={option} value={option}>{formatHandbagDisplayLabel(option)}</option>)}
               </select>
             </div>
             <div />
