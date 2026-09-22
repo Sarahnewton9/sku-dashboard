@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useSeason } from "@/contexts/SeasonContext";
 import { getNewLastsForSeason } from "@shared/const";
 import { getSeasonDisplayLabel, getSeasonFileLabel } from "@shared/seasonLabel";
+import { getW27NewPatternStyleNames, isEligibleFittingStyle } from "@shared/fittingStyleScope";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -1256,6 +1257,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
   }, [allSessionsRaw]);
 
   const allStyleNames = useMemo(() => styleList.map((s) => s.style).sort(), [styleList]);
+  const eligibleStyleSet = useMemo(() => new Set(allStyleNames), [allStyleNames]);
 
   const handleCreate = () => {
     if (!newName.trim()) return;
@@ -1273,7 +1275,8 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
       // Each sheet = one fit model, with all styles they fitted
       const modelMap: Record<string, { style: string; sessionDate: string | null; notes: string | null; sampleDate: string | null; sampleType: string | null }[]> = {};
 
-      for (const style of group.styles) {
+      const eligibleGroupStyles = group.styles.filter((style) => eligibleStyleSet.has(style));
+      for (const style of eligibleGroupStyles) {
         const sessions = sessionsByStyle[style] ?? [];
         if (sessions.length === 0) {
           // Include styles with no sessions under a "No Model" sheet
@@ -1341,7 +1344,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
       }
 
       XLSX.writeFile(wb, `${group.name.replace(/[^a-z0-9]/gi, "_")}_fitting.xlsx`);
-      toast.success(`Exported ${group.styles.length} styles`);
+      toast.success(`Exported ${eligibleGroupStyles.length} styles`);
     } catch (e) {
       console.error(e);
       toast.error("Export failed");
@@ -1379,6 +1382,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
           {groups.map((group) => {
             const isOpen = openGroupId === group.id;
             const isEditing = editingId === group.id;
+            const eligibleGroupStyles = group.styles.filter((style) => eligibleStyleSet.has(style));
             return (
               <div key={group.id} className="border border-border rounded-lg bg-card overflow-hidden">
                 {/* Group header */}
@@ -1407,7 +1411,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
                     ) : (
                       group.sessionDate && <span className="text-xs text-muted-foreground">{new Date(group.sessionDate + "T00:00:00").toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</span>
                     )}
-                    <span className="text-xs text-muted-foreground">{group.styles.length} style{group.styles.length !== 1 ? "s" : ""}</span>
+                    <span className="text-xs text-muted-foreground">{eligibleGroupStyles.length} style{eligibleGroupStyles.length !== 1 ? "s" : ""}</span>
                   </button>
                   <div className="flex items-center gap-1">
                     {isEditing ? (
@@ -1421,7 +1425,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
                       </>
                     ) : (
                       <>
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => handleExportGroup(group)} disabled={exportingGroupId === group.id || group.styles.length === 0}>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => handleExportGroup(group)} disabled={exportingGroupId === group.id || eligibleGroupStyles.length === 0}>
                           <Download className="w-3.5 h-3.5" />{exportingGroupId === group.id ? "..." : "Export"}
                         </Button>
                         <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => { setEditingId(group.id); setEditName(group.name); setEditDate(group.sessionDate ?? ""); }}>
@@ -1438,10 +1442,10 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
                 {/* Expanded: style rows + add styles */}
                 {isOpen && (
                   <div className="border-t border-border divide-y divide-border">
-                    {group.styles.length === 0 && (
+                    {eligibleGroupStyles.length === 0 && (
                       <p className="text-xs text-muted-foreground text-center py-4 px-3">No styles yet — add some below.</p>
                     )}
-                    {group.styles.map((s) => {
+                    {eligibleGroupStyles.map((s) => {
                       const styleKey = `${group.id}:${s}`;
                       const isStyleOpen = openStyleKey === styleKey;
                       const meta = styleMeta[s];
@@ -1650,8 +1654,12 @@ export function FittingTab() {
   );
 
     // Live merged styles (includes custom SKUs from DB)
-  const { mergedStyles } = useCustomSkus();
+  const { mergedStyles, customStyleRows } = useCustomSkus();
   const { season } = useSeason();
+  const { data: ss26CustomStyleRows = [] } = trpc.customStyle.getAll.useQuery(
+    { season: "SS26" },
+    { enabled: season === "W27", staleTime: 300_000 },
+  );
   // Run-on lasts — styles on these lasts should not appear in Fitting
   const { data: customLastsData = [] } = trpc.customLast.getAll.useQuery({ season }, { staleTime: 300_000 });
   const runOnLastsSet = useMemo(() => {
@@ -1675,11 +1683,18 @@ export function FittingTab() {
     );
   // mergedStyles already has new/existing overrides applied via useCustomSkus
   const seasonNewLasts = useMemo(() => getNewLastsForSeason(season), [season]);
+  const w27NewPatternStyleNames = useMemo(
+    () => getW27NewPatternStyleNames(customStyleRows, ss26CustomStyleRows),
+    [customStyleRows, ss26CustomStyleRows],
+  );
   const styleList = useMemo(() => {
-    // Custom styles (_isCustomStyle) always appear regardless of last name
+    // In W27, fit only genuinely new patterns. SS26 custom parents copied into
+    // W27 are carry-overs, not fitting work; new colours on existing patterns
+    // are likewise excluded. SS26 retains the historical new-last workflow.
     const allStyles = mergedStyles as Array<typeof skuData.styles[number] & { _isCustomStyle?: boolean }>;
     const customEntries: StyleEntry[] = allStyles
       .filter((s) => s._isCustomStyle && !cancelledStyleSet.has(s.style) && !runOnLastsSet.has((s.last ?? "").toUpperCase()))
+      .filter((s) => isEligibleFittingStyle(season, s.style, Boolean(s._isCustomStyle), w27NewPatternStyleNames))
       .map((s) => ({
         style: s.style,
         last: s.last ?? "",
@@ -1690,16 +1705,17 @@ export function FittingTab() {
         newSKUs: s.newSKUs,
         totalSKUs: s.totalSKUs,
       }));
-    // Pass season-specific new lasts so W27 shows empty fitting list (no new lasts yet)
-    const staticEntries = buildStyleListFromData(mergedStyles as typeof skuData.styles, seasonNewLasts)
-      .filter((s) => !cancelledStyleSet.has(s.style));
+    const staticEntries = season === "W27"
+      ? []
+      : buildStyleListFromData(mergedStyles as typeof skuData.styles, seasonNewLasts)
+        .filter((s) => !cancelledStyleSet.has(s.style));
     // Merge, deduplicate (custom style wins if same name)
     const seen = new Set(customEntries.map((s) => s.style));
     return [
       ...customEntries,
       ...staticEntries.filter((s) => !seen.has(s.style)),
     ].sort((a, b) => a.last.localeCompare(b.last) || a.style.localeCompare(b.style));
-  }, [mergedStyles, cancelledStyleSet, seasonNewLasts]);
+  }, [mergedStyles, cancelledStyleSet, runOnLastsSet, season, seasonNewLasts, w27NewPatternStyleNames]);
 
   // Data queries
   const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery(undefined, { staleTime: 30_000 });
