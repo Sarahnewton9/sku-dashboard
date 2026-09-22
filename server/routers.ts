@@ -49,6 +49,9 @@ import {
   flagMarkdownSkus,
   updateMarkdownSkuStatus,
   getHandbagStyles,
+  getHandbagStyleParents,
+  createHandbagStyleParent,
+  updateHandbagStyleParent,
   upsertHandbagStyle,
   deleteHandbagStyle,
   getHandbagBuySessions,
@@ -2117,12 +2120,39 @@ If the request is unclear or is a question, use no_action.`;
       return await getHandbagStyles();
     }),
 
+    /** List handbag style parents, including styles that have no SKU yet. */
+    listParents: protectedProcedure.query(async () => {
+      return await getHandbagStyleParents();
+    }),
+
+    /** Add a handbag style before or alongside its first SKU. */
+    createStyle: protectedProcedure
+      .input(z.object({
+        style: z.string().min(1),
+        seasonality: z.string().nullable().optional(),
+        notes: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => createHandbagStyleParent(input)),
+
+    /** Save handbag-only style seasonality and notes. */
+    updateStyleDetails: protectedProcedure
+      .input(z.object({
+        style: z.string().min(1),
+        seasonality: z.string().nullable().optional(),
+        notes: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await updateHandbagStyleParent(input);
+        return { success: true };
+      }),
+
     /** Upsert a handbag style (update RRP or cost) */
     upsertStyle: protectedProcedure
       .input(z.object({
         style: z.string(),
         colour: z.string(),
         material: z.string().optional(),
+        seasonality: z.string().nullable().optional(),
         section: z.string().optional(),
         notes: z.string().optional(),
         rrp: z.number().nullable().optional(),

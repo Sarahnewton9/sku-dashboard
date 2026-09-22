@@ -607,14 +607,32 @@ export type MarkdownSku = typeof markdownSkus.$inferSelect;
 export type InsertMarkdownSku = typeof markdownSkus.$inferInsert;
 
 /**
- * Handbag styles — one row per style+colourway from the SS26 linesheet.
- * Costs are wholesale costs (not retail); RRP is the recommended retail price.
+ * Handbag style parents — supports a handbag style before its first colourway is
+ * created, and holds style-level seasonality, notes, and hero imagery.
+ */
+export const handbagStyleParents = mysqlTable("handbag_style_parents", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 128 }).notNull().unique(),
+  seasonality: varchar("seasonality", { length: 128 }),
+  notes: varchar("notes", { length: 512 }),
+  styleImageUrl: varchar("style_image_url", { length: 1000 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type HandbagStyleParent = typeof handbagStyleParents.$inferSelect;
+export type InsertHandbagStyleParent = typeof handbagStyleParents.$inferInsert;
+
+/**
+ * Handbag SKUs — one row per style+colourway. Costs are wholesale costs (not
+ * retail); RRP is the recommended retail price.
  */
 export const handbagStyles = mysqlTable("handbag_styles", {
   id: int("id").autoincrement().primaryKey(),
   style: varchar("style", { length: 128 }).notNull(),
   colour: varchar("colour", { length: 128 }).notNull(),
   material: varchar("material", { length: 128 }),
+  /** Handbag-only seasonal classification, e.g. Core / Carry Over or New Season. */
+  seasonality: varchar("seasonality", { length: 128 }),
   section: varchar("section", { length: 128 }), // e.g. "Core / Carry Over", "New Season", "WINTER RECUT"
   notes: varchar("notes", { length: 512 }),
   rrp: float("rrp"),

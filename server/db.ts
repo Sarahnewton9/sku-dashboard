@@ -1756,31 +1756,102 @@ export async function updateMarkdownSkuStatus(ids: number[], status: "pending" |
 export async function getHandbagStyles() {
   const db = await getDb();
   if (!db) return [];
-  const { handbagStyles } = await import("../drizzle/schema");
+  const { handbagStyles, handbagStyleParents } = await import("../drizzle/schema");
+  const { asc, eq, sql } = await import("drizzle-orm");
+  return db.select({
+    id: handbagStyles.id,
+    style: handbagStyles.style,
+    colour: handbagStyles.colour,
+    material: handbagStyles.material,
+    seasonality: handbagStyles.seasonality,
+    section: handbagStyles.section,
+    notes: handbagStyles.notes,
+    rrp: handbagStyles.rrp,
+    cost: handbagStyles.cost,
+    imageUrl: handbagStyles.imageUrl,
+    styleImageUrl: sql<string | null>`COALESCE(${handbagStyleParents.styleImageUrl}, ${handbagStyles.styleImageUrl})`,
+    parentSeasonality: handbagStyleParents.seasonality,
+    parentNotes: handbagStyleParents.notes,
+  })
+    .from(handbagStyles)
+    .leftJoin(handbagStyleParents, eq(handbagStyles.style, handbagStyleParents.style))
+    .orderBy(asc(handbagStyles.style), asc(handbagStyles.colour));
+}
+
+export async function getHandbagStyleParents() {
+  const db = await getDb();
+  if (!db) return [];
+  const { handbagStyleParents } = await import("../drizzle/schema");
   const { asc } = await import("drizzle-orm");
-  return db.select().from(handbagStyles).orderBy(asc(handbagStyles.style), asc(handbagStyles.colour));
+  return db.select().from(handbagStyleParents).orderBy(asc(handbagStyleParents.style));
+}
+
+export async function createHandbagStyleParent(data: {
+  style: string;
+  seasonality?: string | null;
+  notes?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { handbagStyleParents } = await import("../drizzle/schema");
+  const style = data.style.trim().toUpperCase();
+  if (!style) throw new Error("Style name is required");
+  await db.insert(handbagStyleParents).values({
+    style,
+    seasonality: data.seasonality ?? null,
+    notes: data.notes ?? null,
+  }).onDuplicateKeyUpdate({
+    set: {
+      seasonality: data.seasonality ?? null,
+      notes: data.notes ?? null,
+    },
+  });
+  return { style };
+}
+
+export async function updateHandbagStyleParent(data: {
+  style: string;
+  seasonality?: string | null;
+  notes?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { handbagStyleParents } = await import("../drizzle/schema");
+  const updateSet: Record<string, unknown> = {};
+  if (data.seasonality !== undefined) updateSet.seasonality = data.seasonality;
+  if (data.notes !== undefined) updateSet.notes = data.notes;
+  if (Object.keys(updateSet).length === 0) return;
+  await db.insert(handbagStyleParents).values({ style: data.style.trim().toUpperCase() })
+    .onDuplicateKeyUpdate({ set: updateSet as any });
 }
 
 export async function upsertHandbagStyle(item: {
-  style: string; colour: string; material?: string; section?: string;
+  style: string; colour: string; material?: string; seasonality?: string | null; section?: string;
   notes?: string; rrp?: number | null; cost?: number | null; imageUrl?: string | null;
 }) {
   const db = await getDb();
   if (!db) return;
-  const { handbagStyles } = await import("../drizzle/schema");
+  const { handbagStyles, handbagStyleParents } = await import("../drizzle/schema");
   const { sql } = await import("drizzle-orm");
+  const style = item.style.trim().toUpperCase();
+  const colour = item.colour.trim().toUpperCase();
+  await db.insert(handbagStyleParents).values({ style }).onDuplicateKeyUpdate({
+    set: { style: sql`style` },
+  });
   // Build update set — only include fields that were explicitly provided
   const updateSet: Record<string, unknown> = {};
   if (item.material !== undefined) updateSet.material = item.material;
+  if (item.seasonality !== undefined) updateSet.seasonality = item.seasonality;
   if (item.section !== undefined) updateSet.section = item.section;
   if (item.notes !== undefined) updateSet.notes = item.notes;
   if (item.rrp !== undefined) updateSet.rrp = item.rrp;
   if (item.cost !== undefined) updateSet.cost = item.cost;
   if (item.imageUrl !== undefined) updateSet.imageUrl = item.imageUrl;
   await db.insert(handbagStyles).values({
-    style: item.style,
-    colour: item.colour,
+    style,
+    colour,
     material: item.material ?? null,
+    seasonality: item.seasonality ?? null,
     section: item.section ?? null,
     notes: item.notes ?? null,
     rrp: item.rrp ?? null,
@@ -1910,10 +1981,11 @@ export async function deleteSalesSnapshot(snapshotId: number) {
 export async function renameHandbagStyle(oldStyle: string, newStyle: string) {
   const db = await getDb();
   if (!db) return;
-  const { handbagStyles, handbagBuyItems } = await import("../drizzle/schema");
+  const { handbagStyles, handbagBuyItems, handbagStyleParents } = await import("../drizzle/schema");
   const { eq } = await import("drizzle-orm");
   await db.update(handbagStyles).set({ style: newStyle }).where(eq(handbagStyles.style, oldStyle));
   await db.update(handbagBuyItems).set({ style: newStyle }).where(eq(handbagBuyItems.style, oldStyle));
+  await db.update(handbagStyleParents).set({ style: newStyle }).where(eq(handbagStyleParents.style, oldStyle));
 }
 
 export async function renameHandbagColour(style: string, oldColour: string, newColour: string) {
@@ -1929,8 +2001,10 @@ export async function renameHandbagColour(style: string, oldColour: string, newC
 export async function updateHandbagStyleImage(style: string, imageUrl: string | null) {
   const db = await getDb();
   if (!db) return;
-  const { handbagStyles } = await import("../drizzle/schema");
-  const { eq } = await import("drizzle-orm");
+  const { handbagStyles, handbagStyleParents } = await import("../drizzle/schema");
+  const { eq, sql } = await import("drizzle-orm");
+  await db.insert(handbagStyleParents).values({ style: style.trim().toUpperCase(), styleImageUrl: imageUrl })
+    .onDuplicateKeyUpdate({ set: { styleImageUrl: imageUrl } });
   await db.update(handbagStyles).set({ styleImageUrl: imageUrl } as any).where(eq(handbagStyles.style, style));
 }
 
