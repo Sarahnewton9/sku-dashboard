@@ -1,6 +1,6 @@
 export const HANDBAG_SEASONALITY_OPTIONS = [
   "Core / Carry Over",
-  "New Season",
+  "SS26",
 ] as const;
 
 export type HandbagSeasonality = (typeof HANDBAG_SEASONALITY_OPTIONS)[number];

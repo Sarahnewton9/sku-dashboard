@@ -33,9 +33,9 @@ describe("handbag range manager router", () => {
 
   it("creates a handbag style before its first SKU", async () => {
     const caller = appRouter.createCaller(createCtx());
-    await expect(caller.handbag.createStyle({ style: "ARIA", seasonality: "New Season", notes: "Campaign bag" }))
+    await expect(caller.handbag.createStyle({ style: "ARIA", seasonality: "SS26", notes: "Campaign bag" }))
       .resolves.toEqual({ style: "ARIA" });
-    expect(handbagDb.createHandbagStyleParent).toHaveBeenCalledWith({ style: "ARIA", seasonality: "New Season", notes: "Campaign bag" });
+    expect(handbagDb.createHandbagStyleParent).toHaveBeenCalledWith({ style: "ARIA", seasonality: "SS26", notes: "Campaign bag" });
   });
 
   it("saves handbag-only style seasonality", async () => {
@@ -51,14 +51,14 @@ describe("handbag range manager router", () => {
       style: "ARIA",
       colour: "BLACK PEBBLE",
       material: "Pebble",
-      seasonality: "New Season",
+      seasonality: "SS26",
       rrp: 199.95,
       cost: 60,
     })).resolves.toEqual({ success: true });
     expect(handbagDb.upsertHandbagStyle).toHaveBeenCalledWith(expect.objectContaining({
       style: "ARIA",
       colour: "BLACK PEBBLE",
-      seasonality: "New Season",
+      seasonality: "SS26",
     }));
   });
 });
