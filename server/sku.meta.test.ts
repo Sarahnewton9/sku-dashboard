@@ -86,6 +86,24 @@ describe("sku.update", () => {
     });
     expect(result).toEqual({ success: true });
   });
+
+  it("accepts Upper 2 colour and leather updates for a static dashboard SKU", async () => {
+    const db = await import("./db");
+    const caller = appRouter.createCaller(createCtx());
+    const result = await caller.sku.update({
+      style: "ALYX",
+      colour: "BLACK",
+      leather: "COMO",
+      colour2: "LIPSTICK",
+      leather2: "SUEDE",
+    });
+
+    expect(result).toEqual({ success: true });
+    expect(db.upsertSkuMeta).toHaveBeenLastCalledWith(expect.objectContaining({
+      colour2: "LIPSTICK",
+      leather2: "SUEDE",
+    }));
+  });
 });
 
 describe("sku.importCosts", () => {

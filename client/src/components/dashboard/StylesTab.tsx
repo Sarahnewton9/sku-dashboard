@@ -83,10 +83,11 @@ export default function StylesTab() {
     style: string;
     sourceColour: string;
     sourceLeather: string;
-    colour2?: string | null;
-    leather2?: string | null;
     colourDraft: string;
     leatherDraft: string;
+    hasUpper2: boolean;
+    colour2Draft: string;
+    leather2Draft: string;
   } | null>(null);
   // Add Style modal state
   const [showAddStyleModal, setShowAddStyleModal] = useState(false);
@@ -349,8 +350,14 @@ export default function StylesTab() {
     if (!colourEdit) return;
     const nextColour = colourEdit.colourDraft.trim().toUpperCase();
     const nextLeather = colourEdit.leatherDraft.trim().toUpperCase();
+    const nextColour2 = colourEdit.colour2Draft.trim().toUpperCase();
+    const nextLeather2 = colourEdit.leather2Draft.trim().toUpperCase();
     if (!nextColour || !nextLeather) {
-      toast.error("Enter both a colour and leather");
+      toast.error("Enter Upper 1 colour and leather");
+      return;
+    }
+    if (colourEdit.hasUpper2 && (!nextColour2 || !nextLeather2)) {
+      toast.error("Enter both Upper 2 colour and leather");
       return;
     }
     if (colourEdit.customId) {
@@ -358,8 +365,8 @@ export default function StylesTab() {
         id: colourEdit.customId,
         colour: nextColour,
         leather: nextLeather,
-        colour2: colourEdit.colour2 ?? undefined,
-        leather2: colourEdit.leather2 ?? undefined,
+        colour2: colourEdit.hasUpper2 ? nextColour2 : undefined,
+        leather2: colourEdit.hasUpper2 ? nextLeather2 : undefined,
       });
       return;
     }
@@ -369,6 +376,8 @@ export default function StylesTab() {
       leather: colourEdit.sourceLeather,
       colourOverride: nextColour,
       leatherOverride: nextLeather,
+      colour2: colourEdit.hasUpper2 ? nextColour2 : null,
+      leather2: colourEdit.hasUpper2 ? nextLeather2 : null,
     });
   }, [colourEdit, updateCustomSkuMutation, updateStaticColourMutation]);
 
@@ -1728,6 +1737,8 @@ export default function StylesTab() {
                                     const sourceLeather = (sku as any)._sourceLeather ?? sku.leather;
                                     const skuKey2 = `${sku.style}|${sourceColour}|${sourceLeather}`;
                                     const dbMeta = skuMetaMap[skuKey2];
+                                    const currentColour2 = (sku as any).colour2 || dbMeta?.colour2 || "";
+                                    const currentLeather2 = (sku as any).leather2 || dbMeta?.leather2 || "";
                                     const colourEditKey = (sku as any)._customId
                                       ? `custom:${(sku as any)._customId}`
                                       : `static:${skuKey2}`;
@@ -1766,57 +1777,105 @@ export default function StylesTab() {
                                         {/* Colour */}
                                         <div className="flex min-w-0 items-center gap-1">
                                           {isEditingColour ? (
-                                            <>
-                                              <input
-                                                autoFocus
-                                                value={colourEdit.colourDraft}
-                                                onChange={(event) => setColourEdit((previous) => previous ? { ...previous, colourDraft: event.target.value.toUpperCase() } : previous)}
-                                                onClick={(event) => event.stopPropagation()}
-                                                onKeyDown={(event) => {
-                                                  event.stopPropagation();
-                                                  if (event.key === "Escape") setColourEdit(null);
-                                                  if (event.key === "Enter") saveColourEdit();
-                                                }}
-                                                className="min-w-0 flex-1 rounded border px-1.5 py-1 text-xs font-medium uppercase bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                                              />
-                                              <button onClick={(event) => { event.stopPropagation(); saveColourEdit(); }} className="p-1 rounded text-emerald-600 hover:bg-emerald-50" title="Save colour"><Check className="w-3.5 h-3.5" /></button>
-                                              <button onClick={(event) => { event.stopPropagation(); setColourEdit(null); }} className="p-1 rounded text-muted-foreground hover:bg-muted" title="Cancel"><X className="w-3.5 h-3.5" /></button>
-                                            </>
+                                            <div className="grid min-w-0 flex-1 gap-1.5">
+                                              <div className="flex min-w-0 items-center gap-1">
+                                                <input
+                                                  autoFocus
+                                                  value={colourEdit.colourDraft}
+                                                  onChange={(event) => setColourEdit((previous) => previous ? { ...previous, colourDraft: event.target.value.toUpperCase() } : previous)}
+                                                  onClick={(event) => event.stopPropagation()}
+                                                  onKeyDown={(event) => {
+                                                    event.stopPropagation();
+                                                    if (event.key === "Escape") setColourEdit(null);
+                                                    if (event.key === "Enter") saveColourEdit();
+                                                  }}
+                                                  aria-label="Upper 1 colour"
+                                                  placeholder="Upper 1 colour"
+                                                  className="min-w-0 flex-1 rounded border px-1.5 py-1 text-xs font-medium uppercase bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                                />
+                                                <button onClick={(event) => { event.stopPropagation(); saveColourEdit(); }} className="p-1 rounded text-emerald-600 hover:bg-emerald-50" title="Save both uppers"><Check className="w-3.5 h-3.5" /></button>
+                                                <button onClick={(event) => { event.stopPropagation(); setColourEdit(null); }} className="p-1 rounded text-muted-foreground hover:bg-muted" title="Cancel"><X className="w-3.5 h-3.5" /></button>
+                                              </div>
+                                              <label className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                                <input
+                                                  type="checkbox"
+                                                  checked={colourEdit.hasUpper2}
+                                                  onChange={(event) => setColourEdit((previous) => previous ? { ...previous, hasUpper2: event.target.checked } : previous)}
+                                                  onClick={(event) => event.stopPropagation()}
+                                                  className="h-3 w-3 rounded border-border"
+                                                />
+                                                Upper 2
+                                              </label>
+                                              {colourEdit.hasUpper2 && (
+                                                <input
+                                                  value={colourEdit.colour2Draft}
+                                                  onChange={(event) => setColourEdit((previous) => previous ? { ...previous, colour2Draft: event.target.value.toUpperCase() } : previous)}
+                                                  onClick={(event) => event.stopPropagation()}
+                                                  onKeyDown={(event) => {
+                                                    event.stopPropagation();
+                                                    if (event.key === "Escape") setColourEdit(null);
+                                                    if (event.key === "Enter") saveColourEdit();
+                                                  }}
+                                                  aria-label="Upper 2 colour"
+                                                  placeholder="Upper 2 colour"
+                                                  className="min-w-0 w-full rounded border px-1.5 py-1 text-xs font-medium uppercase bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                                />
+                                              )}
+                                            </div>
                                           ) : (
                                             <>
                                               <span className="min-w-0 truncate text-sm font-medium text-foreground">
                                                 {displayColour(sku.colour, sku.leather)}
-                                                {((sku as any).colour2 || dbMeta?.colour2) && <span className="text-muted-foreground"> / {displayColour(((sku as any).colour2 || dbMeta?.colour2)!, ((sku as any).leather2 || dbMeta?.leather2) ?? "")}</span>}
+                                                {currentColour2 && <span className="text-muted-foreground"> / {displayColour(currentColour2, currentLeather2)}</span>}
                                               </span>
                                               <button
                                                 onClick={(event) => {
                                                   event.stopPropagation();
-                                                  setColourEdit({ rowKey: colourEditKey, customId: (sku as any)._customId, style: sku.style, sourceColour, sourceLeather, colour2: (sku as any).colour2, leather2: (sku as any).leather2, colourDraft: sku.colour, leatherDraft: sku.leather });
+                                                  setColourEdit({ rowKey: colourEditKey, customId: (sku as any)._customId, style: sku.style, sourceColour, sourceLeather, colourDraft: sku.colour, leatherDraft: sku.leather, hasUpper2: Boolean(currentColour2 || currentLeather2), colour2Draft: currentColour2, leather2Draft: currentLeather2 });
                                                 }}
                                                 className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted flex-shrink-0"
-                                                title="Edit colour and leather"
+                                                title="Edit Upper 1 and Upper 2"
                                               ><Pencil className="w-3 h-3" /></button>
                                             </>
                                           )}
                                         </div>
                                         {/* Leather */}
                                         {isEditingColour ? (
-                                          <input
-                                            value={colourEdit.leatherDraft}
-                                            onChange={(event) => setColourEdit((previous) => previous ? { ...previous, leatherDraft: event.target.value.toUpperCase() } : previous)}
-                                            onClick={(event) => event.stopPropagation()}
-                                            onKeyDown={(event) => {
-                                              event.stopPropagation();
-                                              if (event.key === "Escape") setColourEdit(null);
-                                              if (event.key === "Enter") saveColourEdit();
-                                            }}
-                                            placeholder="Leather"
-                                            className="min-w-0 w-full rounded border px-1.5 py-1 text-xs font-medium uppercase bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
-                                          />
+                                          <div className="grid min-w-0 gap-1.5">
+                                            <input
+                                              value={colourEdit.leatherDraft}
+                                              onChange={(event) => setColourEdit((previous) => previous ? { ...previous, leatherDraft: event.target.value.toUpperCase() } : previous)}
+                                              onClick={(event) => event.stopPropagation()}
+                                              onKeyDown={(event) => {
+                                                event.stopPropagation();
+                                                if (event.key === "Escape") setColourEdit(null);
+                                                if (event.key === "Enter") saveColourEdit();
+                                              }}
+                                              aria-label="Upper 1 leather"
+                                              placeholder="Upper 1 leather"
+                                              className="min-w-0 w-full rounded border px-1.5 py-1 text-xs font-medium uppercase bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                            />
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">&nbsp;</span>
+                                            {colourEdit.hasUpper2 && (
+                                              <input
+                                                value={colourEdit.leather2Draft}
+                                                onChange={(event) => setColourEdit((previous) => previous ? { ...previous, leather2Draft: event.target.value.toUpperCase() } : previous)}
+                                                onClick={(event) => event.stopPropagation()}
+                                                onKeyDown={(event) => {
+                                                  event.stopPropagation();
+                                                  if (event.key === "Escape") setColourEdit(null);
+                                                  if (event.key === "Enter") saveColourEdit();
+                                                }}
+                                                aria-label="Upper 2 leather"
+                                                placeholder="Upper 2 leather"
+                                                className="min-w-0 w-full rounded border px-1.5 py-1 text-xs font-medium uppercase bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                                              />
+                                            )}
+                                          </div>
                                         ) : (
                                           <span className="text-xs text-muted-foreground truncate">
                                             {displayLeather(sku.leather || "", sku.style) || "—"}
-                                            {((sku as any).leather2 || dbMeta?.leather2) && <span> / {displayLeather(((sku as any).leather2 || dbMeta?.leather2)!, sku.style)}</span>}
+                                            {currentLeather2 && <span> / {displayLeather(currentLeather2, sku.style)}</span>}
                                           </span>
                                         )}
                                         {/* Size 11 — only show badge if YES */}
