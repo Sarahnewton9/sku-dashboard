@@ -1797,7 +1797,7 @@ export function FittingTab() {
 
   const createSession = trpc.fittingSession.create.useMutation({
     onSuccess: () => { refetchSessions(); },
-    onError: () => toast.error("Failed to create session"),
+    onError: (error) => toast.error(`Failed to create session: ${error.message}`),
   });
 
   const handleFitUpdate = useCallback((style: string, fitRating: string | null, notes: string | null) => {
@@ -1843,7 +1843,9 @@ export function FittingTab() {
     const today = new Date().toISOString().split("T")[0];
     const model = lastUsedModelRef.current || "";
     createSession.mutate(
-      { style, fitModel: model, sessionDate: today },
+      // Sessions are season-specific. Passing the active season is essential
+      // so a W27 fitting opens in W27 and its notes remain visible there.
+      { style, fitModel: model, sessionDate: today, season },
       {
         onSuccess: (result: any) => {
           if (result?.id) setNewlyCreatedSessionId(result.id);
@@ -1851,7 +1853,7 @@ export function FittingTab() {
         },
       }
     );
-  }, [createSession, refetchSessions]);
+  }, [createSession, refetchSessions, season]);
 
   // ── Fit Report Export ────────────────────────────────────────────────────────────────────────────────
   const handleExportFitReport = useCallback(() => {
