@@ -19,7 +19,7 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import {
-  ChevronDown, ChevronRight, Search, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2, X, ArrowRight, RefreshCw, GripVertical, RotateCcw, Pencil,
+  ChevronDown, ChevronLeft, ChevronRight, Search, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2, X, ArrowRight, RefreshCw, GripVertical, RotateCcw, Pencil,
 } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent, DragOverlay,
@@ -41,6 +41,7 @@ import { selectSpecColourColumns } from "@shared/specsStyleVisibility";
 import { getSeasonDisplayLabel } from "@shared/seasonLabel";
 import { buildNewSpecColourColumns } from "@shared/specSeasonalColumns";
 import { isNewSpecStyleAwaitingCompletion, type SpecCompletionStatus } from "@shared/specCompletionQueue";
+import { getHorizontalScrollMetrics, getHorizontalScrollTarget } from "@shared/specHorizontalNavigation";
 import {
   buildCrossStyleComponentCopies,
   resolveCrossStyleSourceSpecs,
@@ -947,104 +948,79 @@ const STYLE_CATEGORIES = [
   "Flat Sandal",
 ];
 
-// ─── Sticky Phantom Scrollbar ───────────────────────────────────────────────
-// Renders a thin scrollbar that stays stuck to the bottom of the viewport while
-// the user scrolls the spec grid vertically. Scroll position is kept in sync
-// bidirectionally with the real overflow-x-auto container via event listeners.
+// ─── Colour Navigator ───────────────────────────────────────────────────────
+// A prominent control placed immediately above the grid. It replaces the
+// easy-to-miss bottom scrollbar and stays in sync as columns resize or change.
 
-interface StickyScrollBarProps {
+interface ColourNavigatorProps {
   tableScrollRef: React.RefObject<HTMLDivElement | null>;
-  containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-function StickyScrollBar({ tableScrollRef, containerRef }: StickyScrollBarProps) {
-  const phantomRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
-  const syncingRef = useRef(false); // prevent feedback loops
-  const [viewportPosition, setViewportPosition] = useState({ left: 0, width: 0, ready: false });
+function ColourNavigator({ tableScrollRef }: ColourNavigatorProps) {
+  const [metrics, setMetrics] = useState(() => getHorizontalScrollMetrics(0, 0, 0));
 
-  // This control is fixed to the viewport rather than placed at the end of
-  // the sheet, so it remains usable while the component list is scrolled.
-  useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    function updatePosition() {
-      const rect = container!.getBoundingClientRect();
-      setViewportPosition({
-        left: Math.max(0, rect.left),
-        width: Math.max(0, rect.width),
-        ready: rect.width > 0,
-      });
-    }
-
-    updatePosition();
-    const observer = new ResizeObserver(updatePosition);
-    observer.observe(container);
-    window.addEventListener("resize", updatePosition);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", updatePosition);
-    };
-  }, [containerRef]);
-
-  // Keep the phantom inner width equal to the table scroll width
   useLayoutEffect(() => {
     const table = tableScrollRef.current;
-    const inner = innerRef.current;
-    if (!table || !inner) return;
+    if (!table) return;
 
-    function updateWidth() {
-      if (table && inner) inner.style.width = table.scrollWidth + "px";
-    }
-    updateWidth();
+    const updateMetrics = () => {
+      setMetrics(getHorizontalScrollMetrics(table.scrollWidth, table.clientWidth, table.scrollLeft));
+    };
 
-    const ro = new ResizeObserver(updateWidth);
-    ro.observe(table);
-    return () => ro.disconnect();
-  }, [tableScrollRef]);
-
-  // Bidirectional scroll sync
-  useEffect(() => {
-    const table = tableScrollRef.current;
-    const phantom = phantomRef.current;
-    if (!table || !phantom) return;
-
-    function onTableScroll() {
-      if (syncingRef.current) return;
-      syncingRef.current = true;
-      if (phantom) phantom.scrollLeft = table!.scrollLeft;
-      syncingRef.current = false;
-    }
-    function onPhantomScroll() {
-      if (syncingRef.current) return;
-      syncingRef.current = true;
-      if (table) table.scrollLeft = phantom!.scrollLeft;
-      syncingRef.current = false;
-    }
-
-    table.addEventListener("scroll", onTableScroll, { passive: true });
-    phantom.addEventListener("scroll", onPhantomScroll, { passive: true });
+    updateMetrics();
+    const resizeObserver = new ResizeObserver(updateMetrics);
+    resizeObserver.observe(table);
+    if (table.firstElementChild) resizeObserver.observe(table.firstElementChild);
+    table.addEventListener("scroll", updateMetrics, { passive: true });
     return () => {
-      table.removeEventListener("scroll", onTableScroll);
-      phantom.removeEventListener("scroll", onPhantomScroll);
+      resizeObserver.disconnect();
+      table.removeEventListener("scroll", updateMetrics);
     };
   }, [tableScrollRef]);
+
+  const scrollTo = (left: number, behavior: ScrollBehavior = "smooth") => {
+    tableScrollRef.current?.scrollTo({ left, behavior });
+  };
+
+  if (!metrics.isScrollable) return null;
 
   return (
-    <div
-      ref={phantomRef}
-      tabIndex={0}
-      aria-label="Scroll the spec sheet horizontally"
-      className="fixed bottom-0 z-40 h-6 overflow-x-scroll border-t border-border/60 bg-card/95 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] backdrop-blur-sm [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-track]:bg-muted/35 [&::-webkit-scrollbar-thumb]:bg-muted-foreground/55 [&::-webkit-scrollbar-thumb]:rounded-full"
-      style={{
-        scrollbarWidth: "thin",
-        left: viewportPosition.left,
-        width: viewportPosition.width,
-        visibility: viewportPosition.ready ? "visible" : "hidden",
-      }}
-    >
-      <div ref={innerRef} style={{ height: "2px" }} />
+    <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-border bg-background/95 px-3 py-2 shadow-sm backdrop-blur-sm">
+      <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        Scroll colours
+      </span>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="h-7 w-7 shrink-0"
+        aria-label="Scroll colour columns left"
+        disabled={metrics.position <= 0}
+        onClick={() => scrollTo(getHorizontalScrollTarget(metrics.position, tableScrollRef.current?.clientWidth ?? 0, metrics.maxPosition, "left"))}
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+      <input
+        type="range"
+        min={0}
+        max={metrics.maxPosition}
+        value={metrics.position}
+        aria-label="Scroll through colour columns"
+        className="h-2 min-w-24 flex-1 cursor-ew-resize accent-amber-600"
+        onChange={(event) => scrollTo(Number(event.target.value), "auto")}
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="h-7 w-7 shrink-0"
+        aria-label="Scroll colour columns right"
+        disabled={metrics.position >= metrics.maxPosition}
+        onClick={() => scrollTo(getHorizontalScrollTarget(metrics.position, tableScrollRef.current?.clientWidth ?? 0, metrics.maxPosition, "right"))}
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+      <span className="hidden whitespace-nowrap text-[10px] text-muted-foreground sm:inline">Shift + mouse wheel also works</span>
     </div>
   );
 }
@@ -1310,7 +1286,7 @@ function SpecForm({
   const [editSkuColour, setEditSkuColour] = useState("");
   const [editSkuLeather, setEditSkuLeather] = useState("");
   // Refs for the sticky phantom scrollbar
-  // Use the externally-lifted ref if provided (so parent can render StickyScrollBar outside the scroll container)
+  // Use the externally-lifted ref so the visible colour navigator can control this grid.
   const internalTableScrollRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = externalTableScrollRef ?? internalTableScrollRef;
   const tableRef = useRef<HTMLTableElement>(null);
@@ -1819,6 +1795,9 @@ function SpecForm({
       </div>}{/* end showCopyPanel */}
       </div>{/* end copy panel */}
 
+      {/* Always-visible colour navigation — no need to find a bottom scrollbar. */}
+      <ColourNavigator tableScrollRef={tableScrollRef} />
+
       {/* Spec grid — unified drag-and-drop for ALL rows (template + custom) */}
       <DndContext
         sensors={dndSensors}
@@ -1841,7 +1820,16 @@ function SpecForm({
         }}
         onDragCancel={() => setActiveId(null)}
       >
-      <div ref={tableScrollRef} className="overflow-x-auto [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-track]:bg-muted/40 [&::-webkit-scrollbar-thumb]:bg-muted-foreground/50 [&::-webkit-scrollbar-thumb]:rounded-full">
+      <div
+        ref={tableScrollRef}
+        className="overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-muted/40 [&::-webkit-scrollbar-thumb]:bg-muted-foreground/50 [&::-webkit-scrollbar-thumb]:rounded-full"
+        onWheel={(event) => {
+          // Make a conventional mouse with Shift held as useful as a trackpad.
+          if (!event.shiftKey || event.deltaY === 0) return;
+          event.currentTarget.scrollLeft += event.deltaY;
+          event.preventDefault();
+        }}
+      >
         <table ref={tableRef} className="w-max min-w-full text-xs border-collapse">
           <thead>
             <tr className="bg-muted/50">
@@ -2323,7 +2311,7 @@ export default function SpecsTab({}: SpecsTabProps) {
   const [importSaving, setImportSaving] = useState(false);
   const [importOverwrite, setImportOverwrite] = useState(true);
   const importFileRef = React.useRef<HTMLInputElement>(null);
-  // Lifted ref for the spec table's horizontal scroll container — shared with StickyScrollBar
+  // Lifted ref for the spec table's horizontal scroll container — shared with ColourNavigator.
   const specTableScrollRef = useRef<HTMLDivElement>(null);
   const specPaneRef = useRef<HTMLDivElement>(null);
 
@@ -3890,8 +3878,6 @@ export default function SpecsTab({}: SpecsTabProps) {
               }}
             />
             </div>{/* end scrollable body */}
-            {/* Viewport-fixed scrollbar — always available while editing the spec sheet */}
-            {selectedEntry && <StickyScrollBar tableScrollRef={specTableScrollRef} containerRef={specPaneRef} />}
           </div>
         )}
       </div>
