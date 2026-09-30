@@ -40,6 +40,7 @@ import { findSpecColourMapValue, normalizeStoredSpecColourKey } from "@shared/sp
 import { selectSpecColourColumns } from "@shared/specsStyleVisibility";
 import { getSeasonDisplayLabel } from "@shared/seasonLabel";
 import { buildNewSpecColourColumns } from "@shared/specSeasonalColumns";
+import { isNewSpecStyleAwaitingCompletion, type SpecCompletionStatus } from "@shared/specCompletionQueue";
 import {
   buildCrossStyleComponentCopies,
   resolveCrossStyleSourceSpecs,
@@ -2470,10 +2471,34 @@ export default function SpecsTab({}: SpecsTabProps) {
       .filter((s) => s.colours.length > 0 || (s as any)._isCustomStyle);
   }, [baseStyleList, cancelledSet, cancelledColourKeySet]);
 
+  // The completion queue only applies to styles with new SKU columns. Existing
+  // core/carry-over styles remain organised under their normal category.
+  const { data: allSpecMeta = [], refetch: refetchAllSpecMeta } = trpc.specs.getAllMeta.useQuery();
+  const specStatusByStyle = useMemo(() => new Map(
+    (allSpecMeta as Array<{ style: string; specStatus?: SpecCompletionStatus | null }>)
+      .map((meta) => [meta.style, meta.specStatus ?? "not_started"]),
+  ), [allSpecMeta]);
+
   const filtered = styleList.filter((s) => {
     const q = search.toLowerCase();
     return !q || s.style.toLowerCase().includes(q) || s.last.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
   });
+
+  const stylesToComplete = useMemo(
+    () => filtered.filter((entry) => isNewSpecStyleAwaitingCompletion({
+      newSkus: entry.newSKUs,
+      specStatus: specStatusByStyle.get(entry.style),
+    })),
+    [filtered, specStatusByStyle],
+  );
+  const stylesToCompleteSet = useMemo(
+    () => new Set(stylesToComplete.map((entry) => entry.style)),
+    [stylesToComplete],
+  );
+  const categorisedStyles = useMemo(
+    () => filtered.filter((entry) => !stylesToCompleteSet.has(entry.style)),
+    [filtered, stylesToCompleteSet],
+  );
 
   const selectedEntryRaw = styleList.find((s) => s.style === selectedStyle) ?? null;
 
@@ -3014,6 +3039,7 @@ export default function SpecsTab({}: SpecsTabProps) {
     onSettled: (_data, _err, input) => {
       // Quietly sync in background — no blocking refetch
       utils.specs.getForStyle.invalidate({ style: input.style });
+      utils.specs.getAllMeta.invalidate();
     },
   });
 
@@ -3034,6 +3060,7 @@ export default function SpecsTab({}: SpecsTabProps) {
       utils.customSku.getAll.invalidate();
       utils.specHiddenColumns.getHidden.invalidate({ style: vars.style, season: vars.season });
       utils.cancelledSku.list.invalidate({ season: vars.season });
+      utils.specs.getAllMeta.invalidate();
       toast.success("Colour added to spec sheet");
     },
     onError: () => toast.error("Failed to add colour"),
@@ -3072,6 +3099,14 @@ export default function SpecsTab({}: SpecsTabProps) {
   const upsertMetaMutation = trpc.specs.upsertMeta.useMutation({
     onSuccess: () => refetchMeta(),
     onError: () => toast.error("Failed to save style settings"),
+  });
+  const setSpecStatusMutation = trpc.specs.setStatus.useMutation({
+    onSuccess: (_data, input) => {
+      refetchMeta();
+      refetchAllSpecMeta();
+      toast.success(input.status === "complete" ? "New SKU specs marked complete" : "New SKU specs reopened");
+    },
+    onError: () => toast.error("Failed to update Specs completion status"),
   });
 
   // Debounced notes save
@@ -3297,12 +3332,17 @@ export default function SpecsTab({}: SpecsTabProps) {
             <p className="text-xs text-muted-foreground">
               {filtered.length} of {styleList.length} styles
             </p>
+            {stylesToComplete.length > 0 && (
+              <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-amber-300 bg-amber-50 text-amber-800">
+                {stylesToComplete.length} to complete
+              </Badge>
+            )}
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
           {(() => {
             const categories = new Map<string, StyleEntry[]>();
-            for (const entry of filtered) {
+            for (const entry of categorisedStyles) {
               const category = entry.category?.trim() || "Uncategorised";
               const entries = categories.get(category) ?? [];
               entries.push(entry);
@@ -3331,7 +3371,12 @@ export default function SpecsTab({}: SpecsTabProps) {
                       <div className="text-xs text-muted-foreground">{entry.colours.length} colours</div>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      {entry.isAllNew && (
+                      {entry.newSKUs > 0 && (
+                        <Badge className="h-4 px-1 text-[9px] font-medium bg-amber-100 text-amber-800 hover:bg-amber-100">
+                          {entry.newSKUs} new
+                        </Badge>
+                      )}
+                      {entry.isAllNew && entry.newSKUs === 0 && (
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" title="New pattern" />
                       )}
                     </div>
@@ -3342,6 +3387,17 @@ export default function SpecsTab({}: SpecsTabProps) {
 
             return (
               <>
+                {stylesToComplete.length > 0 && (
+                  <>
+                    <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide bg-amber-100/80 text-amber-900 border-y border-amber-200 flex items-center justify-between">
+                      <span>To Be Completed</span>
+                      <span className="font-normal">{stylesToComplete.length}</span>
+                    </div>
+                    <div className="border-b border-amber-200/80 bg-amber-50/30">
+                      {stylesToComplete.map((entry) => <StyleRow key={entry.style} entry={entry} />)}
+                    </div>
+                  </>
+                )}
                 {categoryGroups.map(([category, entries]) => (
                   <React.Fragment key={category}>
                     <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide bg-muted/30 border-b flex items-center justify-between">
@@ -3434,7 +3490,28 @@ export default function SpecsTab({}: SpecsTabProps) {
                   {importLoading ? "Parsing…" : "Import from Excel"}
                 </Button>
               </div>
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
+                {selectedEntry.newSKUs > 0 && (
+                  <Button
+                    size="sm"
+                    variant={specMeta?.specStatus === "complete" ? "outline" : "default"}
+                    className="gap-2"
+                    disabled={setSpecStatusMutation.isPending}
+                    onClick={() => {
+                      if (!selectedStyle) return;
+                      setSpecStatusMutation.mutate({
+                        style: selectedStyle,
+                        status: specMeta?.specStatus === "complete" ? "in_progress" : "complete",
+                      });
+                    }}
+                  >
+                    {specMeta?.specStatus === "complete" ? (
+                      <><RotateCcw className="w-4 h-4" /> Reopen New SKU Specs</>
+                    ) : (
+                      <><Check className="w-4 h-4" /> Mark New SKU Specs Complete</>
+                    )}
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="outline"

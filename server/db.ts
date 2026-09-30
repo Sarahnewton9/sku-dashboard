@@ -5,6 +5,7 @@ import { ENV } from './_core/env';
 import { getSkuCompositeIdentity, normalizeSkuIdentityPart } from "../shared/skuCompositeIdentity";
 import { getCustomSkuCarryOverSeason } from "../shared/customSkuSeasonCarryOver";
 import { getHandbagSkuEditOutcome } from "../shared/handbagSkuEdit";
+import { getSpecTemplateComponentKeys } from "../shared/specCompletionQueue";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -1497,9 +1498,7 @@ export async function checkAllSpecsFilled(
   if (colours.length === 0 || rowKeys.length === 0) return false;
 
   // Only check template rows (custom rows are optional)
-  const templateComponents = rowKeys
-    .filter((k) => k.startsWith("template:"))
-    .map((k) => k.replace("template:", ""));
+  const templateComponents = getSpecTemplateComponentKeys(rowKeys);
 
   if (templateComponents.length === 0) return false;
 

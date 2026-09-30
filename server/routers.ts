@@ -965,6 +965,9 @@ export const appRouter = router({
         // If the SKU already exists in custom_skus, just make sure it's visible:
         // un-cancel it and un-hide it so it reappears in the spec sheet.
         const id = await addCustomSku(style, colour, leather, season, colour2, leather2);
+        // A new colourway requires a fresh spec, even when the parent style
+        // was previously marked complete.
+        await setSpecStatus(style, "not_started");
         // Also clear any hidden-column entry and cancelled-sku entry for this colour key.
         // Build the compound colour key the same way the spec sheet does.
         const colourKey = leather ? `${colour} ${leather}` : colour;
