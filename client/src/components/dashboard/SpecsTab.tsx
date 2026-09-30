@@ -19,7 +19,7 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import {
-  ChevronDown, ChevronLeft, ChevronRight, Search, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2, X, ArrowRight, RefreshCw, GripVertical, RotateCcw, Pencil,
+  ChevronDown, ChevronRight, Search, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2, X, ArrowRight, RefreshCw, GripVertical, RotateCcw, Pencil,
 } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent, DragOverlay,
@@ -41,7 +41,6 @@ import { selectSpecColourColumns } from "@shared/specsStyleVisibility";
 import { getSeasonDisplayLabel } from "@shared/seasonLabel";
 import { buildNewSpecColourColumns } from "@shared/specSeasonalColumns";
 import { isNewSpecStyleAwaitingCompletion, type SpecCompletionStatus } from "@shared/specCompletionQueue";
-import { getHorizontalScrollMetrics, getHorizontalScrollTarget } from "@shared/specHorizontalNavigation";
 import {
   buildCrossStyleComponentCopies,
   resolveCrossStyleSourceSpecs,
@@ -948,79 +947,83 @@ const STYLE_CATEGORIES = [
   "Flat Sandal",
 ];
 
-// ─── Colour Navigator ───────────────────────────────────────────────────────
-// A prominent control placed immediately above the grid. It replaces the
-// easy-to-miss bottom scrollbar and stays in sync as columns resize or change.
+// ─── Fixed Bottom Scrollbar ──────────────────────────────────────────────────
+// A standard horizontal scrollbar anchored at the bottom of the open spec.
+// It stays visible while scrolling the grid vertically and mirrors the table.
 
-interface ColourNavigatorProps {
+interface BottomSpecScrollbarProps {
   tableElement: HTMLDivElement | null;
 }
 
-function ColourNavigator({ tableElement }: ColourNavigatorProps) {
-  const [metrics, setMetrics] = useState(() => getHorizontalScrollMetrics(0, 0, 0));
+function BottomSpecScrollbar({ tableElement }: BottomSpecScrollbarProps) {
+  const scrollbarRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ left: 0, width: 0, visible: false });
 
   useLayoutEffect(() => {
-    const table = tableElement;
-    if (!table) return;
+    if (!tableElement) return;
 
-    const updateMetrics = () => {
-      setMetrics(getHorizontalScrollMetrics(table.scrollWidth, table.clientWidth, table.scrollLeft));
+    const update = () => {
+      const rect = tableElement.getBoundingClientRect();
+      const hasOverflow = tableElement.scrollWidth > tableElement.clientWidth + 1;
+      if (trackRef.current) trackRef.current.style.width = `${tableElement.scrollWidth}px`;
+      setPosition({
+        left: Math.max(0, rect.left),
+        width: Math.max(0, rect.width),
+        visible: hasOverflow && rect.width > 0,
+      });
     };
 
-    updateMetrics();
-    const resizeObserver = new ResizeObserver(updateMetrics);
-    resizeObserver.observe(table);
-    if (table.firstElementChild) resizeObserver.observe(table.firstElementChild);
-    table.addEventListener("scroll", updateMetrics, { passive: true });
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(tableElement);
+    if (tableElement.firstElementChild) observer.observe(tableElement.firstElementChild);
+    window.addEventListener("resize", update);
     return () => {
-      resizeObserver.disconnect();
-      table.removeEventListener("scroll", updateMetrics);
+      observer.disconnect();
+      window.removeEventListener("resize", update);
     };
   }, [tableElement]);
 
-  const scrollTo = (left: number, behavior: ScrollBehavior = "smooth") => {
-    tableElement?.scrollTo({ left, behavior });
-  };
-
-  if (!metrics.isScrollable) return null;
+  useEffect(() => {
+    const scrollbar = scrollbarRef.current;
+    if (!tableElement || !scrollbar) return;
+    let syncing = false;
+    const syncFromTable = () => {
+      if (syncing) return;
+      syncing = true;
+      scrollbar.scrollLeft = tableElement.scrollLeft;
+      syncing = false;
+    };
+    const syncToTable = () => {
+      if (syncing) return;
+      syncing = true;
+      tableElement.scrollLeft = scrollbar.scrollLeft;
+      syncing = false;
+    };
+    tableElement.addEventListener("scroll", syncFromTable, { passive: true });
+    scrollbar.addEventListener("scroll", syncToTable, { passive: true });
+    syncFromTable();
+    return () => {
+      tableElement.removeEventListener("scroll", syncFromTable);
+      scrollbar.removeEventListener("scroll", syncToTable);
+    };
+  }, [tableElement]);
 
   return (
-    <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-border bg-background/95 px-3 py-2 shadow-sm backdrop-blur-sm">
-      <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-        Scroll colours
-      </span>
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className="h-7 w-7 shrink-0"
-        aria-label="Scroll colour columns left"
-        disabled={metrics.position <= 0}
-        onClick={() => scrollTo(getHorizontalScrollTarget(metrics.position, tableElement?.clientWidth ?? 0, metrics.maxPosition, "left"))}
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </Button>
-      <input
-        type="range"
-        min={0}
-        max={metrics.maxPosition}
-        value={metrics.position}
-        aria-label="Scroll through colour columns"
-        className="h-2 min-w-24 flex-1 cursor-ew-resize accent-amber-600"
-        onChange={(event) => scrollTo(Number(event.target.value), "auto")}
-      />
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className="h-7 w-7 shrink-0"
-        aria-label="Scroll colour columns right"
-        disabled={metrics.position >= metrics.maxPosition}
-        onClick={() => scrollTo(getHorizontalScrollTarget(metrics.position, tableElement?.clientWidth ?? 0, metrics.maxPosition, "right"))}
-      >
-        <ChevronRight className="h-4 w-4" />
-      </Button>
-      <span className="hidden whitespace-nowrap text-[10px] text-muted-foreground sm:inline">Shift + mouse wheel also works</span>
+    <div
+      ref={scrollbarRef}
+      tabIndex={0}
+      aria-label="Scroll the spec sheet horizontally"
+      className="fixed bottom-2 z-40 h-5 overflow-x-scroll rounded-md border border-border/70 bg-background shadow-lg [&::-webkit-scrollbar]:h-4 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/60"
+      style={{
+        scrollbarWidth: "auto",
+        left: position.left,
+        width: position.width,
+        visibility: position.visible ? "visible" : "hidden",
+      }}
+    >
+      <div ref={trackRef} className="h-px" />
     </div>
   );
 }
@@ -1798,9 +1801,6 @@ function SpecForm({
       </div>}{/* end showCopyPanel */}
       </div>{/* end copy panel */}
 
-      {/* Always-visible colour navigation — no need to find a bottom scrollbar. */}
-      <ColourNavigator tableElement={tableScrollElement} />
-
       {/* Spec grid — unified drag-and-drop for ALL rows (template + custom) */}
       <DndContext
         sensors={dndSensors}
@@ -2170,6 +2170,8 @@ function SpecForm({
         )}
       </DragOverlay>
       </DndContext>
+      {/* Standard bottom scrollbar stays visible while the grid scrolls vertically. */}
+      <BottomSpecScrollbar tableElement={tableScrollElement} />
     </div>
   );
 }
@@ -2314,7 +2316,7 @@ export default function SpecsTab({}: SpecsTabProps) {
   const [importSaving, setImportSaving] = useState(false);
   const [importOverwrite, setImportOverwrite] = useState(true);
   const importFileRef = React.useRef<HTMLInputElement>(null);
-  // Lifted ref for the spec table's horizontal scroll container — shared with ColourNavigator.
+  // Lifted ref for the spec table's horizontal scroll container — shared with the bottom scrollbar.
   const specTableScrollRef = useRef<HTMLDivElement>(null);
   const specPaneRef = useRef<HTMLDivElement>(null);
 
