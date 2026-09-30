@@ -3536,7 +3536,14 @@ export default function SpecsTab({}: SpecsTabProps) {
                       fitRating: styleMetaMap[selectedEntry.style]?.fitRating ?? null,
                       fittingNotes: styleMetaMap[selectedEntry.style]?.fittingNotes ?? null,
                     });
-                    toast.success(`Exported ${selectedEntry.style} spec sheet`);
+                    // Export is the hand-off point for a new SKU spec sheet.
+                    // Once sent out, it should leave the To Be Completed queue.
+                    if (selectedEntry.newSKUs > 0 && specMeta?.specStatus !== "complete") {
+                      setSpecStatusMutation.mutate({ style: selectedEntry.style, status: "complete" });
+                      toast.success(`Exported ${selectedEntry.style} and marked its new SKU specs complete`);
+                    } else {
+                      toast.success(`Exported ${selectedEntry.style} spec sheet`);
+                    }
                   }}
                 >
                   <FileSpreadsheet className="w-4 h-4" />
