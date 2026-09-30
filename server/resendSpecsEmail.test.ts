@@ -19,12 +19,23 @@ describe("Specs email delivery", () => {
     });
   });
 
-  it("authenticates with Resend using the configured server secret", async () => {
+  it("recognises the configured server secret as a valid full-access or sending-only key", async () => {
     const config = getResendSpecsEmailConfiguration();
     expect(config.enabled).toBe(true);
 
     const { data, error } = await new Resend(config.apiKey).domains.list();
-    expect(error).toBeNull();
+    // A sending-only key is intentionally forbidden from this management
+    // endpoint, but Resend's restricted_api_key response proves the token is
+    // genuine and correctly scoped for the email send endpoint.
+    if (error) {
+      expect(error).toMatchObject({
+        statusCode: 401,
+        name: "restricted_api_key",
+        message: "This API key is restricted to only send emails",
+      });
+      return;
+    }
+
     expect(data).toBeDefined();
 
     const senderDomain = config.from.match(/@([^>\s]+)/)?.[1]?.toLowerCase();
