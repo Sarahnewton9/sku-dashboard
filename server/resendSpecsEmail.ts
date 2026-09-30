@@ -52,6 +52,8 @@ export function buildSpecsEmailHtml(input: {
 
 export async function sendSpecsEmail(input: {
   recipients: string[];
+  cc?: string[];
+  replyTo?: string;
   subject: string;
   message?: string;
   style: string;
@@ -77,6 +79,8 @@ export async function sendSpecsEmail(input: {
   const { data, error } = await resend.emails.send({
     from: config.from,
     to: input.recipients,
+    cc: input.cc?.length ? input.cc : undefined,
+    replyTo: input.replyTo?.trim() || undefined,
     subject: input.subject,
     html: buildSpecsEmailHtml(input),
     attachments: [{

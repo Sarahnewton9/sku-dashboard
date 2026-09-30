@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, float, boolean, uniqueIndex } from "drizzle-orm/mysql-core";
+import { index, int, mysqlEnum, mysqlTable, text, timestamp, varchar, float, boolean, uniqueIndex } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -263,6 +263,41 @@ export const styleSpecMeta = mysqlTable("style_spec_meta", {
 
 export type StyleSpecMeta = typeof styleSpecMeta.$inferSelect;
 export type InsertStyleSpecMeta = typeof styleSpecMeta.$inferInsert;
+
+/** Reusable delivery lists for factory and developer Specs emails. */
+export const specEmailRecipientGroups = mysqlTable("spec_email_recipient_groups", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  recipients: text("recipients").notNull(),
+  cc: text("cc").notNull(),
+  replyTo: varchar("replyTo", { length: 320 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SpecEmailRecipientGroup = typeof specEmailRecipientGroups.$inferSelect;
+export type InsertSpecEmailRecipientGroup = typeof specEmailRecipientGroups.$inferInsert;
+
+/** Audit trail for every Specs workbook sent from SKU Dash. */
+export const specEmailHistory = mysqlTable("spec_email_history", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull(),
+  season: varchar("season", { length: 16 }).notNull(),
+  recipients: text("recipients").notNull(),
+  cc: text("cc").notNull(),
+  replyTo: varchar("replyTo", { length: 320 }),
+  subject: varchar("subject", { length: 255 }).notNull(),
+  attachmentFilename: varchar("attachmentFilename", { length: 255 }).notNull(),
+  resendEmailId: varchar("resendEmailId", { length: 128 }),
+  sentByUserId: int("sentByUserId"),
+  sentByName: varchar("sentByName", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => ({
+  styleSeasonCreatedAt: index("spec_email_history_style_season_created_idx").on(t.style, t.season, t.createdAt),
+}));
+
+export type SpecEmailHistory = typeof specEmailHistory.$inferSelect;
+export type InsertSpecEmailHistory = typeof specEmailHistory.$inferInsert;
 
 /**
  * Fitting sessions — each represents one fitting event for a style

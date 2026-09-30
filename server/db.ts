@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns, customLasts, lastMeasurements, ap21StyleRefs, ap21ColourRefs } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, specEmailHistory, specEmailRecipientGroups, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns, customLasts, lastMeasurements, ap21StyleRefs, ap21ColourRefs } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { getSkuCompositeIdentity, normalizeSkuIdentityPart } from "../shared/skuCompositeIdentity";
 import { getCustomSkuCarryOverSeason } from "../shared/customSkuSeasonCarryOver";
@@ -719,6 +719,118 @@ export async function upsertStyleSpecMeta(data: {
       notes: data.notes ?? existing?.notes ?? null,
     })
     .onDuplicateKeyUpdate({ set: updateSet });
+}
+
+// ─── Specs email delivery groups and history ──────────────────────────────────
+
+function parseEmailAddressList(value: string | null | undefined): string[] {
+  if (!value) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter((entry): entry is string => typeof entry === "string")
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function serialiseEmailAddressList(value: string[]): string {
+  return JSON.stringify(Array.from(new Set(value.map((entry) => entry.trim().toLowerCase()).filter(Boolean))));
+}
+
+export async function getSpecEmailRecipientGroups() {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(specEmailRecipientGroups).orderBy(specEmailRecipientGroups.name);
+  return rows.map((row) => ({
+    ...row,
+    recipients: parseEmailAddressList(row.recipients),
+    cc: parseEmailAddressList(row.cc),
+  }));
+}
+
+export async function upsertSpecEmailRecipientGroup(data: {
+  name: string;
+  recipients: string[];
+  cc?: string[];
+  replyTo?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const normalizedName = data.name.trim();
+  const values = {
+    recipients: serialiseEmailAddressList(data.recipients),
+    cc: serialiseEmailAddressList(data.cc ?? []),
+    replyTo: data.replyTo?.trim() || null,
+  };
+  const existing = await db.select({ id: specEmailRecipientGroups.id })
+    .from(specEmailRecipientGroups)
+    .where(eq(specEmailRecipientGroups.name, normalizedName))
+    .limit(1);
+
+  if (existing[0]) {
+    await db.update(specEmailRecipientGroups).set(values)
+      .where(eq(specEmailRecipientGroups.id, existing[0].id));
+  } else {
+    await db.insert(specEmailRecipientGroups).values({ name: normalizedName, ...values });
+  }
+
+  const result = await db.select().from(specEmailRecipientGroups)
+    .where(eq(specEmailRecipientGroups.name, normalizedName))
+    .limit(1);
+  const group = result[0];
+  return group
+    ? { ...group, recipients: parseEmailAddressList(group.recipients), cc: parseEmailAddressList(group.cc) }
+    : undefined;
+}
+
+export async function deleteSpecEmailRecipientGroup(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(specEmailRecipientGroups).where(eq(specEmailRecipientGroups.id, id));
+}
+
+export async function recordSpecEmailHistory(data: {
+  style: string;
+  season: string;
+  recipients: string[];
+  cc?: string[];
+  replyTo?: string | null;
+  subject: string;
+  attachmentFilename: string;
+  resendEmailId?: string;
+  sentByUserId?: number;
+  sentByName?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(specEmailHistory).values({
+    style: data.style,
+    season: data.season,
+    recipients: serialiseEmailAddressList(data.recipients),
+    cc: serialiseEmailAddressList(data.cc ?? []),
+    replyTo: data.replyTo?.trim() || null,
+    subject: data.subject,
+    attachmentFilename: data.attachmentFilename,
+    resendEmailId: data.resendEmailId ?? null,
+    sentByUserId: data.sentByUserId ?? null,
+    sentByName: data.sentByName ?? null,
+  });
+}
+
+export async function getSpecEmailHistory(style: string, season: string, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(specEmailHistory)
+    .where(and(eq(specEmailHistory.style, style), eq(specEmailHistory.season, season)))
+    .orderBy(desc(specEmailHistory.createdAt), desc(specEmailHistory.id))
+    .limit(limit);
+  return rows.map((row) => ({
+    ...row,
+    recipients: parseEmailAddressList(row.recipients),
+    cc: parseEmailAddressList(row.cc),
+  }));
 }
 
 // ─── Spec counts per style (for sidebar completion indicators) ────────────────
