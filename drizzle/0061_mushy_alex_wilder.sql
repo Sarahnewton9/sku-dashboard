@@ -1,0 +1,1 @@
+ALTER TABLE `style_spec_meta` ADD CONSTRAINT `style_spec_meta_style_season_uniq` UNIQUE(`style`,`season`);

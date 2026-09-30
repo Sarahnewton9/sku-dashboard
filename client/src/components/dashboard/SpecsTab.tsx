@@ -2466,7 +2466,7 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   // The completion queue only applies to styles with new SKU columns. Existing
   // core/carry-over styles remain organised under their normal category.
-  const { data: allSpecMeta = [], refetch: refetchAllSpecMeta } = trpc.specs.getAllMeta.useQuery();
+  const { data: allSpecMeta = [], refetch: refetchAllSpecMeta } = trpc.specs.getAllMeta.useQuery({ season });
   const specStatusByStyle = useMemo(() => new Map(
     (allSpecMeta as Array<{ style: string; specStatus?: SpecCompletionStatus | null }>)
       .map((meta) => [meta.style, meta.specStatus ?? "not_started"]),
@@ -2619,7 +2619,7 @@ export default function SpecsTab({}: SpecsTabProps) {
   );
 
   const { data: rawMeta, refetch: refetchMeta } = trpc.specs.getMeta.useQuery(
-    { style: selectedStyle! },
+    { style: selectedStyle!, season },
     { enabled: !!selectedStyle }
   );
 
@@ -3032,7 +3032,7 @@ export default function SpecsTab({}: SpecsTabProps) {
     onSettled: (_data, _err, input) => {
       // Quietly sync in background — no blocking refetch
       utils.specs.getForStyle.invalidate({ style: input.style });
-      utils.specs.getAllMeta.invalidate();
+      utils.specs.getAllMeta.invalidate({ season: input.season });
     },
   });
 
@@ -3053,7 +3053,7 @@ export default function SpecsTab({}: SpecsTabProps) {
       utils.customSku.getAll.invalidate();
       utils.specHiddenColumns.getHidden.invalidate({ style: vars.style, season: vars.season });
       utils.cancelledSku.list.invalidate({ season: vars.season });
-      utils.specs.getAllMeta.invalidate();
+      utils.specs.getAllMeta.invalidate({ season: vars.season });
       toast.success("Colour added to spec sheet");
     },
     onError: () => toast.error("Failed to add colour"),
@@ -3097,7 +3097,7 @@ export default function SpecsTab({}: SpecsTabProps) {
     onSuccess: (_data, input) => {
       refetchMeta();
       refetchAllSpecMeta();
-      toast.success(input.status === "complete" ? "New SKU specs marked complete" : "New SKU specs reopened");
+      toast.success(input.status === "complete" ? "New SKU specs marked complete" : "New SKU specs ready to complete");
     },
     onError: () => toast.error("Failed to update Specs completion status"),
   });
@@ -3111,7 +3111,7 @@ export default function SpecsTab({}: SpecsTabProps) {
     const colours = (selectedEntry?.colours ?? []).map(normalizeStoredSpecColourKey);
     const rowKeys = exportRowOrderData?.rowKeys ?? [];
     upsertMutation.mutate(
-      { style: selectedStyle, colour: normalizeStoredSpecColourKey(colour), component, value, colours, rowKeys },
+      { style: selectedStyle, colour: normalizeStoredSpecColourKey(colour), component, value, colours, rowKeys, season },
       {
         onSettled: () => {
           // Refresh status after save (server may have auto-promoted to complete)
@@ -3165,10 +3165,10 @@ export default function SpecsTab({}: SpecsTabProps) {
       // Debounce notes saves
       if (notesTimer.current) clearTimeout(notesTimer.current);
       notesTimer.current = setTimeout(() => {
-        upsertMetaMutation.mutate({ style: selectedStyle, ...patch });
+        upsertMetaMutation.mutate({ style: selectedStyle, season, ...patch });
       }, 800);
     } else {
-      upsertMetaMutation.mutate({ style: selectedStyle, ...patch });
+      upsertMetaMutation.mutate({ style: selectedStyle, season, ...patch });
     }
   }
 
@@ -3484,25 +3484,21 @@ export default function SpecsTab({}: SpecsTabProps) {
                 </Button>
               </div>
               <div className="flex justify-end gap-2">
-                {selectedEntry.newSKUs > 0 && (
+                {selectedEntry.newSKUs > 0 && specMeta?.specStatus !== "complete" && (
                   <Button
                     size="sm"
-                    variant={specMeta?.specStatus === "complete" ? "outline" : "default"}
                     className="gap-2"
                     disabled={setSpecStatusMutation.isPending}
                     onClick={() => {
                       if (!selectedStyle) return;
                       setSpecStatusMutation.mutate({
                         style: selectedStyle,
-                        status: specMeta?.specStatus === "complete" ? "in_progress" : "complete",
+                        status: "complete",
+                        season,
                       });
                     }}
                   >
-                    {specMeta?.specStatus === "complete" ? (
-                      <><RotateCcw className="w-4 h-4" /> Reopen New SKU Specs</>
-                    ) : (
-                      <><Check className="w-4 h-4" /> Mark New SKU Specs Complete</>
-                    )}
+                    <Check className="w-4 h-4" /> Mark New SKU Specs Complete
                   </Button>
                 )}
                 <Button
@@ -3532,7 +3528,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                     // Export is the hand-off point for a new SKU spec sheet.
                     // Once sent out, it should leave the To Be Completed queue.
                     if (selectedEntry.newSKUs > 0 && specMeta?.specStatus !== "complete") {
-                      setSpecStatusMutation.mutate({ style: selectedEntry.style, status: "complete" });
+                      setSpecStatusMutation.mutate({ style: selectedEntry.style, status: "complete", season });
                       toast.success(`Exported ${selectedEntry.style} and marked its new SKU specs complete`);
                     } else {
                       toast.success(`Exported ${selectedEntry.style} spec sheet`);

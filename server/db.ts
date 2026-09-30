@@ -669,27 +669,43 @@ export async function updateDropdownOption(id: number, value: string) {
 
 // ─── Style Spec Meta (buckle, sub-type, notes) ────────────────────────────────
 
-export async function getStyleSpecMeta(style: string) {
+export async function getStyleSpecMeta(style: string, season = "SS26") {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(styleSpecMeta).where(eq(styleSpecMeta.style, style)).limit(1);
-  return result[0] ?? null;
+  const result = await db.select().from(styleSpecMeta)
+    .where(and(eq(styleSpecMeta.style, style), eq(styleSpecMeta.season, season)))
+    .orderBy(desc(styleSpecMeta.updatedAt), desc(styleSpecMeta.id))
+    .limit(1);
+  if (result[0] || season === "SS26") return result[0] ?? null;
+
+  // Carry-over styles retain their SS26 setup until W27 settings are explicitly
+  // edited. Completion itself stays season-specific and starts uncompleted.
+  const carryOver = await db.select().from(styleSpecMeta)
+    .where(and(eq(styleSpecMeta.style, style), eq(styleSpecMeta.season, "SS26")))
+    .orderBy(desc(styleSpecMeta.updatedAt), desc(styleSpecMeta.id))
+    .limit(1);
+  return carryOver[0]
+    ? { ...carryOver[0], season, specStatus: "not_started" as const }
+    : null;
 }
 
-export async function getAllStyleSpecMeta() {
+export async function getAllStyleSpecMeta(season = "SS26") {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(styleSpecMeta);
+  return db.select().from(styleSpecMeta).where(eq(styleSpecMeta.season, season));
 }
 
 export async function upsertStyleSpecMeta(data: {
   style: string;
+  season?: string;
   hasBuckle?: boolean;
   dressShoeSubType?: "court" | "sling" | null;
   notes?: string | null;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const season = data.season ?? "SS26";
+  const existing = await getStyleSpecMeta(data.style, season);
   const updateSet: Record<string, unknown> = {};
   if (data.hasBuckle !== undefined) updateSet.hasBuckle = data.hasBuckle;
   if (data.dressShoeSubType !== undefined) updateSet.dressShoeSubType = data.dressShoeSubType;
@@ -697,9 +713,10 @@ export async function upsertStyleSpecMeta(data: {
   await db.insert(styleSpecMeta)
     .values({
       style: data.style,
-      hasBuckle: data.hasBuckle ?? false,
-      dressShoeSubType: data.dressShoeSubType ?? null,
-      notes: data.notes ?? null,
+      season,
+      hasBuckle: data.hasBuckle ?? existing?.hasBuckle ?? false,
+      dressShoeSubType: data.dressShoeSubType ?? existing?.dressShoeSubType ?? null,
+      notes: data.notes ?? existing?.notes ?? null,
     })
     .onDuplicateKeyUpdate({ set: updateSet });
 }
@@ -1472,13 +1489,22 @@ export async function resetSpecColour(style: string, colour: string): Promise<vo
  */
 export async function setSpecStatus(
   style: string,
-  status: "not_started" | "in_progress" | "complete"
+  status: "not_started" | "in_progress" | "complete",
+  season = "SS26",
 ): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const existing = await getStyleSpecMeta(style, season);
   await db
     .insert(styleSpecMeta)
-    .values({ style, specStatus: status })
+    .values({
+      style,
+      season,
+      hasBuckle: existing?.hasBuckle ?? false,
+      dressShoeSubType: existing?.dressShoeSubType ?? null,
+      notes: existing?.notes ?? null,
+      specStatus: status,
+    })
     .onDuplicateKeyUpdate({ set: { specStatus: status } });
 }
 
@@ -1532,7 +1558,8 @@ export async function checkAllSpecsFilled(
 /** Bulk update specStatus for multiple styles at once */
 export async function bulkSetSpecStatus(
   styles: string[],
-  status: "not_started" | "in_progress" | "complete"
+  status: "not_started" | "in_progress" | "complete",
+  season = "SS26",
 ): Promise<void> {
   if (styles.length === 0) return;
   const db = await getDb();
@@ -1540,7 +1567,7 @@ export async function bulkSetSpecStatus(
   for (const style of styles) {
     await db
       .insert(styleSpecMeta)
-      .values({ style, specStatus: status })
+      .values({ style, season, specStatus: status })
       .onDuplicateKeyUpdate({ set: { specStatus: status } });
   }
 }

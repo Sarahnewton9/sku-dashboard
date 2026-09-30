@@ -257,7 +257,9 @@ export const styleSpecMeta = mysqlTable("style_spec_meta", {
   /** Spec completion status — manually overridable, auto-promoted to complete when all cells filled */
   specStatus: mysqlEnum("specStatus", ["not_started", "in_progress", "complete"]).default("not_started").notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  oneStylePerSeason: uniqueIndex("style_spec_meta_style_season_uniq").on(t.style, t.season),
+}));
 
 export type StyleSpecMeta = typeof styleSpecMeta.$inferSelect;
 export type InsertStyleSpecMeta = typeof styleSpecMeta.$inferInsert;

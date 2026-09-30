@@ -736,6 +736,7 @@ export const appRouter = router({
         // Optional: pass current colours + rowKeys for auto-complete check
         colours: z.array(z.string()).optional(),
         rowKeys: z.array(z.string()).optional(),
+        season: z.string().default("SS26"),
       }))
       .mutation(async ({ input }) => {
         await upsertStyleSpec(input.style, input.colour, input.component, input.value);
@@ -743,18 +744,18 @@ export const appRouter = router({
         if (input.colours && input.colours.length > 0 && input.rowKeys && input.rowKeys.length > 0) {
           const allFilled = await checkAllSpecsFilled(input.style, input.colours, input.rowKeys);
           if (allFilled) {
-            await setSpecStatus(input.style, "complete");
+            await setSpecStatus(input.style, "complete", input.season);
           } else if (input.value && input.value.trim() !== "") {
             // A value was set but not all filled — promote to in_progress if not already complete
-            const meta = await getStyleSpecMeta(input.style);
+            const meta = await getStyleSpecMeta(input.style, input.season);
             if (!meta || meta.specStatus === "not_started") {
-              await setSpecStatus(input.style, "in_progress");
+              await setSpecStatus(input.style, "in_progress", input.season);
             }
           } else {
             // A value was cleared — demote from complete to in_progress
-            const meta = await getStyleSpecMeta(input.style);
+            const meta = await getStyleSpecMeta(input.style, input.season);
             if (meta && meta.specStatus === "complete") {
-              await setSpecStatus(input.style, "in_progress");
+              await setSpecStatus(input.style, "in_progress", input.season);
             }
           }
         }
@@ -819,17 +820,19 @@ export const appRouter = router({
 
     // Style spec meta (buckle, sub-type, notes)
     getMeta: publicProcedure
-      .input(z.object({ style: z.string() }))
-      .query(async ({ input }) => getStyleSpecMeta(input.style)),
+      .input(z.object({ style: z.string(), season: z.string().default("SS26") }))
+      .query(async ({ input }) => getStyleSpecMeta(input.style, input.season)),
 
     getAllMeta: publicProcedure
-      .query(async () => getAllStyleSpecMeta()),
+      .input(z.object({ season: z.string().default("SS26") }))
+      .query(async ({ input }) => getAllStyleSpecMeta(input.season)),
     getCounts: publicProcedure
       .query(async () => getSpecCountsForAllStyles()),
 
         upsertMeta: publicProcedure
       .input(z.object({
         style: z.string(),
+        season: z.string().default("SS26"),
         hasBuckle: z.boolean().optional(),
         dressShoeSubType: z.enum(["court", "sling"]).nullable().optional(),
         notes: z.string().nullable().optional(),
@@ -844,18 +847,20 @@ export const appRouter = router({
       .input(z.object({
         style: z.string(),
         status: z.enum(["not_started", "in_progress", "complete"]),
+        season: z.string().default("SS26"),
       }))
       .mutation(async ({ input }) => {
-        await setSpecStatus(input.style, input.status);
+        await setSpecStatus(input.style, input.status, input.season);
         return { success: true };
       }),
     bulkSetStatus: publicProcedure
       .input(z.object({
         styles: z.array(z.string()),
         status: z.enum(["not_started", "in_progress", "complete"]),
+        season: z.string().default("SS26"),
       }))
       .mutation(async ({ input }) => {
-        await bulkSetSpecStatus(input.styles, input.status);
+        await bulkSetSpecStatus(input.styles, input.status, input.season);
         return { success: true };
       }),
     // Reset all spec values (template rows + custom rows) for a specific colour column
@@ -967,7 +972,7 @@ export const appRouter = router({
         const id = await addCustomSku(style, colour, leather, season, colour2, leather2);
         // A new colourway requires a fresh spec, even when the parent style
         // was previously marked complete.
-        await setSpecStatus(style, "not_started");
+        await setSpecStatus(style, "not_started", season);
         // Also clear any hidden-column entry and cancelled-sku entry for this colour key.
         // Build the compound colour key the same way the spec sheet does.
         const colourKey = leather ? `${colour} ${leather}` : colour;
