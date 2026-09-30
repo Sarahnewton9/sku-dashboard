@@ -7,9 +7,10 @@ const emailDb = vi.hoisted(() => ({
   deleteSpecEmailRecipientGroup: vi.fn(),
   recordSpecEmailHistory: vi.fn(),
   getSpecEmailHistory: vi.fn(),
+  getDashboardExportEmailHistory: vi.fn(),
 }));
 
-const delivery = vi.hoisted(() => ({ sendSpecsEmail: vi.fn() }));
+const delivery = vi.hoisted(() => ({ sendSpecsEmail: vi.fn(), sendDashboardExportEmail: vi.fn() }));
 
 vi.mock("./db", () => ({
   getSpecEmailRecipientGroups: emailDb.getSpecEmailRecipientGroups,
@@ -17,9 +18,13 @@ vi.mock("./db", () => ({
   deleteSpecEmailRecipientGroup: emailDb.deleteSpecEmailRecipientGroup,
   recordSpecEmailHistory: emailDb.recordSpecEmailHistory,
   getSpecEmailHistory: emailDb.getSpecEmailHistory,
+  getDashboardExportEmailHistory: emailDb.getDashboardExportEmailHistory,
 }));
 
-vi.mock("./resendSpecsEmail", () => ({ sendSpecsEmail: delivery.sendSpecsEmail }));
+vi.mock("./resendSpecsEmail", () => ({
+  sendSpecsEmail: delivery.sendSpecsEmail,
+  sendDashboardExportEmail: delivery.sendDashboardExportEmail,
+}));
 
 import { appRouter } from "./routers";
 
@@ -37,11 +42,13 @@ describe("Specs email recipient and history router", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delivery.sendSpecsEmail.mockResolvedValue({ id: "resend_123" });
+    delivery.sendDashboardExportEmail.mockResolvedValue({ id: "resend_export_123" });
     emailDb.getSpecEmailRecipientGroups.mockResolvedValue([]);
     emailDb.upsertSpecEmailRecipientGroup.mockResolvedValue({ id: 12, name: "Factory", recipients: ["factory@example.com"], cc: ["developer@example.com"], replyTo: "product@tonybianco.info" });
     emailDb.deleteSpecEmailRecipientGroup.mockResolvedValue(undefined);
     emailDb.recordSpecEmailHistory.mockResolvedValue(undefined);
     emailDb.getSpecEmailHistory.mockResolvedValue([]);
+    emailDb.getDashboardExportEmailHistory.mockResolvedValue([]);
   });
 
   it("sends CC and reply-to details then records delivery against the style", async () => {
@@ -84,6 +91,34 @@ describe("Specs email recipient and history router", () => {
 
     await expect(caller.email.listRecipientGroups()).resolves.toEqual([]);
     await expect(caller.email.getSpecsHistory({ style: "CAPPA", season: "Winter 27" })).resolves.toEqual([]);
+  });
+
+  it("sends and records a non-Specs spreadsheet export by report scope", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    await expect(caller.email.sendExport({
+      recipients: ["factory@example.com"],
+      cc: ["developer@example.com"],
+      replyTo: "product@tonybianco.info",
+      subject: "Winter 27 Buy Sheet",
+      exportType: "Buy Sheet",
+      exportScope: "LA Week 1",
+      season: "Winter 27",
+      attachment: { filename: "WINTER_27_Buy_LA_Week_1.xlsx", base64: "a".repeat(120) },
+    })).resolves.toEqual({ id: "resend_export_123" });
+
+    expect(delivery.sendDashboardExportEmail).toHaveBeenCalledWith(expect.objectContaining({
+      exportType: "Buy Sheet",
+      exportScope: "LA Week 1",
+      cc: ["developer@example.com"],
+    }));
+    expect(emailDb.recordSpecEmailHistory).toHaveBeenCalledWith(expect.objectContaining({
+      style: "LA Week 1",
+      exportType: "Buy Sheet",
+      exportScope: "LA Week 1",
+      resendEmailId: "resend_export_123",
+    }));
+    await expect(caller.email.getExportHistory({ exportType: "Buy Sheet", exportScope: "LA Week 1", season: "Winter 27" })).resolves.toEqual([]);
+    expect(emailDb.getDashboardExportEmailHistory).toHaveBeenCalledWith("Buy Sheet", "LA Week 1", "Winter 27", 20);
   });
 
   it("removes a recipient group without touching delivery history", async () => {

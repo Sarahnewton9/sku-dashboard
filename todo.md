@@ -547,3 +547,11 @@
 - [x] On Generate CSV: mark selected styles as exported, then download CSV; styles disappear from list
 - [x] Show "Reset" link per exported style to bring it back to unexported list
 - [x] Fix: winter carry-over custom styles (ELLIDY, ESTELLE, EVA, etc.) incorrectly appearing in Specs tab — filter now only allows custom styles with totalSKUs === 0 (brand-new) through when they have 0 new colours
+
+## Dashboard Export Email Delivery (Sep 2026)
+- [x] Reuse the secure server-side Resend sender for all dashboard spreadsheet/CSV exports.
+- [x] Add a shared email composer with saved recipient groups, To/CC/reply-to fields, optional message, and report-scope history.
+- [x] Add email delivery for Full Data and AP21 product import exports.
+- [x] Add email delivery for By Style, Handbags, Buy Sheets, Buy Changes Reports, Fitting date reports, Fitting Group reports, and Fit Reports.
+- [x] Extend the email history schema with export type/scope fields and a report-history index.
+- [x] Add generic sender/router/template regression coverage; 88 tests and the production build pass.

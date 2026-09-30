@@ -4,7 +4,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
-import { FileDown, X, Upload, FileText, RotateCcw, CheckSquare, Square } from "lucide-react";
+import { FileDown, Mail, X, Upload, FileText, RotateCcw, CheckSquare, Square } from "lucide-react";
 import { useSeason } from "@/contexts/SeasonContext";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
@@ -17,6 +17,8 @@ import { getSeasonFileLabel } from "@shared/seasonLabel";
 import { formatSkuExportLabel, getSkuExportFields, toTitleCaseSkuExportLabel } from "@shared/skuExportLabel";
 import PptxSyncModal from "./PptxSyncModal";
 import AP21ColourCodeModal from "./AP21ColourCodeModal";
+import { EmailExportDialog } from "./EmailExportDialog";
+import { csvToEmailAttachment, workbookToEmailAttachment } from "@/lib/exportEmailAttachment";
 
 interface Props {
   onClose: () => void;
@@ -115,6 +117,8 @@ export default function ExportPanel({ onClose }: Props) {
   // Missing colour code modal state
   const [missingColourDescriptions, setMissingColourDescriptions] = useState<string[]>([]);
   const [showColourCodeModal, setShowColourCodeModal] = useState(false);
+  const [emailFullDataOpen, setEmailFullDataOpen] = useState(false);
+  const [emailAp21Open, setEmailAp21Open] = useState(false);
   // Callback to run after codes are confirmed
   const [pendingExportCallback, setPendingExportCallback] = useState<(() => void) | null>(null);
 
@@ -342,8 +346,8 @@ export default function ExportPanel({ onClose }: Props) {
   }, [mergedRawSkus, cancelledSkuSet, skuMetaMap,
       ap21SizeRangeMap, ap21StyleRefsMap, ap21ColourRefsAll, styleLookup, heelHeightMap]);
 
-  function downloadCsvRows(csvRows: string[][], suffix: string) {
-    const csvContent = csvRows
+  function csvContentForRows(csvRows: string[][]) {
+    return csvRows
       .map((row) =>
         row.map((cell) => {
           const s = String(cell ?? "");
@@ -354,7 +358,10 @@ export default function ExportPanel({ onClose }: Props) {
         }).join(",")
       )
       .join("\r\n");
+  }
 
+  function downloadCsvRows(csvRows: string[][], suffix: string) {
+    const csvContent = csvContentForRows(csvRows);
     const filename = `AP21_products_${getSeasonFileLabel(season)}_${suffix}_${Date.now()}.csv`;
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -465,9 +472,7 @@ export default function ExportPanel({ onClose }: Props) {
     "Sample Status": 14, "Fit Rating": 18, "Fitting Notes": 24,
   };
 
-  function exportFullData() {
-    setExporting("full");
-    try {
+  function buildFullDataWorkbook() {
       const selectedKeys = getSelectedFullExportColumns(
         FULL_EXPORT_ALL_COLS.map((column) => column.key),
         fullExportCols,
@@ -536,6 +541,13 @@ export default function ExportPanel({ onClose }: Props) {
       ws["!cols"] = selectedKeys.map(k => ({ wch: FULL_EXPORT_COL_WIDTHS[k] ?? 14 }));
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Full SKU Data");
+      return { wb, rows, selectedKeys };
+  }
+
+  function exportFullData() {
+    setExporting("full");
+    try {
+      const { wb, rows, selectedKeys } = buildFullDataWorkbook();
       XLSX.writeFile(wb, `${getSeasonFileLabel(season)}_Full_Export.xlsx`);
       toast.success(`Exported ${rows.length} SKUs · ${selectedKeys.length} columns`);
     } finally {
@@ -633,14 +645,24 @@ export default function ExportPanel({ onClose }: Props) {
                   <span className="text-xs text-muted-foreground">
                     {selectedAp21Styles.size} style{selectedAp21Styles.size !== 1 ? "s" : ""} selected
                   </span>
-                  <button
-                    onClick={exportAP21Csv}
-                    disabled={exporting !== null || selectedAp21Styles.size === 0}
-                    className="px-3 py-1.5 rounded-md text-xs font-semibold transition-all disabled:opacity-50"
-                    style={{ background: "oklch(0.40 0.14 280)", color: "white" }}
-                  >
-                    {exporting === "ap21" ? "Generating…" : "Generate CSV"}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setEmailAp21Open(true)}
+                      disabled={selectedAp21Styles.size === 0}
+                      className="px-3 py-1.5 rounded-md text-xs font-semibold border transition-all disabled:opacity-50 hover:bg-white/50"
+                      style={{ borderColor: "oklch(0.70 0.10 280)", color: "oklch(0.32 0.12 280)" }}
+                    >
+                      <Mail className="inline mr-1 h-3.5 w-3.5" /> Email
+                    </button>
+                    <button
+                      onClick={exportAP21Csv}
+                      disabled={exporting !== null || selectedAp21Styles.size === 0}
+                      className="px-3 py-1.5 rounded-md text-xs font-semibold transition-all disabled:opacity-50"
+                      style={{ background: "oklch(0.40 0.14 280)", color: "white" }}
+                    >
+                      {exporting === "ap21" ? "Generating…" : "Generate CSV"}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Already exported section */}
@@ -746,15 +768,24 @@ export default function ExportPanel({ onClose }: Props) {
                 </label>
               ))}
             </div>
-            <div className="px-4 pb-4 pt-2">
+            <div className="px-4 pb-4 pt-2 flex gap-2">
               <button
                 onClick={exportFullData}
                 disabled={exporting !== null || fullExportCols.size === 0}
-                className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-semibold text-white transition-colors disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-semibold text-white transition-colors disabled:opacity-50"
                 style={{ background: "oklch(0.50 0.14 55)" }}
               >
                 <FileDown className="w-3.5 h-3.5" />
                 {exporting === "full" ? "Exporting…" : `Export ${fullExportCols.size} columns`}
+              </button>
+              <button
+                onClick={() => setEmailFullDataOpen(true)}
+                disabled={fullExportCols.size === 0}
+                className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold border transition-colors disabled:opacity-50 hover:bg-muted"
+                style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+                title="Email Full Data Export"
+              >
+                <Mail className="w-3.5 h-3.5" /> Email
               </button>
             </div>
           </div>
@@ -800,6 +831,33 @@ export default function ExportPanel({ onClose }: Props) {
         }}
       />
     )}
+    <EmailExportDialog
+      open={emailFullDataOpen}
+      onOpenChange={setEmailFullDataOpen}
+      exportType="Full Data Export"
+      exportScope="All active SKUs"
+      season={getSeasonFileLabel(season)}
+      defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — FULL DATA EXPORT`}
+      buildAttachment={async () => {
+        const { wb } = buildFullDataWorkbook();
+        return workbookToEmailAttachment(wb, `${getSeasonFileLabel(season)}_Full_Export.xlsx`);
+      }}
+    />
+    <EmailExportDialog
+      open={emailAp21Open}
+      onOpenChange={setEmailAp21Open}
+      exportType="AP21 Product Import"
+      exportScope={`${selectedAp21Styles.size} selected style${selectedAp21Styles.size === 1 ? "" : "s"}`}
+      season={getSeasonFileLabel(season)}
+      defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — AP21 PRODUCT IMPORT`}
+      buildAttachment={async () => {
+        const stylesToExport = Array.from(selectedAp21Styles).sort();
+        if (stylesToExport.length === 0) throw new Error("Select at least one style for the AP21 export.");
+        const rows = generateAP21CsvRows(colourCodeMap, stylesToExport);
+        const suffix = stylesToExport.length === 1 ? stylesToExport[0].toLowerCase() : `${stylesToExport.length}_styles`;
+        return csvToEmailAttachment(csvContentForRows(rows), `AP21_products_${getSeasonFileLabel(season)}_${suffix}.csv`);
+      }}
+    />
     </>
   );
 }

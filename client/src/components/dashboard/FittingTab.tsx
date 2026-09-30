@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  ChevronDown, ChevronRight, Upload, X, ImageIcon, Download,
+  ChevronDown, ChevronRight, Upload, X, ImageIcon, Download, Mail,
   CheckCircle, RotateCcw, Search, Plus, Calendar, User, ZoomIn,
   Layers, Trash2, Edit2, Check, Ruler,
 } from "lucide-react";
@@ -19,6 +19,8 @@ import { useSeason } from "@/contexts/SeasonContext";
 import { getNewLastsForSeason } from "@shared/const";
 import { getSeasonDisplayLabel, getSeasonFileLabel } from "@shared/seasonLabel";
 import { getW27NewPatternStyleNames, isEligibleFittingStyle } from "@shared/fittingStyleScope";
+import { EmailExportDialog } from "./EmailExportDialog";
+import { workbookToEmailAttachment } from "@/lib/exportEmailAttachment";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -829,6 +831,7 @@ function ExportDialog({
   onClose: () => void;
 }) {
   const [exporting, setExporting] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
 
   // Collect all unique fitting dates from sessions
   const allDates = useMemo(() => {
@@ -864,10 +867,14 @@ function ExportDialog({
     return dt.toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
   };
 
-  const handleExport = async () => {
+  const handleExport = async (download = true) => {
     if (stylesOnDate.length === 0) {
-      toast.error("No fitting sessions on the selected date");
-      return;
+      const error = new Error("No fitting sessions on the selected date");
+      if (download) {
+        toast.error(error.message);
+        return;
+      }
+      throw error;
     }
     setExporting(true);
     try {
@@ -1118,12 +1125,17 @@ function ExportDialog({
       const sheetName = formatDateShort(selectedDate).replace(/[^a-z0-9 ]/gi, "").substring(0, 31);
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
       const fileName = `${getSeasonFileLabel(season)}_Fitting_${selectedDate}.xlsx`;
+      if (!download) return { wb, fileName };
       XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
       toast.success(`Exported ${stylesOnDate.length} styles to ${fileName}`);
       onClose();
     } catch (e) {
       console.error(e);
-      toast.error("Export failed");
+      if (download) {
+        toast.error("Export failed");
+        return;
+      }
+      throw e;
     } finally {
       setExporting(false);
     }
@@ -1202,6 +1214,16 @@ function ExportDialog({
         <div className="flex items-center justify-end gap-2 pt-1 border-t border-border">
           <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
           <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setEmailOpen(true)}
+            disabled={exporting || stylesOnDate.length === 0 || !selectedDate}
+            className="gap-2"
+          >
+            <Mail className="w-3.5 h-3.5" />
+            Email Report
+          </Button>
+          <Button
             size="sm"
             onClick={handleExport}
             disabled={exporting || stylesOnDate.length === 0 || !selectedDate}
@@ -1212,6 +1234,21 @@ function ExportDialog({
           </Button>
         </div>
       </div>
+      {emailOpen && (
+        <EmailExportDialog
+          open={true}
+          onOpenChange={(open) => { if (!open) setEmailOpen(false); }}
+          exportType="Fitting Report"
+          exportScope={selectedDate}
+          season={getSeasonFileLabel(season)}
+          defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — FITTING REPORT ${formatDateShort(selectedDate).toUpperCase()}`}
+          buildAttachment={async () => {
+            const result = await handleExport(false);
+            if (!result) throw new Error("Unable to prepare the fitting report.");
+            return workbookToEmailAttachment(result.wb, result.fileName);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -1240,6 +1277,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
   const [styleSearch, setStyleSearch] = useState("");
   const [openGroupId, setOpenGroupId] = useState<number | null>(null);
   const [exportingGroupId, setExportingGroupId] = useState<number | null>(null);
+  const [emailGroup, setEmailGroup] = useState<typeof groups[0] | null>(null);
   const [openStyleKey, setOpenStyleKey] = useState<string | null>(null); // "groupId:style"
   const [groupLightbox, setGroupLightbox] = useState<{ src: string; sampleDate?: string | null; sampleType?: string | null } | null>(null);
 
@@ -1266,9 +1304,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
     setCreating(false);
   };
 
-  const handleExportGroup = async (group: typeof groups[0]) => {
-    setExportingGroupId(group.id);
-    try {
+  const buildFittingGroupWorkbook = (group: typeof groups[0]) => {
       const wb = XLSX.utils.book_new();
 
       // Group sessions by fit model name
@@ -1343,8 +1379,15 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
         XLSX.utils.book_append_sheet(wb, ws, sheetName);
       }
 
-      XLSX.writeFile(wb, `${group.name.replace(/[^a-z0-9]/gi, "_")}_fitting.xlsx`);
-      toast.success(`Exported ${eligibleGroupStyles.length} styles`);
+      return { wb, filename: `${group.name.replace(/[^a-z0-9]/gi, "_")}_fitting.xlsx`, styleCount: eligibleGroupStyles.length };
+  };
+
+  const handleExportGroup = async (group: typeof groups[0]) => {
+    setExportingGroupId(group.id);
+    try {
+      const { wb, filename, styleCount } = buildFittingGroupWorkbook(group);
+      XLSX.writeFile(wb, filename);
+      toast.success(`Exported ${styleCount} styles`);
     } catch (e) {
       console.error(e);
       toast.error("Export failed");
@@ -1427,6 +1470,9 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
                       <>
                         <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => handleExportGroup(group)} disabled={exportingGroupId === group.id || eligibleGroupStyles.length === 0}>
                           <Download className="w-3.5 h-3.5" />{exportingGroupId === group.id ? "..." : "Export"}
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1" onClick={() => setEmailGroup(group)} disabled={eligibleGroupStyles.length === 0}>
+                          <Mail className="w-3.5 h-3.5" />Email
                         </Button>
                         <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => { setEditingId(group.id); setEditName(group.name); setEditDate(group.sessionDate ?? ""); }}>
                           <Edit2 className="w-3.5 h-3.5" />
@@ -1634,6 +1680,20 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
           )}
         </div>
       )}
+      {emailGroup && (
+        <EmailExportDialog
+          open={true}
+          onOpenChange={(open) => { if (!open) setEmailGroup(null); }}
+          exportType="Fitting Group Report"
+          exportScope={emailGroup.name}
+          season={getSeasonFileLabel(groupSeason)}
+          defaultSubject={`TONY BIANCO ${getSeasonFileLabel(groupSeason)} — FITTING ${emailGroup.name.toUpperCase()}`}
+          buildAttachment={async () => {
+            const { wb, filename } = buildFittingGroupWorkbook(emailGroup);
+            return workbookToEmailAttachment(wb, filename);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -1642,6 +1702,7 @@ function FittingGroupManager({ styleList }: { styleList: StyleEntry[] }) {
 
 export function FittingTab() {
   const [exportOpen, setExportOpen] = useState(false);
+  const [fitReportEmailOpen, setFitReportEmailOpen] = useState(false);
   const [selectedMeasurementsLast, setSelectedMeasurementsLast] = useState<string | null>(null);
   const [newSessionStyle, setNewSessionStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -1856,7 +1917,7 @@ export function FittingTab() {
   }, [createSession, refetchSessions, season]);
 
   // ── Fit Report Export ────────────────────────────────────────────────────────────────────────────────
-  const handleExportFitReport = useCallback(() => {
+  const handleExportFitReport = useCallback((download = true) => {
     // Only include styles that have been fitted (have sessions or a fit rating)
     const fittedStyles = styleList.filter((s) => {
       const sessions = sessionsByStyle[s.style] ?? [];
@@ -1865,8 +1926,12 @@ export function FittingTab() {
     });
 
     if (fittedStyles.length === 0) {
-      toast.error("No fitted styles to export yet.");
-      return;
+      const error = new Error("No fitted styles to export yet.");
+      if (download) {
+        toast.error(error.message);
+        return;
+      }
+      throw error;
     }
 
     const SIZE_REC_LABELS: Record<string, string> = {
@@ -1995,6 +2060,7 @@ export function FittingTab() {
     XLSX.utils.book_append_sheet(wb, ws, "Fit Report");
     const today = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "-");
     const fileName = `${getSeasonFileLabel(season)}_Fit_Report_${today}.xlsx`;
+    if (!download) return { wb, fileName };
     XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
     toast.success(`Fit Report exported - ${fittedStyles.length} styles, ${rows.length} rows`);
   }, [styleList, sessionsByStyle, styleMeta, mergedStyles, cancelledSkuSet, season]);
@@ -2017,6 +2083,21 @@ export function FittingTab() {
           approvedStyles={approvedStyles}
           season={season}
           onClose={() => setExportOpen(false)}
+        />
+      )}
+      {fitReportEmailOpen && (
+        <EmailExportDialog
+          open={true}
+          onOpenChange={(open) => { if (!open) setFitReportEmailOpen(false); }}
+          exportType="Fit Report"
+          exportScope="All fitted styles"
+          season={getSeasonFileLabel(season)}
+          defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — FIT REPORT`}
+          buildAttachment={async () => {
+            const result = handleExportFitReport(false);
+            if (!result) throw new Error("Unable to prepare the fit report.");
+            return workbookToEmailAttachment(result.wb, result.fileName);
+          }}
         />
       )}
 
@@ -2064,6 +2145,10 @@ export function FittingTab() {
           <Button variant="outline" size="sm" onClick={handleExportFitReport} className="gap-2">
             <Download className="w-4 h-4" />
             Fit Report
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setFitReportEmailOpen(true)} className="gap-2">
+            <Mail className="w-4 h-4" />
+            Email Fit Report
           </Button>
           <Button variant="outline" size="sm" onClick={() => setExportOpen(true)} className="gap-2">
             <Download className="w-4 h-4" />

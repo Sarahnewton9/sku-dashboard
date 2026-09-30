@@ -5,6 +5,7 @@ import {
   Ban,
   Download,
   ImageIcon,
+  Mail,
   PackagePlus,
   Pencil,
   Plus,
@@ -32,6 +33,8 @@ import {
   normalizeHandbagSeasonality,
 } from "@shared/handbagSeasonality";
 import { formatHandbagDisplayLabel } from "@shared/handbagDisplayLabel";
+import { EmailExportDialog } from "./EmailExportDialog";
+import { workbookToEmailAttachment } from "@/lib/exportEmailAttachment";
 
 type HandbagSku = {
   id: number;
@@ -236,6 +239,7 @@ function QtyInput({
 export default function HandbagsTab() {
   const utils = trpc.useUtils();
   const { season } = useSeason();
+  const [emailExportOpen, setEmailExportOpen] = useState(false);
   const { data: skuRows = [], isLoading: isLoadingSkus } = trpc.handbag.listStyles.useQuery();
   const { data: parents = [] } = trpc.handbag.listParents.useQuery();
   const { data: sessions = [] } = trpc.handbag.listSessions.useQuery();
@@ -486,7 +490,7 @@ export default function HandbagsTab() {
     });
   }
 
-  function handleExport() {
+  function buildHandbagWorkbook() {
     const exportRows = visibleGroups.flatMap((group) => group.skus.map((sku) => {
       const totals = buyTotals.get(createTotalsKey(sku.style, sku.colour)) ?? { auQty: 0, usaQty: 0, nycQty: 0, total: 0 };
       return {
@@ -506,8 +510,7 @@ export default function HandbagsTab() {
     }));
 
     if (exportRows.length === 0) {
-      toast.error("There are no handbag SKUs in the current view to export");
-      return;
+      throw new Error("There are no handbag SKUs in the current view to export");
     }
 
     const headings = ["STYLE", "STYLE SEASONALITY", "COLOUR / SKU", "MATERIAL", "SKU SEASONALITY", "RRP", "COST", "NOTES", "AU BOUGHT", "USA BOUGHT", "NYC BOUGHT", "TOTAL BOUGHT"];
@@ -549,8 +552,13 @@ export default function HandbagsTab() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Handbags");
     const date = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "-");
-    XLSX.writeFile(workbook, `Handbags_${getSeasonFileLabel(season)}_${date}.xlsx`, { bookType: "xlsx", cellStyles: true });
-    toast.success(`Exported ${exportRows.length} handbag SKUs`);
+    return { workbook, filename: `Handbags_${getSeasonFileLabel(season)}_${date}.xlsx`, rowCount: exportRows.length };
+  }
+
+  function handleExport() {
+    const { workbook, filename, rowCount } = buildHandbagWorkbook();
+    XLSX.writeFile(workbook, filename, { bookType: "xlsx", cellStyles: true });
+    toast.success(`Exported ${rowCount} handbag SKUs`);
   }
 
   return (
@@ -570,6 +578,9 @@ export default function HandbagsTab() {
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={handleExport} disabled={visibleGroups.every((group) => group.skus.length === 0)}>
             <Download className="w-4 h-4 mr-2" /> Export Excel
+          </Button>
+          <Button variant="outline" onClick={() => setEmailExportOpen(true)} disabled={visibleGroups.every((group) => group.skus.length === 0)}>
+            <Mail className="w-4 h-4 mr-2" /> Email Export
           </Button>
           <Button variant={showCancelled ? "secondary" : "outline"} onClick={() => setShowCancelled((show) => !show)}>
             <Ban className="w-4 h-4 mr-2" /> {showCancelled ? "Hide cancelled" : "Show cancelled"}
@@ -764,6 +775,18 @@ export default function HandbagsTab() {
           <DialogFooter>{skuDialog?.mode === "edit" && skuDialog.sku && <Button variant="destructive" onClick={async () => { await cancelSku.mutateAsync({ style: skuDialog.style, colour: skuDialog.sku!.colour }); setSkuDialog(null); }} disabled={cancelSku.isPending}>Cancel SKU</Button>}<Button variant="outline" onClick={() => setSkuDialog(null)}>Close</Button><Button className="bg-amber-600 hover:bg-amber-700" onClick={saveSku} disabled={upsertSku.isPending || updateSku.isPending}>{skuDialog?.mode === "add" ? "Add SKU" : "Save SKU"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+      <EmailExportDialog
+        open={emailExportOpen}
+        onOpenChange={setEmailExportOpen}
+        exportType="Handbag Range Export"
+        exportScope="Current handbag range"
+        season={getSeasonFileLabel(season)}
+        defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — HANDBAG RANGE`}
+        buildAttachment={async () => {
+          const { workbook, filename } = buildHandbagWorkbook();
+          return workbookToEmailAttachment(workbook, filename);
+        }}
+      />
     </div>
   );
 }

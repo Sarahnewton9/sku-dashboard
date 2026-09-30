@@ -8,13 +8,15 @@ import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
-import { Lock, Download, Plus, Clock, CheckCircle, Package, Trash2, Pencil, FileText, X, Send } from "lucide-react";
+import { Lock, Download, Mail, Plus, Clock, CheckCircle, Package, Trash2, Pencil, FileText, X, Send } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 import { formatSkuExportLabel } from "@shared/skuExportLabel";
 import { useSeason } from "@/contexts/SeasonContext";
 import { getSeasonDisplayLabel, getSeasonFileLabel } from "@shared/seasonLabel";
+import { EmailExportDialog } from "./EmailExportDialog";
+import { workbookToEmailAttachment } from "@/lib/exportEmailAttachment";
 
 export default function BuySessionsPanel() {
   const { season } = useSeason();
@@ -27,6 +29,8 @@ export default function BuySessionsPanel() {
   const [editingName, setEditingName] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
   const [changesReportSessionId, setChangesReportSessionId] = useState<number | null>(null);
+  const [emailSession, setEmailSession] = useState<{ id: number; name: string } | null>(null);
+  const [changesEmailOpen, setChangesEmailOpen] = useState(false);
 
   const { data: allSessions = [], refetch: refetchSessions } = trpc.buy.getSessions.useQuery({ season });
   const { data: activeSession, refetch: refetchActive } = trpc.buy.getActive.useQuery({ season });
@@ -188,16 +192,14 @@ export default function BuySessionsPanel() {
     lockMutation.mutate({ sessionId });
   }
 
-  function exportSession(sessionId: number, sessionName: string) {
+  function buildBuySessionWorkbook(sessionId: number, sessionName: string) {
     // Find the session object to get its date
     const session = allSessions.find((s) => s.id === sessionId);
 
     // Export only items for this session with AU qty > 0
     const items = sessionId === selectedSessionId ? sessionItems : [];
     if (items.length === 0) {
-      toast.error("No items to export — select this session first to load its data, then export.");
-      setSelectedSessionId(sessionId);
-      return;
+      throw new Error("Select this session first to load its data, then email or export the buy sheet.");
     }
 
     type RowData = {
@@ -238,8 +240,7 @@ export default function BuySessionsPanel() {
       });
 
     if (rows.length === 0) {
-      toast.error("No SKUs with quantities in this session.");
-      return;
+      throw new Error("No SKUs with quantities in this session.");
     }
 
     // Sort: category → style → colour
@@ -384,12 +385,22 @@ export default function BuySessionsPanel() {
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Buy Sheet");
-    XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
-    toast.success(`Exported ${rows.length} SKUs to ${fileName}`);
+    return { wb, fileName, rowCount: rows.length };
   }
 
-  function exportChangesReport() {
-    if (!changesData) return;
+  function exportSession(sessionId: number, sessionName: string) {
+    try {
+      const { wb, fileName, rowCount } = buildBuySessionWorkbook(sessionId, sessionName);
+    XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
+      toast.success(`Exported ${rowCount} SKUs to ${fileName}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to export the buy sheet.");
+      if (sessionId !== selectedSessionId) setSelectedSessionId(sessionId);
+    }
+  }
+
+  function buildChangesReportWorkbook() {
+    if (!changesData) throw new Error("Changes report data is still loading.");
     const today = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "-");
     const sessionLabel = changesReportSession?.name ?? "Session";
     const fileName = `${getSeasonFileLabel(season)}_Changes_Report_${sessionLabel}_${today}.xlsx`;
@@ -481,8 +492,17 @@ export default function BuySessionsPanel() {
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Changes Report");
+    return { wb, fileName, sessionLabel };
+  }
+
+  function exportChangesReport() {
+    try {
+      const { wb, fileName } = buildChangesReportWorkbook();
     XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
-    toast.success(`Exported changes report to ${fileName}`);
+      toast.success(`Exported changes report to ${fileName}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to export changes report.");
+    }
   }
 
   const selectedSession = allSessions.find((s) => s.id === selectedSessionId);
@@ -677,6 +697,22 @@ export default function BuySessionsPanel() {
                       <Download className="w-3.5 h-3.5" />
                       Export Buy Sheet
                     </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (selectedSessionId !== session.id) {
+                          setSelectedSessionId(session.id);
+                          toast.message("Session selected — use Email Buy Sheet once its SKUs have loaded.");
+                          return;
+                        }
+                        setEmailSession({ id: session.id, name: session.name });
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700"
+                      style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      Email Buy Sheet
+                    </button>
                   </div>
                 </div>
 
@@ -784,6 +820,15 @@ export default function BuySessionsPanel() {
                 >
                   <Download className="w-3.5 h-3.5" />
                   Export Excel
+                </button>
+                <button
+                  onClick={() => setChangesEmailOpen(true)}
+                  disabled={changesLoading || !changesData}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700"
+                  style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  Email Report
                 </button>
                 <button
                   onClick={() => {
@@ -922,6 +967,34 @@ export default function BuySessionsPanel() {
             </div>
           </div>
         </div>
+      )}
+      {emailSession && (
+        <EmailExportDialog
+          open={true}
+          onOpenChange={(open) => { if (!open) setEmailSession(null); }}
+          exportType="Buy Sheet"
+          exportScope={emailSession.name}
+          season={getSeasonFileLabel(season)}
+          defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — BUY ${emailSession.name.toUpperCase()}`}
+          buildAttachment={async () => {
+            const { wb, fileName } = buildBuySessionWorkbook(emailSession.id, emailSession.name);
+            return workbookToEmailAttachment(wb, fileName);
+          }}
+        />
+      )}
+      {changesEmailOpen && changesReportSession && (
+        <EmailExportDialog
+          open={true}
+          onOpenChange={(open) => { if (!open) setChangesEmailOpen(false); }}
+          exportType="Buy Changes Report"
+          exportScope={changesReportSession.name}
+          season={getSeasonFileLabel(season)}
+          defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — BUY CHANGES ${changesReportSession.name.toUpperCase()}`}
+          buildAttachment={async () => {
+            const { wb, fileName } = buildChangesReportWorkbook();
+            return workbookToEmailAttachment(wb, fileName);
+          }}
+        />
       )}
     </div>
   );

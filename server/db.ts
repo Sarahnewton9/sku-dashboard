@@ -794,6 +794,8 @@ export async function deleteSpecEmailRecipientGroup(id: number) {
 export async function recordSpecEmailHistory(data: {
   style: string;
   season: string;
+  exportType?: string;
+  exportScope?: string;
   recipients: string[];
   cc?: string[];
   replyTo?: string | null;
@@ -808,6 +810,8 @@ export async function recordSpecEmailHistory(data: {
   await db.insert(specEmailHistory).values({
     style: data.style,
     season: data.season,
+    exportType: data.exportType?.trim() || "Specs",
+    exportScope: data.exportScope?.trim() || data.style,
     recipients: serialiseEmailAddressList(data.recipients),
     cc: serialiseEmailAddressList(data.cc ?? []),
     replyTo: data.replyTo?.trim() || null,
@@ -824,6 +828,24 @@ export async function getSpecEmailHistory(style: string, season: string, limit =
   if (!db) return [];
   const rows = await db.select().from(specEmailHistory)
     .where(and(eq(specEmailHistory.style, style), eq(specEmailHistory.season, season)))
+    .orderBy(desc(specEmailHistory.createdAt), desc(specEmailHistory.id))
+    .limit(limit);
+  return rows.map((row) => ({
+    ...row,
+    recipients: parseEmailAddressList(row.recipients),
+    cc: parseEmailAddressList(row.cc),
+  }));
+}
+
+export async function getDashboardExportEmailHistory(exportType: string, exportScope: string, season: string, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(specEmailHistory)
+    .where(and(
+      eq(specEmailHistory.exportType, exportType),
+      eq(specEmailHistory.exportScope, exportScope),
+      eq(specEmailHistory.season, season),
+    ))
     .orderBy(desc(specEmailHistory.createdAt), desc(specEmailHistory.id))
     .limit(limit);
   return rows.map((row) => ({

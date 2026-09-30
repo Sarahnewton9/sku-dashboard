@@ -278,9 +278,13 @@ export const specEmailRecipientGroups = mysqlTable("spec_email_recipient_groups"
 export type SpecEmailRecipientGroup = typeof specEmailRecipientGroups.$inferSelect;
 export type InsertSpecEmailRecipientGroup = typeof specEmailRecipientGroups.$inferInsert;
 
-/** Audit trail for every Specs workbook sent from SKU Dash. */
+/** Audit trail for every workbook or CSV sent from SKU Dash. */
 export const specEmailHistory = mysqlTable("spec_email_history", {
   id: int("id").autoincrement().primaryKey(),
+  /** The dashboard export source, e.g. Specs, Full Data, or Buy Sheet. */
+  exportType: varchar("exportType", { length: 100 }).notNull().default("Specs"),
+  /** A user-readable export scope, e.g. a style or buy-session name. */
+  exportScope: varchar("exportScope", { length: 255 }).notNull().default(""),
   style: varchar("style", { length: 64 }).notNull(),
   season: varchar("season", { length: 16 }).notNull(),
   recipients: text("recipients").notNull(),
@@ -294,6 +298,7 @@ export const specEmailHistory = mysqlTable("spec_email_history", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (t) => ({
   styleSeasonCreatedAt: index("spec_email_history_style_season_created_idx").on(t.style, t.season, t.createdAt),
+  exportScopeSeasonCreatedAt: index("spec_email_history_export_scope_season_created_idx").on(t.exportType, t.exportScope, t.season, t.createdAt),
 }));
 
 export type SpecEmailHistory = typeof specEmailHistory.$inferSelect;

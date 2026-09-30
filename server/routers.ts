@@ -93,6 +93,7 @@ import {
   deleteSpecEmailRecipientGroup,
   recordSpecEmailHistory,
   getSpecEmailHistory,
+  getDashboardExportEmailHistory,
 } from "./db";
 import { fetchSaleProducts } from "./markdownScanner";
 import { storagePut } from "./storage";
@@ -104,7 +105,7 @@ import * as os from "os";
 import nodemailer from "nodemailer";
 import { ENV } from "./_core/env";
 import { formatSkuExportLabel } from "@shared/skuExportLabel";
-import { sendSpecsEmail } from "./resendSpecsEmail";
+import { sendDashboardExportEmail, sendSpecsEmail } from "./resendSpecsEmail";
 
 export const appRouter = router({
   system: systemRouter,
@@ -132,6 +133,43 @@ export const appRouter = router({
         await recordSpecEmailHistory({
           style: input.style,
           season: input.season,
+          exportType: "Specs",
+          exportScope: input.style,
+          recipients: input.recipients,
+          cc: input.cc,
+          replyTo: input.replyTo,
+          subject: input.subject,
+          attachmentFilename: input.attachment.filename,
+          resendEmailId: delivery.id,
+          sentByUserId: ctx.user.id,
+          sentByName: ctx.user.name,
+        });
+        return delivery;
+      }),
+
+    /** Sends an Excel or CSV export made in the dashboard, using the same recipient workflow as Specs. */
+    sendExport: protectedProcedure
+      .input(z.object({
+        recipients: z.array(z.string().trim().email()).min(1).max(20),
+        cc: z.array(z.string().trim().email()).max(20).optional(),
+        replyTo: z.string().trim().email().optional(),
+        subject: z.string().trim().min(1).max(200),
+        message: z.string().trim().max(2_000).optional(),
+        exportType: z.string().trim().min(1).max(100),
+        exportScope: z.string().trim().min(1).max(255),
+        season: z.string().trim().min(1).max(100),
+        attachment: z.object({
+          filename: z.string().trim().min(1).max(255).regex(/\.(xlsx|csv)$/i, "Attachment must be an Excel or CSV file"),
+          base64: z.string().min(20).max(45_000_000),
+        }),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const delivery = await sendDashboardExportEmail(input);
+        await recordSpecEmailHistory({
+          style: input.exportScope,
+          season: input.season,
+          exportType: input.exportType,
+          exportScope: input.exportScope,
           recipients: input.recipients,
           cc: input.cc,
           replyTo: input.replyTo,
@@ -172,6 +210,15 @@ export const appRouter = router({
         limit: z.number().int().min(1).max(50).optional(),
       }))
       .query(({ input }) => getSpecEmailHistory(input.style, input.season, input.limit ?? 20)),
+
+    getExportHistory: protectedProcedure
+      .input(z.object({
+        exportType: z.string().trim().min(1).max(100),
+        exportScope: z.string().trim().min(1).max(255),
+        season: z.string().trim().min(1).max(100),
+        limit: z.number().int().min(1).max(50).optional(),
+      }))
+      .query(({ input }) => getDashboardExportEmailHistory(input.exportType, input.exportScope, input.season, input.limit ?? 20)),
   }),
 
   auth: router({

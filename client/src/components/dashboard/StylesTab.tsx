@@ -18,7 +18,7 @@ import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
 import { useSeason } from "@/contexts/SeasonContext";
-import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock, FileSpreadsheet, X, Camera, ImageOff, Ruler, Pencil, Check } from "lucide-react";
+import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Mail, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock, FileSpreadsheet, X, Camera, ImageOff, Ruler, Pencil, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LastMeasurementsPanel } from "./LastMeasurementsPanel";
 import * as XLSX from "xlsx";
@@ -26,6 +26,8 @@ import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
 import ImportPanel from "./ImportPanel";
 import BuySessionBar from "./BuySessionBar";
 import { toast } from "sonner";
+import { EmailExportDialog } from "./EmailExportDialog";
+import { workbookToEmailAttachment } from "@/lib/exportEmailAttachment";
 
 type SortKey = "style" | "category" | "last" | "totalSKUs" | "newSKUs" | "existingSKUs";
 type SortDir = "asc" | "desc";
@@ -73,6 +75,7 @@ export default function StylesTab() {
   const [selectedSku, setSelectedSku] = useState<SkuPanelData | null>(null);
   const [showImport, setShowImport] = useState(false);
   const [showInvoiceImport, setShowInvoiceImport] = useState(false);
+  const [emailRangeOpen, setEmailRangeOpen] = useState(false);
   const [expandedStyle, setExpandedStyle] = useState<string | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
   const [fitApprovedSectionOpen, setFitApprovedSectionOpen] = useState(false);
@@ -692,7 +695,7 @@ export default function StylesTab() {
     });
   }
 
-  function exportToExcel() {
+  function buildByStyleWorkbook() {
     const styleMetaLookup: Record<string, { category: string; last: string }> = {};
     (mergedStyles as any[]).forEach((s) => {
       styleMetaLookup[s.style] = { category: s.category, last: s.last };
@@ -735,6 +738,11 @@ export default function StylesTab() {
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "SKU Data");
+    return { wb, rowCount: rows.length };
+  }
+
+  function exportToExcel() {
+    const { wb } = buildByStyleWorkbook();
     XLSX.writeFile(wb, `${getSeasonFileLabel(season)}_SKU_Export.xlsx`);
   }
 
@@ -1261,6 +1269,14 @@ export default function StylesTab() {
           <Download className="w-4 h-4" />
           Export Excel
         </button>
+        <button
+          onClick={() => setEmailRangeOpen(true)}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700"
+          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+        >
+          <Mail className="w-4 h-4" />
+          Email Export
+        </button>
 
         <button
           onClick={() => setShowAddStyleModal(true)}
@@ -1285,6 +1301,19 @@ export default function StylesTab() {
           )}
         </button>
       </div>
+
+      <EmailExportDialog
+        open={emailRangeOpen}
+        onOpenChange={setEmailRangeOpen}
+        exportType="By Style SKU Export"
+        exportScope="Current By Style range"
+        season={getSeasonFileLabel(season)}
+        defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — SKU EXPORT`}
+        buildAttachment={async () => {
+          const { wb } = buildByStyleWorkbook();
+          return workbookToEmailAttachment(wb, `${getSeasonFileLabel(season)}_SKU_Export.xlsx`);
+        }}
+      />
 
       {/* Table grouped by last */}
       <div className="space-y-4">

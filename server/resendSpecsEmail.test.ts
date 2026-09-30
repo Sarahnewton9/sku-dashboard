@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildSpecsEmailHtml, getResendSpecsEmailConfiguration } from "./resendSpecsEmail";
+import { buildDashboardExportEmailHtml, buildSpecsEmailHtml, getResendSpecsEmailConfiguration } from "./resendSpecsEmail";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -56,5 +56,19 @@ describe("Specs email delivery", () => {
     expect(html).toContain("Winter 27");
     expect(html).toContain("Use &lt;latest&gt; spec &amp; confirm.");
     expect(html).not.toContain("Use <latest> spec");
+  });
+
+  it("renders dashboard export scope and escapes free-text details", () => {
+    const html = buildDashboardExportEmailHtml({
+      exportType: "Buy Sheet",
+      exportScope: "LA <Week 1>",
+      season: "Winter 27",
+      message: "Please use the <final> order & confirm.",
+    });
+
+    expect(html).toContain("Buy Sheet");
+    expect(html).toContain("LA &lt;Week 1&gt;");
+    expect(html).toContain("Please use the &lt;final&gt; order &amp; confirm.");
+    expect(html).not.toContain("LA <Week 1>");
   });
 });
