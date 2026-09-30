@@ -924,7 +924,7 @@ interface SpecFormProps {
   showHiddenColumns: boolean;
   onShowColumn: (colour: string) => void;
   onResetColour: (colour: string) => void;
-  tableScrollRef?: React.RefObject<HTMLDivElement | null>; // lifted up for external sticky scrollbar
+  tableScrollRef?: React.MutableRefObject<HTMLDivElement | null>; // lifted up for external colour navigation
   onBulkCopyCustomRowsFromStyle: (targetColours: string[], rows: Array<{ section: string; title: string; value: string; sortOrder: number }>, sourceRowKeys?: string[]) => void;
   /** Called once on mount so SpecsTab can register a swap function that replaces oldKey with newKey in localRowKeys.
    * If localRowKeys is null (no saved order yet), it initialises from the current unifiedRowIds first
@@ -953,14 +953,14 @@ const STYLE_CATEGORIES = [
 // easy-to-miss bottom scrollbar and stays in sync as columns resize or change.
 
 interface ColourNavigatorProps {
-  tableScrollRef: React.RefObject<HTMLDivElement | null>;
+  tableElement: HTMLDivElement | null;
 }
 
-function ColourNavigator({ tableScrollRef }: ColourNavigatorProps) {
+function ColourNavigator({ tableElement }: ColourNavigatorProps) {
   const [metrics, setMetrics] = useState(() => getHorizontalScrollMetrics(0, 0, 0));
 
   useLayoutEffect(() => {
-    const table = tableScrollRef.current;
+    const table = tableElement;
     if (!table) return;
 
     const updateMetrics = () => {
@@ -976,10 +976,10 @@ function ColourNavigator({ tableScrollRef }: ColourNavigatorProps) {
       resizeObserver.disconnect();
       table.removeEventListener("scroll", updateMetrics);
     };
-  }, [tableScrollRef]);
+  }, [tableElement]);
 
   const scrollTo = (left: number, behavior: ScrollBehavior = "smooth") => {
-    tableScrollRef.current?.scrollTo({ left, behavior });
+    tableElement?.scrollTo({ left, behavior });
   };
 
   if (!metrics.isScrollable) return null;
@@ -996,7 +996,7 @@ function ColourNavigator({ tableScrollRef }: ColourNavigatorProps) {
         className="h-7 w-7 shrink-0"
         aria-label="Scroll colour columns left"
         disabled={metrics.position <= 0}
-        onClick={() => scrollTo(getHorizontalScrollTarget(metrics.position, tableScrollRef.current?.clientWidth ?? 0, metrics.maxPosition, "left"))}
+        onClick={() => scrollTo(getHorizontalScrollTarget(metrics.position, tableElement?.clientWidth ?? 0, metrics.maxPosition, "left"))}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -1016,7 +1016,7 @@ function ColourNavigator({ tableScrollRef }: ColourNavigatorProps) {
         className="h-7 w-7 shrink-0"
         aria-label="Scroll colour columns right"
         disabled={metrics.position >= metrics.maxPosition}
-        onClick={() => scrollTo(getHorizontalScrollTarget(metrics.position, tableScrollRef.current?.clientWidth ?? 0, metrics.maxPosition, "right"))}
+        onClick={() => scrollTo(getHorizontalScrollTarget(metrics.position, tableElement?.clientWidth ?? 0, metrics.maxPosition, "right"))}
       >
         <ChevronRight className="h-4 w-4" />
       </Button>
@@ -1285,10 +1285,13 @@ function SpecForm({
   const [editingSkuColour, setEditingSkuColour] = useState<string | null>(null); // raw colour key being edited
   const [editSkuColour, setEditSkuColour] = useState("");
   const [editSkuLeather, setEditSkuLeather] = useState("");
-  // Refs for the sticky phantom scrollbar
-  // Use the externally-lifted ref so the visible colour navigator can control this grid.
-  const internalTableScrollRef = useRef<HTMLDivElement>(null);
-  const tableScrollRef = externalTableScrollRef ?? internalTableScrollRef;
+  // Keep the mounted grid element in state so the colour navigator appears only
+  // after it has an actual horizontal scroll container to control.
+  const [tableScrollElement, setTableScrollElement] = useState<HTMLDivElement | null>(null);
+  const setTableScrollNode = useCallback((node: HTMLDivElement | null) => {
+    if (externalTableScrollRef) externalTableScrollRef.current = node;
+    setTableScrollElement(node);
+  }, [externalTableScrollRef]);
   const tableRef = useRef<HTMLTableElement>(null);
   // Unified drag-and-drop state — activeId is a string like "t:upper_1" or "c:42"
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -1796,7 +1799,7 @@ function SpecForm({
       </div>{/* end copy panel */}
 
       {/* Always-visible colour navigation — no need to find a bottom scrollbar. */}
-      <ColourNavigator tableScrollRef={tableScrollRef} />
+      <ColourNavigator tableElement={tableScrollElement} />
 
       {/* Spec grid — unified drag-and-drop for ALL rows (template + custom) */}
       <DndContext
@@ -1821,7 +1824,7 @@ function SpecForm({
         onDragCancel={() => setActiveId(null)}
       >
       <div
-        ref={tableScrollRef}
+        ref={setTableScrollNode}
         className="overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-muted/40 [&::-webkit-scrollbar-thumb]:bg-muted-foreground/50 [&::-webkit-scrollbar-thumb]:rounded-full"
         onWheel={(event) => {
           // Make a conventional mouse with Shift held as useful as a trackpad.
