@@ -1,0 +1,49 @@
+import { Resend } from "resend";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { buildSpecsEmailHtml, getResendSpecsEmailConfiguration } from "./resendSpecsEmail";
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+describe("Specs email delivery", () => {
+  it("reads the Resend key only from server environment configuration", () => {
+    vi.stubEnv("RESEND_API_KEY", "re_test_key");
+    vi.stubEnv("RESEND_FROM_EMAIL", "Tony Bianco Reports <reports@tonybianco.info>");
+    vi.stubEnv("DISABLE_EMAIL", "false");
+
+    expect(getResendSpecsEmailConfiguration()).toEqual({
+      apiKey: "re_test_key",
+      from: "Tony Bianco Reports <reports@tonybianco.info>",
+      enabled: true,
+    });
+  });
+
+  it("authenticates with Resend using the configured server secret", async () => {
+    const config = getResendSpecsEmailConfiguration();
+    expect(config.enabled).toBe(true);
+
+    const { data, error } = await new Resend(config.apiKey).domains.list();
+    expect(error).toBeNull();
+    expect(data).toBeDefined();
+
+    const senderDomain = config.from.match(/@([^>\s]+)/)?.[1]?.toLowerCase();
+    const configuredDomain = data?.data.find((domain) => domain.name.toLowerCase() === senderDomain);
+    expect(configuredDomain?.status).toBe("verified");
+  }, 15_000);
+
+  it("keeps free-text email notes escaped inside the factory email", () => {
+    const html = buildSpecsEmailHtml({
+      style: "Cappa",
+      last: "Cheeky/Cuba",
+      category: "Ballet Flat",
+      season: "Winter 27",
+      message: "Use <latest> spec & confirm.",
+    });
+
+    expect(html).toContain("CAPPA");
+    expect(html).toContain("Winter 27");
+    expect(html).toContain("Use &lt;latest&gt; spec &amp; confirm.");
+    expect(html).not.toContain("Use <latest> spec");
+  });
+});

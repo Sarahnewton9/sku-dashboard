@@ -99,9 +99,29 @@ import * as os from "os";
 import nodemailer from "nodemailer";
 import { ENV } from "./_core/env";
 import { formatSkuExportLabel } from "@shared/skuExportLabel";
+import { sendSpecsEmail } from "./resendSpecsEmail";
 
 export const appRouter = router({
   system: systemRouter,
+
+  email: router({
+    /** Sends a trusted dashboard-generated Specs workbook as a Resend attachment. */
+    sendSpecs: protectedProcedure
+      .input(z.object({
+        recipients: z.array(z.string().trim().email()).min(1).max(20),
+        subject: z.string().trim().min(1).max(200),
+        message: z.string().trim().max(2_000).optional(),
+        style: z.string().trim().min(1).max(100),
+        last: z.string().trim().min(1).max(100),
+        category: z.string().trim().min(1).max(100),
+        season: z.string().trim().min(1).max(100),
+        attachment: z.object({
+          filename: z.string().trim().min(1).max(255).regex(/\.xlsx$/i, "Attachment must be an Excel file"),
+          base64: z.string().min(100).max(45_000_000),
+        }),
+      }))
+      .mutation(async ({ input }) => sendSpecsEmail(input)),
+  }),
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

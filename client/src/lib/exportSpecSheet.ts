@@ -28,7 +28,7 @@ import { getTemplateForCategory } from "@shared/specTemplates";
 import { readSpecColourValue } from "@shared/specColourKey";
 import { getSpecExportFilename } from "@shared/specExportFilename";
 
-interface CustomRow {
+export interface CustomSpecRow {
   id: number;
   style: string;
   colour: string;
@@ -38,7 +38,7 @@ interface CustomRow {
   sortOrder: number;
 }
 
-interface ExportSpecSheetParams {
+export interface ExportSpecSheetParams {
   style: string;
   last: string;
   category: string;
@@ -49,7 +49,7 @@ interface ExportSpecSheetParams {
   hasBuckle?: boolean;
   dressShoeSubType?: "court" | "sling" | null;
   imageUrl?: string;
-  customRows?: CustomRow[];
+  customRows?: CustomSpecRow[];
   /** Saved row order from spec_row_order.rowKeys — used to preserve on-screen order and omit deleted rows */
   rowKeys?: string[] | null;
   /** Fit rating for this style: 'tts' | 'runs_small' | 'runs_large' */
@@ -136,7 +136,7 @@ const LABEL_COL_WIDTH = 22;   // narrow label column — text wraps if needed
 const COLOUR_COL_WIDTH = 19;  // colour columns — text wraps if needed
 const GREY_FILL: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9D9D9" } };
 
-export async function exportSpecSheet(params: ExportSpecSheetParams) {
+export async function buildSpecSheetWorkbook(params: ExportSpecSheetParams): Promise<ExcelJS.Workbook> {
   const {
     style,
     last,
@@ -552,11 +552,34 @@ export async function exportSpecSheet(params: ExportSpecSheetParams) {
 
   // Column widths are fixed (set above). Row heights were already calculated to show all wrapped text.
 
-  // ── Generate and download ──────────────────────────────────────────────────
-  const buffer = await wb.xlsx.writeBuffer();
-  const blob = new Blob([buffer], {
+  return wb;
+}
+
+function workbookBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let index = 0; index < bytes.byteLength; index++) {
+    binary += String.fromCharCode(bytes[index]!);
+  }
+  return btoa(binary);
+}
+
+/** Generates the factory workbook for an email attachment without downloading it. */
+export async function buildSpecSheetAttachment(params: ExportSpecSheetParams): Promise<{ filename: string; base64: string }> {
+  const workbook = await buildSpecSheetWorkbook(params);
+  const buffer = await workbook.xlsx.writeBuffer();
+  return {
+    filename: getSpecExportFilename(params.style),
+    base64: workbookBufferToBase64(buffer as ArrayBuffer),
+  };
+}
+
+/** Generates and downloads the factory specification workbook. */
+export async function exportSpecSheet(params: ExportSpecSheetParams) {
+  const workbook = await buildSpecSheetWorkbook(params);
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer as ArrayBuffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
-  const filename = getSpecExportFilename(style);
-  saveAs(blob, filename);
+  saveAs(blob, getSpecExportFilename(params.style));
 }

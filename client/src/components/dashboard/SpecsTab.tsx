@@ -19,7 +19,7 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import {
-  ChevronDown, ChevronRight, Search, FileSpreadsheet, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2, X, ArrowRight, RefreshCw, GripVertical, RotateCcw, Pencil,
+  ChevronDown, ChevronRight, Search, FileSpreadsheet, Mail, Copy, Upload, AlertCircle, Check, ChevronsUpDown, Plus, Trash2, X, ArrowRight, RefreshCw, GripVertical, RotateCcw, Pencil,
 } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent, DragOverlay,
@@ -33,7 +33,8 @@ import {
   getTemplateForCategory, DEFAULT_DROPDOWN_OPTIONS, SECTION_LABELS,
   type SpecComponent, type ShoeCategory,
 } from "@shared/specTemplates";
-import { exportSpecSheet } from "@/lib/exportSpecSheet";
+import { buildSpecSheetAttachment, exportSpecSheet } from "@/lib/exportSpecSheet";
+import { EmailSpecDialog } from "@/components/dashboard/EmailSpecDialog";
 import { parseSpecSheetFile, type ParsedSpecSheet } from "@/lib/importSpecSheet";
 import { useSeason } from "@/contexts/SeasonContext";
 import { findSpecColourMapValue, normalizeStoredSpecColourKey } from "@shared/specColourKey";
@@ -2311,6 +2312,7 @@ export default function SpecsTab({}: SpecsTabProps) {
   const utils = trpc.useUtils();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [emailSpecOpen, setEmailSpecOpen] = useState(false);
   const [importParsed, setImportParsed] = useState<ParsedSpecSheet | null>(null);
   const [importLoading, setImportLoading] = useState(false);
   const [importSaving, setImportSaving] = useState(false);
@@ -3505,6 +3507,15 @@ export default function SpecsTab({}: SpecsTabProps) {
                   size="sm"
                   variant="outline"
                   className="gap-2"
+                  onClick={() => setEmailSpecOpen(true)}
+                >
+                  <Mail className="w-4 h-4" />
+                  Send by Email
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
                   onClick={() => {
                     exportSpecSheet({
                       style: selectedEntry.style,
@@ -3540,6 +3551,38 @@ export default function SpecsTab({}: SpecsTabProps) {
                 </Button>
               </div>
             </div>
+            <EmailSpecDialog
+              open={emailSpecOpen}
+              onOpenChange={setEmailSpecOpen}
+              style={selectedEntry.style}
+              last={selectedEntry.last}
+              category={selectedEntry.category}
+              season={getSeasonDisplayLabel(season)}
+              defaultSubject={`${selectedEntry.style.toUpperCase()} — TONY BIANCO DEV WINTER 2027`}
+              buildAttachment={() => buildSpecSheetAttachment({
+                style: selectedEntry.style,
+                last: selectedEntry.last,
+                category: selectedEntry.category,
+                season: getSeasonDisplayLabel(season),
+                // The attachment includes all columns, including those temporarily hidden in the editor.
+                colours: selectedEntryRaw?.colours ?? selectedEntry.colours,
+                colourLabels: selectedEntryRaw?.colourLabels ?? selectedEntry.colourLabels,
+                specs,
+                hasBuckle: specMeta?.hasBuckle ?? false,
+                dressShoeSubType: specMeta?.dressShoeSubType ?? null,
+                imageUrl: imageOverrides[selectedEntry.style] ?? selectedEntry.imageUrl,
+                customRows: rawCustomRows as any[],
+                rowKeys: getRowKeysRef.current?.() ?? exportRowOrderData?.rowKeys ?? null,
+                fitRating: styleMetaMap[selectedEntry.style]?.fitRating ?? null,
+                fittingNotes: styleMetaMap[selectedEntry.style]?.fittingNotes ?? null,
+              })}
+              onSent={() => {
+                // Sending is also a completed hand-off for a new SKU Specs sheet.
+                if (selectedEntry.newSKUs > 0 && specMeta?.specStatus !== "complete") {
+                  setSpecStatusMutation.mutate({ style: selectedEntry.style, status: "complete", season });
+                }
+              }}
+            />
             {/* AP21 size range selector */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground font-medium">AP21 Size Range:</span>
