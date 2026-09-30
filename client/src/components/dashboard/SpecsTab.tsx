@@ -953,12 +953,39 @@ const STYLE_CATEGORIES = [
 
 interface StickyScrollBarProps {
   tableScrollRef: React.RefObject<HTMLDivElement | null>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-function StickyScrollBar({ tableScrollRef }: StickyScrollBarProps) {
+function StickyScrollBar({ tableScrollRef, containerRef }: StickyScrollBarProps) {
   const phantomRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const syncingRef = useRef(false); // prevent feedback loops
+  const [viewportPosition, setViewportPosition] = useState({ left: 0, width: 0, ready: false });
+
+  // This control is fixed to the viewport rather than placed at the end of
+  // the sheet, so it remains usable while the component list is scrolled.
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    function updatePosition() {
+      const rect = container!.getBoundingClientRect();
+      setViewportPosition({
+        left: Math.max(0, rect.left),
+        width: Math.max(0, rect.width),
+        ready: rect.width > 0,
+      });
+    }
+
+    updatePosition();
+    const observer = new ResizeObserver(updatePosition);
+    observer.observe(container);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [containerRef]);
 
   // Keep the phantom inner width equal to the table scroll width
   useLayoutEffect(() => {
@@ -1006,8 +1033,15 @@ function StickyScrollBar({ tableScrollRef }: StickyScrollBarProps) {
   return (
     <div
       ref={phantomRef}
-      className="h-4 flex-shrink-0 overflow-x-scroll border-t border-border/40 [&::-webkit-scrollbar]:h-2.5 [&::-webkit-scrollbar-track]:bg-muted/20 [&::-webkit-scrollbar-thumb]:bg-muted-foreground/40 [&::-webkit-scrollbar-thumb]:rounded-full"
-      style={{ scrollbarWidth: "thin" }}
+      tabIndex={0}
+      aria-label="Scroll the spec sheet horizontally"
+      className="fixed bottom-0 z-40 h-6 overflow-x-scroll border-t border-border/60 bg-card/95 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] backdrop-blur-sm [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-track]:bg-muted/35 [&::-webkit-scrollbar-thumb]:bg-muted-foreground/55 [&::-webkit-scrollbar-thumb]:rounded-full"
+      style={{
+        scrollbarWidth: "thin",
+        left: viewportPosition.left,
+        width: viewportPosition.width,
+        visibility: viewportPosition.ready ? "visible" : "hidden",
+      }}
     >
       <div ref={innerRef} style={{ height: "2px" }} />
     </div>
@@ -2290,6 +2324,7 @@ export default function SpecsTab({}: SpecsTabProps) {
   const importFileRef = React.useRef<HTMLInputElement>(null);
   // Lifted ref for the spec table's horizontal scroll container — shared with StickyScrollBar
   const specTableScrollRef = useRef<HTMLDivElement>(null);
+  const specPaneRef = useRef<HTMLDivElement>(null);
 
   // ── Bulk import state ────────────────────────────────────────────────────
   const [isDragOver, setIsDragOver] = useState(false);
@@ -3327,7 +3362,7 @@ export default function SpecsTab({}: SpecsTabProps) {
       </div>
 
       {/* Right: spec form */}
-      <div className="flex-1 overflow-hidden flex flex-col">
+      <div ref={specPaneRef} className="flex-1 overflow-hidden flex flex-col">
         {!selectedEntry ? (
           <div className="flex flex-col items-center justify-center h-full text-center gap-3">
             <FileSpreadsheet className="w-12 h-12 text-muted-foreground/40" />
@@ -3678,7 +3713,7 @@ export default function SpecsTab({}: SpecsTabProps) {
             </div>{/* end sticky header */}
 
             {/* Scrollable spec grid body */}
-            <div className="flex-1 overflow-y-auto px-6 pb-6">
+            <div className="flex-1 overflow-y-auto px-6 pb-12">
             <SpecForm
               key={selectedEntry.style}
               tableScrollRef={specTableScrollRef}
@@ -3771,8 +3806,8 @@ export default function SpecsTab({}: SpecsTabProps) {
               }}
             />
             </div>{/* end scrollable body */}
-            {/* Sticky phantom scrollbar — always visible at the bottom of the pane */}
-            {selectedEntry && <StickyScrollBar tableScrollRef={specTableScrollRef} />}
+            {/* Viewport-fixed scrollbar — always available while editing the spec sheet */}
+            {selectedEntry && <StickyScrollBar tableScrollRef={specTableScrollRef} containerRef={specPaneRef} />}
           </div>
         )}
       </div>
