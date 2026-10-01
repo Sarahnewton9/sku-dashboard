@@ -1529,7 +1529,12 @@ export async function batchReorderCustomRows(orderedIds: number[]): Promise<void
 export async function getSpecRowOrder(style: string): Promise<string[] | null> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const rows = await db.select().from(specRowOrder).where(eq(specRowOrder.style, style.toUpperCase())).limit(1);
+  // Older data may contain duplicate historical saves. Prefer the newest record
+  // while the database repair migration consolidates them to one record per style.
+  const rows = await db.select().from(specRowOrder)
+    .where(eq(specRowOrder.style, style.toUpperCase()))
+    .orderBy(desc(specRowOrder.updatedAt), desc(specRowOrder.id))
+    .limit(1);
   if (rows.length === 0) return null;
   try { return JSON.parse(rows[0].rowKeys) as string[]; } catch { return null; }
 }
@@ -1538,8 +1543,18 @@ export async function upsertSpecRowOrder(style: string, rowKeys: string[]): Prom
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const json = JSON.stringify(rowKeys);
-  await db.insert(specRowOrder).values({ style: style.toUpperCase(), rowKeys: json })
-    .onDuplicateKeyUpdate({ set: { rowKeys: json } });
+  const normalizedStyle = style.toUpperCase();
+  // Updating the newest existing record is safe during migration and ensures
+  // subsequent saves cannot create another competing row order.
+  const existing = await db.select({ id: specRowOrder.id }).from(specRowOrder)
+    .where(eq(specRowOrder.style, normalizedStyle))
+    .orderBy(desc(specRowOrder.updatedAt), desc(specRowOrder.id))
+    .limit(1);
+  if (existing[0]) {
+    await db.update(specRowOrder).set({ rowKeys: json }).where(eq(specRowOrder.id, existing[0].id));
+    return;
+  }
+  await db.insert(specRowOrder).values({ style: normalizedStyle, rowKeys: json });
 }
 
 // ── Spec Hidden Columns ─────────────────────────────────────────────────────

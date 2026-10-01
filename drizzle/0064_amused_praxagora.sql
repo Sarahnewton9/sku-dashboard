@@ -1,0 +1,1 @@
+ALTER TABLE `spec_row_order` ADD CONSTRAINT `spec_row_order_style_unique` UNIQUE(`style`);

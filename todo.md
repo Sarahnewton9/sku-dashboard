@@ -555,3 +555,7 @@
 - [x] Add email delivery for By Style, Handbags, Buy Sheets, Buy Changes Reports, Fitting date reports, Fitting Group reports, and Fit Reports.
 - [x] Extend the email history schema with export type/scope fields and a report-history index.
 - [x] Add generic sender/router/template regression coverage; 88 tests and the production build pass.
+
+## Specs Row-Order Reliability (Oct 2026)
+- [x] Consolidate duplicate historical row-order records to the latest saved order per style.
+- [x] Enforce one authoritative row-order record per style and update it on every save so components cannot revert or move after dragging.

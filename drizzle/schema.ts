@@ -578,7 +578,11 @@ export const specRowOrder = mysqlTable("spec_row_order", {
   season: varchar("season", { length: 16 }).notNull().default("SS26"),
   rowKeys: text("row_keys").notNull(), // JSON array of "template:key" | "custom:id"
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  // Row order is shared per style: one authoritative order prevents old saves
+  // being read back and moving components after a user has dragged them.
+  styleUnique: uniqueIndex("spec_row_order_style_unique").on(t.style),
+}));
 export type SpecRowOrder = typeof specRowOrder.$inferSelect;
 export type InsertSpecRowOrder = typeof specRowOrder.$inferInsert;
 
