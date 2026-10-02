@@ -586,3 +586,11 @@
 ## USD Landed-Cost Clarification (Oct 2026)
 - [x] Change the style pricing input to Factory / Landed Cost (USD) and retain RRP as AUD including GST.
 - [x] Pause margin and suggested-RRP calculations until an approved USD-to-AUD landed-cost conversion policy (FX, freight, duty and other costs) is configured.
+
+## Approved AP21 SKU Colour Descriptions (2 Oct 2026)
+- Loaded the supplied AP21 wording for **267 exact physical SKUs** into `ap21_sku_colour_descriptions`. Each mapping is identity-safe across Style, Upper 1 colour/leather, and Upper 2 colour/leather.
+- Buy Sheet exports now include the approved wording in the **AP21 SKU COLOUR** column while retaining the dashboard’s full development label in **COLOUR**.
+- AP21 Product Import CSVs now use the same approved Colour Description wording. Existing AP21 colour-code lookup remains unchanged, as requested.
+- Extended Buy Session rows and quantity handling with `colour2`/`leather2` plus a unique composite identity, so different dual-upper colourways cannot merge into one buy quantity. Updated By Style, Buy Sessions, and Buy Analysis keys/displays accordingly.
+- Added migrations `0068_steady_northstar` and `0069_complex_maverick`; applied both schema changes directly and verified the columns, composite unique index, and mapping count.
+- Validation: **100 tests passed** and production build passed. Visual check passed on the W27 Buy Sessions page.

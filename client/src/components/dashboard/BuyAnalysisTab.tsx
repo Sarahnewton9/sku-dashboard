@@ -11,6 +11,8 @@ import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { useSeason } from "@/contexts/SeasonContext";
 import { BarChart3, ChevronDown, Package, Check, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { displayColour, displayLeather } from "@/lib/utils";
+import { formatSkuExportLabel } from "@shared/skuExportLabel";
+import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import {
   groupBoughtStylesByLocation,
   type BuyLocation,
@@ -70,11 +72,11 @@ export default function BuyAnalysisTab() {
 
   // Merge all items across selected sessions, summing AU+USA qtys per SKU
   const mergedItems = useMemo(() => {
-    const map = new Map<string, { style: string; colour: string; leather: string; auQty: number; usaQty: number; nycQty: number; laQty: number; sessionBreakdown: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number; la: number }> }>();
+    const map = new Map<string, { style: string; colour: string; leather: string; colour2: string; leather2: string; auQty: number; usaQty: number; nycQty: number; laQty: number; sessionBreakdown: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number; la: number }> }>();
     for (let i = 0; i < selectedSessionIds.length; i++) {
       const sessionId = selectedSessionIds[i];
       const sessionName = (allSessions as Array<{ id: number; name: string }>).find((s) => s.id === sessionId)?.name ?? `Session ${sessionId}`;
-      const items = ((sessionQueries[i]?.data ?? []) as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number; nycQty?: number; laQty?: number; qty?: number }>);
+      const items = ((sessionQueries[i]?.data ?? []) as Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; auQty?: number; usaQty?: number; nycQty?: number; laQty?: number; qty?: number }>);
       for (const item of items) {
         const au = item.auQty ?? 0;
         const usa = item.usaQty ?? 0;
@@ -82,8 +84,12 @@ export default function BuyAnalysisTab() {
         const la = item.laQty ?? 0;
         if (au === 0 && usa === 0 && nyc === 0 && la === 0) continue;
         if (!activeRangeStyleSet.has(item.style)) continue;
-        const key = `${item.style}|${item.colour}|${item.leather}`;
-        const existing = map.get(key) ?? { style: item.style, colour: item.colour, leather: item.leather, auQty: 0, usaQty: 0, nycQty: 0, laQty: 0, sessionBreakdown: [] };
+        const key = getSkuCompositeIdentity(item.style, item.colour, item.leather, item.colour2, item.leather2);
+        const existing = map.get(key) ?? {
+          style: item.style, colour: item.colour, leather: item.leather,
+          colour2: item.colour2 ?? "", leather2: item.leather2 ?? "",
+          auQty: 0, usaQty: 0, nycQty: 0, laQty: 0, sessionBreakdown: [],
+        };
         existing.auQty += au;
         existing.usaQty += usa;
         existing.nycQty += nyc;
@@ -108,16 +114,16 @@ export default function BuyAnalysisTab() {
   // Build raw SKU lookup for is_new per SKU (uses mergedRawSkus to include custom SKUs)
   const rawSkuMap = useMemo((): Record<string, boolean> => {
     const map: Record<string, boolean> = {};
-    const rawSkus = (mergedRawSkus as unknown) as Array<{ style: string; colour: string; leather: string; is_new: boolean }>;
+    const rawSkus = (mergedRawSkus as unknown) as Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean }>;
     rawSkus.forEach((sku) => {
-      map[`${sku.style}|${sku.colour}|${sku.leather}`] = sku.is_new;
+      map[getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, sku.colour2, sku.leather2)] = sku.is_new;
     });
     return map;
   }, [mergedRawSkus]);
 
   // All SKUs in the range — use mergedRawSkus to include custom SKUs added via PPT import
   const allRangeSkus = useMemo(() => {
-    return (mergedRawSkus as unknown) as Array<{ style: string; colour: string; leather: string; is_new: boolean }>;
+    return (mergedRawSkus as unknown) as Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean }>;
   }, [mergedRawSkus]);
 
   // Only items with any qty (for selected sessions)
@@ -134,8 +140,9 @@ export default function BuyAnalysisTab() {
     return allRangeSkus.filter((sku) => {
       if (!sku.is_new) return false; // only show new SKUs
       if (cancelledStyleSet.has(sku.style)) return false; // exclude cancelled styles
-      const key = `${sku.style}|${sku.colour}|${sku.leather}`;
-      if (cancelledSkuSet.has(key)) return false; // exclude cancelled SKUs
+      const primaryKey = `${sku.style}|${sku.colour}|${sku.leather}`;
+      if (cancelledSkuSet.has(primaryKey)) return false; // exclude cancelled SKUs
+      const key = getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, sku.colour2, sku.leather2);
       const q = allQtys[key];
       if (notBoughtMarket === "all") return !q || q.total === 0;
       if (notBoughtMarket === "au")  return !q || q.totalAu === 0;
@@ -186,11 +193,13 @@ export default function BuyAnalysisTab() {
     }>;
     return Object.entries(totalsBySku)
       .map(([skuKey, totals]) => {
-        const [style, colour, leather] = skuKey.split("|");
+        const [style, colour, leather, colour2, leather2] = skuKey.split("\u0000");
         return {
           style,
           colour,
           leather,
+          colour2,
+          leather2,
           auQty: totals.totalAu ?? 0,
           usaQty: totals.totalUsa ?? 0,
           nycQty: totals.totalNyc ?? 0,
@@ -208,8 +217,8 @@ export default function BuyAnalysisTab() {
       last: styleInfoMap[group.style]?.last ?? "Unknown",
       colours: group.items
         .map((item) => ({
-          colour: displayColour(item.colour, item.leather),
-          leather: displayLeather(item.leather || "", item.style) || "—",
+          colour: formatSkuExportLabel(item),
+          leather: "",
           quantity: locationMarket === "au" ? item.auQty : locationMarket === "usa" ? item.usaQty : locationMarket === "nyc" ? item.nycQty : item.laQty,
         }))
         .sort((a, b) => b.quantity - a.quantity || a.colour.localeCompare(b.colour)),
@@ -241,9 +250,9 @@ export default function BuyAnalysisTab() {
   const byColourLeather = useMemo(() => {
     const map: Record<string, { au: number; usa: number; nyc: number; la: number }> = {};
     for (const item of boughtItems) {
-      const isNew = rawSkuMap[`${item.style}|${item.colour}|${item.leather}`] ?? false;
+      const isNew = rawSkuMap[getSkuCompositeIdentity(item.style, item.colour, item.leather, item.colour2, item.leather2)] ?? false;
       if (!isNew) continue;
-      const combo = `${displayColour(item.colour, item.leather)} / ${displayLeather(item.leather || "", item.style) || "—"}`;
+      const combo = formatSkuExportLabel(item);
       if (!map[combo]) map[combo] = { au: 0, usa: 0, nyc: 0, la: 0 };
       map[combo].au += item.auQty;
       map[combo].usa += item.usaQty;
@@ -264,7 +273,7 @@ export default function BuyAnalysisTab() {
       styleMap[item.style].usa += item.usaQty;
       styleMap[item.style].nyc += item.nycQty;
       styleMap[item.style].la += item.laQty;
-      const colKey = displayColour(item.colour, item.leather);
+      const colKey = formatSkuExportLabel(item);
       if (!styleMap[item.style].colours[colKey]) styleMap[item.style].colours[colKey] = { au: 0, usa: 0, nyc: 0, la: 0 };
       styleMap[item.style].colours[colKey].au += item.auQty;
       styleMap[item.style].colours[colKey].usa += item.usaQty;
@@ -301,7 +310,7 @@ export default function BuyAnalysisTab() {
   }, [boughtItems]);
 
   const newPairs = useMemo(() =>
-    boughtItems.filter((i) => rawSkuMap[`${i.style}|${i.colour}|${i.leather}`]).reduce((s, i) => s + i.auQty + i.usaQty + i.nycQty + i.laQty, 0),
+    boughtItems.filter((i) => rawSkuMap[getSkuCompositeIdentity(i.style, i.colour, i.leather, i.colour2, i.leather2)]).reduce((s, i) => s + i.auQty + i.usaQty + i.nycQty + i.laQty, 0),
     [boughtItems, rawSkuMap]
   );
 
@@ -329,7 +338,7 @@ export default function BuyAnalysisTab() {
       nyc: item.nycQty,
       la: item.laQty,
       total: item.auQty + item.usaQty + item.nycQty + item.laQty,
-      isNew: rawSkuMap[`${item.style}|${item.colour}|${item.leather}`] ?? false,
+      isNew: rawSkuMap[getSkuCompositeIdentity(item.style, item.colour, item.leather, item.colour2, item.leather2)] ?? false,
     }));
     if (categoryFilter !== "All") rows = rows.filter((r) => r.category === categoryFilter);
     if (lastFilter !== "All") rows = rows.filter((r) => r.last === lastFilter);
@@ -789,7 +798,7 @@ export default function BuyAnalysisTab() {
                       <tr style={{ background: "var(--muted)" }}>
                         {([
                           { field: "style", label: "Style" },
-                          { field: "colour", label: "Colour" },
+                          { field: "colour", label: "SKU Colour" },
                           { field: "leather", label: "Leather" },
                           { field: "category", label: "Category" },
                           { field: "last", label: "Last" },
@@ -818,7 +827,7 @@ export default function BuyAnalysisTab() {
                     <tbody>
                       {skuTableRows.map((row, idx) => (
                         <tr
-                          key={`${row.style}|${row.colour}|${row.leather}`}
+                          key={getSkuCompositeIdentity(row.style, row.colour, row.leather, row.colour2, row.leather2)}
                           style={{ background: idx % 2 === 0 ? "var(--card)" : "var(--muted)/30" }}
                           className="hover:bg-muted/50 transition-colors"
                         >
@@ -828,8 +837,8 @@ export default function BuyAnalysisTab() {
                               <span className="ml-1.5 text-[10px] px-1 py-0.5 rounded font-bold" style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}>NEW</span>
                             )}
                           </td>
-                          <td className="px-3 py-2 text-foreground">{displayColour(row.colour, row.leather)}</td>
-                          <td className="px-3 py-2 text-muted-foreground">{displayLeather(row.leather || "", row.style) || "—"}</td>
+                          <td className="px-3 py-2 text-foreground">{formatSkuExportLabel(row)}</td>
+                          <td className="px-3 py-2 text-muted-foreground">{row.colour2 ? "Upper 2" : "—"}</td>
                           <td className="px-3 py-2 text-muted-foreground">{row.category}</td>
                           <td className="px-3 py-2 text-muted-foreground">{row.last}</td>
                           <td className="px-3 py-2 font-mono font-bold text-right" style={{ color: "#f59e0b" }}>{row.auQty}</td>
@@ -1061,11 +1070,13 @@ export default function BuyAnalysisTab() {
 
             // Build per-SKU totals across all sessions
             const skuRows = styleSkus.map((sku: any) => {
-              const key = `${sku.style}|${sku.colour}|${sku.leather}`;
+              const key = getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, sku.colour2, sku.leather2);
               const totals = allQtys[key] ?? { totalAu: 0, totalUsa: 0, totalNyc: 0, totalLa: 0, total: 0 };
               return {
                 colour: sku.colour,
                 leather: sku.leather,
+                colour2: sku.colour2 ?? "",
+                leather2: sku.leather2 ?? "",
                 is_new: sku.is_new,
                 au: totals.totalAu,
                 usa: totals.totalUsa,
@@ -1179,7 +1190,7 @@ export default function BuyAnalysisTab() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr style={{ background: "var(--muted)" }}>
-                          <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Colour</th>
+                          <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">SKU Colour</th>
                           <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Leather</th>
                           <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</th>
                           <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide" style={{ color: "#f59e0b" }}>AU</th>
@@ -1192,12 +1203,12 @@ export default function BuyAnalysisTab() {
                       <tbody>
                         {skuRows.map((row: any, idx: number) => (
                           <tr
-                            key={`${row.colour}|${row.leather}`}
+                            key={getSkuCompositeIdentity(styleSearch, row.colour, row.leather, row.colour2, row.leather2)}
                             style={{ background: idx % 2 === 0 ? "var(--card)" : "oklch(0.98 0.01 65 / 0.3)" }}
                             className="hover:bg-muted/40 transition-colors"
                           >
-                            <td className="px-4 py-2.5 font-medium text-foreground">{displayColour(row.colour, row.leather)}</td>
-                            <td className="px-4 py-2.5 text-muted-foreground">{displayLeather(row.leather || "", styleSearch) || "—"}</td>
+                            <td className="px-4 py-2.5 font-medium text-foreground">{formatSkuExportLabel({ style: styleSearch, ...row })}</td>
+                            <td className="px-4 py-2.5 text-muted-foreground">{row.colour2 ? "Upper 2" : "—"}</td>
                             <td className="px-4 py-2.5">
                               {row.is_new ? (
                                 <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}>NEW</span>

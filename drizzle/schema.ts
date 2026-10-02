@@ -172,13 +172,19 @@ export const buySessionItems = mysqlTable("buy_session_items", {
   style: varchar("style", { length: 64 }).notNull(),
   colour: varchar("colour", { length: 64 }).notNull(),
   leather: varchar("leather", { length: 64 }).notNull().default(""),
+  colour2: varchar("colour2", { length: 64 }).notNull().default(""),
+  leather2: varchar("leather2", { length: 64 }).notNull().default(""),
   qty: int("qty").default(0).notNull(),       // legacy — kept for backwards compat
   auQty: int("auQty").default(0).notNull(),   // AU buy quantity
   usaQty: int("usaQty").default(0).notNull(), // USA buy quantity
   nycQty: int("nycQty").default(0).notNull(), // NYC buy quantity
   laQty: int("laQty").default(0).notNull(),   // LA buy quantity
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  skuIdentity: uniqueIndex("buy_session_items_sku_identity_unique").on(
+    t.sessionId, t.style, t.colour, t.leather, t.colour2, t.leather2,
+  ),
+}));
 
 export type BuySessionItem = typeof buySessionItems.$inferSelect;
 export type InsertBuySessionItem = typeof buySessionItems.$inferInsert;
@@ -789,6 +795,30 @@ export const colourCodes = mysqlTable("colour_codes", {
 });
 export type ColourCode = typeof colourCodes.$inferSelect;
 export type InsertColourCode = typeof colourCodes.$inferInsert;
+
+/**
+ * The AP21-facing Colour Description for a physical SKU. It is deliberately
+ * distinct from the dashboard development label: AP21 can shorten Upper 2 or
+ * use preferred wording such as "Chocolate". All five identity fields are
+ * stored so colourways with the same primary upper never overwrite each other.
+ */
+export const ap21SkuColourDescriptions = mysqlTable("ap21_sku_colour_descriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull(),
+  colour: varchar("colour", { length: 64 }).notNull(),
+  leather: varchar("leather", { length: 64 }).notNull().default(""),
+  colour2: varchar("colour2", { length: 64 }).notNull().default(""),
+  leather2: varchar("leather2", { length: 64 }).notNull().default(""),
+  ap21ColourDescription: varchar("ap21_colour_description", { length: 160 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  skuIdentity: uniqueIndex("ap21_sku_colour_descriptions_identity_unique").on(
+    t.style, t.colour, t.leather, t.colour2, t.leather2,
+  ),
+}));
+export type Ap21SkuColourDescription = typeof ap21SkuColourDescriptions.$inferSelect;
+export type InsertAp21SkuColourDescription = typeof ap21SkuColourDescriptions.$inferInsert;
 
 /**
  * AP21 style-level reference fields (Ref1–Ref20).

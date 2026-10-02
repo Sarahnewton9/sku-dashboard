@@ -11,8 +11,13 @@ import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { Lock, Download, Mail, Plus, Clock, CheckCircle, Package, Trash2, Pencil, FileText, X, Send } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
-import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
-import { formatSkuExportLabel, toTitleCaseSkuExportLabel } from "@shared/skuExportLabel";
+import { displayColourLeather } from "@/lib/utils";
+import { formatSkuExportLabel } from "@shared/skuExportLabel";
+import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
+import {
+  buildAp21SkuColourDescriptionMap,
+  resolveAp21SkuColourDescription,
+} from "@shared/ap21SkuColourDescription";
 import { useSeason } from "@/contexts/SeasonContext";
 import { getSeasonDisplayLabel, getSeasonFileLabel } from "@shared/seasonLabel";
 import { EmailExportDialog } from "./EmailExportDialog";
@@ -43,6 +48,7 @@ export default function BuySessionsPanel() {
   const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
   const { data: subCategoryList = [] } = trpc.styleSubCategory.getAll.useQuery();
   const { data: trendFlagList = [] } = trpc.trendFlag.getAll.useQuery();
+  const { data: ap21SkuColourDescriptionRows = [] } = trpc.ap21SkuColour.getAll.useQuery();
 
   // Changes Report
   const changesReportSession = allSessions.find((s) => s.id === changesReportSessionId);
@@ -130,17 +136,21 @@ export default function BuySessionsPanel() {
     return map;
   }, [mergedStyles]);
 
-  // Buy-session items store the primary colour and leather as their operational
-  // key. Look up the live SKU row so an export can preserve its Upper 2 pair.
+  // Keep each Upper 1/Upper 2 combination separate in the export lookup.
   const skuExportLabelMap = useMemo(() => {
     const map: Record<string, string> = {};
     for (const sku of mergedRawSkus as Array<{
       style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null;
     }>) {
-      map[`${sku.style}|${sku.colour}|${sku.leather}`] = formatSkuExportLabel(sku);
+      map[getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, sku.colour2, sku.leather2)] = formatSkuExportLabel(sku);
     }
     return map;
   }, [mergedRawSkus]);
+
+  const ap21SkuColourDescriptionMap = useMemo(
+    () => buildAp21SkuColourDescriptionMap(ap21SkuColourDescriptionRows as any[]),
+    [ap21SkuColourDescriptionRows],
+  );
 
   // Resolved category: sub-category override > trend flag (CASUAL FLAT) > static category
   const resolvedCategoryMap = useMemo(() => {
@@ -207,7 +217,10 @@ export default function BuySessionsPanel() {
       style: string; colourDesc: string; ap21SkuColour: string; auQty: number; usaQty: number; nycQty: number; laQty: number;
     };
 
-    const allItems = items as Array<{ style: string; colour: string; leather: string; qty?: number; auQty?: number; usaQty?: number; nycQty?: number; laQty?: number }>;
+    const allItems = items as Array<{
+      style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null;
+      qty?: number; auQty?: number; usaQty?: number; nycQty?: number; laQty?: number;
+    }>;
 
     const rows: RowData[] = allItems
       .filter((item) => {
@@ -224,7 +237,9 @@ export default function BuySessionsPanel() {
       })
       .map((item) => {
         const styleInfo = styleInfoMap[item.style];
-        const colourDesc = skuExportLabelMap[`${item.style}|${item.colour}|${item.leather}`]
+        const colourDesc = skuExportLabelMap[getSkuCompositeIdentity(
+          item.style, item.colour, item.leather, item.colour2, item.leather2,
+        )]
           ?? displayColourLeather(item.colour, item.leather, item.style);
         return {
           category: resolvedCategoryMap[item.style] ?? styleInfo?.category ?? "",
@@ -232,9 +247,9 @@ export default function BuySessionsPanel() {
           size11: styleSize11Map[item.style] ? "Y" : "",
           style: item.style,
           colourDesc,
-          // Uses the same shared formatter as the AP21 Product Import's
-          // Colour Description: title case with a compact Upper 1/Upper 2 slash.
-          ap21SkuColour: toTitleCaseSkuExportLabel(colourDesc),
+          // Exact factory-approved AP21 wording, scoped to the full Upper 1 +
+          // Upper 2 identity. Development wording remains a safe fallback.
+          ap21SkuColour: resolveAp21SkuColourDescription(item, colourDesc, ap21SkuColourDescriptionMap),
           auQty: (item.auQty ?? 0) || (item.qty ?? 0),
           usaQty: item.usaQty ?? 0,
           nycQty: item.nycQty ?? 0,
@@ -736,8 +751,7 @@ export default function BuySessionsPanel() {
                         <thead>
                           <tr style={{ background: "var(--muted)", borderBottom: "1px solid var(--border)" }}>
                             <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wide">Style</th>
-                            <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wide">Colour</th>
-                            <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wide">Leather</th>
+                            <th colSpan={2} className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wide">Colour / Leather</th>
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">AU</th>
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">USA</th>
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">NYC</th>
@@ -745,16 +759,15 @@ export default function BuySessionsPanel() {
                           </tr>
                         </thead>
                         <tbody>
-                          {(sessionItems as Array<{ style: string; colour: string; leather: string; auQty?: number; usaQty?: number; nycQty?: number; laQty?: number }>)
+                          {(sessionItems as Array<{ style: string; colour: string; leather: string; colour2?: string; leather2?: string; auQty?: number; usaQty?: number; nycQty?: number; laQty?: number }>)
                             .filter((i) => ((i.auQty ?? 0) + (i.usaQty ?? 0) + (i.nycQty ?? 0) + (i.laQty ?? 0)) > 0)
                             .sort((a, b) => a.style.localeCompare(b.style))
                             .map((item) => {
                               return (
-                                <tr key={`${item.style}-${item.colour}-${item.leather}`}
+                                <tr key={getSkuCompositeIdentity(item.style, item.colour, item.leather, item.colour2, item.leather2)}
                                   className="border-t" style={{ borderColor: "var(--border)" }}>
                                   <td className="px-3 py-2 font-medium text-foreground">{item.style}</td>
-                                  <td className="px-3 py-2 text-muted-foreground">{displayColour(item.colour, item.leather)}</td>
-                                  <td className="px-3 py-2 text-muted-foreground">{displayLeather(item.leather || "", item.style) || "—"}</td>
+                                  <td colSpan={2} className="px-3 py-2 text-muted-foreground">{formatSkuExportLabel(item)}</td>
                                   <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{item.auQty ?? 0}</td>
                                   <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.15 240)" }}>{item.usaQty ?? 0}</td>
                                   <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.55 0.18 300)" }}>{item.nycQty ?? 0}</td>

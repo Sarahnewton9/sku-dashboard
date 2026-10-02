@@ -477,6 +477,20 @@
       "when": 1790905325965,
       "tag": "0067_dusty_prodigy",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "5",
+      "when": 1790908953790,
+      "tag": "0068_steady_northstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "5",
+      "when": 1790909114099,
+      "tag": "0069_complex_maverick",
+      "breakpoints": true
     }
   ]
 }

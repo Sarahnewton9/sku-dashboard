@@ -14,7 +14,11 @@ import {
   sortFullExportRowsByStyle,
 } from "@shared/fullExportOrder";
 import { getSeasonFileLabel } from "@shared/seasonLabel";
-import { formatSkuExportLabel, getSkuExportFields, toTitleCaseSkuExportLabel } from "@shared/skuExportLabel";
+import { formatSkuExportLabel, getSkuExportFields } from "@shared/skuExportLabel";
+import {
+  buildAp21SkuColourDescriptionMap,
+  resolveAp21SkuColourDescription,
+} from "@shared/ap21SkuColourDescription";
 import PptxSyncModal from "./PptxSyncModal";
 import AP21ColourCodeModal from "./AP21ColourCodeModal";
 import { EmailExportDialog } from "./EmailExportDialog";
@@ -131,6 +135,8 @@ export default function ExportPanel({ onClose }: Props) {
   const { data: heelHeightData = [] } = trpc.heelHeight.getAll.useQuery();
   // Load all colour codes for AP21 lookup
   const { data: colourCodeList = [] } = trpc.colourCode.getAll.useQuery();
+  // Exact AP21 Colour Description wording supplied by the business.
+  const { data: ap21SkuColourDescriptionRows = [] } = trpc.ap21SkuColour.getAll.useQuery();
   // Load per-style AP21 size ranges
   const { data: ap21SizeRangeMap = {} } = trpc.ap21SizeRange.getAll.useQuery();
   // Load all AP21 style refs (Ref1-Ref20)
@@ -171,6 +177,11 @@ export default function ExportPanel({ onClose }: Props) {
     }
     return map;
   }, [colourCodeList]);
+
+  const ap21SkuColourDescriptionMap = useMemo(
+    () => buildAp21SkuColourDescriptionMap(ap21SkuColourDescriptionRows as any[]),
+    [ap21SkuColourDescriptionRows],
+  );
 
   // Build lookup maps
   const skuMetaMap: Record<string, typeof skuMetaList[0]> = {};
@@ -297,7 +308,13 @@ export default function ExportPanel({ onClose }: Props) {
         const colourDescUpper = colourDescFull.toUpperCase();
         const colourCode = codeMap.get(colourDescUpper) ?? "";
 
-        const colourDescCsv = toTitleCaseSkuExportLabel(colourDescFull);
+        // Keep the established code lookup on the development label. The user
+        // supplied mappings change the AP21-facing description only, not code.
+        const colourDescCsv = resolveAp21SkuColourDescription(
+          sku,
+          colourDescFull,
+          ap21SkuColourDescriptionMap,
+        );
 
         const colourKey = colour.toUpperCase();
         const colourRefsForStyle = (ap21ColourRefsAll as any)[styleName] ?? {};
@@ -344,7 +361,8 @@ export default function ExportPanel({ onClose }: Props) {
 
     return csvRows;
   }, [mergedRawSkus, cancelledSkuSet, skuMetaMap,
-      ap21SizeRangeMap, ap21StyleRefsMap, ap21ColourRefsAll, styleLookup, heelHeightMap]);
+      ap21SizeRangeMap, ap21StyleRefsMap, ap21ColourRefsAll, styleLookup, heelHeightMap,
+      ap21SkuColourDescriptionMap]);
 
   function csvContentForRows(csvRows: string[][]) {
     return csvRows

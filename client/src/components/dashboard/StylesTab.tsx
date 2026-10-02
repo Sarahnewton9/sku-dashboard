@@ -325,7 +325,16 @@ export default function StylesTab() {
       ]);
       // Also add to active buy session if one is selected and unlocked
       if (selectedSessionId && !isSessionLocked) {
-        upsertItemMutation.mutate({ sessionId: selectedSessionId, style: vars.style, colour: vars.colour, leather: vars.leather, auQty: 0, usaQty: 0 });
+        upsertItemMutation.mutate({
+          sessionId: selectedSessionId,
+          style: vars.style,
+          colour: vars.colour,
+          leather: vars.leather,
+          colour2: vars.colour2 ?? "",
+          leather2: vars.leather2 ?? "",
+          auQty: 0,
+          usaQty: 0,
+        });
       }
       setAddColourDraft((prev) => { const n = { ...prev }; delete n[vars.style]; return n; });
       toast.success(`${vars.colour} ${vars.leather} added to ${vars.style}`);
@@ -614,7 +623,13 @@ export default function StylesTab() {
   const sessionItemMap = useMemo(() => {
     const map: Record<string, { auQty: number; usaQty: number; nycQty: number; laQty: number }> = {};
     for (const item of displayItems) {
-      const key = `${item.style}|${item.colour}|${item.leather}` as string;
+      const key = getSkuCompositeIdentity(
+        item.style,
+        item.colour,
+        item.leather,
+        (item as any).colour2,
+        (item as any).leather2,
+      );
       // Use legacy qty as fallback for auQty so old sessions display correctly
       const legacyQty = (item as any).qty ?? 0;
       map[key] = { auQty: (item as any).auQty || legacyQty, usaQty: (item as any).usaQty ?? 0, nycQty: (item as any).nycQty ?? 0, laQty: (item as any).laQty ?? 0 };
@@ -651,8 +666,8 @@ export default function StylesTab() {
     refetchActive();
   }
 
-  function handleQtyChange(style: string, colour: string, leather: string, field: 'au' | 'usa' | 'nyc' | 'la', val: string) {
-    const key = `${style}|${colour}|${leather}|${field}`;
+  function handleQtyChange(style: string, colour: string, leather: string, colour2: string, leather2: string, field: 'au' | 'usa' | 'nyc' | 'la', val: string) {
+    const key = `${getSkuCompositeIdentity(style, colour, leather, colour2, leather2)}|${field}`;
     if (val === '' || val === null) {
       // Empty field — store 0 so blur handler saves it as 0
       pendingQty.current[key] = 0;
@@ -664,9 +679,9 @@ export default function StylesTab() {
     }
   }
 
-  function handleQtyBlur(style: string, colour: string, leather: string, field: 'au' | 'usa' | 'nyc' | 'la') {
+  function handleQtyBlur(style: string, colour: string, leather: string, colour2: string, leather2: string, field: 'au' | 'usa' | 'nyc' | 'la') {
     if (!selectedSessionId || isSessionLocked) return;
-    const baseKey = `${style}|${colour}|${leather}`;
+    const baseKey = getSkuCompositeIdentity(style, colour, leather, colour2, leather2);
     const fieldKey = `${baseKey}|${field}`;
     const newVal = pendingQty.current[fieldKey];
     if (newVal === undefined) return;
@@ -676,7 +691,7 @@ export default function StylesTab() {
     const nycQty = field === 'nyc' ? newVal : current.nycQty;
     const laQty = field === 'la' ? newVal : current.laQty;
     upsertItemMutation.mutate(
-      { sessionId: selectedSessionId, style, colour, leather, auQty, usaQty, nycQty, laQty },
+      { sessionId: selectedSessionId, style, colour, leather, colour2, leather2, auQty, usaQty, nycQty, laQty },
       { onSuccess: () => { refetchItems(); delete pendingQty.current[fieldKey]; } }
     );
   }
@@ -1018,7 +1033,7 @@ export default function StylesTab() {
   function getStyleAllSessionsTotal(styleName: string): { au: number; usa: number; nyc: number; total: number } {
     let au = 0; let usa = 0; let nyc = 0;
     for (const sku of getSkusForStyle(styleName)) {
-      const key = `${sku.style}|${sku.colour}|${sku.leather}`;
+      const key = getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, (sku as any).colour2, (sku as any).leather2);
       const d = allQtysTyped[key];
       if (d) { au += d.totalAu; usa += d.totalUsa; nyc += d.totalNyc ?? 0; }
     }
@@ -1027,7 +1042,7 @@ export default function StylesTab() {
   // Legacy: session buy total for a style (current selected session only)
   function getStyleSessionTotal(styleName: string) {
     return getSkusForStyle(styleName).reduce((sum, sku) => {
-      const key = `${sku.style}|${sku.colour}|${sku.leather}` as string;
+      const key = getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, (sku as any).colour2, (sku as any).leather2);
       const item = sessionItemMap[key];
       return sum + (item ? item.auQty + item.usaQty + (item.nycQty ?? 0) + (item.laQty ?? 0) : 0);
     }, 0);
@@ -1921,6 +1936,9 @@ export default function StylesTab() {
                                     const dbMeta = skuMetaMap[skuKey2];
                                     const currentColour2 = (sku as any).colour2 || dbMeta?.colour2 || "";
                                     const currentLeather2 = (sku as any).leather2 || dbMeta?.leather2 || "";
+                                    const buySkuKey = getSkuCompositeIdentity(
+                                      sku.style, sku.colour, sku.leather, currentColour2, currentLeather2,
+                                    );
                                     const currentSeasonalCost = seasonCostMap.get(getSkuCompositeIdentity(
                                       sku.style, sku.colour, sku.leather, currentColour2, currentLeather2,
                                     ));
@@ -1928,14 +1946,14 @@ export default function StylesTab() {
                                       ? `custom:${(sku as any)._customId}`
                                       : `static:${skuKey2}`;
                                     const isEditingColour = colourEdit?.rowKey === colourEditKey;
-                                    const sessionQtyObj = sessionItemMap[skuKey2] ?? { auQty: 0, usaQty: 0, nycQty: 0, laQty: 0 };
+                                    const sessionQtyObj = sessionItemMap[buySkuKey] ?? { auQty: 0, usaQty: 0, nycQty: 0, laQty: 0 };
                                     const sessionAuQty = sessionQtyObj.auQty;
                                     const sessionUsaQty = sessionQtyObj.usaQty;
                                     const sessionNycQty = sessionQtyObj.nycQty;
                                     const sessionLaQty = sessionQtyObj.laQty;
                                     const sessionTotalQty = sessionAuQty + sessionUsaQty + sessionNycQty + sessionLaQty;
                                     // All-session combined totals
-                                    const allQtyData = (allSessionQtys as Record<string, { totalAu: number; totalUsa: number; totalNyc: number; totalLa: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number; la: number }> }>)[skuKey2];
+                                    const allQtyData = (allSessionQtys as Record<string, { totalAu: number; totalUsa: number; totalNyc: number; totalLa: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number; la: number }> }>)[buySkuKey];
                                     const allTotalAu = allQtyData?.totalAu ?? 0;
                                     const allTotalUsa = allQtyData?.totalUsa ?? 0;
                                     const allTotalNyc = allQtyData?.totalNyc ?? 0;
@@ -2127,9 +2145,9 @@ export default function StylesTab() {
                                                     type="number" min={0}
                                                     disabled={!canEdit}
                                                     defaultValue={sessionAuQty || ""}
-                                                    key={`au-${selectedSessionId}-${skuKey2}-${sessionAuQty}`}
-                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sourceLeather, 'au', e.target.value)}
-                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sourceLeather, 'au')}
+                                                    key={`au-${selectedSessionId}-${buySkuKey}-${sessionAuQty}`}
+                                                    onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'au', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'au')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
                                                     className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
@@ -2143,9 +2161,9 @@ export default function StylesTab() {
                                                     type="number" min={0}
                                                     disabled={!canEdit}
                                                     defaultValue={sessionUsaQty || ""}
-                                                    key={`usa-${selectedSessionId}-${skuKey2}-${sessionUsaQty}`}
-                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sourceLeather, 'usa', e.target.value)}
-                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sourceLeather, 'usa')}
+                                                    key={`usa-${selectedSessionId}-${buySkuKey}-${sessionUsaQty}`}
+                                                    onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'usa', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'usa')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
                                                     className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-blue-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
@@ -2159,9 +2177,9 @@ export default function StylesTab() {
                                                     type="number" min={0}
                                                     disabled={!canEdit}
                                                     defaultValue={sessionNycQty || ""}
-                                                    key={`nyc-${selectedSessionId}-${skuKey2}-${sessionNycQty}`}
-                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sourceLeather, 'nyc', e.target.value)}
-                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sourceLeather, 'nyc')}
+                                                    key={`nyc-${selectedSessionId}-${buySkuKey}-${sessionNycQty}`}
+                                                    onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'nyc', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'nyc')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
                                                     className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-purple-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
@@ -2175,9 +2193,9 @@ export default function StylesTab() {
                                                     type="number" min={0}
                                                     disabled={!canEdit}
                                                     defaultValue={sessionLaQty || ""}
-                                                    key={`la-${selectedSessionId}-${skuKey2}-${sessionLaQty}`}
-                                                    onChange={(e) => handleQtyChange(sku.style, sourceColour, sourceLeather, 'la', e.target.value)}
-                                                    onBlur={() => handleQtyBlur(sku.style, sourceColour, sourceLeather, 'la')}
+                                                    key={`la-${selectedSessionId}-${buySkuKey}-${sessionLaQty}`}
+                                                    onChange={(e) => handleQtyChange(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'la', e.target.value)}
+                                                    onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'la')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
                                                     className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-green-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"

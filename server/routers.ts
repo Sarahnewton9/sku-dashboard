@@ -74,6 +74,8 @@ import {
   getColourCodeByDescription,
   upsertColourCode,
   getMissingColourCodes,
+  getAllAp21SkuColourDescriptions,
+  upsertAp21SkuColourDescriptions,
   setAp21SizeRange,
   getAllAp21SizeRanges,
   type Ap21SizeRange,
@@ -684,13 +686,19 @@ export const appRouter = router({
         style: z.string(),
         colour: z.string(),
         leather: z.string().default(""),
+        colour2: z.string().default(""),
+        leather2: z.string().default(""),
         auQty: z.number().int().min(0).default(0),
         usaQty: z.number().int().min(0).default(0),
         nycQty: z.number().int().min(0).default(0),
         laQty: z.number().int().min(0).default(0),
       }))
       .mutation(async ({ input }) => {
-        await upsertBuySessionItem(input.sessionId, input.style, input.colour, input.leather, input.auQty, input.usaQty, input.nycQty, input.laQty);
+        await upsertBuySessionItem(
+          input.sessionId, input.style, input.colour, input.leather,
+          input.auQty, input.usaQty, input.nycQty, input.laQty,
+          input.colour2, input.leather2,
+        );
         return { success: true };
       }),
 
@@ -2646,6 +2654,26 @@ Respond with ONLY the code, nothing else. No explanation.`,
         }
         return { code: parts[0].slice(0, 6) };
       }),
+  }),
+
+  // Approved AP21 Colour Description by exact physical SKU identity.
+  ap21SkuColour: router({
+    getAll: publicProcedure.query(async () => getAllAp21SkuColourDescriptions()),
+
+    bulkUpsert: protectedProcedure
+      .input(z.object({
+        rows: z.array(z.object({
+          style: z.string().trim().min(1).max(64),
+          colour: z.string().trim().min(1).max(64),
+          leather: z.string().trim().max(64).optional(),
+          colour2: z.string().trim().max(64).optional(),
+          leather2: z.string().trim().max(64).optional(),
+          ap21ColourDescription: z.string().trim().min(1).max(160),
+        })).min(1).max(2_000),
+      }))
+      .mutation(async ({ input }) => ({
+        updated: await upsertAp21SkuColourDescriptions(input.rows),
+      })),
   }),
 
   // AP21 reference fields — Ref1-Ref20 and ColourRef1-10 for AP21 Product Import CSV

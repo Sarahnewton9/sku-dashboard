@@ -396,7 +396,7 @@ export async function getSessionTotals(season = "SS26"): Promise<Record<number, 
 
 /**
  * Returns per-SKU totals across ALL sessions, plus a per-session breakdown.
- * Key: "style|colour|leather"
+ * Key: the complete ordered Upper 1 + Upper 2 SKU identity.
  * Only includes SKUs with at least 1 unit bought.
  */
 export async function getAllSessionQtys(season = "SS26"): Promise<Record<string, {
@@ -424,7 +424,7 @@ export async function getAllSessionQtys(season = "SS26"): Promise<Record<string,
     const nyc = row.nycQty ?? 0;
     const la = row.laQty ?? 0;
     if (au === 0 && usa === 0 && nyc === 0 && la === 0) continue;
-    const key = `${row.style}|${row.colour}|${row.leather}`;
+    const key = getSkuCompositeIdentity(row.style, row.colour, row.leather, row.colour2, row.leather2);
     if (!result[key]) result[key] = { totalAu: 0, totalUsa: 0, totalNyc: 0, totalLa: 0, total: 0, sessions: [] };
     result[key].totalAu += au;
     result[key].totalUsa += usa;
@@ -438,16 +438,26 @@ export async function getAllSessionQtys(season = "SS26"): Promise<Record<string,
 
 export async function upsertBuySessionItem(
   sessionId: number, style: string, colour: string, leather: string,
-  auQty: number, usaQty: number, nycQty: number = 0, laQty: number = 0
+  auQty: number, usaQty: number, nycQty: number = 0, laQty: number = 0,
+  colour2: string = "", leather2: string = "",
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const normalized = {
+    style: normalizeSkuIdentityPart(style),
+    colour: normalizeSkuIdentityPart(colour),
+    leather: normalizeSkuIdentityPart(leather),
+    colour2: normalizeSkuIdentityPart(colour2),
+    leather2: normalizeSkuIdentityPart(leather2),
+  };
   const existing = await db.select().from(buySessionItems)
     .where(and(
       eq(buySessionItems.sessionId, sessionId),
-      eq(buySessionItems.style, style),
-      eq(buySessionItems.colour, colour),
-      eq(buySessionItems.leather, leather)
+      eq(buySessionItems.style, normalized.style),
+      eq(buySessionItems.colour, normalized.colour),
+      eq(buySessionItems.leather, normalized.leather),
+      eq(buySessionItems.colour2, normalized.colour2),
+      eq(buySessionItems.leather2, normalized.leather2),
     ))
     .limit(1);
   const qty = auQty + usaQty + nycQty + laQty; // keep legacy qty in sync
@@ -456,7 +466,7 @@ export async function upsertBuySessionItem(
       .set({ auQty, usaQty, nycQty, laQty, qty })
       .where(eq(buySessionItems.id, existing[0].id));
   } else {
-    await db.insert(buySessionItems).values({ sessionId, style, colour, leather, auQty, usaQty, nycQty, laQty, qty });
+    await db.insert(buySessionItems).values({ sessionId, ...normalized, auQty, usaQty, nycQty, laQty, qty });
   }
 }
 
@@ -2387,6 +2397,51 @@ export async function getMissingColourCodes(descriptions: string[]) {
     .where(inArray(colourCodes.colourDescription, uppers));
   const foundSet = new Set(found.map((r) => r.colourDescription));
   return uppers.filter((d) => !foundSet.has(d));
+}
+
+// ── Approved AP21 SKU Colour Descriptions ───────────────────────────────────
+
+export type Ap21SkuColourDescriptionInput = {
+  style: string;
+  colour: string;
+  leather?: string | null;
+  colour2?: string | null;
+  leather2?: string | null;
+  ap21ColourDescription: string;
+};
+
+export async function getAllAp21SkuColourDescriptions() {
+  const db = await getDb();
+  if (!db) return [];
+  const { ap21SkuColourDescriptions } = await import("../drizzle/schema");
+  const { asc } = await import("drizzle-orm");
+  return db.select().from(ap21SkuColourDescriptions).orderBy(
+    asc(ap21SkuColourDescriptions.style),
+    asc(ap21SkuColourDescriptions.colour),
+    asc(ap21SkuColourDescriptions.leather),
+  );
+}
+
+export async function upsertAp21SkuColourDescriptions(rows: Ap21SkuColourDescriptionInput[]) {
+  if (rows.length === 0) return 0;
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { ap21SkuColourDescriptions } = await import("../drizzle/schema");
+
+  for (const row of rows) {
+    const values = {
+      style: normalizeSkuIdentityPart(row.style),
+      colour: normalizeSkuIdentityPart(row.colour),
+      leather: normalizeSkuIdentityPart(row.leather),
+      colour2: normalizeSkuIdentityPart(row.colour2),
+      leather2: normalizeSkuIdentityPart(row.leather2),
+      ap21ColourDescription: row.ap21ColourDescription.trim(),
+    };
+    await db.insert(ap21SkuColourDescriptions).values(values).onDuplicateKeyUpdate({
+      set: { ap21ColourDescription: values.ap21ColourDescription },
+    });
+  }
+  return rows.length;
 }
 
 // ─── AP21 Size Range helpers ────────────────────────────────────────────────
