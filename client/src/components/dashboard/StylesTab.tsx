@@ -12,6 +12,7 @@ import { ALL_LASTS } from "@shared/const";
 import { getSeasonFileLabel } from "@shared/seasonLabel";
 import { getSkuExportFields } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
+import { hasSize11ForAllColourways } from "@shared/size11";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
@@ -566,37 +567,6 @@ export default function StylesTab() {
     onError: (err) => toast.error(`Failed to update Size 11: ${err.message}`),
   });
 
-  // Fetch size 11 availability from tonybianco.com.au
-  const [isFetchingSize11, setIsFetchingSize11] = useState(false);
-  const fetchSize11Mutation = trpc.sku.fetchSize11FromTonyBianco.useMutation({
-    onSuccess: (result) => {
-      refetchSkuMeta();
-      const with11 = result.results.filter((r: { style: string; isSize11: boolean }) => r.isSize11).length;
-      const without11 = result.results.filter((r: { style: string; isSize11: boolean }) => !r.isSize11).length;
-      toast.success(
-        `Size 11 updated: ${with11} styles YES, ${without11} styles NO. ` +
-        `${result.notFoundStyles.length} new styles not yet on website.`
-      );
-      setIsFetchingSize11(false);
-    },
-    onError: (err) => {
-      toast.error(`Failed to fetch size 11 data: ${err.message}`);
-      setIsFetchingSize11(false);
-    },
-  });
-
-  function handleFetchSize11() {
-    if (isFetchingSize11) return;
-    setIsFetchingSize11(true);
-    // Build skusByStyle from all merged SKUs
-    const skusByStyle: Record<string, Array<{ colour: string; leather: string }>> = {};
-    for (const sku of mergedRawSkus) {
-      if (!skusByStyle[sku.style]) skusByStyle[sku.style] = [];
-      skusByStyle[sku.style].push({ colour: sku.colour, leather: sku.leather ?? "" });
-    }
-    fetchSize11Mutation.mutate({ skusByStyle });
-  }
-
   // Build lookup maps
   type SkuMetaItem = { style: string; colour: string; leather: string; sampleStatus?: string | null; orderQty?: number | null; isSize11?: boolean | null; costPrice?: number | null; rrpOverride?: number | null; fitRating?: string | null; fittingNotes?: string | null; colourOverride?: string | null; colour2?: string | null; leather2?: string | null; };
   type StyleMetaItem = { style: string; landedCost?: number | null; targetMargin?: number | null; rrp?: number | null; pricingSource?: string | null; fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; websiteImageUrl?: string | null; sizeRecommendation?: string | null; };
@@ -1061,13 +1031,14 @@ export default function StylesTab() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allSessionQtys]);
 
-  // Check if style has Size 11 enabled (any SKU in the style)
+  // A style is Size 11 only when every current colourway is marked Size 11.
   function getStyleSize11(styleName: string) {
     const customStyle = customStyleRows.find((row) => row.style === styleName);
     if (customStyle?.isSize11 !== null && customStyle?.isSize11 !== undefined) {
       return customStyle.isSize11;
     }
-    return getSkusForStyle(styleName).some((sku) => {
+    const styleSkus = getSkusForStyle(styleName);
+    return hasSize11ForAllColourways(styleSkus, (sku) => {
       const key = `${sku.style}|${sku.colour}|${sku.leather}`;
       return skuMetaMap[key]?.isSize11 === true;
     });
@@ -1366,23 +1337,13 @@ export default function StylesTab() {
           Add Style
         </button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700" style={{ borderColor: "var(--border)", color: "var(--foreground)" }}>
-              <Upload className="w-4 h-4" /> Import <ChevronDown className="w-3.5 h-3.5" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-52">
-            <DropdownMenuLabel>Import into SKU Dash</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => setShowInvoiceImport(true)}><FileSpreadsheet /> Import sample invoice</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={handleFetchSize11} disabled={isFetchingSize11}>
-              <RefreshCw className={isFetchingSize11 ? "animate-spin" : ""} />
-              {isFetchingSize11 ? "Syncing Size 11…" : "Sync Size 11"}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <button
+          onClick={() => setShowInvoiceImport(true)}
+          className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700"
+          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+        >
+          <FileSpreadsheet className="w-4 h-4" /> Import sample invoice
+        </button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

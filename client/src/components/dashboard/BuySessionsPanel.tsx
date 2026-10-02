@@ -18,6 +18,7 @@ import {
   buildAp21SkuColourDescriptionMap,
   resolveAp21SkuColourDescription,
 } from "@shared/ap21SkuColourDescription";
+import { hasSize11ForAllColourways } from "@shared/size11";
 import { useSeason } from "@/contexts/SeasonContext";
 import { getSeasonDisplayLabel, getSeasonFileLabel } from "@shared/seasonLabel";
 import { EmailExportDialog } from "./EmailExportDialog";
@@ -174,15 +175,19 @@ export default function BuySessionsPanel() {
     return map;
   }, [skuMetaList]);
 
-  // Style-level size 11 map: true if ANY SKU for that style has isSize11=true in the DB
+  // Style-level Size 11 applies only when every active colourway is confirmed.
   const styleSize11Map = useMemo(() => {
+    const flagsByStyle: Record<string, boolean[]> = {};
+    for (const sku of mergedRawSkus as Array<{ style: string; colour: string; leather: string }>) {
+      const key = `${sku.style}|${sku.colour}|${sku.leather}`;
+      (flagsByStyle[sku.style] ??= []).push(skuMetaMap[key]?.isSize11 === true);
+    }
     const map: Record<string, boolean> = {};
-    for (const m of skuMetaList as any[]) {
-      if (m.isSize11) map[m.style] = true;
-      else if (!(m.style in map)) map[m.style] = false;
+    for (const [style, flags] of Object.entries(flagsByStyle)) {
+      map[style] = hasSize11ForAllColourways(flags, Boolean);
     }
     return map;
-  }, [skuMetaList]);
+  }, [mergedRawSkus, skuMetaMap]);
 
   const styleMetaMap = useMemo(() => {
     const map: Record<string, { rrp?: number | null }> = {};

@@ -618,3 +618,9 @@
 
 ## Sample Invoice Label Update (Oct 2026)
 - [x] Renamed **Supplier invoice** to **Import sample invoice** in the By Style menu and dialog title. Verified with 101 tests and a production build.
+
+## Strict Size 11 Rule (Oct 2026)
+- [x] Removed the website-driven **Sync Size 11** workflow: online products contain historical colourways and should not determine the development range.
+- [x] Size 11 now displays and exports only when **every active colourway** of a style is explicitly marked Size 11; mixed styles are treated as not Size 11.
+- [x] Corrected ANJA to 0 of 14 Size 11 colourways and cleared the 17 existing styles with partial Size 11 flags.
+- [x] Applied the same strict rule to By Style and Buy Sheet exports; added regression coverage. Validation: 103 tests and production build passed.
