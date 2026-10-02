@@ -63,12 +63,22 @@ describe("Specs email recipient and history router", () => {
       category: "Ballet Flat",
       season: "Winter 27",
       attachment,
+      additionalAttachments: [{
+        filename: "CAPPA factory comments.pdf",
+        base64: "cGRm",
+        contentType: "application/pdf",
+      }],
     })).resolves.toEqual({ id: "resend_123" });
 
     expect(delivery.sendSpecsEmail).toHaveBeenCalledWith(expect.objectContaining({
       recipients: ["factory@example.com"],
       cc: ["developer@example.com"],
       replyTo: "product@tonybianco.info",
+      additionalAttachments: [{
+        filename: "CAPPA factory comments.pdf",
+        base64: "cGRm",
+        contentType: "application/pdf",
+      }],
     }));
     expect(emailDb.recordSpecEmailHistory).toHaveBeenCalledWith(expect.objectContaining({
       style: "CAPPA",

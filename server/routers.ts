@@ -127,6 +127,11 @@ export const appRouter = router({
           filename: z.string().trim().min(1).max(255).regex(/\.xlsx$/i, "Attachment must be an Excel file"),
           base64: z.string().min(100).max(45_000_000),
         }),
+        additionalAttachments: z.array(z.object({
+          filename: z.string().trim().min(1).max(255),
+          base64: z.string().min(4).max(16_000_000),
+          contentType: z.string().trim().max(128).optional(),
+        })).max(10).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const delivery = await sendSpecsEmail(input);

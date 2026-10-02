@@ -559,3 +559,8 @@
 ## Specs Row-Order Reliability (Oct 2026)
 - [x] Consolidate duplicate historical row-order records to the latest saved order per style.
 - [x] Enforce one authoritative row-order record per style and update it on every save so components cannot revert or move after dragging.
+
+## Specs Email Attachments (Oct 2026)
+- [x] Add drag-and-drop and file-picker support for optional files in the Specs email composer.
+- [x] Send selected files together with the generated Specs workbook through the existing protected Resend workflow without storing them in SKU Dash.
+- [x] Enforce client and server attachment limits, including 10 files, 10 MB per file, and 30 MB combined email content.

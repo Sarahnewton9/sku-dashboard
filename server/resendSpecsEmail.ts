@@ -3,6 +3,13 @@ import { Resend } from "resend";
 const DEFAULT_FROM = "Tony Bianco Reports <reports@tonybianco.info>";
 const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 const CSV_MIME = "text/csv";
+const MAX_EMAIL_ATTACHMENT_BYTES = 30 * 1024 * 1024;
+
+type EmailAttachment = {
+  filename: string;
+  base64: string;
+  contentType?: string;
+};
 
 function escapeHtml(value: string): string {
   return value
@@ -29,9 +36,13 @@ export function buildSpecsEmailHtml(input: {
   category: string;
   season: string;
   message?: string;
+  additionalAttachmentCount?: number;
 }): string {
   const optionalMessage = input.message?.trim()
     ? `<div style="margin:0 0 20px;padding:12px 16px;background:#f8f3e9;border-left:3px solid #9a621d;border-radius:4px;font-size:14px;color:#3b2a1b;white-space:pre-wrap">${escapeHtml(input.message.trim())}</div>`
+    : "";
+  const additionalAttachmentNote = input.additionalAttachmentCount
+    ? `<p style="font-size:14px;line-height:1.55;margin:0 0 16px">${input.additionalAttachmentCount} additional file${input.additionalAttachmentCount === 1 ? "" : "s"} ${input.additionalAttachmentCount === 1 ? "is" : "are"} included with this specification sheet.</p>`
     : "";
 
   return `<div style="font-family:Arial,sans-serif;max-width:680px;margin:0 auto;padding:28px 24px;color:#21120d">
@@ -41,6 +52,7 @@ export function buildSpecsEmailHtml(input: {
   </div>
   ${optionalMessage}
   <p style="font-size:14px;line-height:1.55;margin:0 0 16px">The attached Excel file contains the current specification sheet for <strong>${escapeHtml(input.style.toUpperCase())}</strong>.</p>
+  ${additionalAttachmentNote}
   <table style="width:100%;border-collapse:collapse;font-size:13px;margin:0 0 20px">
     <tr><td style="padding:8px 0;border-top:1px solid #e5ded3;font-weight:700;width:110px">STYLE</td><td style="padding:8px 0;border-top:1px solid #e5ded3">${escapeHtml(input.style.toUpperCase())}</td></tr>
     <tr><td style="padding:8px 0;border-top:1px solid #e5ded3;font-weight:700">LAST</td><td style="padding:8px 0;border-top:1px solid #e5ded3">${escapeHtml(input.last.toUpperCase())}</td></tr>
@@ -87,19 +99,30 @@ export async function sendSpecsEmail(input: {
   last: string;
   category: string;
   season: string;
-  attachment: { filename: string; base64: string };
+  attachment: EmailAttachment;
+  additionalAttachments?: EmailAttachment[];
 }): Promise<{ id: string | undefined }> {
   const config = getResendSpecsEmailConfiguration();
   if (!config.enabled) {
     throw new Error("Email is not configured. Add the Resend API key in the project secrets before sending.");
   }
 
-  const attachmentContent = Buffer.from(input.attachment.base64, "base64");
-  if (attachmentContent.length === 0) {
+  const workbookContent = Buffer.from(input.attachment.base64, "base64");
+  if (workbookContent.length === 0) {
     throw new Error("The Specs attachment could not be prepared.");
   }
-  if (attachmentContent.length > 30 * 1024 * 1024) {
-    throw new Error("The Specs attachment is too large to send by email.");
+  const additionalAttachments = (input.additionalAttachments ?? []).map((attachment) => ({
+    filename: attachment.filename,
+    content: Buffer.from(attachment.base64, "base64"),
+    contentType: attachment.contentType?.trim() || "application/octet-stream",
+  }));
+  if (additionalAttachments.some((attachment) => attachment.content.length === 0)) {
+    throw new Error("One of the additional attachments could not be prepared.");
+  }
+  const totalAttachmentBytes = workbookContent.length
+    + additionalAttachments.reduce((total, attachment) => total + attachment.content.length, 0);
+  if (totalAttachmentBytes > MAX_EMAIL_ATTACHMENT_BYTES) {
+    throw new Error("The combined email attachments are too large to send. Keep them under 30 MB in total.");
   }
 
   const resend = new Resend(config.apiKey);
@@ -109,12 +132,12 @@ export async function sendSpecsEmail(input: {
     cc: input.cc?.length ? input.cc : undefined,
     replyTo: input.replyTo?.trim() || undefined,
     subject: input.subject,
-    html: buildSpecsEmailHtml(input),
+    html: buildSpecsEmailHtml({ ...input, additionalAttachmentCount: additionalAttachments.length }),
     attachments: [{
       filename: input.attachment.filename,
-      content: attachmentContent,
+      content: workbookContent,
       contentType: XLSX_MIME,
-    }],
+    }, ...additionalAttachments],
   });
 
   if (error) {

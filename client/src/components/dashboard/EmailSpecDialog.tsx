@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { BookmarkPlus, History, Mail, Send, Trash2, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { BookmarkPlus, History, Mail, Paperclip, Send, Trash2, Upload, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { fileToEmailAttachment, type UserEmailAttachment } from "@/lib/exportEmailAttachment";
 
 type SpecsAttachment = { filename: string; base64: string };
+type AdditionalAttachment = UserEmailAttachment & { size: number };
+
+const MAX_ADDITIONAL_ATTACHMENTS = 10;
+const MAX_ADDITIONAL_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+const MAX_SINGLE_ADDITIONAL_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
 type RecipientGroup = {
   id: number;
@@ -43,6 +49,11 @@ function joinRecipients(recipients: string[] | undefined): string {
 
 function isEmailAddress(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function EmailSpecDialog({
@@ -75,6 +86,9 @@ export function EmailSpecDialog({
   const [groupName, setGroupName] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState<string>("manual");
   const [isPreparing, setIsPreparing] = useState(false);
+  const [additionalAttachments, setAdditionalAttachments] = useState<AdditionalAttachment[]>([]);
+  const [isFileDragActive, setIsFileDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const recipientGroups = trpc.email.listRecipientGroups.useQuery(undefined, { enabled: open });
   const emailHistory = trpc.email.getSpecsHistory.useQuery({ style, season }, { enabled: open });
@@ -98,8 +112,52 @@ export function EmailSpecDialog({
   });
 
   useEffect(() => {
-    if (open) setSubject(defaultSubject);
+    if (open) {
+      setSubject(defaultSubject);
+      setAdditionalAttachments([]);
+      setIsFileDragActive(false);
+    }
   }, [defaultSubject, open]);
+
+  const addAdditionalAttachments = async (files: FileList | File[]) => {
+    const filesToAdd = Array.from(files);
+    if (filesToAdd.length === 0) return;
+
+    const attachmentSlots = MAX_ADDITIONAL_ATTACHMENTS - additionalAttachments.length;
+    if (attachmentSlots <= 0) {
+      toast.error(`You can add up to ${MAX_ADDITIONAL_ATTACHMENTS} extra attachments.`);
+      return;
+    }
+    const permittedFiles = filesToAdd.slice(0, attachmentSlots);
+    if (filesToAdd.length > attachmentSlots) {
+      toast.error(`Only the first ${attachmentSlots} file${attachmentSlots === 1 ? "" : "s"} could be added.`);
+    }
+    const oversizedFile = permittedFiles.find((file) => file.size > MAX_SINGLE_ADDITIONAL_ATTACHMENT_BYTES);
+    if (oversizedFile) {
+      toast.error(`${oversizedFile.name} is over the 10 MB per-file limit.`);
+      return;
+    }
+    const newBytes = permittedFiles.reduce((total, file) => total + file.size, 0);
+    const existingBytes = additionalAttachments.reduce((total, attachment) => total + attachment.size, 0);
+    if (existingBytes + newBytes > MAX_ADDITIONAL_ATTACHMENT_BYTES) {
+      toast.error("Extra attachments are limited to 20 MB in total.");
+      return;
+    }
+
+    try {
+      const prepared = await Promise.all(permittedFiles.map(async (file) => ({
+        ...(await fileToEmailAttachment(file)),
+        size: file.size,
+      })));
+      setAdditionalAttachments((current) => [...current, ...prepared]);
+    } catch {
+      toast.error("One of the attachments could not be prepared.");
+    }
+  };
+
+  const removeAdditionalAttachment = (index: number) => {
+    setAdditionalAttachments((current) => current.filter((_, currentIndex) => currentIndex !== index));
+  };
 
   const applyRecipientGroup = (id: string) => {
     setSelectedGroupId(id);
@@ -166,10 +224,15 @@ export function EmailSpecDialog({
         category,
         season,
         attachment,
+        additionalAttachments: additionalAttachments.map(({ filename, base64, contentType }) => ({ filename, base64, contentType })),
       });
       await utils.email.getSpecsHistory.invalidate({ style, season });
-      toast.success(`Sent ${attachment.filename} to ${recipients.length} recipient${recipients.length === 1 ? "" : "s"}`);
+      const attachmentSummary = additionalAttachments.length
+        ? ` with ${additionalAttachments.length} extra attachment${additionalAttachments.length === 1 ? "" : "s"}`
+        : "";
+      toast.success(`Sent ${attachment.filename}${attachmentSummary} to ${recipients.length} recipient${recipients.length === 1 ? "" : "s"}`);
       setMessage("");
+      setAdditionalAttachments([]);
       onOpenChange(false);
       onSent?.();
     } catch (error) {
@@ -280,6 +343,59 @@ export function EmailSpecDialog({
             <Label htmlFor="spec-email-message">Message (optional)</Label>
             <Textarea id="spec-email-message" value={message} onChange={(event) => setMessage(event.target.value)} rows={4} placeholder="Add any notes for the recipient…" />
           </div>
+
+          <section className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-medium"><Paperclip className="h-4 w-4" /> Extra attachments (optional)</div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="sr-only"
+              onChange={(event) => {
+                if (event.target.files) void addAdditionalAttachments(event.target.files);
+                event.target.value = "";
+              }}
+            />
+            <div
+              className={`rounded-lg border-2 border-dashed px-4 py-5 text-center transition-colors ${isFileDragActive ? "border-amber-500 bg-amber-50 dark:bg-amber-950/20" : "border-muted-foreground/25 bg-muted/20"}`}
+              onDragEnter={(event) => { event.preventDefault(); setIsFileDragActive(true); }}
+              onDragOver={(event) => event.preventDefault()}
+              onDragLeave={(event) => { event.preventDefault(); setIsFileDragActive(false); }}
+              onDrop={(event) => {
+                event.preventDefault();
+                setIsFileDragActive(false);
+                void addAdditionalAttachments(event.dataTransfer.files);
+              }}
+            >
+              <Upload className="mx-auto mb-2 h-5 w-5 text-muted-foreground" />
+              <p className="text-sm font-medium">Drag and drop files here</p>
+              <p className="mt-1 text-xs text-muted-foreground">or select files from your computer — up to 10 files, 10 MB each, 20 MB total.</p>
+              <Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => fileInputRef.current?.click()}>
+                <Paperclip className="mr-1.5 h-4 w-4" /> Choose files
+              </Button>
+            </div>
+            {additionalAttachments.length > 0 && (
+              <div className="space-y-1.5">
+                {additionalAttachments.map((attachment, index) => (
+                  <div key={`${attachment.filename}-${index}`} className="flex items-center gap-2 rounded-md border bg-muted/20 px-3 py-2 text-xs">
+                    <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 truncate font-medium">{attachment.filename}</span>
+                    <span className="shrink-0 text-muted-foreground">{formatFileSize(attachment.size)}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeAdditionalAttachment(index)}
+                      className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-destructive"
+                      aria-label={`Remove ${attachment.filename}`}
+                      title={`Remove ${attachment.filename}`}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">Files are used for this email only and are not saved in SKU Dash.</p>
+          </section>
 
           <section className="space-y-2 border-t pt-4">
             <div className="flex items-center gap-2 text-sm font-medium"><History className="h-4 w-4" /> Email history for {style.toUpperCase()}</div>

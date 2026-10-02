@@ -1,6 +1,7 @@
 import * as XLSX from "xlsx";
 
 export type ExportEmailAttachment = { filename: string; base64: string };
+export type UserEmailAttachment = ExportEmailAttachment & { contentType?: string };
 
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -27,5 +28,14 @@ export async function csvToEmailAttachment(csv: string, filename: string): Promi
   return {
     filename,
     base64: await blobToBase64(new Blob([csv], { type: "text/csv;charset=utf-8" })),
+  };
+}
+
+/** Encodes a user-selected file for the authenticated email-send request. */
+export async function fileToEmailAttachment(file: File): Promise<UserEmailAttachment> {
+  return {
+    filename: file.name,
+    base64: await blobToBase64(file),
+    contentType: file.type || undefined,
   };
 }

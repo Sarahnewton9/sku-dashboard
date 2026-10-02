@@ -50,11 +50,13 @@ describe("Specs email delivery", () => {
       category: "Ballet Flat",
       season: "Winter 27",
       message: "Use <latest> spec & confirm.",
+      additionalAttachmentCount: 2,
     });
 
     expect(html).toContain("CAPPA");
     expect(html).toContain("Winter 27");
     expect(html).toContain("Use &lt;latest&gt; spec &amp; confirm.");
+    expect(html).toContain("2 additional files are included");
     expect(html).not.toContain("Use <latest> spec");
   });
 
