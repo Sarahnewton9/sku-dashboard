@@ -1,5 +1,6 @@
 /**
- * ExportPanel — Full Data Export, AP21 CSV (101836 BxB format), and PPTX Range Review Sync
+ * ExportPanel — Full Data Export and PPTX Range Review Sync.
+ * The AP21 CSV workflow remains retained but is intentionally hidden until needed.
  */
 import { useState, useMemo, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
@@ -8,11 +9,7 @@ import { FileDown, Mail, X, Upload, FileText, RotateCcw, CheckSquare, Square } f
 import { useSeason } from "@/contexts/SeasonContext";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
-import {
-  FULL_EXPORT_REQUIRED_COLS,
-  getSelectedFullExportColumns,
-  sortFullExportRowsByStyle,
-} from "@shared/fullExportOrder";
+import { sortFullExportRowsByStyle } from "@shared/fullExportOrder";
 import { getSeasonFileLabel } from "@shared/seasonLabel";
 import { formatSkuExportLabel, getSkuExportFields } from "@shared/skuExportLabel";
 import {
@@ -104,15 +101,14 @@ const FULL_EXPORT_ALL_COLS: Array<{ key: string; label: string }> = [
   { key: "Fit Rating",         label: "Fit Rating" },
   { key: "Fitting Notes",       label: "Fitting Notes" },
 ];
-// These columns are always included and cannot be deselected
-const FULL_EXPORT_DEFAULT_COLS = new Set(FULL_EXPORT_ALL_COLS.map(c => c.key));
+const FULL_EXPORT_KEYS = FULL_EXPORT_ALL_COLS.map((column) => column.key);
+const SHOW_AP21_PRODUCT_EXPORT = false;
 
 export default function ExportPanel({ onClose }: Props) {
   const { mergedRawSkus, mergedStyles } = useCustomSkus();
   const { season } = useSeason();
   const [exporting, setExporting] = useState<string | null>(null);
   const [showPptxSync, setShowPptxSync] = useState(false);
-  const [fullExportCols, setFullExportCols] = useState<Set<string>>(FULL_EXPORT_DEFAULT_COLS);
 
   // AP21 style multi-select state
   const [selectedAp21Styles, setSelectedAp21Styles] = useState<Set<string>>(new Set());
@@ -491,10 +487,7 @@ export default function ExportPanel({ onClose }: Props) {
   };
 
   function buildFullDataWorkbook() {
-      const selectedKeys = getSelectedFullExportColumns(
-        FULL_EXPORT_ALL_COLS.map((column) => column.key),
-        fullExportCols,
-      );
+      const selectedKeys = FULL_EXPORT_KEYS;
 
       const rows = sortFullExportRowsByStyle(
         (mergedRawSkus as any[])
@@ -602,7 +595,8 @@ export default function ExportPanel({ onClose }: Props) {
             Choose an export format. All exports include Size 11 flag and current DB data.
           </p>
 
-          {/* AP21 CSV Export */}
+          {/* Retained for a future AP21 handover; deliberately hidden while not in use. */}
+          {SHOW_AP21_PRODUCT_EXPORT && (
           <div
             className="w-full rounded-xl border overflow-hidden"
             style={{ borderColor: "oklch(0.80 0.12 280)", background: "oklch(0.97 0.02 280)" }}
@@ -716,6 +710,7 @@ export default function ExportPanel({ onClose }: Props) {
               </div>
             </div>
           </div>
+          )}
 
           {/* PPTX Range Review Sync */}
           <button
@@ -742,63 +737,24 @@ export default function ExportPanel({ onClose }: Props) {
                 <FileDown className="w-5 h-5 text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-foreground">Full Data Export</p>
+                <p className="font-semibold text-sm text-foreground">Full range export</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Choose which columns to include, then export all SKUs to Excel.
+                  All active SKUs with style, last, category, sample and fitting details.
                 </p>
-                <div className="flex items-center gap-3 mt-3">
-                  <button
-                    onClick={() => setFullExportCols(new Set(FULL_EXPORT_ALL_COLS.map(c => c.key)))}
-                    className="text-xs px-2.5 py-1 rounded-full border font-medium transition-colors hover:bg-muted/40"
-                    style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
-                  >Select All</button>
-                  <button
-                    onClick={() => setFullExportCols(new Set(FULL_EXPORT_REQUIRED_COLS))}
-                    className="text-xs px-2.5 py-1 rounded-full border font-medium transition-colors hover:bg-muted/40"
-                    style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
-                  >Reset</button>
-                  <span className="text-xs text-muted-foreground ml-auto">{fullExportCols.size} columns</span>
-                </div>
               </div>
             </div>
-            <div className="px-4 pb-3 border-t grid grid-cols-2 gap-x-4 gap-y-1.5 pt-3" style={{ borderColor: "var(--border)" }}>
-              {FULL_EXPORT_ALL_COLS.map((col) => (
-                <label key={col.key} className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={fullExportCols.has(col.key)}
-                    disabled={FULL_EXPORT_REQUIRED_COLS.includes(col.key)}
-                    onChange={() => {
-                      setFullExportCols(prev => {
-                        const next = new Set(prev);
-                        if (next.has(col.key)) next.delete(col.key);
-                        else next.add(col.key);
-                        return next;
-                      });
-                    }}
-                    className="accent-amber-600 w-3.5 h-3.5 flex-shrink-0"
-                  />
-                  <span className={`text-xs font-medium truncate ${
-                    FULL_EXPORT_REQUIRED_COLS.includes(col.key)
-                      ? "text-muted-foreground"
-                      : "text-foreground group-hover:text-foreground"
-                  }`}>{col.label}</span>
-                </label>
-              ))}
-            </div>
-            <div className="px-4 pb-4 pt-2 flex gap-2">
+            <div className="px-4 pb-4 pt-1 flex gap-2">
               <button
                 onClick={exportFullData}
-                disabled={exporting !== null || fullExportCols.size === 0}
+                disabled={exporting !== null}
                 className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-semibold text-white transition-colors disabled:opacity-50"
                 style={{ background: "oklch(0.50 0.14 55)" }}
               >
                 <FileDown className="w-3.5 h-3.5" />
-                {exporting === "full" ? "Exporting…" : `Export ${fullExportCols.size} columns`}
+                {exporting === "full" ? "Exporting…" : "Download Excel"}
               </button>
               <button
                 onClick={() => setEmailFullDataOpen(true)}
-                disabled={fullExportCols.size === 0}
                 className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold border transition-colors disabled:opacity-50 hover:bg-muted"
                 style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
                 title="Email Full Data Export"
@@ -833,7 +789,7 @@ export default function ExportPanel({ onClose }: Props) {
       />
     )}
 
-    {showColourCodeModal && (
+    {SHOW_AP21_PRODUCT_EXPORT && showColourCodeModal && (
       <AP21ColourCodeModal
         missingDescriptions={missingColourDescriptions}
         onConfirm={() => {
@@ -861,7 +817,7 @@ export default function ExportPanel({ onClose }: Props) {
         return workbookToEmailAttachment(wb, `${getSeasonFileLabel(season)}_Full_Export.xlsx`);
       }}
     />
-    <EmailExportDialog
+    {SHOW_AP21_PRODUCT_EXPORT && <EmailExportDialog
       open={emailAp21Open}
       onOpenChange={setEmailAp21Open}
       exportType="AP21 Product Import"
@@ -875,7 +831,7 @@ export default function ExportPanel({ onClose }: Props) {
         const suffix = stylesToExport.length === 1 ? stylesToExport[0].toLowerCase() : `${stylesToExport.length}_styles`;
         return csvToEmailAttachment(csvContentForRows(rows), `AP21_products_${getSeasonFileLabel(season)}_${suffix}.csv`);
       }}
-    />
+    />}
     </>
   );
 }

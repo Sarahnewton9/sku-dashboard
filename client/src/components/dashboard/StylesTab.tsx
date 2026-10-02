@@ -20,6 +20,14 @@ import { useStyleCategories } from "@/hooks/useStyleCategories";
 import { useSeason } from "@/contexts/SeasonContext";
 import { Search, ChevronUp, ChevronDown, ChevronRight, Download, Mail, Upload, SlidersHorizontal, CheckCircle, RotateCcw, Ban, RefreshCw, Plus, Lock, Unlock, FileSpreadsheet, X, Camera, ImageOff, Ruler, Pencil, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { LastMeasurementsPanel } from "./LastMeasurementsPanel";
 import * as XLSX from "xlsx";
 import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
@@ -1349,94 +1357,77 @@ export default function StylesTab() {
         )}
       </div>
 
-      {/* Action toolbar */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <button
-          onClick={() => setShowImport(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700"
-          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
-        >
-          <Upload className="w-4 h-4" />
-          Import
-        </button>
-
-        <button
-          onClick={() => setShowInvoiceImport(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-green-50 hover:border-green-400 hover:text-green-700"
-          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
-        >
-          <FileSpreadsheet className="w-4 h-4" />
-          Import Invoice
-        </button>
-
-        <button
-          onClick={exportToExcel}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700"
-          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
-        >
-          <Download className="w-4 h-4" />
-          Export Excel
-        </button>
-        <button
-          onClick={() => setEmailRangeOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700"
-          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
-        >
-          <Mail className="w-4 h-4" />
-          Email Export
-        </button>
-        <button
-          onClick={() => {
-            const { wb, filename } = buildMissingCostRequestWorkbook();
-            XLSX.writeFile(wb, filename);
-          }}
-          disabled={missingCostRequestRows.length === 0}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
-          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
-        >
-          <Download className="w-4 h-4" />
-          Cost Request ({missingCostRequestRows.length})
-        </button>
-        <button
-          onClick={() => setEmailCostRequestOpen(true)}
-          disabled={missingCostRequestRows.length === 0}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
-          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
-        >
-          <Mail className="w-4 h-4" />
-          Email Cost Request
-        </button>
-        <button
-          onClick={() => setCostRequestImportOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700"
-          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
-        >
-          <Upload className="w-4 h-4" />
-          Import Factory Costs
-        </button>
-
+      {/* Action toolbar — primary actions stay visible; supporting actions stay grouped. */}
+      <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => setShowAddStyleModal(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-purple-50 hover:border-purple-400 hover:text-purple-700"
-          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors hover:brightness-95"
+          style={{ background: "oklch(0.50 0.14 55)" }}
         >
           <Plus className="w-4 h-4" />
           Add Style
         </button>
 
-        <button
-          onClick={handleFetchSize11}
-          disabled={isFetchingSize11}
-          title="Reads tonybianco.com.au to auto-fill which styles come in size 11"
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-green-50 hover:border-green-400 hover:text-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
-        >
-          {isFetchingSize11 ? (
-            <><RefreshCw className="w-4 h-4 animate-spin" /> Fetching…</>
-          ) : (
-            <><RefreshCw className="w-4 h-4" /> Sync Size 11</>
-          )}
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700" style={{ borderColor: "var(--border)", color: "var(--foreground)" }}>
+              <Upload className="w-4 h-4" /> Import <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-52">
+            <DropdownMenuLabel>Import into SKU Dash</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => setShowImport(true)}><Upload /> SKU data</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setShowInvoiceImport(true)}><FileSpreadsheet /> Supplier invoice</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={handleFetchSize11} disabled={isFetchingSize11}>
+              <RefreshCw className={isFetchingSize11 ? "animate-spin" : ""} />
+              {isFetchingSize11 ? "Syncing Size 11…" : "Sync Size 11"}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700" style={{ borderColor: "var(--border)", color: "var(--foreground)" }}>
+              <Download className="w-4 h-4" /> Export <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-52">
+            <DropdownMenuLabel>Current range</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={exportToExcel}><Download /> Download Excel</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setEmailRangeOpen(true)}><Mail /> Email Excel</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700" style={{ borderColor: "var(--border)", color: "var(--foreground)" }}>
+              <FileSpreadsheet className="w-4 h-4" /> Factory costs
+              <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">{missingCostRequestRows.length}</span>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-60">
+            <DropdownMenuLabel>Factory cost requests</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={() => {
+                const { wb, filename } = buildMissingCostRequestWorkbook();
+                XLSX.writeFile(wb, filename);
+              }}
+              disabled={missingCostRequestRows.length === 0}
+            >
+              <Download /> Download request ({missingCostRequestRows.length})
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setEmailCostRequestOpen(true)} disabled={missingCostRequestRows.length === 0}>
+              <Mail /> Email request
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => setCostRequestImportOpen(true)}><Upload /> Import completed costs</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <EmailExportDialog

@@ -603,3 +603,10 @@
 ## Below-Target Margin Indicator (Oct 2026)
 - [x] Treat 70%–74.9% as an acceptable, quiet tolerance range beneath the 75% target.
 - [x] Use the subtle amber warning only when the selected RRP produces a margin below the 70% tolerance floor.
+
+## By Style Toolbar & Export Simplification (Oct 2026)
+- [x] Reduced the By Style action bar from eight controls to four grouped actions: **Add Style**, **Import**, **Export**, and **Factory costs**.
+- [x] Moved supplier-invoice import and Size 11 sync into Import; moved download/email into Export; moved cost-request download/email and completed-cost import into Factory costs.
+- [x] Simplified the main Export dialog to a single **Full range export** card with **Download Excel** and **Email** actions. All standard columns are included automatically.
+- [x] Hidden the AP21 Product Import CSV workflow and its email option while it is not needed, retaining the underlying workflow for a future AP21 handover.
+- [x] Validation: 101 regression tests and production build passed; visual check confirmed the compact W27 By Style toolbar.
