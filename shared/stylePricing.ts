@@ -11,15 +11,17 @@ export function snapToAuRrpLadder(value: number): number {
 }
 
 /**
- * Recommends an AU GST-inclusive RRP from landed cost and desired gross margin.
- * The result uses the price points observed in the supplied Summer 26 buy plan.
+ * Recommends an AU GST-inclusive RRP from an already-converted AUD landed cost
+ * and desired gross margin. Never pass a USD factory cost directly to this
+ * helper; SKU Dash leaves this calculation disabled until a conversion policy
+ * is supplied.
  */
 export function getSuggestedAuRrp(landedCost: number, targetMargin: number): number | null {
   if (!Number.isFinite(landedCost) || landedCost <= 0 || !Number.isFinite(targetMargin) || targetMargin <= 0 || targetMargin >= 1) return null;
   return snapToAuRrpLadder((landedCost / (1 - targetMargin)) * 1.1);
 }
 
-/** Gross margin calculated against AU retail price excluding 10% GST. */
+/** Gross margin from an already-converted AUD landed cost and AU retail price excluding 10% GST. */
 export function getAuGrossMargin(landedCost: number, rrpIncGst: number): number | null {
   if (!Number.isFinite(landedCost) || landedCost < 0 || !Number.isFinite(rrpIncGst) || rrpIncGst <= 0) return null;
   return 1 - landedCost / (rrpIncGst / 1.1);

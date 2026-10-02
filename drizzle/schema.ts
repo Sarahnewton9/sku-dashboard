@@ -82,7 +82,7 @@ export type InsertSkuCostPrice = typeof skuCostPrices.$inferInsert;
 export const styleMeta = mysqlTable("style_meta", {
   id: int("id").autoincrement().primaryKey(),
   style: varchar("style", { length: 64 }).notNull().unique(),
-  /** Landed cost in AUD, used for price and margin planning. */
+  /** Factory / landed cost in USD. AU margin planning requires a separate conversion policy. */
   landedCost: float("landedCost"),
   /** Gross-margin target stored as a decimal, e.g. 0.75 = 75%. */
   targetMargin: float("targetMargin").default(0.75).notNull(),

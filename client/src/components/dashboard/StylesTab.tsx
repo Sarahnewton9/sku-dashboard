@@ -820,7 +820,7 @@ export default function StylesTab() {
       "FACTORY COMMENTS": "",
     }));
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FACTORY COST (AUD)": "No active SKUs are missing a cost" }]);
+    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FACTORY COST (USD)": "No active SKUs are missing a cost" }]);
     ws["!cols"] = [
       { wch: 13 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 20 },
       { wch: 20 }, { wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 20 }, { wch: 34 },

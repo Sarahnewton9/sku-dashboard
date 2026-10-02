@@ -582,3 +582,7 @@
 - [x] Label factory-cost exports, imports and SKU details as USD; exclude USD factory cost from AUD margin calculation.
 - [x] Fix Last Approval saves to retain the active season and enforce one approval record per last per season.
 - [x] Consolidate duplicate historic Last Approval records and recover the W27 FERGIE and HOLLIE notes.
+
+## USD Landed-Cost Clarification (Oct 2026)
+- [x] Change the style pricing input to Factory / Landed Cost (USD) and retain RRP as AUD including GST.
+- [x] Pause margin and suggested-RRP calculations until an approved USD-to-AUD landed-cost conversion policy (FX, freight, duty and other costs) is configured.
