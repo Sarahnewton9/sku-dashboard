@@ -576,3 +576,9 @@
 - [x] Add a matching factory email flow using saved groups, CC/reply-to fields and export email history.
 - [x] Add a drag-and-drop completed-cost import with preview, exact SKU matching and safe skip reporting.
 - [x] Store returned factory costs seasonally with a composite SKU identity so Upper 2 variants remain independently costed.
+
+## USD Cost List & Last Approval Notes (Oct 2026)
+- [x] Load the supplied 30 Aug cost list as USD factory costs: 531 new costs added, 55 newer values updated, 344 matching values retained; 65 retired/non-range rows skipped.
+- [x] Label factory-cost exports, imports and SKU details as USD; exclude USD factory cost from AUD margin calculation.
+- [x] Fix Last Approval saves to retain the active season and enforce one approval record per last per season.
+- [x] Consolidate duplicate historic Last Approval records and recover the W27 FERGIE and HOLLIE notes.

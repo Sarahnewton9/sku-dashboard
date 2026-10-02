@@ -50,9 +50,9 @@ async function parseCompletedCostFile(file: File): Promise<{ rows: ImportedCostR
   const leatherColumn = findColumn(headers, ["UPPER 1 LEATHER", "LEATHER", "REMARKS"]);
   const colour2Column = findColumn(headers, ["UPPER 2 COLOUR"]);
   const leather2Column = findColumn(headers, ["UPPER 2 LEATHER"]);
-  const costColumn = findColumn(headers, ["FACTORY COST AUD", "COST AUD", "COST", "UNIT PRICE"]);
+  const costColumn = findColumn(headers, ["FACTORY COST USD", "COST USD", "USD", "FACTORY COST AUD", "COST AUD", "COST", "UNIT PRICE"]);
   if (styleColumn < 0 || colourColumn < 0 || costColumn < 0) {
-    return { rows: [], formatError: "Use the exported cost-request workbook, or provide STYLE, COLOUR and FACTORY COST (AUD) / COST columns." };
+    return { rows: [], formatError: "Use the exported cost-request workbook, or provide STYLE, COLOUR and FACTORY COST (USD) / COST columns." };
   }
 
   const rows: ImportedCostRow[] = [];
@@ -176,7 +176,7 @@ export function CostRequestImportDialog({
           >
             {isParsing ? <Loader2 className="mb-2 h-9 w-9 animate-spin text-muted-foreground" /> : <Upload className="mb-2 h-9 w-9 text-muted-foreground" />}
             <p className="text-sm font-medium text-foreground">{fileName || "Drop the completed Excel file here, or click to select"}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Accepted: .xlsx, .xls or .csv · Expected cost column: FACTORY COST (AUD)</p>
+            <p className="mt-1 text-xs text-muted-foreground">Accepted: .xlsx, .xls or .csv · Expected cost column: FACTORY COST (USD)</p>
             <input ref={inputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void loadFile(file); }} />
           </div>
 

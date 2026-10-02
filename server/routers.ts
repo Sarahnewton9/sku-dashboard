@@ -727,6 +727,7 @@ export const appRouter = router({
     upsert: publicProcedure
       .input(z.object({
         lastName: z.string(),
+        season: z.string().optional().default("SS26"),
         status: z.enum(["approved", "waiting_revised"]),
         notes: z.string().nullable().optional(),
         size65Approved: z.boolean().optional(),
@@ -743,6 +744,7 @@ export const appRouter = router({
           input.size7Approved,
           input.size95Approved,
           input.proceedWithSamples,
+          input.season,
         );
         return { success: true };
       }),

@@ -457,7 +457,7 @@ export default function LastApprovalTab() {
       });
     }
     upsert.mutate(
-      { lastName, status: next, notes: approvalMap[lastName]?.notes ?? null },
+      { lastName, season, status: next, notes: approvalMap[lastName]?.notes ?? null },
       {
         onError: () => {
           setLocalOverrides((prev) => ({ ...prev, [lastName]: current }));
@@ -471,7 +471,7 @@ export default function LastApprovalTab() {
     setLocalSizeOverrides((prev) => ({ ...prev, [lastName]: { ...prev[lastName], [field]: next } }));
     const fieldMap = { size65: "size65Approved", size7: "size7Approved", size95: "size95Approved" } as const;
     upsert.mutate(
-      { lastName, status: approvalMap[lastName]?.status ?? "waiting_revised", notes: approvalMap[lastName]?.notes ?? null, [fieldMap[field]]: next },
+      { lastName, season, status: approvalMap[lastName]?.status ?? "waiting_revised", notes: approvalMap[lastName]?.notes ?? null, [fieldMap[field]]: next },
       { onError: () => setLocalSizeOverrides((prev) => ({ ...prev, [lastName]: { ...prev[lastName], [field]: current } })) }
     );
   };
@@ -480,7 +480,7 @@ export default function LastApprovalTab() {
     const next = !current;
     setLocalSizeOverrides((prev) => ({ ...prev, [lastName]: { ...prev[lastName], proceed: next } }));
     upsert.mutate(
-      { lastName, status: approvalMap[lastName]?.status ?? "waiting_revised", notes: approvalMap[lastName]?.notes ?? null, proceedWithSamples: next },
+      { lastName, season, status: approvalMap[lastName]?.status ?? "waiting_revised", notes: approvalMap[lastName]?.notes ?? null, proceedWithSamples: next },
       { onError: () => setLocalSizeOverrides((prev) => ({ ...prev, [lastName]: { ...prev[lastName], proceed: current } })) }
     );
   };
@@ -495,6 +495,7 @@ export default function LastApprovalTab() {
     const draft = notesDrafts[lastName] ?? "";
     upsert.mutate({
       lastName,
+      season,
       status: approvalMap[lastName]?.status ?? "waiting_revised",
       notes: draft || null,
     });
@@ -582,6 +583,7 @@ export default function LastApprovalTab() {
         const canonical = seasonLasts.find((l: string) => l.toUpperCase() === row.lastName) ?? row.lastName;
         await upsert.mutateAsync({
           lastName: canonical,
+          season,
           status: row.status ?? approvalMap[canonical]?.status ?? "waiting_revised",
           notes: row.notes || approvalMap[canonical]?.notes || null,
         });

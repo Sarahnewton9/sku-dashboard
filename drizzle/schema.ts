@@ -199,7 +199,9 @@ export const lastApprovals = mysqlTable("last_approvals", {
   // Proceed with samples sign-off
   proceedWithSamples: boolean("proceedWithSamples").default(false).notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  oneLastPerSeason: uniqueIndex("last_approvals_last_season_uniq").on(t.lastName, t.season),
+}));
 
 export type LastApproval = typeof lastApprovals.$inferSelect;
 export type InsertLastApproval = typeof lastApprovals.$inferInsert;

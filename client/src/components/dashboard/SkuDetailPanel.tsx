@@ -9,7 +9,6 @@ import { trpc } from "@/lib/trpc";
 import { X, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { displayColour, displayLeather } from "@/lib/utils";
-import { getAuGrossMargin } from "@shared/stylePricing";
 
 export interface SkuPanelData {
   style: string;
@@ -53,9 +52,6 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
   const effectiveCost = sku?.seasonalCost ?? meta?.costPrice;
   const styleRrp = sku ? styleMeta[sku.style]?.rrp : undefined;
   const effectiveRrp = meta?.rrpOverride ?? styleRrp;
-  const effectiveMargin = effectiveCost != null && effectiveRrp != null
-    ? getAuGrossMargin(effectiveCost, effectiveRrp)
-    : null;
 
   const updateMutation = trpc.sku.update.useMutation({
     onSuccess: () => { onMetaChange(); },
@@ -218,7 +214,7 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
               </label>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Cost Price</span>
+              <span className="text-sm text-muted-foreground">Factory Cost (USD)</span>
               <span className="text-sm font-semibold font-mono text-foreground">
                 {effectiveCost != null ? `$${effectiveCost.toFixed(2)}` : "—"}
               </span>
@@ -245,14 +241,6 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
               />
               <p className="text-xs text-muted-foreground">Leave blank to use the style RRP.</p>
             </div>
-            {effectiveMargin != null && (
-              <div className="flex items-center justify-between pt-1 border-t" style={{ borderColor: "var(--border)" }}>
-                <span className="text-sm text-muted-foreground">Margin</span>
-                <span className="text-sm font-semibold" style={{ color: "oklch(0.50 0.14 55)" }}>
-                  {Math.round(effectiveMargin * 100)}%
-                </span>
-              </div>
-            )}
           </div>
 
           {/* Hint about fitting */}

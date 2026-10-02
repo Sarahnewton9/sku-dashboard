@@ -470,6 +470,13 @@
       "when": 1790904054911,
       "tag": "0066_lush_the_anarchist",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "5",
+      "when": 1790905325965,
+      "tag": "0067_dusty_prodigy",
+      "breakpoints": true
     }
   ]
 }

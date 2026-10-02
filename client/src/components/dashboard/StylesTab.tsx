@@ -750,7 +750,7 @@ export default function StylesTab() {
           "Size 11": dbMeta?.isSize11 ? "Yes" : "No",
           "Sample Status": dbMeta?.sampleStatus ?? "waiting",
           "Order Qty": dbMeta?.orderQty ?? 0,
-          "Cost Price": currentCost != null ? currentCost : "",
+          "Factory Cost (USD)": currentCost != null ? currentCost : "",
           RRP: styleMetaMap[sku.style]?.rrp != null ? styleMetaMap[sku.style].rrp : "",
           "Fit Rating": dbMeta?.fitRating ?? "",
           "Fitting Notes": dbMeta?.fittingNotes ?? "",
@@ -816,7 +816,7 @@ export default function StylesTab() {
       "UPPER 2 LEATHER": sku.leather2,
       "STATUS": sku.status,
       "SIZE 11": sku.isSize11,
-      "FACTORY COST (AUD)": "",
+      "FACTORY COST (USD)": "",
       "FACTORY COMMENTS": "",
     }));
     const wb = XLSX.utils.book_new();
@@ -1443,7 +1443,7 @@ export default function StylesTab() {
         exportScope={`${missingCostRequestRows.length} active SKU${missingCostRequestRows.length === 1 ? "" : "s"} missing costs`}
         season={getSeasonFileLabel(season)}
         defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — FACTORY COST REQUEST`}
-        defaultMessage={`Please complete the FACTORY COST (AUD) column for each SKU in the attached workbook and return the same file to us.\n\nPlease leave the Style and Upper 1 / Upper 2 columns unchanged so the completed costs can be safely loaded back into SKU Dash. Thank you.`}
+        defaultMessage={`Please complete the FACTORY COST (USD) column for each SKU in the attached workbook and return the same file to us.\n\nPlease leave the Style and Upper 1 / Upper 2 columns unchanged so the completed costs can be safely loaded back into SKU Dash. Thank you.`}
         buildAttachment={async () => {
           const { wb, filename } = buildMissingCostRequestWorkbook();
           return workbookToEmailAttachment(wb, filename);
