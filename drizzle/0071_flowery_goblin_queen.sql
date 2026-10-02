@@ -1,0 +1,1 @@
+ALTER TABLE `style_meta` MODIFY COLUMN `targetMargin` float NOT NULL DEFAULT 0.75;

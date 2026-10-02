@@ -596,9 +596,10 @@
 - Validation: **100 tests passed** and production build passed. Visual check passed on the W27 Buy Sessions page.
 
 ## Margin & RRP Guide Refinement (Oct 2026)
-- [x] Replace the long paused-calculation notice with quiet current-margin and 70%-target RRP guide tiles.
+- [x] Replace the long paused-calculation notice with quiet current-margin and RRP guide tiles.
 - [x] Use the Summer 26 Buy Plan's AUD landed-cost basis and RRP excluding GST for margin calculations; retain factory costs as USD per SKU.
-- [x] Change the default target margin from 75% to 70% for the 108 seeded price records and future styles.
+- [x] Restore 75% as the target margin for the 108 seeded price records and future styles.
 
 ## Below-Target Margin Indicator (Oct 2026)
-- [x] Add a subtle amber current-margin tile and indicator when the selected RRP produces a margin below the editable target (70% by default).
+- [x] Treat 70%–74.9% as an acceptable, quiet tolerance range beneath the 75% target.
+- [x] Use the subtle amber warning only when the selected RRP produces a margin below the 70% tolerance floor.

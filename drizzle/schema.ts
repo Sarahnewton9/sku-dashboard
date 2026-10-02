@@ -84,8 +84,8 @@ export const styleMeta = mysqlTable("style_meta", {
   style: varchar("style", { length: 64 }).notNull().unique(),
   /** Buy Plan landed cost in AUD, used to calculate AU gross margin. */
   landedCost: float("landedCost"),
-  /** Gross-margin target stored as a decimal, e.g. 0.70 = 70%. */
-  targetMargin: float("targetMargin").default(0.70).notNull(),
+  /** Gross-margin target stored as a decimal, e.g. 0.75 = 75%. */
+  targetMargin: float("targetMargin").default(0.75).notNull(),
   rrp: float("rrp"),
   /** Optional audit label such as "Summer 26 Buy Plan". */
   pricingSource: varchar("pricingSource", { length: 128 }),

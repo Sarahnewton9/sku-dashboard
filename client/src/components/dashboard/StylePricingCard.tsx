@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, Calculator, CircleDollarSign, Save } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { getAuGrossMargin, getSuggestedAuRrp } from "@shared/stylePricing";
+import {
+  DEFAULT_MARGIN_TARGET,
+  getAuGrossMargin,
+  getMarginStatus,
+  getSuggestedAuRrp,
+} from "@shared/stylePricing";
 
 type StylePricing = {
   landedCost?: number | null;
@@ -34,12 +39,12 @@ export function StylePricingCard({
   onSaved?: () => void;
 }) {
   const [landedCost, setLandedCost] = useState("");
-  const [targetMargin, setTargetMargin] = useState("70");
+  const [targetMargin, setTargetMargin] = useState("75");
   const [rrp, setRrp] = useState("");
 
   useEffect(() => {
     setLandedCost(pricing?.landedCost != null ? pricing.landedCost.toFixed(2) : "");
-    setTargetMargin(((pricing?.targetMargin ?? 0.70) * 100).toFixed(0));
+    setTargetMargin(((pricing?.targetMargin ?? DEFAULT_MARGIN_TARGET) * 100).toFixed(0));
     setRrp(pricing?.rrp != null ? pricing.rrp.toFixed(2) : "");
   }, [pricing?.landedCost, pricing?.rrp, pricing?.targetMargin, style]);
 
@@ -55,8 +60,9 @@ export function StylePricingCard({
   const suggestedMargin = landedCostValue != null && suggestedRrp != null
     ? getAuGrossMargin(landedCostValue, suggestedRrp)
     : null;
-  const isBelowTarget = currentMargin != null && targetMarginValue != null
-    && currentMargin < targetMarginValue - 0.0001;
+  const marginStatus = getMarginStatus(currentMargin, targetMarginValue ?? DEFAULT_MARGIN_TARGET);
+  const isBelowTolerance = marginStatus === "below_tolerance";
+  const isWithinTolerance = marginStatus === "within_tolerance";
 
   const updatePricing = trpc.style.updatePricing.useMutation({
     onSuccess: () => {
@@ -112,7 +118,7 @@ export function StylePricingCard({
         <label className="space-y-1.5">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Target margin</span>
           <div className="relative">
-            <input value={targetMargin} onChange={(event) => setTargetMargin(event.target.value)} inputMode="decimal" placeholder="70" className="h-9 w-full rounded-md border bg-background px-3 pr-7 text-sm font-medium tabular-nums outline-none focus:ring-2 focus:ring-amber-400/40" style={{ borderColor: "var(--border)" }} />
+            <input value={targetMargin} onChange={(event) => setTargetMargin(event.target.value)} inputMode="decimal" placeholder="75" className="h-9 w-full rounded-md border bg-background px-3 pr-7 text-sm font-medium tabular-nums outline-none focus:ring-2 focus:ring-amber-400/40" style={{ borderColor: "var(--border)" }} />
             <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
           </div>
         </label>
@@ -129,18 +135,25 @@ export function StylePricingCard({
         <div className="grid gap-2 border-t px-4 py-3 sm:grid-cols-2" style={{ borderColor: "oklch(0.88 0.06 65)" }}>
           <div
             className="rounded-lg border px-3 py-2"
-            style={isBelowTarget
+            style={isBelowTolerance
               ? { borderColor: "oklch(0.82 0.10 75)", background: "oklch(0.98 0.04 75)" }
-              : { borderColor: "transparent", background: "color-mix(in oklab, var(--background) 70%, transparent)" }}
+              : isWithinTolerance
+                ? { borderColor: "oklch(0.89 0.05 75)", background: "oklch(0.99 0.025 75)" }
+                : { borderColor: "transparent", background: "color-mix(in oklab, var(--background) 70%, transparent)" }}
           >
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Current margin</p>
             <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">
               {currentMargin != null ? `${(currentMargin * 100).toFixed(1)}%` : "Add landed cost and RRP"}
             </p>
-            {isBelowTarget && (
+            {isBelowTolerance && (
               <p className="mt-1 flex items-center gap-1 text-[10px] font-medium" style={{ color: "oklch(0.52 0.12 65)" }}>
                 <AlertTriangle className="h-3 w-3" aria-hidden="true" />
-                Below {(targetMarginValue! * 100).toFixed(0)}% target
+                Below 70% tolerance
+              </p>
+            )}
+            {isWithinTolerance && (
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Within 70–74% tolerance
               </p>
             )}
           </div>
