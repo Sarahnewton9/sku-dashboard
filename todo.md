@@ -599,3 +599,6 @@
 - [x] Replace the long paused-calculation notice with quiet current-margin and 70%-target RRP guide tiles.
 - [x] Use the Summer 26 Buy Plan's AUD landed-cost basis and RRP excluding GST for margin calculations; retain factory costs as USD per SKU.
 - [x] Change the default target margin from 75% to 70% for the 108 seeded price records and future styles.
+
+## Below-Target Margin Indicator (Oct 2026)
+- [x] Add a subtle amber current-margin tile and indicator when the selected RRP produces a margin below the editable target (70% by default).

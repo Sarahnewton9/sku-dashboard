@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Calculator, CircleDollarSign, Save } from "lucide-react";
+import { AlertTriangle, Calculator, CircleDollarSign, Save } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { getAuGrossMargin, getSuggestedAuRrp } from "@shared/stylePricing";
@@ -55,6 +55,8 @@ export function StylePricingCard({
   const suggestedMargin = landedCostValue != null && suggestedRrp != null
     ? getAuGrossMargin(landedCostValue, suggestedRrp)
     : null;
+  const isBelowTarget = currentMargin != null && targetMarginValue != null
+    && currentMargin < targetMarginValue - 0.0001;
 
   const updatePricing = trpc.style.updatePricing.useMutation({
     onSuccess: () => {
@@ -125,11 +127,22 @@ export function StylePricingCard({
 
       {(currentMargin != null || suggestedRrp != null) && (
         <div className="grid gap-2 border-t px-4 py-3 sm:grid-cols-2" style={{ borderColor: "oklch(0.88 0.06 65)" }}>
-          <div className="rounded-lg bg-background/70 px-3 py-2">
+          <div
+            className="rounded-lg border px-3 py-2"
+            style={isBelowTarget
+              ? { borderColor: "oklch(0.82 0.10 75)", background: "oklch(0.98 0.04 75)" }
+              : { borderColor: "transparent", background: "color-mix(in oklab, var(--background) 70%, transparent)" }}
+          >
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Current margin</p>
             <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">
               {currentMargin != null ? `${(currentMargin * 100).toFixed(1)}%` : "Add landed cost and RRP"}
             </p>
+            {isBelowTarget && (
+              <p className="mt-1 flex items-center gap-1 text-[10px] font-medium" style={{ color: "oklch(0.52 0.12 65)" }}>
+                <AlertTriangle className="h-3 w-3" aria-hidden="true" />
+                Below {(targetMarginValue! * 100).toFixed(0)}% target
+              </p>
+            )}
           </div>
           <div className="rounded-lg bg-background/70 px-3 py-2">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">RRP guide at {targetMarginValue != null ? `${(targetMarginValue * 100).toFixed(0)}%` : "target"}</p>
