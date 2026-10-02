@@ -55,6 +55,28 @@ export type SkuMeta = typeof skuMeta.$inferSelect;
 export type InsertSkuMeta = typeof skuMeta.$inferInsert;
 
 /**
+ * Seasonal factory cost for one physical SKU. The ordered Upper 2 fields form
+ * part of the identity so two colourways with the same primary upper remain
+ * independently costed.
+ */
+export const skuCostPrices = mysqlTable("sku_cost_prices", {
+  id: int("id").autoincrement().primaryKey(),
+  style: varchar("style", { length: 64 }).notNull(),
+  colour: varchar("colour", { length: 64 }).notNull(),
+  leather: varchar("leather", { length: 64 }).notNull().default(""),
+  colour2: varchar("colour2", { length: 64 }).notNull().default(""),
+  leather2: varchar("leather2", { length: 64 }).notNull().default(""),
+  season: varchar("season", { length: 16 }).notNull().default("SS26"),
+  cost: float("cost").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  skuSeason: uniqueIndex("sku_cost_prices_sku_season_unique").on(t.style, t.colour, t.leather, t.colour2, t.leather2, t.season),
+}));
+export type SkuCostPrice = typeof skuCostPrices.$inferSelect;
+export type InsertSkuCostPrice = typeof skuCostPrices.$inferInsert;
+
+/**
  * Per-style metadata: development pricing, RRP, fit rating, fitting notes
  */
 export const styleMeta = mysqlTable("style_meta", {

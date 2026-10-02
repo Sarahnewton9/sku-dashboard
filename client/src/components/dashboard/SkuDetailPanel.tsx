@@ -19,6 +19,8 @@ export interface SkuPanelData {
   category: string;
   last: string;
   imageUrl?: string;
+  /** Current-season factory cost takes priority over legacy SKU metadata. */
+  seasonalCost?: number | null;
 }
 
 interface Props {
@@ -48,10 +50,11 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
   const utils = trpc.useUtils();
 
   const meta = sku ? skuMeta[skuKey(sku.style, sku.colour, sku.leather)] : undefined;
+  const effectiveCost = sku?.seasonalCost ?? meta?.costPrice;
   const styleRrp = sku ? styleMeta[sku.style]?.rrp : undefined;
   const effectiveRrp = meta?.rrpOverride ?? styleRrp;
-  const effectiveMargin = meta?.costPrice != null && effectiveRrp != null
-    ? getAuGrossMargin(meta.costPrice, effectiveRrp)
+  const effectiveMargin = effectiveCost != null && effectiveRrp != null
+    ? getAuGrossMargin(effectiveCost, effectiveRrp)
     : null;
 
   const updateMutation = trpc.sku.update.useMutation({
@@ -217,7 +220,7 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Cost Price</span>
               <span className="text-sm font-semibold font-mono text-foreground">
-                {meta?.costPrice != null ? `$${meta.costPrice.toFixed(2)}` : "—"}
+                {effectiveCost != null ? `$${effectiveCost.toFixed(2)}` : "—"}
               </span>
             </div>
             <div className="flex items-center justify-between">

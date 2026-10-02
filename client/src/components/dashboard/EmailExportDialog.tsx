@@ -38,6 +38,7 @@ export function EmailExportDialog({
   exportScope,
   season,
   defaultSubject,
+  defaultMessage = "",
   buildAttachment,
 }: {
   open: boolean;
@@ -46,6 +47,7 @@ export function EmailExportDialog({
   exportScope: string;
   season: string;
   defaultSubject: string;
+  defaultMessage?: string;
   buildAttachment: () => Promise<ExportAttachment>;
 }) {
   const utils = trpc.useUtils();
@@ -80,8 +82,11 @@ export function EmailExportDialog({
   });
 
   useEffect(() => {
-    if (open) setSubject(defaultSubject);
-  }, [defaultSubject, open]);
+    if (open) {
+      setSubject(defaultSubject);
+      setMessage(defaultMessage);
+    }
+  }, [defaultMessage, defaultSubject, open]);
 
   const applyRecipientGroup = (id: string) => {
     setSelectedGroupId(id);

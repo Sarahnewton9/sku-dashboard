@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, fittingImages, skuMeta, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, specEmailHistory, specEmailRecipientGroups, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns, customLasts, lastMeasurements, ap21StyleRefs, ap21ColourRefs } from "../drizzle/schema";
+import { InsertUser, fittingImages, skuMeta, skuCostPrices, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, specEmailHistory, specEmailRecipientGroups, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns, customLasts, lastMeasurements, ap21StyleRefs, ap21ColourRefs } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { getSkuCompositeIdentity, normalizeSkuIdentityPart } from "../shared/skuCompositeIdentity";
 import { getCustomSkuCarryOverSeason } from "../shared/customSkuSeasonCarryOver";
@@ -99,6 +99,37 @@ export async function getAllSkuMeta() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(skuMeta);
+}
+
+export async function getSeasonSkuCosts(season: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(skuCostPrices).where(eq(skuCostPrices.season, season));
+}
+
+export async function upsertSeasonSkuCosts(items: Array<{
+  style: string;
+  colour: string;
+  leather?: string | null;
+  colour2?: string | null;
+  leather2?: string | null;
+  season: string;
+  cost: number;
+}>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  for (const item of items) {
+    const values = {
+      style: normalizeSkuIdentityPart(item.style),
+      colour: normalizeSkuIdentityPart(item.colour),
+      leather: normalizeSkuIdentityPart(item.leather),
+      colour2: normalizeSkuIdentityPart(item.colour2),
+      leather2: normalizeSkuIdentityPart(item.leather2),
+      season: item.season,
+      cost: item.cost,
+    };
+    await db.insert(skuCostPrices).values(values).onDuplicateKeyUpdate({ set: { cost: values.cost } });
+  }
 }
 
 export async function getSkuMeta(style: string, colour: string, leather: string) {

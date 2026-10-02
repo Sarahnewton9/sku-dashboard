@@ -5,7 +5,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import axios from "axios";
 import {
-  getAllSkuMeta, upsertSkuMeta,
+  getAllSkuMeta, getSeasonSkuCosts, upsertSeasonSkuCosts, upsertSkuMeta,
   getAllStyleMeta, upsertStyleRrp, upsertStylePricing, upsertStyleFit, upsertStyleCategory,
   getStyleFittingImages, getAllStyleFittingImages, addStyleFittingImage, deleteStyleFittingImage,
   getFittingImages, addFittingImage, deleteFittingImage, getAllFittingImages,
@@ -238,6 +238,9 @@ export const appRouter = router({
   // SKU metadata: sample status, order qty, size11, cost, fitting notes
   sku: router({
     getAll: publicProcedure.query(async () => getAllSkuMeta()),
+    getSeasonCosts: publicProcedure
+      .input(z.object({ season: z.string().trim().min(1).max(16) }))
+      .query(async ({ input }) => getSeasonSkuCosts(input.season)),
 
     update: publicProcedure
       .input(z.object({
@@ -396,6 +399,23 @@ export const appRouter = router({
           updated++;
         }
         return { updated };
+      }),
+
+    importCostRequest: publicProcedure
+      .input(z.object({
+        season: z.string().trim().min(1).max(16),
+        costs: z.array(z.object({
+          style: z.string().trim().min(1).max(64),
+          colour: z.string().trim().min(1).max(64),
+          leather: z.string().trim().max(64).optional(),
+          colour2: z.string().trim().max(64).optional(),
+          leather2: z.string().trim().max(64).optional(),
+          cost: z.number().positive().max(100000),
+        })).min(1).max(5000),
+      }))
+      .mutation(async ({ input }) => {
+        await upsertSeasonSkuCosts(input.costs.map((cost) => ({ ...cost, season: input.season })));
+        return { updated: input.costs.length };
       }),
 
     // Fetch size 11 availability from tonybianco.com.au Shopify API

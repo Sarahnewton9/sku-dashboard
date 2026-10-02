@@ -463,6 +463,13 @@
       "when": 1790902696215,
       "tag": "0065_soft_polaris",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "5",
+      "when": 1790904054911,
+      "tag": "0066_lush_the_anarchist",
+      "breakpoints": true
     }
   ]
 }

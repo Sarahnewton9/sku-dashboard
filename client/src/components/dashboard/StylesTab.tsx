@@ -24,6 +24,7 @@ import { LastMeasurementsPanel } from "./LastMeasurementsPanel";
 import * as XLSX from "xlsx";
 import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
 import { StylePricingCard } from "./StylePricingCard";
+import { CostRequestImportDialog } from "./CostRequestImportDialog";
 import ImportPanel from "./ImportPanel";
 import BuySessionBar from "./BuySessionBar";
 import { toast } from "sonner";
@@ -77,6 +78,8 @@ export default function StylesTab() {
   const [showImport, setShowImport] = useState(false);
   const [showInvoiceImport, setShowInvoiceImport] = useState(false);
   const [emailRangeOpen, setEmailRangeOpen] = useState(false);
+  const [emailCostRequestOpen, setEmailCostRequestOpen] = useState(false);
+  const [costRequestImportOpen, setCostRequestImportOpen] = useState(false);
   const [expandedStyle, setExpandedStyle] = useState<string | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
   const [fitApprovedSectionOpen, setFitApprovedSectionOpen] = useState(false);
@@ -195,6 +198,7 @@ export default function StylesTab() {
   // Fetch all SKU meta from DB
   const { data: skuMetaList = [], refetch: refetchSkuMeta } = trpc.sku.getAll.useQuery(undefined, { staleTime: 30_000 });
   const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery(undefined, { staleTime: 30_000 });
+  const { data: seasonCostList = [], refetch: refetchSeasonCosts } = trpc.sku.getSeasonCosts.useQuery({ season }, { staleTime: 30_000 });
 
 
   // Fitting images for approved styles
@@ -590,6 +594,14 @@ export default function StylesTab() {
     return map;
   }, [skuMetaList]);
 
+  const seasonCostMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const cost of seasonCostList as Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; cost: number }>) {
+      map.set(getSkuCompositeIdentity(cost.style, cost.colour, cost.leather, cost.colour2, cost.leather2), Number(cost.cost));
+    }
+    return map;
+  }, [seasonCostList]);
+
   const styleMetaMap = useMemo(() => {
     const map: Record<string, StyleMetaItem> = {};
     for (const m of styleMetaList as StyleMetaItem[]) {
@@ -631,6 +643,7 @@ export default function StylesTab() {
   function handleMetaChange() {
     refetchSkuMeta();
     refetchStyleMeta();
+    refetchSeasonCosts();
   }
 
   function handleSessionChange() {
@@ -721,6 +734,13 @@ export default function StylesTab() {
           colour2: (sku as any).colour2 ?? dbMeta?.colour2 ?? null,
           leather2: (sku as any).leather2 ?? dbMeta?.leather2 ?? null,
         });
+        const currentCost = seasonCostMap.get(getSkuCompositeIdentity(
+          sku.style,
+          sku.colour,
+          sku.leather,
+          (sku as any).colour2 ?? dbMeta?.colour2,
+          (sku as any).leather2 ?? dbMeta?.leather2,
+        )) ?? dbMeta?.costPrice ?? null;
         return {
           Category: styleMetaLookup[sku.style]?.category ?? "",
           Style: sku.style,
@@ -730,7 +750,7 @@ export default function StylesTab() {
           "Size 11": dbMeta?.isSize11 ? "Yes" : "No",
           "Sample Status": dbMeta?.sampleStatus ?? "waiting",
           "Order Qty": dbMeta?.orderQty ?? 0,
-          "Cost Price": dbMeta?.costPrice != null ? dbMeta.costPrice : "",
+          "Cost Price": currentCost != null ? currentCost : "",
           RRP: styleMetaMap[sku.style]?.rrp != null ? styleMetaMap[sku.style].rrp : "",
           "Fit Rating": dbMeta?.fitRating ?? "",
           "Fitting Notes": dbMeta?.fittingNotes ?? "",
@@ -746,6 +766,77 @@ export default function StylesTab() {
   function exportToExcel() {
     const { wb } = buildByStyleWorkbook();
     XLSX.writeFile(wb, `${getSeasonFileLabel(season)}_SKU_Export.xlsx`);
+  }
+
+  function getMissingCostRequestRows() {
+    const seen = new Set<string>();
+    return (mergedRawSkus as any[]).flatMap((sku) => {
+      if (cancelledSet.has(sku.style)) return [];
+      if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) return [];
+      if (markdownSkuSet.has(markdownKey(sku.style, sku.colour, sku.leather))) return [];
+      const sourceColour = (sku as any)._sourceColour ?? sku.colour;
+      const sourceLeather = (sku as any)._sourceLeather ?? sku.leather;
+      const dbMeta = skuMetaMap[`${sku.style}|${sourceColour}|${sourceLeather}`];
+      const colour2 = (sku as any).colour2 ?? dbMeta?.colour2 ?? "";
+      const leather2 = (sku as any).leather2 ?? dbMeta?.leather2 ?? "";
+      const compositeKey = getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, colour2, leather2);
+      if (seen.has(compositeKey)) return [];
+      seen.add(compositeKey);
+      const currentCost = seasonCostMap.get(compositeKey) ?? dbMeta?.costPrice ?? null;
+      if (currentCost != null && Number(currentCost) > 0) return [];
+      const styleInfo = (mergedStyles as any[]).find((style) => style.style === sku.style);
+      return [{
+        style: sku.style,
+        category: styleInfo ? getCategory(sku.style, styleInfo.category) : "",
+        last: styleInfo?.last ?? "",
+        colour: sku.colour,
+        leather: sku.leather ?? "",
+        colour2,
+        leather2,
+        status: sku.is_new ? "New" : "Existing",
+        isSize11: dbMeta?.isSize11 ? "Yes" : "No",
+      }];
+    });
+  }
+
+  const missingCostRequestRows = useMemo(
+    () => getMissingCostRequestRows(),
+    [mergedRawSkus, mergedStyles, cancelledSet, cancelledSkuSet, markdownSkuSet, skuMetaMap, seasonCostMap, getCategory],
+  );
+
+  function buildMissingCostRequestWorkbook() {
+    const rows = missingCostRequestRows.map((sku) => ({
+      "SEASON": getSeasonFileLabel(season),
+      "LAST": sku.last,
+      "CATEGORY": sku.category,
+      "STYLE": sku.style,
+      "UPPER 1 COLOUR": sku.colour,
+      "UPPER 1 LEATHER": sku.leather,
+      "UPPER 2 COLOUR": sku.colour2,
+      "UPPER 2 LEATHER": sku.leather2,
+      "STATUS": sku.status,
+      "SIZE 11": sku.isSize11,
+      "FACTORY COST (AUD)": "",
+      "FACTORY COMMENTS": "",
+    }));
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FACTORY COST (AUD)": "No active SKUs are missing a cost" }]);
+    ws["!cols"] = [
+      { wch: 13 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 20 },
+      { wch: 20 }, { wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 20 }, { wch: 34 },
+    ];
+    if (rows.length) {
+      const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1");
+      ws["!autofilter"] = { ref: XLSX.utils.encode_range(range) };
+      for (let row = 1; row <= rows.length; row += 1) {
+        const costCell = XLSX.utils.encode_cell({ r: row, c: 10 });
+        const cell = ws[costCell] ?? { t: "s", v: "" };
+        cell.s = { fill: { patternType: "solid", fgColor: { rgb: "FFF2CC" } } } as any;
+        ws[costCell] = cell;
+      }
+    }
+    XLSX.utils.book_append_sheet(wb, ws, "Missing Costs");
+    return { wb, rowCount: rows.length, filename: `${getSeasonFileLabel(season)}_Missing_Factory_Costs.xlsx` };
   }
 
   // Apply runtime category overrides (sub-categories + trend flags)
@@ -1279,6 +1370,35 @@ export default function StylesTab() {
           <Mail className="w-4 h-4" />
           Email Export
         </button>
+        <button
+          onClick={() => {
+            const { wb, filename } = buildMissingCostRequestWorkbook();
+            XLSX.writeFile(wb, filename);
+          }}
+          disabled={missingCostRequestRows.length === 0}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+        >
+          <Download className="w-4 h-4" />
+          Cost Request ({missingCostRequestRows.length})
+        </button>
+        <button
+          onClick={() => setEmailCostRequestOpen(true)}
+          disabled={missingCostRequestRows.length === 0}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+        >
+          <Mail className="w-4 h-4" />
+          Email Cost Request
+        </button>
+        <button
+          onClick={() => setCostRequestImportOpen(true)}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700"
+          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+        >
+          <Upload className="w-4 h-4" />
+          Import Factory Costs
+        </button>
 
         <button
           onClick={() => setShowAddStyleModal(true)}
@@ -1315,6 +1435,32 @@ export default function StylesTab() {
           const { wb } = buildByStyleWorkbook();
           return workbookToEmailAttachment(wb, `${getSeasonFileLabel(season)}_SKU_Export.xlsx`);
         }}
+      />
+      <EmailExportDialog
+        open={emailCostRequestOpen}
+        onOpenChange={setEmailCostRequestOpen}
+        exportType="Missing Factory Cost Request"
+        exportScope={`${missingCostRequestRows.length} active SKU${missingCostRequestRows.length === 1 ? "" : "s"} missing costs`}
+        season={getSeasonFileLabel(season)}
+        defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — FACTORY COST REQUEST`}
+        defaultMessage={`Please complete the FACTORY COST (AUD) column for each SKU in the attached workbook and return the same file to us.\n\nPlease leave the Style and Upper 1 / Upper 2 columns unchanged so the completed costs can be safely loaded back into SKU Dash. Thank you.`}
+        buildAttachment={async () => {
+          const { wb, filename } = buildMissingCostRequestWorkbook();
+          return workbookToEmailAttachment(wb, filename);
+        }}
+      />
+      <CostRequestImportDialog
+        open={costRequestImportOpen}
+        onOpenChange={setCostRequestImportOpen}
+        season={season}
+        knownSkus={missingCostRequestRows.map((sku) => ({
+          style: sku.style,
+          colour: sku.colour,
+          leather: sku.leather,
+          colour2: sku.colour2,
+          leather2: sku.leather2,
+        }))}
+        onImported={handleMetaChange}
       />
 
       {/* Table grouped by last */}
@@ -1775,6 +1921,9 @@ export default function StylesTab() {
                                     const dbMeta = skuMetaMap[skuKey2];
                                     const currentColour2 = (sku as any).colour2 || dbMeta?.colour2 || "";
                                     const currentLeather2 = (sku as any).leather2 || dbMeta?.leather2 || "";
+                                    const currentSeasonalCost = seasonCostMap.get(getSkuCompositeIdentity(
+                                      sku.style, sku.colour, sku.leather, currentColour2, currentLeather2,
+                                    ));
                                     const colourEditKey = (sku as any)._customId
                                       ? `custom:${(sku as any)._customId}`
                                       : `static:${skuKey2}`;
@@ -2052,6 +2201,7 @@ export default function StylesTab() {
                                               category: style.category,
                                               last: style.last,
                                               imageUrl: style.imageUrl,
+                                              seasonalCost: currentSeasonalCost,
                                             });
                                           }}
                                           className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0"

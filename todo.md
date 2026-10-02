@@ -570,3 +570,9 @@
 - [x] Seed 108 matching styles from the Summer 26 Buy Plan without overwriting existing SKU Dash RRPs.
 - [x] Add optional SKU-level RRP overrides for genuine colourway exceptions.
 - [x] Add a visual operating-model flow that positions SKU Dash as the pre-product range-definition source of truth.
+
+## Factory Cost Completion Workflow (Oct 2026)
+- [x] Add a By Style export of all active SKUs that are missing a factory cost, including Upper 1 and Upper 2 identity fields.
+- [x] Add a matching factory email flow using saved groups, CC/reply-to fields and export email history.
+- [x] Add a drag-and-drop completed-cost import with preview, exact SKU matching and safe skip reporting.
+- [x] Store returned factory costs seasonally with a composite SKU identity so Upper 2 variants remain independently costed.

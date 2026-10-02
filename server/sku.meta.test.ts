@@ -11,6 +11,8 @@ vi.mock("./db", () => ({
   getAllSkuMeta: vi.fn().mockResolvedValue([
     { id: 1, style: "ALYX", colour: "BLACK", leather: "COMO", sampleStatus: "waiting", orderQty: 0, isSize11: false, costPrice: null, fitRating: null, fittingNotes: null },
   ]),
+  getSeasonSkuCosts: vi.fn().mockResolvedValue([]),
+  upsertSeasonSkuCosts: vi.fn().mockResolvedValue(undefined),
   upsertSkuMeta: vi.fn().mockResolvedValue(undefined),
   getAllStyleMeta: vi.fn().mockResolvedValue([
     { id: 1, style: "ALYX", rrp: 299.95 },
@@ -128,6 +130,41 @@ describe("sku.importCosts", () => {
     ]);
     expect(result).toHaveProperty("updated");
     expect(result.updated).toBe(2);
+  });
+});
+
+describe("sku.importCostRequest", () => {
+  it("persists the completed factory workbook against the requested season and both uppers", async () => {
+    const db = await import("./db");
+    const caller = appRouter.createCaller(createCtx());
+    await expect(caller.sku.importCostRequest({
+      season: "W27",
+      costs: [{
+        style: "ROBYN",
+        colour: "ECRU",
+        leather: "SNAKE",
+        colour2: "LIPSTICK",
+        leather2: "SUEDE",
+        cost: 96.25,
+      }],
+    })).resolves.toEqual({ updated: 1 });
+    expect(db.upsertSeasonSkuCosts).toHaveBeenLastCalledWith([{
+      style: "ROBYN",
+      colour: "ECRU",
+      leather: "SNAKE",
+      colour2: "LIPSTICK",
+      leather2: "SUEDE",
+      cost: 96.25,
+      season: "W27",
+    }]);
+  });
+
+  it("rejects blank or zero factory costs", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    await expect(caller.sku.importCostRequest({
+      season: "W27",
+      costs: [{ style: "ROBYN", colour: "ECRU", cost: 0 }],
+    })).rejects.toThrow();
   });
 });
 
