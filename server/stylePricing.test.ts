@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { getAuGrossMargin, getSuggestedAuRrp } from "../shared/stylePricing";
 
 describe("style price recommendations", () => {
-  it("rounds a 75% target price up to the established Buy Plan ladder", () => {
-    // Summer 26 ARLA: $46.25 landed cost, with the next full RRP point at $209.95.
-    expect(getSuggestedAuRrp(46.25, 0.75)).toBe(209.95);
+  it("rounds a 70% target price up to the established Buy Plan ladder", () => {
+    // Summer 26 ARLA: $46.25 landed cost, with the next full RRP point at $169.95.
+    expect(getSuggestedAuRrp(46.25, 0.70)).toBe(169.95);
   });
 
   it("calculates gross margin on retail excluding Australian GST", () => {
@@ -13,7 +13,7 @@ describe("style price recommendations", () => {
   });
 
   it("rejects incomplete or invalid price inputs", () => {
-    expect(getSuggestedAuRrp(0, 0.75)).toBeNull();
+    expect(getSuggestedAuRrp(0, 0.70)).toBeNull();
     expect(getSuggestedAuRrp(46.25, 1)).toBeNull();
     expect(getAuGrossMargin(46.25, 0)).toBeNull();
   });

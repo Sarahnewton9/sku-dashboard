@@ -197,14 +197,14 @@ describe("style.updatePricing", () => {
     await expect(caller.style.updatePricing({
       style: "ALYX",
       landedCost: 48.25,
-      targetMargin: 0.75,
+      targetMargin: 0.70,
       rrp: 219.95,
       pricingSource: "Summer 26 Buy Plan",
     })).resolves.toEqual({ success: true });
     expect(db.upsertStylePricing).toHaveBeenLastCalledWith({
       style: "ALYX",
       landedCost: 48.25,
-      targetMargin: 0.75,
+      targetMargin: 0.70,
       rrp: 219.95,
       pricingSource: "Summer 26 Buy Plan",
     });

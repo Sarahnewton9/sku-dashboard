@@ -229,7 +229,7 @@ export async function upsertStylePricing(data: {
   await db.insert(styleMeta).values({
     style: data.style,
     landedCost: data.landedCost ?? null,
-    targetMargin: data.targetMargin ?? 0.75,
+    targetMargin: data.targetMargin ?? 0.70,
     rrp: data.rrp ?? null,
     pricingSource: data.pricingSource ?? null,
   }).onDuplicateKeyUpdate({ set: updateSet as any });

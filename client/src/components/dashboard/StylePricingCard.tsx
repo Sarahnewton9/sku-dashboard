@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Calculator, Check, CircleDollarSign, Save } from "lucide-react";
+import { Calculator, CircleDollarSign, Save } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { getAuGrossMargin, getSuggestedAuRrp } from "@shared/stylePricing";
 
 type StylePricing = {
   landedCost?: number | null;
@@ -22,11 +23,7 @@ function percentageFromInput(value: string): number | null {
   return Number.isFinite(parsed) && parsed > 0 && parsed < 100 ? parsed / 100 : null;
 }
 
-/**
- * Development price card: factory / landed costs are held in USD, while retail
- * RRPs are held in AUD. Margin suggestions stay disabled until an approved
- * USD-to-AUD landed-cost policy is configured.
- */
+/** Planning card using the Buy Plan's AUD landed-cost and GST-exclusive margin basis. */
 export function StylePricingCard({
   style,
   pricing,
@@ -37,18 +34,27 @@ export function StylePricingCard({
   onSaved?: () => void;
 }) {
   const [landedCost, setLandedCost] = useState("");
-  const [targetMargin, setTargetMargin] = useState("75");
+  const [targetMargin, setTargetMargin] = useState("70");
   const [rrp, setRrp] = useState("");
 
   useEffect(() => {
     setLandedCost(pricing?.landedCost != null ? pricing.landedCost.toFixed(2) : "");
-    setTargetMargin(((pricing?.targetMargin ?? 0.75) * 100).toFixed(0));
+    setTargetMargin(((pricing?.targetMargin ?? 0.70) * 100).toFixed(0));
     setRrp(pricing?.rrp != null ? pricing.rrp.toFixed(2) : "");
   }, [pricing?.landedCost, pricing?.rrp, pricing?.targetMargin, style]);
 
   const landedCostValue = amountFromInput(landedCost);
   const targetMarginValue = percentageFromInput(targetMargin);
   const rrpValue = amountFromInput(rrp);
+  const currentMargin = landedCostValue != null && rrpValue != null
+    ? getAuGrossMargin(landedCostValue, rrpValue)
+    : null;
+  const suggestedRrp = landedCostValue != null && targetMarginValue != null
+    ? getSuggestedAuRrp(landedCostValue, targetMarginValue)
+    : null;
+  const suggestedMargin = landedCostValue != null && suggestedRrp != null
+    ? getAuGrossMargin(landedCostValue, suggestedRrp)
+    : null;
 
   const updatePricing = trpc.style.updatePricing.useMutation({
     onSuccess: () => {
@@ -87,7 +93,7 @@ export function StylePricingCard({
           <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "oklch(0.89 0.12 75)", color: "oklch(0.38 0.13 55)" }}><CircleDollarSign className="h-4 w-4" /></span>
           <div>
             <h3 className="text-sm font-semibold text-foreground">Style pricing</h3>
-            <p className="text-xs text-muted-foreground">USD factory costs · AUD retail RRPs include GST</p>
+            <p className="text-xs text-muted-foreground">Buy Plan landed cost (AUD) · RRP includes GST</p>
           </div>
         </div>
         {pricing?.pricingSource && <span className="text-xs text-muted-foreground">Seed: {pricing.pricingSource}</span>}
@@ -95,16 +101,16 @@ export function StylePricingCard({
 
       <div className="grid gap-3 p-4 lg:grid-cols-3">
         <label className="space-y-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Factory / landed cost (USD)</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Buy Plan landed cost (AUD)</span>
           <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">US$</span>
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
             <input value={landedCost} onChange={(event) => setLandedCost(event.target.value)} inputMode="decimal" placeholder="0.00" className="h-9 w-full rounded-md border bg-background pl-10 pr-3 text-sm font-medium tabular-nums outline-none focus:ring-2 focus:ring-amber-400/40" style={{ borderColor: "var(--border)" }} />
           </div>
         </label>
         <label className="space-y-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Target margin (for AU converted cost)</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Target margin</span>
           <div className="relative">
-            <input value={targetMargin} onChange={(event) => setTargetMargin(event.target.value)} inputMode="decimal" placeholder="75" className="h-9 w-full rounded-md border bg-background px-3 pr-7 text-sm font-medium tabular-nums outline-none focus:ring-2 focus:ring-amber-400/40" style={{ borderColor: "var(--border)" }} />
+            <input value={targetMargin} onChange={(event) => setTargetMargin(event.target.value)} inputMode="decimal" placeholder="70" className="h-9 w-full rounded-md border bg-background px-3 pr-7 text-sm font-medium tabular-nums outline-none focus:ring-2 focus:ring-amber-400/40" style={{ borderColor: "var(--border)" }} />
             <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
           </div>
         </label>
@@ -117,14 +123,31 @@ export function StylePricingCard({
         </label>
       </div>
 
-      <div className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "oklch(0.88 0.06 65)" }}>
-        <p className="max-w-2xl text-xs text-muted-foreground">Margin and RRP suggestions are intentionally paused: USD factory costs cannot be compared to an AUD RRP until the approved USD→AUD landed-cost conversion (including freight, duty and other costs) is defined.</p>
+      {(currentMargin != null || suggestedRrp != null) && (
+        <div className="grid gap-2 border-t px-4 py-3 sm:grid-cols-2" style={{ borderColor: "oklch(0.88 0.06 65)" }}>
+          <div className="rounded-lg bg-background/70 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Current margin</p>
+            <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">
+              {currentMargin != null ? `${(currentMargin * 100).toFixed(1)}%` : "Add landed cost and RRP"}
+            </p>
+          </div>
+          <div className="rounded-lg bg-background/70 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">RRP guide at {targetMarginValue != null ? `${(targetMarginValue * 100).toFixed(0)}%` : "target"}</p>
+            <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">
+              {suggestedRrp != null ? `$${suggestedRrp.toFixed(2)}` : "Add landed cost"}
+              {suggestedMargin != null && <span className="ml-1.5 text-xs font-normal text-muted-foreground">({(suggestedMargin * 100).toFixed(1)}%)</span>}
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between border-t px-4 py-2.5" style={{ borderColor: "oklch(0.88 0.06 65)" }}>
+        <p className="text-[11px] text-muted-foreground">Factory costs stay USD per SKU; this guide uses the Buy Plan’s AUD landed cost.</p>
         <button type="button" onClick={save} disabled={updatePricing.isPending} className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md px-3 text-xs font-semibold text-white shadow-sm transition-colors disabled:opacity-60" style={{ background: "oklch(0.50 0.14 55)" }}>
           {updatePricing.isPending ? <Calculator className="h-3.5 w-3.5 animate-pulse" /> : <Save className="h-3.5 w-3.5" />}
-          {updatePricing.isPending ? "Saving…" : "Save pricing"}
+          {updatePricing.isPending ? "Saving…" : "Save"}
         </button>
       </div>
-      <div className="flex items-center gap-1.5 px-4 pb-3 text-[11px] text-muted-foreground"><Check className="h-3.5 w-3.5" /> Set a colour-specific price only when needed from that SKU’s detail panel.</div>
     </section>
   );
 }

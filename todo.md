@@ -594,3 +594,8 @@
 - Extended Buy Session rows and quantity handling with `colour2`/`leather2` plus a unique composite identity, so different dual-upper colourways cannot merge into one buy quantity. Updated By Style, Buy Sessions, and Buy Analysis keys/displays accordingly.
 - Added migrations `0068_steady_northstar` and `0069_complex_maverick`; applied both schema changes directly and verified the columns, composite unique index, and mapping count.
 - Validation: **100 tests passed** and production build passed. Visual check passed on the W27 Buy Sessions page.
+
+## Margin & RRP Guide Refinement (Oct 2026)
+- [x] Replace the long paused-calculation notice with quiet current-margin and 70%-target RRP guide tiles.
+- [x] Use the Summer 26 Buy Plan's AUD landed-cost basis and RRP excluding GST for margin calculations; retain factory costs as USD per SKU.
+- [x] Change the default target margin from 75% to 70% for the 108 seeded price records and future styles.
