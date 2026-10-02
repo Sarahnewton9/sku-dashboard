@@ -595,6 +595,32 @@ export default function StylesTab() {
     return map;
   }, [styleMetaList]);
 
+  const styleFobSummaryMap = useMemo(() => {
+    const summaries: Record<string, { totalColourways: number; costedColourways: number; minFobUsd: number | null; maxFobUsd: number | null }> = {};
+    const seen = new Set<string>();
+    for (const sku of mergedRawSkus as any[]) {
+      if (cancelledSet.has(sku.style) || cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) continue;
+      const sourceColour = sku._sourceColour ?? sku.colour;
+      const sourceLeather = sku._sourceLeather ?? sku.leather;
+      const dbMeta = skuMetaMap[`${sku.style}|${sourceColour}|${sourceLeather}`];
+      const colour2 = sku.colour2 ?? dbMeta?.colour2 ?? "";
+      const leather2 = sku.leather2 ?? dbMeta?.leather2 ?? "";
+      const identity = getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, colour2, leather2);
+      if (seen.has(identity)) continue;
+      seen.add(identity);
+
+      const summary = summaries[sku.style] ??= { totalColourways: 0, costedColourways: 0, minFobUsd: null, maxFobUsd: null };
+      summary.totalColourways += 1;
+      const fobUsd = seasonCostMap.get(identity) ?? dbMeta?.costPrice ?? null;
+      if (fobUsd == null || Number(fobUsd) <= 0) continue;
+      const amount = Number(fobUsd);
+      summary.costedColourways += 1;
+      summary.minFobUsd = summary.minFobUsd == null ? amount : Math.min(summary.minFobUsd, amount);
+      summary.maxFobUsd = summary.maxFobUsd == null ? amount : Math.max(summary.maxFobUsd, amount);
+    }
+    return summaries;
+  }, [mergedRawSkus, cancelledSet, cancelledSkuSet, skuMetaMap, seasonCostMap]);
+
   // Buy session item lookup — uses selected session items, or falls back to most recent session for read-only display
   const sessionItemMap = useMemo(() => {
     const map: Record<string, { auQty: number; usaQty: number; nycQty: number; laQty: number }> = {};
@@ -741,7 +767,7 @@ export default function StylesTab() {
           "Size 11": dbMeta?.isSize11 ? "Yes" : "No",
           "Sample Status": dbMeta?.sampleStatus ?? "waiting",
           "Order Qty": dbMeta?.orderQty ?? 0,
-          "Factory Cost (USD)": currentCost != null ? currentCost : "",
+          "FOB (USD)": currentCost != null ? currentCost : "",
           RRP: styleMetaMap[sku.style]?.rrp != null ? styleMetaMap[sku.style].rrp : "",
           "Fit Rating": dbMeta?.fitRating ?? "",
           "Fitting Notes": dbMeta?.fittingNotes ?? "",
@@ -807,11 +833,11 @@ export default function StylesTab() {
       "UPPER 2 LEATHER": sku.leather2,
       "STATUS": sku.status,
       "SIZE 11": sku.isSize11,
-      "FACTORY COST (USD)": "",
+      "FOB (USD)": "",
       "FACTORY COMMENTS": "",
     }));
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FACTORY COST (USD)": "No active SKUs are missing a cost" }]);
+    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FOB (USD)": "No active SKUs are missing a FOB cost" }]);
     ws["!cols"] = [
       { wch: 13 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 20 },
       { wch: 20 }, { wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 20 }, { wch: 34 },
@@ -1362,13 +1388,13 @@ export default function StylesTab() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700" style={{ borderColor: "var(--border)", color: "var(--foreground)" }}>
-              <FileSpreadsheet className="w-4 h-4" /> Factory costs
+              <FileSpreadsheet className="w-4 h-4" /> FOB costs
               <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">{missingCostRequestRows.length}</span>
               <ChevronDown className="w-3.5 h-3.5" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-60">
-            <DropdownMenuLabel>Factory cost requests</DropdownMenuLabel>
+            <DropdownMenuLabel>FOB cost requests</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onSelect={() => {
@@ -1403,11 +1429,11 @@ export default function StylesTab() {
       <EmailExportDialog
         open={emailCostRequestOpen}
         onOpenChange={setEmailCostRequestOpen}
-        exportType="Missing Factory Cost Request"
+        exportType="Missing FOB Cost Request"
         exportScope={`${missingCostRequestRows.length} active SKU${missingCostRequestRows.length === 1 ? "" : "s"} missing costs`}
         season={getSeasonFileLabel(season)}
-        defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — FACTORY COST REQUEST`}
-        defaultMessage={`Please complete the FACTORY COST (USD) column for each SKU in the attached workbook and return the same file to us.\n\nPlease leave the Style and Upper 1 / Upper 2 columns unchanged so the completed costs can be safely loaded back into SKU Dash. Thank you.`}
+        defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — FOB COST REQUEST`}
+        defaultMessage={`Please complete the FOB (USD) column for each SKU in the attached workbook and return the same file to us.\n\nPlease leave the Style and Upper 1 / Upper 2 columns unchanged so the completed costs can be safely loaded back into SKU Dash. Thank you.`}
         buildAttachment={async () => {
           const { wb, filename } = buildMissingCostRequestWorkbook();
           return workbookToEmailAttachment(wb, filename);
@@ -1709,6 +1735,7 @@ export default function StylesTab() {
                                 <StylePricingCard
                                   style={style.style}
                                   pricing={styleMetaMap[style.style]}
+                                  factoryCosts={styleFobSummaryMap[style.style]}
                                   onSaved={handleMetaChange}
                                 />
                                 {/* Website image + fit info row */}

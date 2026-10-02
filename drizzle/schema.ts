@@ -82,12 +82,12 @@ export type InsertSkuCostPrice = typeof skuCostPrices.$inferInsert;
 export const styleMeta = mysqlTable("style_meta", {
   id: int("id").autoincrement().primaryKey(),
   style: varchar("style", { length: 64 }).notNull().unique(),
-  /** Buy Plan landed cost in AUD, used to calculate AU gross margin. */
+  /** Legacy Buy Plan landed-cost field. Current factory costs are SKU-level FOB (USD). */
   landedCost: float("landedCost"),
-  /** Gross-margin target stored as a decimal, e.g. 0.75 = 75%. */
+  /** Legacy Buy Plan margin target, retained for compatibility with earlier records. */
   targetMargin: float("targetMargin").default(0.75).notNull(),
   rrp: float("rrp"),
-  /** Optional audit label such as "Summer 26 Buy Plan". */
+  /** Legacy pricing-source label, retained for compatibility with earlier records. */
   pricingSource: varchar("pricingSource", { length: 128 }),
   fitRating: mysqlEnum("fitRating", ["tts", "runs_small", "runs_large"]),
   fittingNotes: text("fittingNotes"),

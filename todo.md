@@ -624,3 +624,9 @@
 - [x] Size 11 now displays and exports only when **every active colourway** of a style is explicitly marked Size 11; mixed styles are treated as not Size 11.
 - [x] Corrected ANJA to 0 of 14 Size 11 colourways and cleared the 17 existing styles with partial Size 11 flags.
 - [x] Applied the same strict rule to By Style and Buy Sheet exports; added regression coverage. Validation: 103 tests and production build passed.
+
+## FOB Cost Source Correction (Oct 2026)
+- [x] Replaced the old Buy Plan landed-cost/margin/RRP calculation with an SKU Dash **FOB (USD)** view. The style card now shows the imported per-colourway FOB range and coverage, plus a separate optional RRP field.
+- [x] Loaded the existing 1,120 factory-cost records into the seasonal `sku_cost_prices` store for both SS26 and W27 (267 styles); zero legacy Buy Plan landed-cost or source records remain.
+- [x] Updated By Style exports, completed-cost import, factory email request, SKU detail panel and action menu to say **FOB (USD)**. Removed the obsolete margin calculation code and Buy Plan pricing mutation.
+- [x] Validation: 99 tests and production build passed; FOB data coverage and zero legacy pricing records verified directly.

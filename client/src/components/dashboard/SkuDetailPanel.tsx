@@ -214,7 +214,7 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
               </label>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Factory Cost (USD)</span>
+              <span className="text-sm text-muted-foreground">FOB (USD)</span>
               <span className="text-sm font-semibold font-mono text-foreground">
                 {effectiveCost != null ? `$${effectiveCost.toFixed(2)}` : "—"}
               </span>

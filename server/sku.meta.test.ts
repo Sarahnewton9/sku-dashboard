@@ -190,24 +190,15 @@ describe("style.importRrp", () => {
   });
 });
 
-describe("style.updatePricing", () => {
-  it("stores landed cost, target margin and selected RRP", async () => {
+describe("style.setRrp", () => {
+  it("stores a selected RRP independently of FOB costs", async () => {
     const db = await import("./db");
     const caller = appRouter.createCaller(createCtx());
-    await expect(caller.style.updatePricing({
+    await expect(caller.style.setRrp({
       style: "ALYX",
-      landedCost: 48.25,
-      targetMargin: 0.75,
       rrp: 219.95,
-      pricingSource: "Summer 26 Buy Plan",
     })).resolves.toEqual({ success: true });
-    expect(db.upsertStylePricing).toHaveBeenLastCalledWith({
-      style: "ALYX",
-      landedCost: 48.25,
-      targetMargin: 0.75,
-      rrp: 219.95,
-      pricingSource: "Summer 26 Buy Plan",
-    });
+    expect(db.upsertStyleRrp).toHaveBeenLastCalledWith("ALYX", 219.95);
   });
 });
 

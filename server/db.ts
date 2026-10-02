@@ -211,30 +211,6 @@ export async function upsertStyleRrp(style: string, rrp: number | null) {
   await db.insert(styleMeta).values({ style, rrp }).onDuplicateKeyUpdate({ set: { rrp } });
 }
 
-export async function upsertStylePricing(data: {
-  style: string;
-  landedCost?: number | null;
-  targetMargin?: number;
-  rrp?: number | null;
-  pricingSource?: string | null;
-}) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  const updateSet: Record<string, unknown> = {};
-  if (data.landedCost !== undefined) updateSet.landedCost = data.landedCost;
-  if (data.targetMargin !== undefined) updateSet.targetMargin = data.targetMargin;
-  if (data.rrp !== undefined) updateSet.rrp = data.rrp;
-  if (data.pricingSource !== undefined) updateSet.pricingSource = data.pricingSource;
-
-  await db.insert(styleMeta).values({
-    style: data.style,
-    landedCost: data.landedCost ?? null,
-    targetMargin: data.targetMargin ?? 0.75,
-    rrp: data.rrp ?? null,
-    pricingSource: data.pricingSource ?? null,
-  }).onDuplicateKeyUpdate({ set: updateSet as any });
-}
-
 export async function upsertStyleCategory(style: string, category: string | null) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

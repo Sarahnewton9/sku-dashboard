@@ -50,9 +50,9 @@ async function parseCompletedCostFile(file: File): Promise<{ rows: ImportedCostR
   const leatherColumn = findColumn(headers, ["UPPER 1 LEATHER", "LEATHER", "REMARKS"]);
   const colour2Column = findColumn(headers, ["UPPER 2 COLOUR"]);
   const leather2Column = findColumn(headers, ["UPPER 2 LEATHER"]);
-  const costColumn = findColumn(headers, ["FACTORY COST USD", "COST USD", "USD", "FACTORY COST AUD", "COST AUD", "COST", "UNIT PRICE"]);
+  const costColumn = findColumn(headers, ["FOB USD", "FOB", "FACTORY COST USD", "COST USD", "USD", "COST", "UNIT PRICE"]);
   if (styleColumn < 0 || colourColumn < 0 || costColumn < 0) {
-    return { rows: [], formatError: "Use the exported cost-request workbook, or provide STYLE, COLOUR and FACTORY COST (USD) / COST columns." };
+    return { rows: [], formatError: "Use the exported cost-request workbook, or provide STYLE, COLOUR and FOB (USD) / COST columns." };
   }
 
   const rows: ImportedCostRow[] = [];
@@ -164,7 +164,7 @@ export function CostRequestImportDialog({
 
         <div className="space-y-4 py-2">
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
-            <strong>Safe import:</strong> only rows with a valid positive factory cost and an exact active SKU match will be imported. Blank, duplicate or unmatched rows are left untouched and listed below.
+            <strong>Safe import:</strong> only rows with a valid positive FOB (USD) amount and an exact active SKU match will be imported. Blank, duplicate or unmatched rows are left untouched and listed below.
           </div>
 
           <div
@@ -176,7 +176,7 @@ export function CostRequestImportDialog({
           >
             {isParsing ? <Loader2 className="mb-2 h-9 w-9 animate-spin text-muted-foreground" /> : <Upload className="mb-2 h-9 w-9 text-muted-foreground" />}
             <p className="text-sm font-medium text-foreground">{fileName || "Drop the completed Excel file here, or click to select"}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Accepted: .xlsx, .xls or .csv · Expected cost column: FACTORY COST (USD)</p>
+            <p className="mt-1 text-xs text-muted-foreground">Accepted: .xlsx, .xls or .csv · Expected cost column: FOB (USD)</p>
             <input ref={inputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void loadFile(file); }} />
           </div>
 
@@ -192,7 +192,7 @@ export function CostRequestImportDialog({
 
               <div className="overflow-hidden rounded-lg border">
                 <table className="w-full text-xs">
-                  <thead className="bg-muted"><tr><th className="px-3 py-2 text-left">Style</th><th className="px-3 py-2 text-left">Colour / Leather</th><th className="px-3 py-2 text-right">Cost</th><th className="px-3 py-2 text-left">Status</th></tr></thead>
+                  <thead className="bg-muted"><tr><th className="px-3 py-2 text-left">Style</th><th className="px-3 py-2 text-left">Colour / Leather</th><th className="px-3 py-2 text-right">FOB (USD)</th><th className="px-3 py-2 text-left">Status</th></tr></thead>
                   <tbody>{reviewedRows.slice(0, 12).map((row) => <tr key={`${row.sourceRow}-${row.style}-${row.colour}-${row.leather}`} className="border-t"><td className="px-3 py-2 font-medium">{row.style || "—"}</td><td className="px-3 py-2">{[row.colour, row.leather].filter(Boolean).join(" ") || "—"}{row.colour2 && <span className="text-muted-foreground"> / {[row.colour2, row.leather2].filter(Boolean).join(" ")}</span>}</td><td className="px-3 py-2 text-right font-mono">{row.cost != null ? `$${row.cost.toFixed(2)}` : "—"}</td><td className="px-3 py-2">{row.issue ? <span className="text-amber-700">{row.issue}</span> : <span className="inline-flex items-center gap-1 text-emerald-700"><CheckCircle2 className="h-3.5 w-3.5" /> Ready</span>}</td></tr>)}</tbody>
                 </table>
               </div>

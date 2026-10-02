@@ -6,7 +6,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import axios from "axios";
 import {
   getAllSkuMeta, getSeasonSkuCosts, upsertSeasonSkuCosts, upsertSkuMeta,
-  getAllStyleMeta, upsertStyleRrp, upsertStylePricing, upsertStyleFit, upsertStyleCategory,
+  getAllStyleMeta, upsertStyleRrp, upsertStyleFit, upsertStyleCategory,
   getStyleFittingImages, getAllStyleFittingImages, addStyleFittingImage, deleteStyleFittingImage,
   getFittingImages, addFittingImage, deleteFittingImage, getAllFittingImages,
   getAllBuySessions, getActiveBuySession, createBuySession, lockBuySession, deleteBuySession,
@@ -426,16 +426,13 @@ export const appRouter = router({
   style: router({
     getAll: publicProcedure.query(async () => getAllStyleMeta()),
 
-    updatePricing: publicProcedure
+    setRrp: publicProcedure
       .input(z.object({
         style: z.string().trim().min(1).max(64),
-        landedCost: z.number().nonnegative().nullable().optional(),
-        targetMargin: z.number().min(0.01).max(0.99).optional(),
-        rrp: z.number().positive().nullable().optional(),
-        pricingSource: z.string().trim().max(128).nullable().optional(),
+        rrp: z.number().positive().nullable(),
       }))
       .mutation(async ({ input }) => {
-        await upsertStylePricing(input);
+        await upsertStyleRrp(input.style, input.rrp);
         return { success: true };
       }),
 
