@@ -630,3 +630,9 @@
 - [x] Loaded the existing 1,120 factory-cost records into the seasonal `sku_cost_prices` store for both SS26 and W27 (267 styles); zero legacy Buy Plan landed-cost or source records remain.
 - [x] Updated By Style exports, completed-cost import, factory email request, SKU detail panel and action menu to say **FOB (USD)**. Removed the obsolete margin calculation code and Buy Plan pricing mutation.
 - [x] Validation: 99 tests and production build passed; FOB data coverage and zero legacy pricing records verified directly.
+
+## FOB Margin Guide Restoration (Oct 2026)
+- [x] Restored the style-level margin and RRP guide after confirming it should remain in SKU Dash.
+- [x] The guide now uses the **highest imported FOB (USD)** colourway for a conservative style result, converted using the Summer 26 planning basis: USD→AUD **0.70** plus **AU$1.25** freight.
+- [x] Restored the 75% target, 70–74% quiet tolerance, below-70% warning, and RRP recommendation. Margin calculation waits until every active colourway has a FOB cost.
+- [x] Validated against ARLA: US$31.50 FOB → AU$46.25 planning landed cost, 74.6% at AU$199.95, and AU$209.95 75%-target guide. 102 tests and production build passed.
