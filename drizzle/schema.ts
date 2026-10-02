@@ -37,6 +37,8 @@ export const skuMeta = mysqlTable("sku_meta", {
   orderQty: int("orderQty").default(0),
   isSize11: boolean("isSize11").default(false).notNull(),
   costPrice: float("costPrice"),
+  /** Optional selling-price exception for this colourway; otherwise the style RRP applies. */
+  rrpOverride: float("rrpOverride"),
   fitRating: mysqlEnum("fitRating", ["tts", "runs_small", "runs_large"]),
   fittingNotes: text("fittingNotes"),
   sampleType: varchar("sampleType", { length: 64 }),
@@ -53,12 +55,18 @@ export type SkuMeta = typeof skuMeta.$inferSelect;
 export type InsertSkuMeta = typeof skuMeta.$inferInsert;
 
 /**
- * Per-style metadata: RRP, fit rating, fitting notes
+ * Per-style metadata: development pricing, RRP, fit rating, fitting notes
  */
 export const styleMeta = mysqlTable("style_meta", {
   id: int("id").autoincrement().primaryKey(),
   style: varchar("style", { length: 64 }).notNull().unique(),
+  /** Landed cost in AUD, used for price and margin planning. */
+  landedCost: float("landedCost"),
+  /** Gross-margin target stored as a decimal, e.g. 0.75 = 75%. */
+  targetMargin: float("targetMargin").default(0.75).notNull(),
   rrp: float("rrp"),
+  /** Optional audit label such as "Summer 26 Buy Plan". */
+  pricingSource: varchar("pricingSource", { length: 128 }),
   fitRating: mysqlEnum("fitRating", ["tts", "runs_small", "runs_large"]),
   fittingNotes: text("fittingNotes"),
   fitApproved: boolean("fitApproved").default(false).notNull(),

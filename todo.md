@@ -564,3 +564,9 @@
 - [x] Add drag-and-drop and file-picker support for optional files in the Specs email composer.
 - [x] Send selected files together with the generated Specs workbook through the existing protected Resend workflow without storing them in SKU Dash.
 - [x] Enforce client and server attachment limits, including 10 files, 10 MB per file, and 30 MB combined email content.
+
+## Range Pricing & RRP Planning (Oct 2026)
+- [x] Add a per-style pricing card in By Style with landed cost, target margin, RRP, suggested price and current-margin calculation.
+- [x] Seed 108 matching styles from the Summer 26 Buy Plan without overwriting existing SKU Dash RRPs.
+- [x] Add optional SKU-level RRP overrides for genuine colourway exceptions.
+- [x] Add a visual operating-model flow that positions SKU Dash as the pre-product range-definition source of truth.

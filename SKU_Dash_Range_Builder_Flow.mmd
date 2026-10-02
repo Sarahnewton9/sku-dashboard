@@ -1,0 +1,41 @@
+flowchart TB
+    classDef input fill:#fff0e6,stroke:#f97316,stroke-width:2px,color:#431407;
+    classDef core fill:#eaf3ff,stroke:#1673c9,stroke-width:3px,color:#102a43;
+    classDef output fill:#effbf3,stroke:#169c52,stroke-width:2px,color:#123c24;
+    classDef feedback fill:#fff8db,stroke:#ca8a04,stroke-width:2px,color:#513600;
+
+    subgraph A[1 · Range intent and commercial guardrails]
+      direction LR
+      Brief[Seasonal brief<br/>customer, trend, channel & price architecture] --> Lasts[Last strategy<br/>new lasts, carry-over & category role]
+    end
+
+    subgraph B[2 · SKU Dash — the master range builder]
+      direction LR
+      Range[Range architecture<br/>style, category, last, newness & carry-over] --> SKU[SKU creation<br/>colour, material, Upper 2 & imagery] --> Price[Style pricing<br/>landed cost, target margin & RRP suggestion] --> Spec[Development spec<br/>components, measurements & factory pack] --> Fit[Fitting & approval<br/>samples, fit notes & size recommendation]
+    end
+
+    subgraph C[3 · Controlled decisions and hand-offs]
+      direction LR
+      Buy[Buy plan<br/>channel/location quantities & buy sessions] --> PO[Production / purchase order<br/>confirmed cost, MOQ, supplier & ETA] --> Launch[E-commerce & retail launch<br/>product data, images, final RRP & assortment]
+      Master[Product master / AP21<br/>style, SKU, colour codes & size range] --> Launch
+    end
+
+    subgraph D[4 · Post-launch learning loop]
+      direction LR
+      Trade[Trading signals<br/>sell-through, markdowns & customer feedback] --> Learn[Range review<br/>repeat, recolour, cancel or refine]
+    end
+
+    Lasts --> Range
+    Price --> Buy
+    SKU --> Master
+    Spec --> PO
+    Fit --> PO
+    Launch --> Trade
+    Learn -. informs next seasonal brief .-> Brief
+    Trade -. price / cost / demand feedback .-> Price
+    Trade -. fit and product feedback .-> Fit
+
+    class Brief,Lasts input
+    class Range,SKU,Price,Spec,Fit core
+    class Buy,Master,PO,Launch output
+    class Trade,Learn feedback

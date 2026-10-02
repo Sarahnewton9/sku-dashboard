@@ -16,6 +16,7 @@ vi.mock("./db", () => ({
     { id: 1, style: "ALYX", rrp: 299.95 },
   ]),
   upsertStyleRrp: vi.fn().mockResolvedValue(undefined),
+  upsertStylePricing: vi.fn().mockResolvedValue(undefined),
   getAllCustomSkus: vi.fn().mockResolvedValue([
     { id: 1, style: "FERGIE", colour: "BLACK", leather: "SUEDE", season: "W27" },
   ]),
@@ -104,6 +105,18 @@ describe("sku.update", () => {
       leather2: "SUEDE",
     }));
   });
+
+  it("accepts a colour-specific RRP override", async () => {
+    const db = await import("./db");
+    const caller = appRouter.createCaller(createCtx());
+    await expect(caller.sku.update({
+      style: "ALYX",
+      colour: "BLACK",
+      leather: "COMO",
+      rrpOverride: 319.95,
+    })).resolves.toEqual({ success: true });
+    expect(db.upsertSkuMeta).toHaveBeenLastCalledWith(expect.objectContaining({ rrpOverride: 319.95 }));
+  });
 });
 
 describe("sku.importCosts", () => {
@@ -137,6 +150,27 @@ describe("style.importRrp", () => {
     ]);
     expect(result).toHaveProperty("updated");
     expect(result.updated).toBe(2);
+  });
+});
+
+describe("style.updatePricing", () => {
+  it("stores landed cost, target margin and selected RRP", async () => {
+    const db = await import("./db");
+    const caller = appRouter.createCaller(createCtx());
+    await expect(caller.style.updatePricing({
+      style: "ALYX",
+      landedCost: 48.25,
+      targetMargin: 0.75,
+      rrp: 219.95,
+      pricingSource: "Summer 26 Buy Plan",
+    })).resolves.toEqual({ success: true });
+    expect(db.upsertStylePricing).toHaveBeenLastCalledWith({
+      style: "ALYX",
+      landedCost: 48.25,
+      targetMargin: 0.75,
+      rrp: 219.95,
+      pricingSource: "Summer 26 Buy Plan",
+    });
   });
 });
 

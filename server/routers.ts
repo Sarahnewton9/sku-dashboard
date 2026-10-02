@@ -6,7 +6,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import axios from "axios";
 import {
   getAllSkuMeta, upsertSkuMeta,
-  getAllStyleMeta, upsertStyleRrp, upsertStyleFit, upsertStyleCategory,
+  getAllStyleMeta, upsertStyleRrp, upsertStylePricing, upsertStyleFit, upsertStyleCategory,
   getStyleFittingImages, getAllStyleFittingImages, addStyleFittingImage, deleteStyleFittingImage,
   getFittingImages, addFittingImage, deleteFittingImage, getAllFittingImages,
   getAllBuySessions, getActiveBuySession, createBuySession, lockBuySession, deleteBuySession,
@@ -248,6 +248,7 @@ export const appRouter = router({
         orderQty: z.number().int().min(0).optional(),
         isSize11: z.boolean().optional(),
         costPrice: z.number().nullable().optional(),
+        rrpOverride: z.number().positive().nullable().optional(),
         fitRating: z.enum(["tts", "runs_small", "runs_large"]).nullable().optional(),
         fittingNotes: z.string().nullable().optional(),
         sampleType: z.string().nullable().optional(),
@@ -479,6 +480,19 @@ export const appRouter = router({
   // Style metadata: RRP
   style: router({
     getAll: publicProcedure.query(async () => getAllStyleMeta()),
+
+    updatePricing: publicProcedure
+      .input(z.object({
+        style: z.string().trim().min(1).max(64),
+        landedCost: z.number().nonnegative().nullable().optional(),
+        targetMargin: z.number().min(0.01).max(0.99).optional(),
+        rrp: z.number().positive().nullable().optional(),
+        pricingSource: z.string().trim().max(128).nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await upsertStylePricing(input);
+        return { success: true };
+      }),
 
     setCategory: publicProcedure
       .input(z.object({ style: z.string(), category: z.string().nullable() }))

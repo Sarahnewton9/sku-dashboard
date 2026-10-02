@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { LastMeasurementsPanel } from "./LastMeasurementsPanel";
 import * as XLSX from "xlsx";
 import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
+import { StylePricingCard } from "./StylePricingCard";
 import ImportPanel from "./ImportPanel";
 import BuySessionBar from "./BuySessionBar";
 import { toast } from "sonner";
@@ -578,8 +579,8 @@ export default function StylesTab() {
   }
 
   // Build lookup maps
-  type SkuMetaItem = { style: string; colour: string; leather: string; sampleStatus?: string | null; orderQty?: number | null; isSize11?: boolean | null; costPrice?: number | null; fitRating?: string | null; fittingNotes?: string | null; colourOverride?: string | null; colour2?: string | null; leather2?: string | null; };
-  type StyleMetaItem = { style: string; rrp?: number | null; fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; websiteImageUrl?: string | null; sizeRecommendation?: string | null; };
+  type SkuMetaItem = { style: string; colour: string; leather: string; sampleStatus?: string | null; orderQty?: number | null; isSize11?: boolean | null; costPrice?: number | null; rrpOverride?: number | null; fitRating?: string | null; fittingNotes?: string | null; colourOverride?: string | null; colour2?: string | null; leather2?: string | null; };
+  type StyleMetaItem = { style: string; landedCost?: number | null; targetMargin?: number | null; rrp?: number | null; pricingSource?: string | null; fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; websiteImageUrl?: string | null; sizeRecommendation?: string | null; };
 
   const skuMetaMap = useMemo(() => {
     const map: Record<string, SkuMetaItem> = {};
@@ -629,6 +630,7 @@ export default function StylesTab() {
 
   function handleMetaChange() {
     refetchSkuMeta();
+    refetchStyleMeta();
   }
 
   function handleSessionChange() {
@@ -1594,6 +1596,11 @@ export default function StylesTab() {
                           {expandedStyle === style.style && (
                             <tr key={`${style.style}-expanded`} className="border-b" style={{ borderColor: "var(--border)" }}>
                               <td colSpan={8} className="px-6 py-4" style={{ background: "oklch(0.98 0.02 65 / 0.5)" }}>
+                                <StylePricingCard
+                                  style={style.style}
+                                  pricing={styleMetaMap[style.style]}
+                                  onSaved={handleMetaChange}
+                                />
                                 {/* Website image + fit info row */}
                                 {(() => {
                                   const sm = styleMetaMap[style.style];

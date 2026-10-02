@@ -116,6 +116,7 @@ export async function upsertSkuMeta(data: {
   orderQty?: number;
   isSize11?: boolean;
   costPrice?: number | null;
+  rrpOverride?: number | null;
   fitRating?: "tts" | "runs_small" | "runs_large" | null;
   fittingNotes?: string | null;
   sampleType?: string | null;
@@ -133,6 +134,7 @@ export async function upsertSkuMeta(data: {
     if (data.orderQty !== undefined) updateSet.orderQty = data.orderQty;
     if (data.isSize11 !== undefined) updateSet.isSize11 = data.isSize11;
     if (data.costPrice !== undefined) updateSet.costPrice = data.costPrice;
+    if (data.rrpOverride !== undefined) updateSet.rrpOverride = data.rrpOverride;
     if (data.fitRating !== undefined) updateSet.fitRating = data.fitRating;
     if (data.fittingNotes !== undefined) updateSet.fittingNotes = data.fittingNotes;
     if (data.sampleType !== undefined) updateSet.sampleType = data.sampleType;
@@ -152,6 +154,7 @@ export async function upsertSkuMeta(data: {
       orderQty: data.orderQty ?? 0,
       isSize11: data.isSize11 ?? false,
       costPrice: data.costPrice ?? null,
+      rrpOverride: data.rrpOverride ?? null,
       fitRating: data.fitRating ?? null,
       fittingNotes: data.fittingNotes ?? null,
       sampleType: data.sampleType ?? null,
@@ -175,6 +178,30 @@ export async function upsertStyleRrp(style: string, rrp: number | null) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.insert(styleMeta).values({ style, rrp }).onDuplicateKeyUpdate({ set: { rrp } });
+}
+
+export async function upsertStylePricing(data: {
+  style: string;
+  landedCost?: number | null;
+  targetMargin?: number;
+  rrp?: number | null;
+  pricingSource?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const updateSet: Record<string, unknown> = {};
+  if (data.landedCost !== undefined) updateSet.landedCost = data.landedCost;
+  if (data.targetMargin !== undefined) updateSet.targetMargin = data.targetMargin;
+  if (data.rrp !== undefined) updateSet.rrp = data.rrp;
+  if (data.pricingSource !== undefined) updateSet.pricingSource = data.pricingSource;
+
+  await db.insert(styleMeta).values({
+    style: data.style,
+    landedCost: data.landedCost ?? null,
+    targetMargin: data.targetMargin ?? 0.75,
+    rrp: data.rrp ?? null,
+    pricingSource: data.pricingSource ?? null,
+  }).onDuplicateKeyUpdate({ set: updateSet as any });
 }
 
 export async function upsertStyleCategory(style: string, category: string | null) {

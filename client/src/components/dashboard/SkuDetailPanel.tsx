@@ -9,6 +9,7 @@ import { trpc } from "@/lib/trpc";
 import { X, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { displayColour, displayLeather } from "@/lib/utils";
+import { getAuGrossMargin } from "@shared/stylePricing";
 
 export interface SkuPanelData {
   style: string;
@@ -29,6 +30,7 @@ interface Props {
     orderQty?: number;
     isSize11?: boolean;
     costPrice?: number | null;
+    rrpOverride?: number | null;
   }>;
   styleMeta: Record<string, { rrp?: number | null }>;
   onMetaChange: () => void;
@@ -47,6 +49,10 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
 
   const meta = sku ? skuMeta[skuKey(sku.style, sku.colour, sku.leather)] : undefined;
   const styleRrp = sku ? styleMeta[sku.style]?.rrp : undefined;
+  const effectiveRrp = meta?.rrpOverride ?? styleRrp;
+  const effectiveMargin = meta?.costPrice != null && effectiveRrp != null
+    ? getAuGrossMargin(meta.costPrice, effectiveRrp)
+    : null;
 
   const updateMutation = trpc.sku.update.useMutation({
     onSuccess: () => { onMetaChange(); },
@@ -71,6 +77,21 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
     if (!isNaN(qty) && qty >= 0) {
       updateMutation.mutate({ style: sku.style, colour: sku.colour, leather: sku.leather, orderQty: qty });
     }
+  }, [sku, updateMutation]);
+
+  const handleRrpOverride = useCallback((value: string) => {
+    if (!sku) return;
+    const trimmed = value.trim();
+    if (!trimmed) {
+      updateMutation.mutate({ style: sku.style, colour: sku.colour, leather: sku.leather, rrpOverride: null });
+      return;
+    }
+    const rrp = Number(trimmed.replace(/[$,\s]/g, ""));
+    if (!Number.isFinite(rrp) || rrp <= 0) {
+      toast.error("Enter a valid RRP, or clear the field to use the style price.");
+      return;
+    }
+    updateMutation.mutate({ style: sku.style, colour: sku.colour, leather: sku.leather, rrpOverride: rrp });
   }, [sku, updateMutation]);
 
   // Style-level Size 11 mutation — updates ALL SKUs in the style
@@ -200,16 +221,32 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">RRP</span>
+              <span className="text-sm text-muted-foreground">Style RRP</span>
               <span className="text-sm font-semibold font-mono text-foreground">
                 {styleRrp != null ? `$${styleRrp.toFixed(2)}` : "—"}
               </span>
             </div>
-            {meta?.costPrice != null && styleRrp != null && (
+            <div className="space-y-1.5 border-t pt-3" style={{ borderColor: "var(--border)" }}>
+              <label className="block text-sm text-muted-foreground" htmlFor="sku-rrp-override">SKU RRP override</label>
+              <input
+                id="sku-rrp-override"
+                type="number"
+                min={0}
+                step="0.01"
+                defaultValue={meta?.rrpOverride ?? ""}
+                key={`rrp-${sku.style}-${sku.colour}-${sku.leather}-${meta?.rrpOverride ?? "style"}`}
+                onBlur={(event) => handleRrpOverride(event.target.value)}
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                style={{ borderColor: "var(--border)" }}
+                placeholder={styleRrp != null ? `Style price: $${styleRrp.toFixed(2)}` : "Optional colourway price"}
+              />
+              <p className="text-xs text-muted-foreground">Leave blank to use the style RRP.</p>
+            </div>
+            {effectiveMargin != null && (
               <div className="flex items-center justify-between pt-1 border-t" style={{ borderColor: "var(--border)" }}>
                 <span className="text-sm text-muted-foreground">Margin</span>
                 <span className="text-sm font-semibold" style={{ color: "oklch(0.50 0.14 55)" }}>
-                  {Math.round(((styleRrp - meta.costPrice) / styleRrp) * 100)}%
+                  {Math.round(effectiveMargin * 100)}%
                 </span>
               </div>
             )}
