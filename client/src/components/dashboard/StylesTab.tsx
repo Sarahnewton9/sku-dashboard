@@ -1375,7 +1375,7 @@ export default function StylesTab() {
           <DropdownMenuContent align="start" className="w-52">
             <DropdownMenuLabel>Import into SKU Dash</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => setShowInvoiceImport(true)}><FileSpreadsheet /> Supplier invoice</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setShowInvoiceImport(true)}><FileSpreadsheet /> Import sample invoice</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleFetchSize11} disabled={isFetchingSize11}>
               <RefreshCw className={isFetchingSize11 ? "animate-spin" : ""} />
@@ -2522,7 +2522,7 @@ export default function StylesTab() {
         />
       )}
 
-      {/* Invoice Import Dialog */}
+      {/* Sample Invoice Import Dialog */}
       {showInvoiceImport && (
         <InvoiceImportDialog
           allSkus={skuData.rawSkus.map((s) => ({ style: s.style, colour: s.colour, leather: s.leather ?? "" }))}
@@ -2832,7 +2832,7 @@ export default function StylesTab() {
   );
 }
 
-// ─── Invoice Import Dialog ────────────────────────────────────────────────────
+// ─── Sample Invoice Import Dialog ─────────────────────────────────────────────
 type InvoiceMatch = {
   invoiceStyle: string;
   invoiceColour: string;
@@ -2931,7 +2931,7 @@ function InvoiceImportDialog({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
           <div>
-            <h2 className="text-base font-semibold">Import Invoice</h2>
+            <h2 className="text-base font-semibold">Import Sample Invoice</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               {step === "upload" ? "Upload a supplier XLSX invoice to mark samples as received" :
                step === "review" ? `Review ${results.length} items found — approve or reject each match` :

@@ -615,3 +615,6 @@
 - [x] Removed the legacy **SKU data** bulk cost/RRP importer from By Style and deleted its unused dialog component.
 - [x] Retained the useful options: supplier invoice import, completed factory-cost request import, and Size 11 sync.
 - [x] Validation: 101 tests and production build passed; visual check confirmed the streamlined By Style controls.
+
+## Sample Invoice Label Update (Oct 2026)
+- [x] Renamed **Supplier invoice** to **Import sample invoice** in the By Style menu and dialog title. Verified with 101 tests and a production build.
