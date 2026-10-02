@@ -12,7 +12,7 @@ import { Lock, Download, Mail, Plus, Clock, CheckCircle, Package, Trash2, Pencil
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
-import { formatSkuExportLabel } from "@shared/skuExportLabel";
+import { formatSkuExportLabel, toTitleCaseSkuExportLabel } from "@shared/skuExportLabel";
 import { useSeason } from "@/contexts/SeasonContext";
 import { getSeasonDisplayLabel, getSeasonFileLabel } from "@shared/seasonLabel";
 import { EmailExportDialog } from "./EmailExportDialog";
@@ -204,7 +204,7 @@ export default function BuySessionsPanel() {
 
     type RowData = {
       category: string; last: string; size11: string;
-      style: string; colourDesc: string; auQty: number; usaQty: number; nycQty: number; laQty: number;
+      style: string; colourDesc: string; ap21SkuColour: string; auQty: number; usaQty: number; nycQty: number; laQty: number;
     };
 
     const allItems = items as Array<{ style: string; colour: string; leather: string; qty?: number; auQty?: number; usaQty?: number; nycQty?: number; laQty?: number }>;
@@ -232,6 +232,9 @@ export default function BuySessionsPanel() {
           size11: styleSize11Map[item.style] ? "Y" : "",
           style: item.style,
           colourDesc,
+          // Uses the same shared formatter as the AP21 Product Import's
+          // Colour Description: title case with a compact Upper 1/Upper 2 slash.
+          ap21SkuColour: toTitleCaseSkuExportLabel(colourDesc),
           auQty: (item.auQty ?? 0) || (item.qty ?? 0),
           usaQty: item.usaQty ?? 0,
           nycQty: item.nycQty ?? 0,
@@ -261,14 +264,14 @@ export default function BuySessionsPanel() {
     const fileName = `${getSeasonFileLabel(season)}_${sessionName}_BUY.xlsx`;
 
     // ── Layout ────────────────────────────────────────────────────────────────────
-    // Columns: CATEGORY | LAST | SIZE 11 | STYLE | COLOUR | AU QTY [| USA QTY] [| NYC QTY]
+    // Columns: CATEGORY | LAST | SIZE 11 | STYLE | COLOUR | AP21 SKU COLOUR | AU QTY [| USA QTY] [| NYC QTY]
     // Row 1: Title merged across all columns
     // Row 2: Empty spacer
     // Row 3: Bold header row
     // Rows 4+: Data rows (plain white)
     // Last row: TOTAL
 
-    const COLS = 6 + (hasUsa ? 1 : 0) + (hasNyc ? 1 : 0) + (hasLa ? 1 : 0);
+    const COLS = 7 + (hasUsa ? 1 : 0) + (hasNyc ? 1 : 0) + (hasLa ? 1 : 0);
     const sheetRows: (string | number)[][] = [];
     const rowTypes: string[] = [];
 
@@ -282,7 +285,7 @@ export default function BuySessionsPanel() {
     sheetRows.push([...emptyRow]);
     rowTypes.push("spacer");
     // Header
-    const headerRow = ["CATEGORY", "LAST", "SIZE 11", "STYLE", "COLOUR", "AU QTY"];
+    const headerRow = ["CATEGORY", "LAST", "SIZE 11", "STYLE", "COLOUR", "AP21 SKU COLOUR", "AU QTY"];
     if (hasUsa) headerRow.push("USA QTY");
     if (hasNyc) headerRow.push("NYC QTY");
     if (hasLa) headerRow.push("LA QTY");
@@ -291,7 +294,7 @@ export default function BuySessionsPanel() {
 
     // Data rows
     for (const r of rows) {
-      const dataRow: (string | number)[] = [r.category, r.last, r.size11, r.style, r.colourDesc, r.auQty];
+      const dataRow: (string | number)[] = [r.category, r.last, r.size11, r.style, r.colourDesc, r.ap21SkuColour, r.auQty];
       if (hasUsa) dataRow.push(r.usaQty > 0 ? r.usaQty : "");
       if (hasNyc) dataRow.push(r.nycQty > 0 ? r.nycQty : "");
       if (hasLa) dataRow.push(r.laQty > 0 ? r.laQty : "");
@@ -304,7 +307,7 @@ export default function BuySessionsPanel() {
     const totalUsa = rows.reduce((s, r) => s + r.usaQty, 0);
     const totalNyc = rows.reduce((s, r) => s + r.nycQty, 0);
     const totalLa = rows.reduce((s, r) => s + r.laQty, 0);
-    const totalRow: (string | number)[] = ["TOTAL", "", "", "", " ", totalAu];
+    const totalRow: (string | number)[] = ["TOTAL", "", "", "", "", "", totalAu];
     if (hasUsa) totalRow.push(totalUsa);
     if (hasNyc) totalRow.push(totalNyc);
     if (hasLa) totalRow.push(totalLa);
@@ -324,6 +327,7 @@ export default function BuySessionsPanel() {
       { wch: 9.875  }, // SIZE 11
       { wch: 12.875 }, // STYLE
       { wch: 23.875 }, // COLOUR
+      { wch: 25.875 }, // AP21 SKU COLOUR
       ...qtyColWidths,
     ];
 
@@ -343,7 +347,7 @@ export default function BuySessionsPanel() {
     const darkFill = { patternType: "solid", fgColor: { rgb: "1A1A1A" } };
     const whiteFont = { name: "Calibri", sz: 12, bold: true, color: { rgb: "FFFFFF" } };
     const plainFont = { name: "Calibri", sz: 12, bold: false };
-    const qtyColIndices = [5, ...(hasUsa ? [6] : []), ...(hasNyc ? [hasUsa ? 7 : 6] : [])];
+    const qtyColIndices = Array.from({ length: COLS - 6 }, (_, index) => 6 + index);
 
     // Apply styles
     for (let R = 0; R < sheetRows.length; R++) {

@@ -44,4 +44,17 @@ describe("SKU export upper labels", () => {
     expect(toTitleCaseSkuExportLabel("BLACK VINTAGE/BLACK SUEDE"))
       .toBe("Black Vintage/Black Suede");
   });
+
+  it("creates the exact AP21 Colour Description used by the Buy Sheet", () => {
+    const developmentLabel = formatSkuExportLabel({
+      style: "ROBYN",
+      colour: "ECRU",
+      leather: "SNAKE",
+      colour2: "LIPSTICK",
+      leather2: "SUEDE",
+    });
+
+    expect(toTitleCaseSkuExportLabel(developmentLabel))
+      .toBe("Ecru Snake/Lipstick Suede");
+  });
 });
