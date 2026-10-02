@@ -33,7 +33,6 @@ import * as XLSX from "xlsx";
 import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
 import { StylePricingCard } from "./StylePricingCard";
 import { CostRequestImportDialog } from "./CostRequestImportDialog";
-import ImportPanel from "./ImportPanel";
 import BuySessionBar from "./BuySessionBar";
 import { toast } from "sonner";
 import { EmailExportDialog } from "./EmailExportDialog";
@@ -83,7 +82,6 @@ export default function StylesTab() {
   const [sortKey, setSortKey] = useState<SortKey>("style");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [selectedSku, setSelectedSku] = useState<SkuPanelData | null>(null);
-  const [showImport, setShowImport] = useState(false);
   const [showInvoiceImport, setShowInvoiceImport] = useState(false);
   const [emailRangeOpen, setEmailRangeOpen] = useState(false);
   const [emailCostRequestOpen, setEmailCostRequestOpen] = useState(false);
@@ -1377,7 +1375,6 @@ export default function StylesTab() {
           <DropdownMenuContent align="start" className="w-52">
             <DropdownMenuLabel>Import into SKU Dash</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => setShowImport(true)}><Upload /> SKU data</DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setShowInvoiceImport(true)}><FileSpreadsheet /> Supplier invoice</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleFetchSize11} disabled={isFetchingSize11}>
@@ -2522,14 +2519,6 @@ export default function StylesTab() {
           styleMeta={styleMetaMap as any}
           onMetaChange={handleMetaChange}
           allStyleSkus={getSkusForStyle(selectedSku.style).map((s) => ({ colour: s.colour, leather: s.leather }))}
-        />
-      )}
-
-      {/* Import Panel */}
-      {showImport && (
-        <ImportPanel
-          onClose={() => setShowImport(false)}
-          onImportDone={() => { refetchSkuMeta(); refetchStyleMeta(); }}
         />
       )}
 

@@ -610,3 +610,8 @@
 - [x] Simplified the main Export dialog to a single **Full range export** card with **Download Excel** and **Email** actions. All standard columns are included automatically.
 - [x] Hidden the AP21 Product Import CSV workflow and its email option while it is not needed, retaining the underlying workflow for a future AP21 handover.
 - [x] Validation: 101 regression tests and production build passed; visual check confirmed the compact W27 By Style toolbar.
+
+## Legacy SKU Data Import Removal (Oct 2026)
+- [x] Removed the legacy **SKU data** bulk cost/RRP importer from By Style and deleted its unused dialog component.
+- [x] Retained the useful options: supplier invoice import, completed factory-cost request import, and Size 11 sync.
+- [x] Validation: 101 tests and production build passed; visual check confirmed the streamlined By Style controls.
