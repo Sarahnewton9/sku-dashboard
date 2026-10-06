@@ -376,6 +376,7 @@ export default function BuyAnalysisTab() {
   }, [notBoughtSkus, styleInfoMap]);
 
   const boughtNewSkuCount = Math.max(0, activeNewSkus.length - notBoughtRows.length);
+  const boughtSharePercentage = getBuyShare(boughtNewSkuCount, activeNewSkus.length);
   const boughtShare = formatBuyShare(boughtNewSkuCount, activeNewSkus.length);
 
   const selectedSessionNames = (allSessions as Array<{ id: number; name: string }>)
@@ -1317,6 +1318,27 @@ export default function BuyAnalysisTab() {
               <p className="text-sm font-medium text-foreground">New SKUs with at least 1 unit</p>
               <p className="text-xs text-muted-foreground">Bought in the selected market</p>
               </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border px-4 py-3 mb-5" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+            <div className="flex items-center justify-between gap-4 mb-2">
+              <div>
+                <p className="text-sm font-semibold text-foreground">New SKU buy completion</p>
+                <p className="text-xs text-muted-foreground">{boughtNewSkuCount} of {activeNewSkus.length} active new SKUs bought</p>
+              </div>
+              <span className="text-sm font-bold tabular-nums" style={{ color: "oklch(0.45 0.15 145)" }}>{boughtShare}</span>
+            </div>
+            <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--muted)" }}>
+              <div
+                className="h-full rounded-full transition-[width] duration-200"
+                style={{ width: `${boughtSharePercentage}%`, background: "oklch(0.62 0.16 145)" }}
+                role="progressbar"
+                aria-label="New SKU buy completion"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(boughtSharePercentage)}
+              />
             </div>
           </div>
 

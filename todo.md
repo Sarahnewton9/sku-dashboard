@@ -650,3 +650,8 @@
 - [x] Add per-colour and per-session share of a searched style, plus `Total` and `% Bought` in the expanded Buy Session preview.
 - [x] Add safe zero-total percentage calculation coverage. Validation: 105 tests and production build passed.
 - [x] Add the active-new-SKU completion percentage to the **Not Yet Bought** tab label and its completion cards; it updates with the market filter and excludes cancelled SKUs.
+
+## Buy Completion Bar & Buy Sheet Percentages (6 Oct 2026)
+- [x] Added a green **New SKU buy completion** progress bar to the Not Yet Bought view, with bought count and percentage for the active market filter.
+- [x] Extended Buy Sheet download and email attachments with **TOTAL QTY** and native Excel **% BOUGHT** columns. Each SKU’s percentage is its share of that session’s total units; the total row is 100.0%.
+- [x] Validation: 105 tests, production build, diff checks, and updated Buy Analysis visual review passed.

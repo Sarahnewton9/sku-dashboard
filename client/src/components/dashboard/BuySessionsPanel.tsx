@@ -14,7 +14,7 @@ import * as XLSX from "xlsx-js-style";
 import { displayColourLeather } from "@/lib/utils";
 import { formatSkuExportLabel } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
-import { formatBuyShare } from "@shared/buyShare";
+import { formatBuyShare, getBuyShare } from "@shared/buyShare";
 import {
   buildAp21SkuColourDescriptionMap,
   resolveAp21SkuColourDescription,
@@ -220,7 +220,7 @@ export default function BuySessionsPanel() {
 
     type RowData = {
       category: string; last: string; size11: string;
-      style: string; colourDesc: string; ap21SkuColour: string; auQty: number; usaQty: number; nycQty: number; laQty: number;
+      style: string; colourDesc: string; ap21SkuColour: string; auQty: number; usaQty: number; nycQty: number; laQty: number; totalQty: number;
     };
 
     const allItems = items as Array<{
@@ -247,6 +247,10 @@ export default function BuySessionsPanel() {
           item.style, item.colour, item.leather, item.colour2, item.leather2,
         )]
           ?? displayColourLeather(item.colour, item.leather, item.style);
+        const auQty = (item.auQty ?? 0) || (item.qty ?? 0);
+        const usaQty = item.usaQty ?? 0;
+        const nycQty = item.nycQty ?? 0;
+        const laQty = item.laQty ?? 0;
         return {
           category: resolvedCategoryMap[item.style] ?? styleInfo?.category ?? "",
           last: styleInfo?.last ?? "",
@@ -256,10 +260,11 @@ export default function BuySessionsPanel() {
           // Exact factory-approved AP21 wording, scoped to the full Upper 1 +
           // Upper 2 identity. Development wording remains a safe fallback.
           ap21SkuColour: resolveAp21SkuColourDescription(item, colourDesc, ap21SkuColourDescriptionMap),
-          auQty: (item.auQty ?? 0) || (item.qty ?? 0),
-          usaQty: item.usaQty ?? 0,
-          nycQty: item.nycQty ?? 0,
-          laQty: item.laQty ?? 0,
+          auQty,
+          usaQty,
+          nycQty,
+          laQty,
+          totalQty: auQty + usaQty + nycQty + laQty,
         };
       });
 
@@ -285,14 +290,14 @@ export default function BuySessionsPanel() {
     const fileName = `${getSeasonFileLabel(season)}_${sessionName}_BUY.xlsx`;
 
     // ── Layout ────────────────────────────────────────────────────────────────────
-    // Columns: CATEGORY | LAST | SIZE 11 | STYLE | COLOUR | AP21 SKU COLOUR | AU QTY [| USA QTY] [| NYC QTY]
+    // Columns: CATEGORY | LAST | SIZE 11 | STYLE | COLOUR | AP21 SKU COLOUR | market qty columns | TOTAL QTY | % BOUGHT
     // Row 1: Title merged across all columns
     // Row 2: Empty spacer
     // Row 3: Bold header row
     // Rows 4+: Data rows (plain white)
     // Last row: TOTAL
 
-    const COLS = 7 + (hasUsa ? 1 : 0) + (hasNyc ? 1 : 0) + (hasLa ? 1 : 0);
+    const COLS = 9 + (hasUsa ? 1 : 0) + (hasNyc ? 1 : 0) + (hasLa ? 1 : 0);
     const sheetRows: (string | number)[][] = [];
     const rowTypes: string[] = [];
 
@@ -310,15 +315,18 @@ export default function BuySessionsPanel() {
     if (hasUsa) headerRow.push("USA QTY");
     if (hasNyc) headerRow.push("NYC QTY");
     if (hasLa) headerRow.push("LA QTY");
+    headerRow.push("TOTAL QTY", "% BOUGHT");
     sheetRows.push(headerRow);
     rowTypes.push("header");
 
     // Data rows
+    const sessionTotal = rows.reduce((sum, row) => sum + row.totalQty, 0);
     for (const r of rows) {
       const dataRow: (string | number)[] = [r.category, r.last, r.size11, r.style, r.colourDesc, r.ap21SkuColour, r.auQty];
       if (hasUsa) dataRow.push(r.usaQty > 0 ? r.usaQty : "");
       if (hasNyc) dataRow.push(r.nycQty > 0 ? r.nycQty : "");
       if (hasLa) dataRow.push(r.laQty > 0 ? r.laQty : "");
+      dataRow.push(r.totalQty, getBuyShare(r.totalQty, sessionTotal) / 100);
       sheetRows.push(dataRow);
       rowTypes.push("data");
     }
@@ -332,6 +340,7 @@ export default function BuySessionsPanel() {
     if (hasUsa) totalRow.push(totalUsa);
     if (hasNyc) totalRow.push(totalNyc);
     if (hasLa) totalRow.push(totalLa);
+    totalRow.push(sessionTotal, 1);
     sheetRows.push(totalRow);
     rowTypes.push("total");
 
@@ -342,6 +351,7 @@ export default function BuySessionsPanel() {
     if (hasUsa) qtyColWidths.push({ wch: 10.875 }); // USA QTY
     if (hasNyc) qtyColWidths.push({ wch: 10.875 }); // NYC QTY
     if (hasLa) qtyColWidths.push({ wch: 10.875 }); // LA QTY
+    qtyColWidths.push({ wch: 11.875 }, { wch: 11.875 }); // TOTAL QTY, % BOUGHT
     ws["!cols"] = [
       { wch: 20.875 }, // CATEGORY
       { wch: 14.875 }, // LAST
@@ -378,6 +388,11 @@ export default function BuySessionsPanel() {
         if (!ws[addr]) ws[addr] = { v: "", t: "s" };
 
         const isQtyCol = qtyColIndices.includes(C);
+
+        // The final column is stored as a decimal for Excel's native percentage formatting.
+        if (C === COLS - 1 && (type === "data" || type === "total")) {
+          ws[addr].z = "0.0%";
+        }
 
         if (type === "title") {
           ws[addr].s = {
