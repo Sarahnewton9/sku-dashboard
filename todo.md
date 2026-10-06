@@ -649,3 +649,4 @@
 - [x] Add location share and per-style/per-colour purchase shares in the By Location analysis.
 - [x] Add per-colour and per-session share of a searched style, plus `Total` and `% Bought` in the expanded Buy Session preview.
 - [x] Add safe zero-total percentage calculation coverage. Validation: 105 tests and production build passed.
+- [x] Add the active-new-SKU completion percentage to the **Not Yet Bought** tab label and its completion cards; it updates with the market filter and excludes cancelled SKUs.

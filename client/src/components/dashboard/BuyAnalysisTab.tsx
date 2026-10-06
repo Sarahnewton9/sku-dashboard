@@ -127,6 +127,13 @@ export default function BuyAnalysisTab() {
     return (mergedRawSkus as unknown) as Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean }>;
   }, [mergedRawSkus]);
 
+  // The base population for buying completion excludes cancelled new SKUs.
+  // The same denominator is used in the tab, cards and market filter.
+  const activeNewSkus = useMemo(() => allRangeSkus.filter((sku) => {
+    if (!sku.is_new || cancelledStyleSet.has(sku.style)) return false;
+    return !cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`);
+  }), [allRangeSkus, cancelledStyleSet, cancelledSkuSet]);
+
   // Only items with any qty (for selected sessions)
   const boughtItems = useMemo(() => mergedItems.filter((i) => i.auQty + i.usaQty + i.nycQty + i.laQty > 0), [mergedItems]);
   const totalAU = useMemo(() => boughtItems.reduce((s, i) => s + i.auQty, 0), [boughtItems]);
@@ -138,11 +145,7 @@ export default function BuyAnalysisTab() {
   // Not yet bought — NEW SKUs only with zero qty for the selected market, excluding cancelled styles/SKUs
   const notBoughtSkus = useMemo(() => {
     const allQtys = allSessionQtys as Record<string, { total: number; totalAu: number; totalUsa: number; totalNyc: number; totalLa: number }>;
-    return allRangeSkus.filter((sku) => {
-      if (!sku.is_new) return false; // only show new SKUs
-      if (cancelledStyleSet.has(sku.style)) return false; // exclude cancelled styles
-      const primaryKey = `${sku.style}|${sku.colour}|${sku.leather}`;
-      if (cancelledSkuSet.has(primaryKey)) return false; // exclude cancelled SKUs
+    return activeNewSkus.filter((sku) => {
       const key = getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, sku.colour2, sku.leather2);
       const q = allQtys[key];
       if (notBoughtMarket === "all") return !q || q.total === 0;
@@ -152,7 +155,7 @@ export default function BuyAnalysisTab() {
       if (notBoughtMarket === "la")  return !q || q.totalLa === 0;
       return true;
     });
-  }, [allRangeSkus, allSessionQtys, cancelledStyleSet, cancelledSkuSet, notBoughtMarket]);
+  }, [activeNewSkus, allSessionQtys, notBoughtMarket]);
 
   // By category
   const byCategory = useMemo(() => {
@@ -372,6 +375,8 @@ export default function BuyAnalysisTab() {
     })).sort((a, b) => a.style.localeCompare(b.style));
   }, [notBoughtSkus, styleInfoMap]);
 
+  const notBoughtShare = formatBuyShare(notBoughtRows.length, activeNewSkus.length);
+
   const selectedSessionNames = (allSessions as Array<{ id: number; name: string }>)
     .filter((s) => selectedSessionIds.includes(s.id))
     .map((s) => s.name);
@@ -509,7 +514,7 @@ export default function BuyAnalysisTab() {
           { id: "summary", label: "Summary" },
           { id: "pairs-breakdown", label: "Pairs Breakdown" },
           { id: "sku-table", label: `SKU Breakdown${boughtItems.length > 0 ? ` (${boughtItems.length})` : ""}` },
-          { id: "not-bought", label: `Not Yet Bought (${notBoughtRows.length})` },
+          { id: "not-bought", label: `Not Yet Bought (${notBoughtRows.length} · ${notBoughtShare})` },
           { id: "location", label: "By Location" },
           { id: "style-search", label: "Style Search" },
         ] as Array<{ id: ViewTab; label: string }>).map((tab) => (
@@ -1296,17 +1301,23 @@ export default function BuyAnalysisTab() {
           </div>
           <div className="flex items-center gap-3 mb-2">
             <div className="rounded-xl border px-4 py-3 flex items-center gap-3" style={{ borderColor: "oklch(0.85 0.08 30)", background: "oklch(0.97 0.04 30)" }}>
-              <span className="text-2xl font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 30)" }}>{notBoughtRows.length}</span>
+              <div className="text-center">
+                <p className="text-2xl font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 30)" }}>{notBoughtRows.length}</p>
+                <p className="text-xs font-semibold tabular-nums" style={{ color: "oklch(0.50 0.14 30)" }}>{notBoughtShare}</p>
+              </div>
               <div>
               <p className="text-sm font-medium text-foreground">New SKUs not yet bought</p>
-              <p className="text-xs text-muted-foreground">{notBoughtMarket === "all" ? "Zero units across all markets" : `Zero units for ${notBoughtMarket.toUpperCase()}`}</p>
+              <p className="text-xs text-muted-foreground">{notBoughtMarket === "all" ? "Zero units across all markets" : `Zero units for ${notBoughtMarket.toUpperCase()}`} · of active new SKUs</p>
               </div>
             </div>
             <div className="rounded-xl border px-4 py-3 flex items-center gap-3" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-              <span className="text-2xl font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{allRangeSkus.filter(s => s.is_new).length - notBoughtRows.length}</span>
+              <div className="text-center">
+                <p className="text-2xl font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{activeNewSkus.length - notBoughtRows.length}</p>
+                <p className="text-xs font-semibold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{formatBuyShare(activeNewSkus.length - notBoughtRows.length, activeNewSkus.length)}</p>
+              </div>
               <div>
               <p className="text-sm font-medium text-foreground">New SKUs with at least 1 unit</p>
-              <p className="text-xs text-muted-foreground">Bought in any session</p>
+              <p className="text-xs text-muted-foreground">Bought in the selected market</p>
               </div>
             </div>
           </div>
