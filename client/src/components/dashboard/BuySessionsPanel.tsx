@@ -14,6 +14,7 @@ import * as XLSX from "xlsx-js-style";
 import { displayColourLeather } from "@/lib/utils";
 import { formatSkuExportLabel } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
+import { formatBuyShare } from "@shared/buyShare";
 import {
   buildAp21SkuColourDescriptionMap,
   resolveAp21SkuColourDescription,
@@ -761,6 +762,8 @@ export default function BuySessionsPanel() {
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">USA</th>
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">NYC</th>
                             <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">LA</th>
+                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">Total</th>
+                            <th className="px-3 py-2 text-right font-semibold text-muted-foreground uppercase tracking-wide">% Bought</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -768,6 +771,7 @@ export default function BuySessionsPanel() {
                             .filter((i) => ((i.auQty ?? 0) + (i.usaQty ?? 0) + (i.nycQty ?? 0) + (i.laQty ?? 0)) > 0)
                             .sort((a, b) => a.style.localeCompare(b.style))
                             .map((item) => {
+                              const itemTotal = (item.auQty ?? 0) + (item.usaQty ?? 0) + (item.nycQty ?? 0) + ((item as any).laQty ?? 0);
                               return (
                                 <tr key={getSkuCompositeIdentity(item.style, item.colour, item.leather, item.colour2, item.leather2)}
                                   className="border-t" style={{ borderColor: "var(--border)" }}>
@@ -777,6 +781,8 @@ export default function BuySessionsPanel() {
                                   <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.15 240)" }}>{item.usaQty ?? 0}</td>
                                   <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.55 0.18 300)" }}>{item.nycQty ?? 0}</td>
                                   <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.16 160)" }}>{(item as any).laQty ?? 0}</td>
+                                  <td className="px-3 py-2 text-right font-bold tabular-nums text-foreground">{itemTotal}</td>
+                                  <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{formatBuyShare(itemTotal, selectedTotal)}</td>
                                 </tr>
                               );
                             })}
@@ -796,6 +802,8 @@ export default function BuySessionsPanel() {
                             <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.16 160)" }}>
                               {(sessionItems as Array<{ laQty?: number }>).reduce((s, i) => s + (i.laQty ?? 0), 0)}
                             </td>
+                            <td className="px-3 py-2 text-right font-bold tabular-nums text-foreground">{selectedTotal}</td>
+                            <td className="px-3 py-2 text-right font-bold tabular-nums text-muted-foreground">100.0%</td>
                           </tr>
                         </tfoot>
                       </table>

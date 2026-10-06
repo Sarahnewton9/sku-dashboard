@@ -13,12 +13,13 @@ import { BarChart3, ChevronDown, Package, Check, ArrowUpDown, ArrowUp, ArrowDown
 import { displayColour, displayLeather } from "@/lib/utils";
 import { formatSkuExportLabel } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
+import { formatBuyShare, getBuyShare } from "@shared/buyShare";
 import {
   groupBoughtStylesByLocation,
   type BuyLocation,
 } from "@shared/buyLocationAnalysis";
 
-type SortField = "style" | "colour" | "leather" | "category" | "last" | "au" | "usa" | "nyc" | "la" | "total";
+type SortField = "style" | "colour" | "leather" | "category" | "last" | "au" | "usa" | "nyc" | "la" | "total" | "share";
 type SortDir = "asc" | "desc";
 type ViewTab = "summary" | "sku-table" | "not-bought" | "pairs-breakdown" | "style-search" | "location";
 
@@ -230,6 +231,14 @@ export default function BuyAnalysisTab() {
     [locationStyleRows],
   );
 
+  const allLocationPairs = useMemo(
+    () => allSessionLocationItems.reduce(
+      (total, item) => total + item.auQty + item.usaQty + item.nycQty + item.laQty,
+      0,
+    ),
+    [allSessionLocationItems],
+  );
+
   // By leather
   const byLeather = useMemo(() => {
     const map: Record<string, { au: number; usa: number; nyc: number; la: number }> = {};
@@ -338,6 +347,7 @@ export default function BuyAnalysisTab() {
       nyc: item.nycQty,
       la: item.laQty,
       total: item.auQty + item.usaQty + item.nycQty + item.laQty,
+      share: getBuyShare(item.auQty + item.usaQty + item.nycQty + item.laQty, totalPairs),
       isNew: rawSkuMap[getSkuCompositeIdentity(item.style, item.colour, item.leather, item.colour2, item.leather2)] ?? false,
     }));
     if (categoryFilter !== "All") rows = rows.filter((r) => r.category === categoryFilter);
@@ -351,7 +361,7 @@ export default function BuyAnalysisTab() {
       return sortDir === "asc" ? (va as number) - (vb as number) : (vb as number) - (va as number);
     });
     return rows;
-  }, [boughtItems, styleInfoMap, rawSkuMap, sortField, sortDir, categoryFilter, lastFilter]);
+  }, [boughtItems, styleInfoMap, rawSkuMap, sortField, sortDir, categoryFilter, lastFilter, totalPairs]);
 
   // Not-bought table rows sorted by style
   const notBoughtRows = useMemo(() => {
@@ -390,7 +400,7 @@ export default function BuyAnalysisTab() {
 
   function BarRow({ label, au, usa, nyc = 0, la = 0, max }: { label: string; au: number; usa: number; nyc?: number; la?: number; max: number }) {
     const total = au + usa + nyc + la;
-    const pct = max > 0 ? (total / max) * 100 : 0;
+    const pct = getBuyShare(total, max);
     const auPct = total > 0 ? (au / total) * 100 : 0;
     const usaPct = total > 0 ? (usa / total) * 100 : 0;
     const nycPct = total > 0 ? (nyc / total) * 100 : 0;
@@ -412,7 +422,7 @@ export default function BuyAnalysisTab() {
           <span className="font-bold" style={{ color: "oklch(0.60 0.14 200)" }}>{usa}</span>
           {nyc > 0 && <><span className="text-muted-foreground">/</span><span className="font-bold" style={{ color: "oklch(0.55 0.18 300)" }}>{nyc}</span></>}
           {la > 0 && <><span className="text-muted-foreground">/</span><span className="font-bold" style={{ color: "oklch(0.55 0.18 140)" }}>{la}</span></>}
-          <span className="text-muted-foreground text-xs">({pct.toFixed(0)}%)</span>
+          <span className="text-muted-foreground text-xs">({formatBuyShare(total, max)})</span>
         </div>
       </div>
     );
@@ -552,14 +562,14 @@ export default function BuyAnalysisTab() {
             <>
               {/* Summary cards */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                {[
-                  { label: "Total Pairs", value: totalPairs, sub: "AU + USA + NYC + LA" },
-                  { label: "AU Pairs", value: totalAU, sub: "Australia", color: "#f59e0b" },
-                  { label: "USA Pairs", value: totalUSA, sub: "United States", color: "oklch(0.60 0.14 200)" },
-                  { label: "NYC Pairs", value: totalNYC, sub: "New York City", color: "oklch(0.55 0.18 300)" },
-                  { label: "LA Pairs", value: totalLA, sub: "Los Angeles", color: "oklch(0.55 0.18 140)" },
-                  { label: "New SKU Pairs", value: newPairs, sub: "new styles only" },
-                ].map((card) => (
+                  {[
+                    { label: "Total Pairs", value: totalPairs, sub: "100.0% of selected buy" },
+                    { label: "AU Pairs", value: totalAU, sub: `${formatBuyShare(totalAU, totalPairs)} of selected buy`, color: "#f59e0b" },
+                    { label: "USA Pairs", value: totalUSA, sub: `${formatBuyShare(totalUSA, totalPairs)} of selected buy`, color: "oklch(0.60 0.14 200)" },
+                    { label: "NYC Pairs", value: totalNYC, sub: `${formatBuyShare(totalNYC, totalPairs)} of selected buy`, color: "oklch(0.55 0.18 300)" },
+                    { label: "LA Pairs", value: totalLA, sub: `${formatBuyShare(totalLA, totalPairs)} of selected buy`, color: "oklch(0.55 0.18 140)" },
+                    { label: "New SKU Pairs", value: newPairs, sub: `${formatBuyShare(newPairs, totalPairs)} of selected buy` },
+                  ].map((card) => (
                   <div key={card.label} className="rounded-xl border p-4" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
                     <p className="text-2xl font-bold tabular-nums" style={{ color: card.color ?? "oklch(0.50 0.14 55)" }}>{card.value}</p>
                     <p className="text-sm font-medium text-foreground mt-0.5">{card.label}</p>
@@ -807,6 +817,7 @@ export default function BuyAnalysisTab() {
                           { field: "nyc", label: "NYC" },
                           { field: "la", label: "LA" },
                           { field: "total", label: "Total" },
+                          { field: "share", label: "% of Buy" },
                         ] as Array<{ field: SortField; label: string }>).map(({ field, label }) => (
                           <th
                             key={field}
@@ -846,6 +857,7 @@ export default function BuyAnalysisTab() {
                           <td className="px-3 py-2 font-mono font-bold text-right" style={{ color: "oklch(0.55 0.18 300)" }}>{row.nycQty}</td>
                           <td className="px-3 py-2 font-mono font-bold text-right" style={{ color: "oklch(0.55 0.18 140)" }}>{row.laQty}</td>
                           <td className="px-3 py-2 font-mono font-bold text-right" style={{ color: "oklch(0.50 0.14 55)" }}>{row.total}</td>
+                          <td className="px-3 py-2 font-mono text-right text-muted-foreground">{formatBuyShare(row.total, totalPairs)}</td>
                           {selectedSessionIds.length > 1 && (
                             <td className="px-3 py-2">
                               <div className="flex flex-wrap gap-1">
@@ -877,6 +889,9 @@ export default function BuyAnalysisTab() {
                         </td>
                         <td className="px-3 py-2 font-mono font-bold text-right" style={{ color: "oklch(0.50 0.14 55)" }}>
                           {skuTableRows.reduce((s, r) => s + r.total, 0)}
+                        </td>
+                        <td className="px-3 py-2 font-mono font-bold text-right text-muted-foreground">
+                          {formatBuyShare(skuTableRows.reduce((s, r) => s + r.total, 0), totalPairs)}
                         </td>
                         {selectedSessionIds.length > 1 && <td />}
                       </tr>
@@ -919,10 +934,14 @@ export default function BuyAnalysisTab() {
               </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-3 max-w-md">
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl">
               <div className="rounded-lg p-3" style={{ background: "var(--muted)" }}>
                 <p className="text-xl font-bold tabular-nums text-foreground">{locationTotalPairs.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">Pairs bought for {locationMarket.toUpperCase()}</p>
+              </div>
+              <div className="rounded-lg p-3" style={{ background: "var(--muted)" }}>
+                <p className="text-xl font-bold tabular-nums text-foreground">{formatBuyShare(locationTotalPairs, allLocationPairs)}</p>
+                <p className="text-xs text-muted-foreground">Of all location pairs</p>
               </div>
               <div className="rounded-lg p-3" style={{ background: "var(--muted)" }}>
                 <p className="text-xl font-bold tabular-nums text-foreground">{locationStyleRows.length.toLocaleString()}</p>
@@ -939,12 +958,13 @@ export default function BuyAnalysisTab() {
             </div>
           ) : (
             <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
-              <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-0 px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
+              <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-0 px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                 <span>Style</span>
                 <span className="text-right w-28">Category</span>
                 <span className="text-right w-24">Last</span>
                 <span className="text-right w-20">SKUs</span>
                 <span className="text-right w-24">{locationMarket.toUpperCase()} pairs</span>
+                <span className="text-right w-24">% of location</span>
               </div>
               <div className="divide-y" style={{ borderColor: "var(--border)" }}>
                 {locationStyleRows.map((row) => {
@@ -957,7 +977,7 @@ export default function BuyAnalysisTab() {
                           if (next.has(row.style)) next.delete(row.style); else next.add(row.style);
                           return next;
                         })}
-                        className="w-full grid grid-cols-[1fr_auto_auto_auto_auto] gap-0 px-5 py-3 text-left items-center hover:bg-muted/40 transition-colors"
+                        className="w-full grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-0 px-5 py-3 text-left items-center hover:bg-muted/40 transition-colors"
                       >
                         <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
                           <ChevronDown className="w-3.5 h-3.5 text-muted-foreground transition-transform" style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(-90deg)" }} />
@@ -967,14 +987,16 @@ export default function BuyAnalysisTab() {
                         <span className="text-xs text-muted-foreground text-right w-24 truncate">{row.last}</span>
                         <span className="text-sm tabular-nums text-right w-20 text-muted-foreground">{row.colours.length}</span>
                         <span className="text-sm tabular-nums font-bold text-right w-24" style={{ color: "oklch(0.55 0.18 140)" }}>{row.quantity.toLocaleString()}</span>
+                        <span className="text-xs tabular-nums text-right w-24 text-muted-foreground">{formatBuyShare(row.quantity, locationTotalPairs)}</span>
                       </button>
                       {isExpanded && (
                         <div className="border-t px-10 py-2.5" style={{ borderColor: "var(--border)", background: "oklch(0.98 0.01 65 / 0.4)" }}>
                           {row.colours.map((colour) => (
-                            <div key={`${colour.colour}|${colour.leather}`} className="grid grid-cols-[1fr_auto_auto] gap-3 py-1.5 text-sm">
+                            <div key={`${colour.colour}|${colour.leather}`} className="grid grid-cols-[1fr_auto_auto_auto] gap-3 py-1.5 text-sm">
                               <span className="text-foreground">{colour.colour}</span>
                               <span className="text-muted-foreground text-right">{colour.leather}</span>
                               <span className="font-bold tabular-nums text-right w-20" style={{ color: "oklch(0.55 0.18 140)" }}>{colour.quantity}</span>
+                              <span className="tabular-nums text-right w-24 text-xs text-muted-foreground">{formatBuyShare(colour.quantity, row.quantity)} of style</span>
                             </div>
                           ))}
                         </div>
@@ -1172,7 +1194,7 @@ export default function BuyAnalysisTab() {
                             {usa > 0 && <span className="font-bold" style={{ color: "oklch(0.60 0.14 200)" }}>{usa} USA</span>}
                             {nyc > 0 && <span className="font-bold" style={{ color: "oklch(0.55 0.18 300)" }}>{nyc} NYC</span>}
                             {la > 0 && <span className="font-bold" style={{ color: "oklch(0.55 0.18 140)" }}>{la} LA</span>}
-                            <span className="font-bold text-foreground border-l pl-3" style={{ borderColor: "var(--border)" }}>{total} total</span>
+                            <span className="font-bold text-foreground border-l pl-3" style={{ borderColor: "var(--border)" }}>{total} total · {formatBuyShare(total, styleTotal)} of style</span>
                           </div>
                         </div>
                       ))}
@@ -1198,6 +1220,7 @@ export default function BuyAnalysisTab() {
                           <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide" style={{ color: "oklch(0.55 0.18 300)" }}>NYC</th>
                           <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide" style={{ color: "oklch(0.55 0.18 140)" }}>LA</th>
                           <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total</th>
+                          <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">% of Style</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1223,6 +1246,9 @@ export default function BuyAnalysisTab() {
                             <td className="px-4 py-2.5 text-right font-mono font-bold" style={{ color: row.total > 0 ? "oklch(0.50 0.14 55)" : "var(--muted-foreground)" }}>
                               {row.total > 0 ? row.total : <span className="text-xs">Not bought</span>}
                             </td>
+                            <td className="px-4 py-2.5 text-right font-mono text-muted-foreground">
+                              {row.total > 0 ? formatBuyShare(row.total, styleTotal) : "—"}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -1234,6 +1260,7 @@ export default function BuyAnalysisTab() {
                           <td className="px-4 py-2 text-right font-mono font-bold" style={{ color: "oklch(0.55 0.18 300)" }}>{styleTotalNyc > 0 ? styleTotalNyc : "—"}</td>
                           <td className="px-4 py-2 text-right font-mono font-bold" style={{ color: "oklch(0.55 0.18 140)" }}>{styleTotalLa > 0 ? styleTotalLa : "—"}</td>
                           <td className="px-4 py-2 text-right font-mono font-bold" style={{ color: "oklch(0.50 0.14 55)" }}>{styleTotal}</td>
+                          <td className="px-4 py-2 text-right font-mono font-bold text-muted-foreground">100.0%</td>
                         </tr>
                       </tfoot>
                     </table>

@@ -642,3 +642,10 @@
 - [x] Updated deleted-last storage to use a Style/season-style composite unique rule (`lastName + season`), so deleting a W27 last cannot affect SS26 and vice versa; restore is scoped the same way.
 - [x] Marked cancelled W27 lasts **NIKOH** and **YASMIN** as removed from Last Approvals. Verified they have zero remaining visible W27 approval rows.
 - [x] Replaced the stale hard-coded Last Approval header count with a neutral, current description. Validation: 103 tests, production build, database verification, and W27 visual check passed.
+
+## Buy Unit & Percentage Analysis (6 Oct 2026)
+- [x] Show each market's share of the selected buy alongside pair units in Buy Analysis summary cards and ranking bars.
+- [x] Add a sortable **% of Buy** column to the selected-session SKU breakdown.
+- [x] Add location share and per-style/per-colour purchase shares in the By Location analysis.
+- [x] Add per-colour and per-session share of a searched style, plus `Total` and `% Bought` in the expanded Buy Session preview.
+- [x] Add safe zero-total percentage calculation coverage. Validation: 105 tests and production build passed.
