@@ -375,7 +375,8 @@ export default function BuyAnalysisTab() {
     })).sort((a, b) => a.style.localeCompare(b.style));
   }, [notBoughtSkus, styleInfoMap]);
 
-  const notBoughtShare = formatBuyShare(notBoughtRows.length, activeNewSkus.length);
+  const boughtNewSkuCount = Math.max(0, activeNewSkus.length - notBoughtRows.length);
+  const boughtShare = formatBuyShare(boughtNewSkuCount, activeNewSkus.length);
 
   const selectedSessionNames = (allSessions as Array<{ id: number; name: string }>)
     .filter((s) => selectedSessionIds.includes(s.id))
@@ -514,7 +515,7 @@ export default function BuyAnalysisTab() {
           { id: "summary", label: "Summary" },
           { id: "pairs-breakdown", label: "Pairs Breakdown" },
           { id: "sku-table", label: `SKU Breakdown${boughtItems.length > 0 ? ` (${boughtItems.length})` : ""}` },
-          { id: "not-bought", label: `Not Yet Bought (${notBoughtRows.length} · ${notBoughtShare})` },
+          { id: "not-bought", label: `Not Yet Bought (${notBoughtRows.length} · ${boughtShare} bought)` },
           { id: "location", label: "By Location" },
           { id: "style-search", label: "Style Search" },
         ] as Array<{ id: ViewTab; label: string }>).map((tab) => (
@@ -1301,10 +1302,7 @@ export default function BuyAnalysisTab() {
           </div>
           <div className="flex items-center gap-3 mb-2">
             <div className="rounded-xl border px-4 py-3 flex items-center gap-3" style={{ borderColor: "oklch(0.85 0.08 30)", background: "oklch(0.97 0.04 30)" }}>
-              <div className="text-center">
-                <p className="text-2xl font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 30)" }}>{notBoughtRows.length}</p>
-                <p className="text-xs font-semibold tabular-nums" style={{ color: "oklch(0.50 0.14 30)" }}>{notBoughtShare}</p>
-              </div>
+              <span className="text-2xl font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 30)" }}>{notBoughtRows.length}</span>
               <div>
               <p className="text-sm font-medium text-foreground">New SKUs not yet bought</p>
               <p className="text-xs text-muted-foreground">{notBoughtMarket === "all" ? "Zero units across all markets" : `Zero units for ${notBoughtMarket.toUpperCase()}`} · of active new SKUs</p>
@@ -1312,8 +1310,8 @@ export default function BuyAnalysisTab() {
             </div>
             <div className="rounded-xl border px-4 py-3 flex items-center gap-3" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
               <div className="text-center">
-                <p className="text-2xl font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{activeNewSkus.length - notBoughtRows.length}</p>
-                <p className="text-xs font-semibold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{formatBuyShare(activeNewSkus.length - notBoughtRows.length, activeNewSkus.length)}</p>
+                <p className="text-2xl font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{boughtNewSkuCount}</p>
+                <p className="text-xs font-semibold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{boughtShare} bought</p>
               </div>
               <div>
               <p className="text-sm font-medium text-foreground">New SKUs with at least 1 unit</p>
