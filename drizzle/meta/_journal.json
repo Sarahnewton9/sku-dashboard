@@ -505,6 +505,13 @@
       "when": 1790920348113,
       "tag": "0071_flowery_goblin_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "5",
+      "when": 1791253834318,
+      "tag": "0072_mushy_thing",
+      "breakpoints": true
     }
   ]
 }

@@ -678,16 +678,16 @@ export const appRouter = router({
       }),
 
     delete: publicProcedure
-      .input(z.object({ lastName: z.string() }))
+      .input(z.object({ lastName: z.string(), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
-        await deleteLast(input.lastName);
+        await deleteLast(input.lastName, input.season);
         return { success: true };
       }),
 
     restore: publicProcedure
-      .input(z.object({ lastName: z.string() }))
+      .input(z.object({ lastName: z.string(), season: z.string().default("SS26") }))
       .mutation(async ({ input }) => {
-        await restoreDeletedLast(input.lastName);
+        await restoreDeletedLast(input.lastName, input.season);
         return { success: true };
       }),
   }),

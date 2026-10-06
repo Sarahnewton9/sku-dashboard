@@ -488,7 +488,19 @@ export default function LastApprovalTab() {
   const handleDeleteLast = (lastName: string) => {
     setLocalDeletedLasts((prev) => new Set(Array.from(prev).concat(lastName)));
     setDeletingLast(null);
-    deleteLastMutation.mutate({ lastName });
+    deleteLastMutation.mutate(
+      { lastName, season },
+      {
+        onError: () => {
+          setLocalDeletedLasts((prev) => {
+            const next = new Set(prev);
+            next.delete(lastName);
+            return next;
+          });
+          toast.error(`Could not remove ${lastName}`);
+        },
+      },
+    );
   };
 
   const handleSaveNotes = (lastName: string) => {

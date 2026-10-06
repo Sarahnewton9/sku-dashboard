@@ -415,10 +415,12 @@ export type InsertCancelledStyle = typeof cancelledStyles.$inferInsert;
  */
 export const deletedLasts = mysqlTable("deleted_lasts", {
   id: int("id").autoincrement().primaryKey(),
-  lastName: varchar("lastName", { length: 128 }).notNull().unique(),
+  lastName: varchar("lastName", { length: 128 }).notNull(),
   deletedAt: timestamp("deletedAt").defaultNow().notNull(),
   season: varchar("season", { length: 16 }).notNull().default("SS26"),
-});
+}, (t) => ({
+  lastSeasonUniq: uniqueIndex("deleted_lasts_last_season_uniq").on(t.lastName, t.season),
+}));
 
 export type DeletedLast = typeof deletedLasts.$inferSelect;
 export type InsertDeletedLast = typeof deletedLasts.$inferInsert;

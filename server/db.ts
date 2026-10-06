@@ -546,18 +546,18 @@ export async function getDeletedLasts(season = "SS26"): Promise<string[]> {
   return rows.map(r => r.lastName);
 }
 
-export async function deleteLast(lastName: string): Promise<void> {
+export async function deleteLast(lastName: string, season = "SS26"): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.insert(deletedLasts)
-    .values({ lastName })
-    .onDuplicateKeyUpdate({ set: { lastName } });
+    .values({ lastName, season })
+    .onDuplicateKeyUpdate({ set: { lastName, season } });
 }
 
-export async function restoreDeletedLast(lastName: string): Promise<void> {
+export async function restoreDeletedLast(lastName: string, season = "SS26"): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.delete(deletedLasts).where(eq(deletedLasts.lastName, lastName));
+  await db.delete(deletedLasts).where(and(eq(deletedLasts.lastName, lastName), eq(deletedLasts.season, season)));
 }
 
 // ─── Season Imports ──────────────────────────────────────────────────────────

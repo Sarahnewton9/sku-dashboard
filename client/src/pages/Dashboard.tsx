@@ -298,7 +298,7 @@ export default function Dashboard() {
               {activeTab === "colourleather" && "Colour/leather combinations"}
               {activeTab === "buy-sessions" && "Manage weekly buy rounds — create, lock, and export independently"}
               {activeTab === "buy-analysis" && "Breakdown of pairs bought per session by category, leather, and colour/leather combo"}
-              {activeTab === "last-approval" && "16 new lasts — track approval status and notes per last"}
+              {activeTab === "last-approval" && "Track approval status, samples and notes per last"}
               {activeTab === "fitting" && "Style-level fit commentary and imagery for all styles on new lasts"}
               {activeTab === "specs" && "Product specification sheets — search any active style and manage per-colour component details"}
             </p>

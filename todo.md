@@ -636,3 +636,9 @@
 - [x] The guide now uses the **highest imported FOB (USD)** colourway for a conservative style result, converted using the Summer 26 planning basis: USD→AUD **0.70** plus **AU$1.25** freight.
 - [x] Restored the 75% target, 70–74% quiet tolerance, below-70% warning, and RRP recommendation. Margin calculation waits until every active colourway has a FOB cost.
 - [x] Validated against ARLA: US$31.50 FOB → AU$46.25 planning landed cost, 74.6% at AU$199.95, and AU$209.95 75%-target guide. 102 tests and production build passed.
+
+## Last Approval Seasonal Delete Repair (6 Oct 2026)
+- [x] Fixed the Last Approval delete action so it sends and stores the active season instead of silently defaulting to SS26.
+- [x] Updated deleted-last storage to use a Style/season-style composite unique rule (`lastName + season`), so deleting a W27 last cannot affect SS26 and vice versa; restore is scoped the same way.
+- [x] Marked cancelled W27 lasts **NIKOH** and **YASMIN** as removed from Last Approvals. Verified they have zero remaining visible W27 approval rows.
+- [x] Replaced the stale hard-coded Last Approval header count with a neutral, current description. Validation: 103 tests, production build, database verification, and W27 visual check passed.

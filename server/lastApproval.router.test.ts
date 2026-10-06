@@ -44,4 +44,16 @@ describe("lastApproval.upsert", () => {
       "W27",
     );
   });
+
+  it("deletes and restores only the active season's Last Approval row", async () => {
+    const caller = appRouter.createCaller(createCtx());
+
+    await expect(caller.lastApproval.delete({ lastName: "NIKOH", season: "W27" }))
+      .resolves.toEqual({ success: true });
+    expect(db.deleteLast).toHaveBeenCalledWith("NIKOH", "W27");
+
+    await expect(caller.lastApproval.restore({ lastName: "NIKOH", season: "W27" }))
+      .resolves.toEqual({ success: true });
+    expect(db.restoreDeletedLast).toHaveBeenCalledWith("NIKOH", "W27");
+  });
 });
