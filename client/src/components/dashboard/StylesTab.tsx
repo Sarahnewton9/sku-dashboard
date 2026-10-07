@@ -14,7 +14,7 @@ import { getSkuExportFields } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { hasSize11ForAllColourways } from "@shared/size11";
 import { summariseStyleFobCosts } from "@shared/fobEstimates";
-import { isFobCostRequestEligible } from "@shared/fobCostRequest";
+import { formatFobRequestColour, getFobCostRequestFilename, isFobCostRequestEligible } from "@shared/fobCostRequest";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
@@ -828,37 +828,18 @@ export default function StylesTab() {
 
   function buildMissingCostRequestWorkbook() {
     const rows = missingCostRequestRows.map((sku) => ({
-      "SEASON": getSeasonFileLabel(season),
       "LAST": sku.last,
-      "CATEGORY": sku.category,
-      "STYLE": sku.style,
-      "UPPER 1 COLOUR": sku.colour,
-      "UPPER 1 LEATHER": sku.leather,
-      "UPPER 2 COLOUR": sku.colour2,
-      "UPPER 2 LEATHER": sku.leather2,
-      "STATUS": sku.status,
-      "SIZE 11": sku.isSize11,
-      "FOB (USD)": "",
-      "FACTORY COMMENTS": "",
+      "Style": sku.style,
+      "Colour": formatFobRequestColour(sku),
+      "FOB": "",
     }));
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FOB (USD)": "No received new-season SKUs are awaiting an FOB cost" }]);
+    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FOB": "No received new-season SKUs are awaiting an FOB cost" }]);
     ws["!cols"] = [
-      { wch: 13 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 20 },
-      { wch: 20 }, { wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 20 }, { wch: 34 },
+      { wch: 23.625 }, { wch: 13 }, { wch: 30 }, { wch: 13 },
     ];
-    if (rows.length) {
-      const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1");
-      ws["!autofilter"] = { ref: XLSX.utils.encode_range(range) };
-      for (let row = 1; row <= rows.length; row += 1) {
-        const costCell = XLSX.utils.encode_cell({ r: row, c: 10 });
-        const cell = ws[costCell] ?? { t: "s", v: "" };
-        cell.s = { fill: { patternType: "solid", fgColor: { rgb: "FFF2CC" } } } as any;
-        ws[costCell] = cell;
-      }
-    }
-    XLSX.utils.book_append_sheet(wb, ws, "Missing Costs");
-    return { wb, rowCount: rows.length, filename: `${getSeasonFileLabel(season)}_Missing_Factory_Costs.xlsx` };
+    XLSX.utils.book_append_sheet(wb, ws, "Cost Needed");
+    return { wb, rowCount: rows.length, filename: getFobCostRequestFilename() };
   }
 
   // Apply runtime category overrides (sub-categories + trend flags)
@@ -1438,8 +1419,8 @@ export default function StylesTab() {
         exportType="FOB Cost Request"
         exportScope={`${missingCostRequestRows.length} received new-season SKU${missingCostRequestRows.length === 1 ? "" : "s"} awaiting FOB`}
         season={getSeasonFileLabel(season)}
-        defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — FOB COST REQUEST`}
-        defaultMessage={`Please complete the FOB (USD) column for each received new-season SKU in the attached workbook and return the same file to us.\n\nPlease leave the Style and Upper 1 / Upper 2 columns unchanged so the completed costs can be safely loaded back into SKU Dash. Once imported, those SKUs will no longer appear in the next FOB request. Thank you.`}
+        defaultSubject={getFobCostRequestFilename().replace(/\.xlsx$/i, "")}
+        defaultMessage={`Please complete the FOB column in the attached workbook and return the same file to us. Once imported, those SKUs will no longer appear in the next FOB request. Thank you.`}
         buildAttachment={async () => {
           const { wb, filename } = buildMissingCostRequestWorkbook();
           return workbookToEmailAttachment(wb, filename);

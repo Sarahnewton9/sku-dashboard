@@ -668,3 +668,9 @@
 - [x] Carry-over SKUs, waiting samples, cancelled/markdown SKUs, and already-costed SKUs are excluded; new colourways on an existing style are correctly included.
 - [x] The returned-workbook import still saves exact SKU FOBs. On the next request, an imported SKU automatically disappears because it is no longer missing a cost.
 - [x] Updated the menu and factory email wording to explain the rolling rule. Corrected the initial over-strict style-level filter; the W27 request now contains 12 eligible received new-season SKUs. Validation: 111 tests, production build, and W27 visual check passed.
+
+## Factory FOB Workbook Template (7 Oct 2026)
+- [x] Changed the FOB request attachment to exactly four columns from the supplied workbook: **LAST**, **Style**, **Colour**, and **FOB**. The worksheet is named **Cost Needed**; no extra request metadata, instructions, filters, or formatting is exported.
+- [x] The attachment and default email subject now use the Sydney business-date naming pattern: **FOB COST NEEDED DD.MM.xlsx** (for 7 October: `FOB COST NEEDED 07.10.xlsx`).
+- [x] Retained a safe returned-file import despite the concise template: the displayed Colour field is resolved back to its full Upper 1/Upper 2 identity only when it uniquely matches an active requested SKU. Ambiguous rows remain safely excluded.
+- [x] Validation: 113 tests and production build passed; template helper tests verify the four-column colour wording, dual-upper resolution, and Sydney date filename.

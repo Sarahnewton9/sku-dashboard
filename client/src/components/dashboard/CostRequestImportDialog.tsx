@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { AlertCircle, CheckCircle2, FileSpreadsheet, Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { resolveFobRequestSku } from "@shared/fobCostRequest";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -104,13 +105,23 @@ export function CostRequestImportDialog({
     const seen = new Set<string>();
     return parsedRows.map((row) => {
       if (row.cost == null) return { ...row, issue: "No cost entered" };
-      const key = getSkuCompositeIdentity(row.style, row.colour, row.leather, row.colour2, row.leather2);
+      // The factory template deliberately contains only Last, Style, Colour and
+      // FOB. Resolve its display colour back to a full Upper 1 / Upper 2 identity
+      // before importing; ambiguous rows remain safely excluded.
+      const simplifiedTemplateRow = !row.leather && !row.colour2 && !row.leather2;
+      const matchedSku = simplifiedTemplateRow
+        ? resolveFobRequestSku(knownSkus, row.style, row.colour)
+        : null;
+      const resolvedRow = matchedSku
+        ? { ...row, ...matchedSku, cost: row.cost, sourceRow: row.sourceRow }
+        : row;
+      const key = getSkuCompositeIdentity(resolvedRow.style, resolvedRow.colour, resolvedRow.leather, resolvedRow.colour2, resolvedRow.leather2);
       if (!knownSkuMap.has(key)) return { ...row, issue: "SKU is not in the active range" };
-      if (seen.has(key)) return { ...row, issue: "Duplicate spreadsheet row" };
+      if (seen.has(key)) return { ...resolvedRow, issue: "Duplicate spreadsheet row" };
       seen.add(key);
-      return row;
+      return resolvedRow;
     });
-  }, [knownSkuMap, parsedRows]);
+  }, [knownSkuMap, knownSkus, parsedRows]);
 
   const readyRows = useMemo(() => reviewedRows.filter((row) => !row.issue && row.cost != null), [reviewedRows]);
   const issueRows = useMemo(() => reviewedRows.filter((row) => row.issue), [reviewedRows]);
@@ -203,7 +214,7 @@ export function CostRequestImportDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => close(false)} disabled={importCosts.isPending}>Cancel</Button>
-          <Button onClick={() => importCosts.mutate({ season, costs: readyRows.map((row) => ({ style: row.style, colour: row.colour, leather: row.leather, colour2: row.colour2 ?? "", leather2: row.leather2 ?? "", cost: row.cost! })) })} disabled={readyRows.length === 0 || importCosts.isPending} className="gap-2">
+          <Button onClick={() => importCosts.mutate({ season, costs: readyRows.map((row) => ({ style: row.style, colour: row.colour, leather: row.leather ?? "", colour2: row.colour2 ?? "", leather2: row.leather2 ?? "", cost: row.cost! })) })} disabled={readyRows.length === 0 || importCosts.isPending} className="gap-2">
             {importCosts.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
             {importCosts.isPending ? "Importing…" : `Import ${readyRows.length} cost${readyRows.length === 1 ? "" : "s"}`}
           </Button>

@@ -1,3 +1,5 @@
+import { formatSkuExportLabel, toTitleCaseSkuExportLabel } from "./skuExportLabel";
+
 export type FobCostRequestCandidate = {
   /** True when this physical SKU is new in the active season. */
   isNewSeasonSku: boolean;
@@ -6,6 +8,18 @@ export type FobCostRequestCandidate = {
   /** Actual imported factory FOB, in USD. */
   currentFobUsd?: number | null;
 };
+
+export type FobRequestSku = {
+  style: string;
+  colour: string;
+  leather?: string | null;
+  colour2?: string | null;
+  leather2?: string | null;
+};
+
+function normaliseRequestValue(value: string | null | undefined): string {
+  return String(value ?? "").trim().replace(/\s+/g, " ").toUpperCase();
+}
 
 /**
  * A factory FOB request is deliberately a rolling operational list. It includes
@@ -18,4 +32,40 @@ export function isFobCostRequestEligible(candidate: FobCostRequestCandidate): bo
   if (sampleStatus !== "received" && sampleStatus !== "fitting_sample") return false;
   const fob = Number(candidate.currentFobUsd);
   return !Number.isFinite(fob) || fob <= 0;
+}
+
+/** Matches the concise Colour wording used in the factory's FOB workbook. */
+export function formatFobRequestColour(sku: FobRequestSku): string {
+  return toTitleCaseSkuExportLabel(formatSkuExportLabel(sku));
+}
+
+/** Uses the Australia/Sydney business date, independent of browser locale. */
+export function getFobCostRequestFilename(date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-AU", {
+    timeZone: "Australia/Sydney",
+    day: "2-digit",
+    month: "2-digit",
+  }).formatToParts(date);
+  const day = parts.find((part) => part.type === "day")?.value ?? "";
+  const month = parts.find((part) => part.type === "month")?.value ?? "";
+  return `FOB COST NEEDED ${day}.${month}.xlsx`;
+}
+
+/**
+ * Resolves the four-column factory template (LAST, Style, Colour, FOB) back to
+ * a full SKU identity. This keeps Upper 1 / Upper 2 detail safe inside SKU Dash
+ * without exposing it in the factory request.
+ */
+export function resolveFobRequestSku(
+  knownSkus: FobRequestSku[],
+  style: string,
+  colourLabel: string,
+): FobRequestSku | null {
+  const expectedStyle = normaliseRequestValue(style);
+  const expectedColour = normaliseRequestValue(colourLabel);
+  const matches = knownSkus.filter((sku) => (
+    normaliseRequestValue(sku.style) === expectedStyle
+    && normaliseRequestValue(formatFobRequestColour(sku)) === expectedColour
+  ));
+  return matches.length === 1 ? matches[0] : null;
 }
