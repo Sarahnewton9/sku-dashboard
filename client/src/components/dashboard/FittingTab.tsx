@@ -19,6 +19,7 @@ import { useSeason } from "@/contexts/SeasonContext";
 import { getNewLastsForSeason } from "@shared/const";
 import { getSeasonDisplayLabel, getSeasonFileLabel } from "@shared/seasonLabel";
 import { getW27NewPatternStyleNames, isEligibleFittingStyle } from "@shared/fittingStyleScope";
+import { getSameDayFittingDefaults, getSydneyBusinessDate } from "@shared/fittingSessionDefaults";
 import { EmailExportDialog } from "./EmailExportDialog";
 import { workbookToEmailAttachment } from "@/lib/exportEmailAttachment";
 
@@ -1900,21 +1901,45 @@ export function FittingTab() {
   }, [updateFit, styleMetaList]);
 
   const handleCreateSession = useCallback((style: string) => {
-    // Immediately create the session with today's date and the last used model — no dialog needed
-    const today = new Date().toISOString().split("T")[0];
-    const model = lastUsedModelRef.current || "";
+    // A second fitting for the same shoe on the same day inherits only its
+    // shared sample details. The new fit model, notes and images stay unique.
+    const today = getSydneyBusinessDate();
+    const defaults = getSameDayFittingDefaults(
+      (sessionsByStyle[style] ?? []).map((session) => ({
+        id: session.id,
+        sessionDate: session.sessionDate,
+        sampleDate: session.sampleDate,
+        sampleType: session.sampleType,
+        sampleSize: session.sampleSize,
+      })),
+      today,
+    );
+    // Do not prefill Jordan (or another earlier model) into Kiara's copied
+    // session. For a first session, retain the existing last-model shortcut.
+    const model = defaults.copiedFromSessionId ? "" : lastUsedModelRef.current || "";
     createSession.mutate(
       // Sessions are season-specific. Passing the active season is essential
       // so a W27 fitting opens in W27 and its notes remain visible there.
-      { style, fitModel: model, sessionDate: today, season },
+      {
+        style,
+        fitModel: model,
+        sessionDate: defaults.sessionDate,
+        sampleDate: defaults.sampleDate,
+        sampleType: defaults.sampleType,
+        sampleSize: defaults.sampleSize,
+        season,
+      },
       {
         onSuccess: (result: any) => {
           if (result?.id) setNewlyCreatedSessionId(result.id);
+          if (defaults.copiedFromSessionId) {
+            toast.success("Copied today’s sample date and type — enter the new fit model when saving.");
+          }
           refetchSessions();
         },
       }
     );
-  }, [createSession, refetchSessions, season]);
+  }, [createSession, refetchSessions, season, sessionsByStyle]);
 
   // ── Fit Report Export ────────────────────────────────────────────────────────────────────────────────
   const handleExportFitReport = useCallback((download = true) => {

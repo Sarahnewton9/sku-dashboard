@@ -955,7 +955,7 @@ export async function deleteFittingSession(id: number): Promise<void> {
 }
 
 export async function getFittingSessionsForStyle(style: string, season = "SS26"): Promise<Array<{
-  id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; sampleDate: string | null; sampleType: string | null; createdAt: Date;
+  id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; sampleDate: string | null; sampleType: string | null; sampleSize: string | null; createdAt: Date;
   images: Array<{ id: number; imageUrl: string; fileKey: string; createdAt: Date }>;
 }>> {
   const db = await getDb();
@@ -969,7 +969,7 @@ export async function getFittingSessionsForStyle(style: string, season = "SS26")
 }
 
 export async function getAllFittingSessions(season = "SS26"): Promise<Array<{
-  id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; sampleDate: string | null; sampleType: string | null; createdAt: Date;
+  id: number; style: string; fitModel: string; sessionDate: string; notes: string | null; sampleDate: string | null; sampleType: string | null; sampleSize: string | null; createdAt: Date;
   images: Array<{ id: number; sessionId: number; style: string; imageUrl: string; fileKey: string; createdAt: Date }>;
 }>> {
   const db = await getDb();

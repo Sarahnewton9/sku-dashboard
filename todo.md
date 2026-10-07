@@ -674,3 +674,9 @@
 - [x] The attachment and default email subject now use the Sydney business-date naming pattern: **FOB COST NEEDED DD.MM.xlsx** (for 7 October: `FOB COST NEEDED 07.10.xlsx`).
 - [x] Retained a safe returned-file import despite the concise template: the displayed Colour field is resolved back to its full Upper 1/Upper 2 identity only when it uniquely matches an active requested SKU. Ambiguous rows remain safely excluded.
 - [x] Validation: 113 tests and production build passed; template helper tests verify the four-column colour wording, dual-upper resolution, and Sydney date filename.
+
+## Same-Day Fitting Session Mirroring (7 Oct 2026)
+- [x] A new fitting session for the **same style on the same Sydney business day** now copies the latest session’s session date, sample date, sample type, and fitting size (when applicable).
+- [x] The new session deliberately does **not** copy the previous fit model, notes, or images. For example, a Jordan session can be followed by a blank-model session for Kiara with the same sample information ready to save.
+- [x] First sessions retain the existing recent-model shortcut; copied sessions display a confirmation message so the user knows the shared sample details were carried across.
+- [x] Updated fitting-session return types to include fitting sample size. Validation: 116 tests, production build, same-day default unit tests, typecheck confirms no new Fitting session errors, and W27 Fitting visual check passed.
