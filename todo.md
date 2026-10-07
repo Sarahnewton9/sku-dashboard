@@ -680,3 +680,10 @@
 - [x] The new session deliberately does **not** copy the previous fit model, notes, or images. For example, a Jordan session can be followed by a blank-model session for Kiara with the same sample information ready to save.
 - [x] First sessions retain the existing recent-model shortcut; copied sessions display a confirmation message so the user knows the shared sample details were carried across.
 - [x] Updated fitting-session return types to include fitting sample size. Validation: 116 tests, production build, same-day default unit tests, typecheck confirms no new Fitting session errors, and W27 Fitting visual check passed.
+
+## Flexible Factory FOB Import (7 Oct 2026)
+- [x] Rename the completed-cost action to **Import factory FOB file** and retain the drag-and-drop importer in the By Style → FOB costs menu.
+- [x] Accept both the compact SKU Dash request workbook and the factory full cost-list format (`LAST`, `STYLE`, `COLOUR`, `LEATHER`, `$USD`).
+- [x] Normalise common currency entries such as `US$34.50`, `$USD40`, `USD 40`, and comma-separated amounts before validation.
+- [x] Validate factory rows against every active SKU, not just the outstanding request list, while safely skipping blank, duplicate, cancelled, markdown, or unmatched rows.
+- [x] Verified the supplied factory workbook: 997 rows recognised as the factory list, 996 valid FOB values, and one blank FOB safely excluded. Validation: 127 tests and production build passed.

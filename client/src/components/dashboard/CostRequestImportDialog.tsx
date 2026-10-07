@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
-import { AlertCircle, CheckCircle2, FileSpreadsheet, Loader2, Upload, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileSpreadsheet, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { resolveFobRequestSku } from "@shared/fobCostRequest";
+import { parseFobCostGrid, type ParsedFobCostFile } from "@shared/fobCostImport";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,57 +23,12 @@ type ImportedCostRow = KnownSku & {
   issue?: string;
 };
 
-const normaliseHeader = (value: unknown) => String(value ?? "").trim().toUpperCase().replace(/[^A-Z0-9]+/g, " ").trim();
-const normaliseText = (value: unknown) => String(value ?? "").trim().toUpperCase();
-
-function findColumn(headers: string[], candidates: string[]): number {
-  return headers.findIndex((header) => candidates.includes(header));
-}
-
-function numberFromCell(value: unknown): number | null {
-  if (typeof value === "number") return Number.isFinite(value) && value > 0 ? value : null;
-  const cleaned = String(value ?? "").replace(/[^0-9.]/g, "");
-  if (!cleaned) return null;
-  const parsed = Number(cleaned);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-}
-
-async function parseCompletedCostFile(file: File): Promise<{ rows: ImportedCostRow[]; formatError?: string }> {
+async function parseCompletedCostFile(file: File): Promise<ParsedFobCostFile> {
   const buffer = await file.arrayBuffer();
   const workbook = XLSX.read(buffer, { type: "array" });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const grid = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: "" });
-  const headerRowIndex = grid.findIndex((row) => Array.isArray(row) && row.some((cell) => normaliseHeader(cell) === "STYLE"));
-  if (headerRowIndex < 0) return { rows: [], formatError: "Could not find a STYLE header in the first worksheet." };
-
-  const headers = (grid[headerRowIndex] ?? []).map(normaliseHeader);
-  const styleColumn = findColumn(headers, ["STYLE"]);
-  const colourColumn = findColumn(headers, ["UPPER 1 COLOUR", "COLOUR", "COLOR"]);
-  const leatherColumn = findColumn(headers, ["UPPER 1 LEATHER", "LEATHER", "REMARKS"]);
-  const colour2Column = findColumn(headers, ["UPPER 2 COLOUR"]);
-  const leather2Column = findColumn(headers, ["UPPER 2 LEATHER"]);
-  const costColumn = findColumn(headers, ["FOB USD", "FOB", "FACTORY COST USD", "COST USD", "USD", "COST", "UNIT PRICE"]);
-  if (styleColumn < 0 || colourColumn < 0 || costColumn < 0) {
-    return { rows: [], formatError: "Use the exported cost-request workbook, or provide STYLE, COLOUR and FOB (USD) / COST columns." };
-  }
-
-  const rows: ImportedCostRow[] = [];
-  for (let index = headerRowIndex + 1; index < grid.length; index += 1) {
-    const row = grid[index] ?? [];
-    const style = normaliseText(row[styleColumn]);
-    const colour = normaliseText(row[colourColumn]);
-    if (!style && !colour) continue;
-    rows.push({
-      style,
-      colour,
-      leather: leatherColumn >= 0 ? normaliseText(row[leatherColumn]) : "",
-      colour2: colour2Column >= 0 ? normaliseText(row[colour2Column]) : "",
-      leather2: leather2Column >= 0 ? normaliseText(row[leather2Column]) : "",
-      cost: numberFromCell(row[costColumn]),
-      sourceRow: index + 1,
-    });
-  }
-  return { rows };
+  return parseFobCostGrid(grid);
 }
 
 export function CostRequestImportDialog({
@@ -91,6 +47,7 @@ export function CostRequestImportDialog({
   const inputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState("");
   const [parsedRows, setParsedRows] = useState<ImportedCostRow[]>([]);
+  const [fileFormat, setFileFormat] = useState<ParsedFobCostFile["format"] | null>(null);
   const [formatError, setFormatError] = useState<string | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const utils = trpc.useUtils();
@@ -104,12 +61,11 @@ export function CostRequestImportDialog({
   const reviewedRows = useMemo(() => {
     const seen = new Set<string>();
     return parsedRows.map((row) => {
-      if (row.cost == null) return { ...row, issue: "No cost entered" };
-      // The factory template deliberately contains only Last, Style, Colour and
-      // FOB. Resolve its display colour back to a full Upper 1 / Upper 2 identity
-      // before importing; ambiguous rows remain safely excluded.
-      const simplifiedTemplateRow = !row.leather && !row.colour2 && !row.leather2;
-      const matchedSku = simplifiedTemplateRow
+      if (row.cost == null) return { ...row, issue: "No valid USD FOB entered" };
+      // SKU Dash request sheets deliberately omit the individual leather fields.
+      // Resolve the display colour back to a complete Upper 1 / Upper 2 identity.
+      const simplifiedRequestRow = !row.leather && !row.colour2 && !row.leather2;
+      const matchedSku = simplifiedRequestRow
         ? resolveFobRequestSku(knownSkus, row.style, row.colour)
         : null;
       const resolvedRow = matchedSku
@@ -139,10 +95,12 @@ export function CostRequestImportDialog({
   const loadFile = async (file: File) => {
     setIsParsing(true);
     setFileName(file.name);
+    setFileFormat(null);
     setFormatError(null);
     try {
       const result = await parseCompletedCostFile(file);
       setParsedRows(result.rows);
+      setFileFormat(result.format);
       setFormatError(result.formatError ?? null);
       if (!result.formatError) toast.success(`Read ${result.rows.length} row${result.rows.length === 1 ? "" : "s"} from ${file.name}`);
     } catch {
@@ -157,6 +115,7 @@ export function CostRequestImportDialog({
   const reset = () => {
     setFileName("");
     setParsedRows([]);
+    setFileFormat(null);
     setFormatError(null);
   };
 
@@ -169,13 +128,13 @@ export function CostRequestImportDialog({
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><FileSpreadsheet className="h-5 w-5" /> Import completed cost request</DialogTitle>
-          <DialogDescription>Upload the factory’s completed cost workbook. SKU identity is checked before any cost is saved to {season}.</DialogDescription>
+          <DialogTitle className="flex items-center gap-2"><FileSpreadsheet className="h-5 w-5" /> Import factory FOB costs</DialogTitle>
+          <DialogDescription>Drag in the factory’s returned FOB file. SKU identity is checked before any cost is saved to {season}.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
-            <strong>Safe import:</strong> only rows with a valid positive FOB (USD) amount and an exact active SKU match will be imported. Blank, duplicate or unmatched rows are left untouched and listed below.
+            <strong>Safe import:</strong> upload either the SKU Dash FOB request or the factory’s full cost list. Values such as <strong>US$34.50</strong>, <strong>$USD40</strong> and <strong>USD 40</strong> are read as USD. Only positive amounts with an exact active SKU match are saved.
           </div>
 
           <div
@@ -186,8 +145,8 @@ export function CostRequestImportDialog({
             onDrop={(event) => { event.preventDefault(); const file = event.dataTransfer.files?.[0]; if (file) void loadFile(file); }}
           >
             {isParsing ? <Loader2 className="mb-2 h-9 w-9 animate-spin text-muted-foreground" /> : <Upload className="mb-2 h-9 w-9 text-muted-foreground" />}
-            <p className="text-sm font-medium text-foreground">{fileName || "Drop the completed Excel file here, or click to select"}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Accepted: .xlsx, .xls or .csv · Expected cost column: FOB (USD)</p>
+            <p className="text-sm font-medium text-foreground">{fileName || "Drop the returned factory cost file here, or click to select"}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Accepted: .xlsx, .xls or .csv · Headers supported: FOB / $USD / Cost (USD)</p>
             <input ref={inputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void loadFile(file); }} />
           </div>
 
@@ -200,6 +159,7 @@ export function CostRequestImportDialog({
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3"><p className="text-xs text-emerald-800">Ready to import</p><p className="text-lg font-semibold text-emerald-900">{readyRows.length}</p></div>
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-3"><p className="text-xs text-amber-800">Skipped safely</p><p className="text-lg font-semibold text-amber-900">{issueRows.length}</p></div>
               </div>
+              <p className="text-xs text-muted-foreground">Recognised format: <strong>{fileFormat === "factory_list" ? "factory full cost list" : "SKU Dash FOB request"}</strong>.</p>
 
               <div className="overflow-hidden rounded-lg border">
                 <table className="w-full text-xs">

@@ -826,6 +826,33 @@ export default function StylesTab() {
     [mergedRawSkus, mergedStyles, cancelledSet, cancelledSkuSet, markdownSkuSet, skuMetaMap, seasonCostMap, getCategory],
   );
 
+  // The returned factory file can be either the compact request spreadsheet or
+  // the factory's full cost list. Keep every active range SKU available for a
+  // safe identity check, rather than limiting imports to today's request list.
+  const costImportSkus = useMemo(() => {
+    const seen = new Set<string>();
+    return (mergedRawSkus as any[]).flatMap((sku) => {
+      if (cancelledSet.has(sku.style)) return [];
+      if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) return [];
+      if (markdownSkuSet.has(markdownKey(sku.style, sku.colour, sku.leather))) return [];
+      const sourceColour = (sku as any)._sourceColour ?? sku.colour;
+      const sourceLeather = (sku as any)._sourceLeather ?? sku.leather;
+      const dbMeta = skuMetaMap[`${sku.style}|${sourceColour}|${sourceLeather}`];
+      const colour2 = (sku as any).colour2 ?? dbMeta?.colour2 ?? "";
+      const leather2 = (sku as any).leather2 ?? dbMeta?.leather2 ?? "";
+      const key = getSkuCompositeIdentity(sku.style, sku.colour, sku.leather ?? "", colour2, leather2);
+      if (seen.has(key)) return [];
+      seen.add(key);
+      return [{
+        style: sku.style,
+        colour: sku.colour,
+        leather: sku.leather ?? "",
+        colour2,
+        leather2,
+      }];
+    });
+  }, [mergedRawSkus, cancelledSet, cancelledSkuSet, markdownSkuSet, skuMetaMap]);
+
   function buildMissingCostRequestWorkbook() {
     const rows = missingCostRequestRows.map((sku) => ({
       "LAST": sku.last,
@@ -1396,7 +1423,7 @@ export default function StylesTab() {
               <Mail /> Email request
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => setCostRequestImportOpen(true)}><Upload /> Import completed costs</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setCostRequestImportOpen(true)}><Upload /> Import factory FOB file</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -1430,13 +1457,7 @@ export default function StylesTab() {
         open={costRequestImportOpen}
         onOpenChange={setCostRequestImportOpen}
         season={season}
-        knownSkus={missingCostRequestRows.map((sku) => ({
-          style: sku.style,
-          colour: sku.colour,
-          leather: sku.leather,
-          colour2: sku.colour2,
-          leather2: sku.leather2,
-        }))}
+        knownSkus={costImportSkus}
         onImported={handleMetaChange}
       />
 
