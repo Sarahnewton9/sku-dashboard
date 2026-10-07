@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { isFobCostRequestEligible } from "../shared/fobCostRequest";
 
 describe("FOB cost request eligibility", () => {
-  it("includes a received sample from an all-new style when FOB is missing", () => {
+  it("includes a received new-season SKU when FOB is missing", () => {
     expect(isFobCostRequestEligible({
-      isNewSeasonStyle: true,
+      isNewSeasonSku: true,
       sampleStatus: "received",
       currentFobUsd: null,
     })).toBe(true);
@@ -12,20 +12,25 @@ describe("FOB cost request eligibility", () => {
 
   it("drops the SKU from the rolling request immediately after an FOB import", () => {
     expect(isFobCostRequestEligible({
-      isNewSeasonStyle: true,
+      isNewSeasonSku: true,
       sampleStatus: "received",
       currentFobUsd: 31.5,
     })).toBe(false);
   });
 
-  it("excludes carry-over styles and samples that have not been received", () => {
+  it("includes fitting samples and excludes carry-over or waiting SKUs", () => {
     expect(isFobCostRequestEligible({
-      isNewSeasonStyle: false,
+      isNewSeasonSku: true,
+      sampleStatus: "fitting_sample",
+      currentFobUsd: null,
+    })).toBe(true);
+    expect(isFobCostRequestEligible({
+      isNewSeasonSku: false,
       sampleStatus: "received",
       currentFobUsd: null,
     })).toBe(false);
     expect(isFobCostRequestEligible({
-      isNewSeasonStyle: true,
+      isNewSeasonSku: true,
       sampleStatus: "waiting",
       currentFobUsd: null,
     })).toBe(false);

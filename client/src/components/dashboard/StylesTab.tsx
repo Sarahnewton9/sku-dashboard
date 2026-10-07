@@ -803,7 +803,7 @@ export default function StylesTab() {
       const currentCost = seasonCostMap.get(compositeKey) ?? dbMeta?.costPrice ?? null;
       const styleInfo = (mergedStyles as any[]).find((style) => style.style === sku.style);
       if (!isFobCostRequestEligible({
-        isNewSeasonStyle: styleInfo?.isAllNew === true,
+        isNewSeasonSku: sku.is_new === true,
         sampleStatus: dbMeta?.sampleStatus,
         currentFobUsd: currentCost,
       })) return [];
@@ -815,7 +815,7 @@ export default function StylesTab() {
         leather: sku.leather ?? "",
         colour2,
         leather2,
-        status: "New season · sample received",
+        status: dbMeta?.sampleStatus === "fitting_sample" ? "New season · fitting sample" : "New season · sample received",
         isSize11: dbMeta?.isSize11 ? "Yes" : "No",
       }];
     });
@@ -842,7 +842,7 @@ export default function StylesTab() {
       "FACTORY COMMENTS": "",
     }));
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FOB (USD)": "No received samples from new-season styles are awaiting an FOB cost" }]);
+    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FOB (USD)": "No received new-season SKUs are awaiting an FOB cost" }]);
     ws["!cols"] = [
       { wch: 13 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 20 },
       { wch: 20 }, { wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 20 }, { wch: 34 },
@@ -1399,8 +1399,8 @@ export default function StylesTab() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-60">
-            <DropdownMenuLabel>Received new-style FOB requests</DropdownMenuLabel>
-            <p className="px-2 pb-2 text-xs leading-relaxed text-muted-foreground">Only received samples from all-new {getSeasonFileLabel(season)} styles without an FOB appear here.</p>
+            <DropdownMenuLabel>Received new-season SKU FOB requests</DropdownMenuLabel>
+            <p className="px-2 pb-2 text-xs leading-relaxed text-muted-foreground">Only received new {getSeasonFileLabel(season)} SKUs without an FOB appear here, including new colourways on an existing style.</p>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onSelect={() => {
@@ -1439,7 +1439,7 @@ export default function StylesTab() {
         exportScope={`${missingCostRequestRows.length} received new-season SKU${missingCostRequestRows.length === 1 ? "" : "s"} awaiting FOB`}
         season={getSeasonFileLabel(season)}
         defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — FOB COST REQUEST`}
-        defaultMessage={`Please complete the FOB (USD) column for each received new-season sample in the attached workbook and return the same file to us.\n\nPlease leave the Style and Upper 1 / Upper 2 columns unchanged so the completed costs can be safely loaded back into SKU Dash. Once imported, those SKUs will no longer appear in the next FOB request. Thank you.`}
+        defaultMessage={`Please complete the FOB (USD) column for each received new-season SKU in the attached workbook and return the same file to us.\n\nPlease leave the Style and Upper 1 / Upper 2 columns unchanged so the completed costs can be safely loaded back into SKU Dash. Once imported, those SKUs will no longer appear in the next FOB request. Thank you.`}
         buildAttachment={async () => {
           const { wb, filename } = buildMissingCostRequestWorkbook();
           return workbookToEmailAttachment(wb, filename);

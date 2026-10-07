@@ -664,7 +664,7 @@
 - [x] Validation: 108 tests, production build, source audit, real CHERRY coverage check, and By Style visual review passed.
 
 ## Rolling FOB Request Filter (7 Oct 2026)
-- [x] FOB request download and email now include only active **all-new W27 styles**, with the physical SKU’s sample status set to **received**, and no positive FOB (USD) stored.
-- [x] Existing/carry-over styles, styles with only new colourways, waiting samples, cancelled/markdown SKUs, and already-costed SKUs are excluded.
+- [x] FOB request download and email now include only active **new W27 SKUs**, with the physical SKU’s sample status set to **received** or **fitting sample**, and no positive FOB (USD) stored.
+- [x] Carry-over SKUs, waiting samples, cancelled/markdown SKUs, and already-costed SKUs are excluded; new colourways on an existing style are correctly included.
 - [x] The returned-workbook import still saves exact SKU FOBs. On the next request, an imported SKU automatically disappears because it is no longer missing a cost.
-- [x] Updated the menu and factory email wording to explain the rolling rule. Visual validation shows the W27 request count reduced from 359 broad missing-cost rows to 2 eligible received new-style samples; 111 tests and the production build passed.
+- [x] Updated the menu and factory email wording to explain the rolling rule. Corrected the initial over-strict style-level filter; the W27 request now contains 12 eligible received new-season SKUs. Validation: 111 tests, production build, and W27 visual check passed.
