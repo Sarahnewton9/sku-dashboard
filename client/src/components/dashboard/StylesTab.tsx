@@ -2238,6 +2238,8 @@ export default function StylesTab() {
                                               style: sku.style,
                                               colour: sku.colour,
                                               leather: sku.leather,
+                                              colour2: currentColour2,
+                                              leather2: currentLeather2,
                                               isNew: sku.is_new,
                                               category: style.category,
                                               last: style.last,
@@ -2553,6 +2555,7 @@ export default function StylesTab() {
           skuMeta={skuMetaMap as any}
           styleMeta={styleMetaMap as any}
           onMetaChange={handleMetaChange}
+          season={season}
           allStyleSkus={getSkusForStyle(selectedSku.style).map((s) => ({ colour: s.colour, leather: s.leather }))}
         />
       )}

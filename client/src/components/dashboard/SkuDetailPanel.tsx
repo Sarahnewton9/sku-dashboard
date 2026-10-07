@@ -4,9 +4,9 @@
  * Fit rating/notes/images are now at style level — see FittingTab
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { X, CheckCircle, Clock } from "lucide-react";
+import { X, CheckCircle, Clock, Save } from "lucide-react";
 import { toast } from "sonner";
 import { displayColour, displayLeather } from "@/lib/utils";
 
@@ -14,6 +14,8 @@ export interface SkuPanelData {
   style: string;
   colour: string;
   leather: string;
+  colour2?: string | null;
+  leather2?: string | null;
   isNew: boolean;
   category: string;
   last: string;
@@ -25,6 +27,7 @@ export interface SkuPanelData {
 interface Props {
   sku: SkuPanelData | null;
   onClose: () => void;
+  season: string;
   // Live meta from DB (passed in from parent which fetches all at once)
   skuMeta: Record<string, {
     sampleStatus?: string;
@@ -43,8 +46,8 @@ function skuKey(style: string, colour: string, leather: string) {
   return `${style}|${colour}|${leather}`;
 }
 
-export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMetaChange, allStyleSkus }: Props) {
-  const [savingQty, setSavingQty] = useState(false);
+export default function SkuDetailPanel({ sku, onClose, season, skuMeta, styleMeta, onMetaChange, allStyleSkus }: Props) {
+  const [fobDraft, setFobDraft] = useState("");
 
   const utils = trpc.useUtils();
 
@@ -57,6 +60,37 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
     onSuccess: () => { onMetaChange(); },
     onError: (err) => toast.error(`Save failed: ${err.message}`),
   });
+
+  useEffect(() => {
+    setFobDraft(effectiveCost != null ? String(effectiveCost) : "");
+  }, [sku?.style, sku?.colour, sku?.leather, sku?.colour2, sku?.leather2, effectiveCost]);
+
+  const saveFobMutation = trpc.sku.setSeasonCost.useMutation({
+    onSuccess: async () => {
+      await utils.sku.getSeasonCosts.invalidate({ season });
+      onMetaChange();
+      toast.success("FOB (USD) saved");
+    },
+    onError: (error) => toast.error(`Could not save FOB: ${error.message}`),
+  });
+
+  const handleSaveFob = useCallback(() => {
+    if (!sku) return;
+    const cost = Number(fobDraft.trim().replace(/USD|\$|,/gi, ""));
+    if (!Number.isFinite(cost) || cost <= 0) {
+      toast.error("Enter a valid FOB (USD) greater than zero.");
+      return;
+    }
+    saveFobMutation.mutate({
+      season,
+      style: sku.style,
+      colour: sku.colour,
+      leather: sku.leather,
+      colour2: sku.colour2 ?? "",
+      leather2: sku.leather2 ?? "",
+      cost,
+    });
+  }, [fobDraft, saveFobMutation, season, sku]);
 
   const handleSampleToggle = useCallback(() => {
     if (!sku) return;
@@ -213,11 +247,31 @@ export default function SkuDetailPanel({ sku, onClose, skuMeta, styleMeta, onMet
                   style={{ background: isSize11 ? "#f59e0b" : "var(--muted)" }} />
               </label>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">FOB (USD)</span>
-              <span className="text-sm font-semibold font-mono text-foreground">
-                {effectiveCost != null ? `$${effectiveCost.toFixed(2)}` : "—"}
-              </span>
+            <div className="space-y-1.5">
+              <label className="block text-sm text-muted-foreground" htmlFor="sku-fob-cost">FOB (USD)</label>
+              <div className="flex gap-2">
+                <input
+                  id="sku-fob-cost"
+                  type="text"
+                  inputMode="decimal"
+                  value={fobDraft}
+                  onChange={(event) => setFobDraft(event.target.value)}
+                  onKeyDown={(event) => { if (event.key === "Enter") handleSaveFob(); }}
+                  className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                  style={{ borderColor: "var(--border)" }}
+                  placeholder="$0.00"
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveFob}
+                  disabled={saveFobMutation.isPending}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-700 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  {saveFobMutation.isPending ? "Saving" : "Save"}
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">Enter or replace the factory FOB for this exact SKU.</p>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Style RRP</span>

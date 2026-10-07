@@ -168,6 +168,41 @@ describe("sku.importCostRequest", () => {
   });
 });
 
+describe("sku.setSeasonCost", () => {
+  it("saves one manual FOB against the active season and both uppers", async () => {
+    const db = await import("./db");
+    const caller = appRouter.createCaller(createCtx());
+    await expect(caller.sku.setSeasonCost({
+      season: "W27",
+      style: "ROBYN",
+      colour: "ECRU",
+      leather: "SNAKE",
+      colour2: "LIPSTICK",
+      leather2: "SUEDE",
+      cost: 96.25,
+    })).resolves.toEqual({ success: true });
+    expect(db.upsertSeasonSkuCosts).toHaveBeenLastCalledWith([{
+      season: "W27",
+      style: "ROBYN",
+      colour: "ECRU",
+      leather: "SNAKE",
+      colour2: "LIPSTICK",
+      leather2: "SUEDE",
+      cost: 96.25,
+    }]);
+  });
+
+  it("rejects a blank or zero manual FOB", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    await expect(caller.sku.setSeasonCost({
+      season: "W27",
+      style: "ROBYN",
+      colour: "ECRU",
+      cost: 0,
+    })).rejects.toThrow();
+  });
+});
+
 describe("style.getAll", () => {
   it("returns all style metadata", async () => {
     const caller = appRouter.createCaller(createCtx());

@@ -420,6 +420,21 @@ export const appRouter = router({
         return { updated: input.costs.length };
       }),
 
+    setSeasonCost: publicProcedure
+      .input(z.object({
+        season: z.string().trim().min(1).max(16),
+        style: z.string().trim().min(1).max(64),
+        colour: z.string().trim().min(1).max(64),
+        leather: z.string().trim().max(64).optional(),
+        colour2: z.string().trim().max(64).optional(),
+        leather2: z.string().trim().max(64).optional(),
+        cost: z.number().positive().max(100000),
+      }))
+      .mutation(async ({ input }) => {
+        await upsertSeasonSkuCosts([{ ...input }]);
+        return { success: true };
+      }),
+
   }),
 
   // Style metadata: RRP

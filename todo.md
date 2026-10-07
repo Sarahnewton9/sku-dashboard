@@ -706,3 +706,9 @@
 - [x] Added 28 previously unmatched active physical-SKU costs to each season (56 verified records), including dual-upper DIMA, DONTE, KASSY, PIXIE, RIVA, ROBYN, ROXIE, SAVANT and TABBY SKUs. Cost coverage is now **1,148 SKUs across 269 styles** in each season.
 - [x] Improved the factory importer to split slash-formatted combined colour/material fields into the correct Upper 1 / Upper 2 identity. The current factory file now safely recognises 921 exact active W27 SKUs; 47 unmatched historical/non-range rows remain excluded rather than being guessed.
 - [x] Validation: 128 tests and production build passed. Database verification confirms every imported physical-SKU FOB value within USD precision.
+
+## Manual FOB Entry (8 Oct 2026)
+- [x] Added a **FOB (USD)** editable field and Save control to the SKU detail panel in By Style (open the sliders icon on any SKU).
+- [x] Manual entries accept ordinary currency text such as `40`, `$40`, or `USD40`, validate it is positive, and save it against the active season and exact Upper 1 / Upper 2 SKU identity.
+- [x] The saved figure refreshes the current-season FOB data, feeds the style margin card, and removes eligible new-season items from the next factory FOB request.
+- [x] Added server validation for a direct one-SKU cost save, including dual-upper identity protection and zero-cost rejection. Validation: 130 tests and production build passed.
