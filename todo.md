@@ -694,3 +694,8 @@
 - [x] Matched the supplied column widths, centered Calibri layout, bold Style column, row borders, and FOB COST currency formatting.
 - [x] Updated the date-stamped attachment name to the intended convention: `FOB COST NEEDED 07.10.xlsx`.
 - [x] Validation: 127 tests and production build passed; the export/import resolver remains case-insensitive for returned factory files.
+
+## FOB Workbook Cell Fit (7 Oct 2026)
+- [x] Made FOB request columns size themselves from their current data, with sensible maximum widths.
+- [x] Enabled wrapping and calculated row heights across LAST, STYLE, and COLOUR so lengthy labels and dual-upper combinations stay visible inside their cells.
+- [x] Kept cost cells clear and formatted as currency. Validated with a long-label Excel artifact: all three text fields wrap, the row expands to 36 points, and no column exceeds its readable cap. 127 tests and production build passed.

@@ -862,8 +862,26 @@ export default function StylesTab() {
     }));
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FOB COST": "NO RECEIVED NEW-SEASON SKUS ARE AWAITING AN FOB COST" }]);
+    const fitColumnWidth = (values: string[], minimum: number, maximum: number) => (
+      Math.max(minimum, Math.min(maximum, Math.max(...values.map((value) => String(value ?? "").length)) + 2))
+    );
+    const lastWidth = fitColumnWidth(rows.map((row) => row.LAST), 14.25, 30);
+    const styleWidth = fitColumnWidth(rows.map((row) => row.STYLE), 10, 30);
+    const colourWidth = fitColumnWidth(rows.map((row) => row.COLOUR), 23, 60);
+    const wrappedRowHeight = (row: typeof rows[number]) => {
+      const lines = Math.max(
+        Math.ceil(String(row.LAST ?? "").length / lastWidth),
+        Math.ceil(String(row.STYLE ?? "").length / styleWidth),
+        Math.ceil(String(row.COLOUR ?? "").length / colourWidth),
+      );
+      return Math.max(20, lines * 18);
+    };
     ws["!cols"] = [
-      { width: 14.25 }, { width: 8.625 }, { width: 21.375 }, { width: 10.375 },
+      { width: lastWidth }, { width: styleWidth }, { width: colourWidth }, { width: 12 },
+    ];
+    ws["!rows"] = [
+      { hpt: 20 },
+      ...rows.map((row) => ({ hpt: wrappedRowHeight(row) })),
     ];
     const thinBorder = { style: "thin", color: { rgb: "000000" } };
     const allCapsFont = { name: "Calibri", sz: 12 };
@@ -874,7 +892,11 @@ export default function StylesTab() {
         if (!ws[address]) ws[address] = { v: "", t: "s" };
         ws[address].s = {
           font: { ...allCapsFont, bold: rowIndex === 0 || columnIndex === 1 },
-          alignment: { horizontal: "center", vertical: "center" },
+          alignment: {
+            horizontal: "center",
+            vertical: "center",
+            wrapText: columnIndex < 3,
+          },
           border: { bottom: thinBorder },
         };
         if (columnIndex === 3) {
