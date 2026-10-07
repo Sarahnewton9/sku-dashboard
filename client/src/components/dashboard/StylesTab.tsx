@@ -14,6 +14,7 @@ import { getSkuExportFields } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { hasSize11ForAllColourways } from "@shared/size11";
 import { summariseStyleFobCosts } from "@shared/fobEstimates";
+import { isFobCostRequestEligible } from "@shared/fobCostRequest";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
@@ -800,8 +801,12 @@ export default function StylesTab() {
       if (seen.has(compositeKey)) return [];
       seen.add(compositeKey);
       const currentCost = seasonCostMap.get(compositeKey) ?? dbMeta?.costPrice ?? null;
-      if (currentCost != null && Number(currentCost) > 0) return [];
       const styleInfo = (mergedStyles as any[]).find((style) => style.style === sku.style);
+      if (!isFobCostRequestEligible({
+        isNewSeasonStyle: styleInfo?.isAllNew === true,
+        sampleStatus: dbMeta?.sampleStatus,
+        currentFobUsd: currentCost,
+      })) return [];
       return [{
         style: sku.style,
         category: styleInfo ? getCategory(sku.style, styleInfo.category) : "",
@@ -810,7 +815,7 @@ export default function StylesTab() {
         leather: sku.leather ?? "",
         colour2,
         leather2,
-        status: sku.is_new ? "New" : "Existing",
+        status: "New season · sample received",
         isSize11: dbMeta?.isSize11 ? "Yes" : "No",
       }];
     });
@@ -837,7 +842,7 @@ export default function StylesTab() {
       "FACTORY COMMENTS": "",
     }));
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FOB (USD)": "No active SKUs are missing a FOB cost" }]);
+    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FOB (USD)": "No received samples from new-season styles are awaiting an FOB cost" }]);
     ws["!cols"] = [
       { wch: 13 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 20 },
       { wch: 20 }, { wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 20 }, { wch: 34 },
@@ -1394,7 +1399,8 @@ export default function StylesTab() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-60">
-            <DropdownMenuLabel>FOB cost requests</DropdownMenuLabel>
+            <DropdownMenuLabel>Received new-style FOB requests</DropdownMenuLabel>
+            <p className="px-2 pb-2 text-xs leading-relaxed text-muted-foreground">Only received samples from all-new {getSeasonFileLabel(season)} styles without an FOB appear here.</p>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onSelect={() => {
@@ -1429,11 +1435,11 @@ export default function StylesTab() {
       <EmailExportDialog
         open={emailCostRequestOpen}
         onOpenChange={setEmailCostRequestOpen}
-        exportType="Missing FOB Cost Request"
-        exportScope={`${missingCostRequestRows.length} active SKU${missingCostRequestRows.length === 1 ? "" : "s"} missing costs`}
+        exportType="FOB Cost Request"
+        exportScope={`${missingCostRequestRows.length} received new-season SKU${missingCostRequestRows.length === 1 ? "" : "s"} awaiting FOB`}
         season={getSeasonFileLabel(season)}
         defaultSubject={`TONY BIANCO ${getSeasonFileLabel(season)} — FOB COST REQUEST`}
-        defaultMessage={`Please complete the FOB (USD) column for each SKU in the attached workbook and return the same file to us.\n\nPlease leave the Style and Upper 1 / Upper 2 columns unchanged so the completed costs can be safely loaded back into SKU Dash. Thank you.`}
+        defaultMessage={`Please complete the FOB (USD) column for each received new-season sample in the attached workbook and return the same file to us.\n\nPlease leave the Style and Upper 1 / Upper 2 columns unchanged so the completed costs can be safely loaded back into SKU Dash. Once imported, those SKUs will no longer appear in the next FOB request. Thank you.`}
         buildAttachment={async () => {
           const { wb, filename } = buildMissingCostRequestWorkbook();
           return workbookToEmailAttachment(wb, filename);

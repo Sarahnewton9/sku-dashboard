@@ -662,3 +662,9 @@
 - [x] The pricing card now shows a **rolled-up style margin** based on actual plus valid material estimates, while retaining a highest-FOB 75% RRP guide and clearly reporting any costs still outstanding.
 - [x] CHERRY validation: 8 actual US$33.50 FOBs, 4 same-material estimates (one Crinkle and three Suede), 1 unmatched Snake colourway still outstanding; rolled-up FOB is US$33.50, producing a 73.0% margin at AU$199.95 and a AU$219.95 75% guide.
 - [x] Validation: 108 tests, production build, source audit, real CHERRY coverage check, and By Style visual review passed.
+
+## Rolling FOB Request Filter (7 Oct 2026)
+- [x] FOB request download and email now include only active **all-new W27 styles**, with the physical SKU’s sample status set to **received**, and no positive FOB (USD) stored.
+- [x] Existing/carry-over styles, styles with only new colourways, waiting samples, cancelled/markdown SKUs, and already-costed SKUs are excluded.
+- [x] The returned-workbook import still saves exact SKU FOBs. On the next request, an imported SKU automatically disappears because it is no longer missing a cost.
+- [x] Updated the menu and factory email wording to explain the rolling rule. Visual validation shows the W27 request count reduced from 359 broad missing-cost rows to 2 eligible received new-style samples; 111 tests and the production build passed.
