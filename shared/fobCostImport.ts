@@ -26,6 +26,13 @@ export function normaliseFobText(value: unknown): string {
   return String(value ?? "").trim().replace(/\s+/g, " ").toUpperCase();
 }
 
+function splitFactoryUpper(value: unknown): [string, string] | null {
+  const parts = String(value ?? "")
+    .split(/\s*\/\s*/)
+    .map(normaliseFobText);
+  return parts.length === 2 && parts[0] && parts[1] ? [parts[0], parts[1]] : null;
+}
+
 /**
  * Accepts common factory FOB representations, including numeric cells, US$34.50,
  * $USD40, USD 40 and US$ 1,234.50. Negative, blank and non-numeric values are
@@ -103,14 +110,21 @@ export function parseFobCostGrid(grid: unknown[][]): ParsedFobCostFile {
   for (let index = headerRowIndex + 1; index < grid.length; index += 1) {
     const row = grid[index] ?? [];
     const style = normaliseFobText(row[styleColumn]);
-    const colour = normaliseFobText(row[colourColumn]);
+    const sourceColour = normaliseFobText(row[colourColumn]);
+    const sourceLeather = leatherColumn >= 0 ? normaliseFobText(row[leatherColumn]) : "";
+    const combinedColours = leatherColumn >= 0 ? splitFactoryUpper(row[colourColumn]) : null;
+    const combinedLeathers = leatherColumn >= 0 ? splitFactoryUpper(row[leatherColumn]) : null;
+    const colour = combinedColours?.[0] ?? sourceColour;
+    const leather = combinedLeathers?.[0] ?? sourceLeather;
+    const colour2 = combinedColours && combinedLeathers ? combinedColours[1] : (colour2Column >= 0 ? normaliseFobText(row[colour2Column]) : "");
+    const leather2 = combinedColours && combinedLeathers ? combinedLeathers[1] : (leather2Column >= 0 ? normaliseFobText(row[leather2Column]) : "");
     if (!style && !colour) continue;
     rows.push({
       style,
       colour,
-      leather: leatherColumn >= 0 ? normaliseFobText(row[leatherColumn]) : "",
-      colour2: colour2Column >= 0 ? normaliseFobText(row[colour2Column]) : "",
-      leather2: leather2Column >= 0 ? normaliseFobText(row[leather2Column]) : "",
+      leather,
+      colour2,
+      leather2,
       cost: parseFobUsd(row[costColumn]),
       sourceRow: index + 1,
     });

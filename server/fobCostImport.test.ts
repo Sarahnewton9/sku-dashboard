@@ -32,6 +32,19 @@ describe("factory FOB cost import", () => {
     ]);
   });
 
+  it("splits the factory's slash-formatted dual-upper rows into the physical SKU identity", () => {
+    const result = parseFobCostGrid([
+      ["LAST", "STYLE", "COLOUR", "LEATHER", "$USD"],
+      ["CHEEKY/CUBA", "CAPPA", "DOVE / BLACK", "NAPPA / NAPPA", 23.5],
+      ["ESSA", "DIMA", "ESPRESSO / CHOC", "SNAKE / NAPPA", "$USD32.50"],
+    ]);
+
+    expect(result.rows).toEqual([
+      { style: "CAPPA", colour: "DOVE", leather: "NAPPA", colour2: "BLACK", leather2: "NAPPA", cost: 23.5, sourceRow: 2 },
+      { style: "DIMA", colour: "ESPRESSO", leather: "SNAKE", colour2: "CHOC", leather2: "NAPPA", cost: 32.5, sourceRow: 3 },
+    ]);
+  });
+
   it("keeps the compact SKU Dash request format compatible", () => {
     const result = parseFobCostGrid([
       ["LAST", "STYLE", "COLOUR", "FOB COST"],

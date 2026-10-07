@@ -699,3 +699,10 @@
 - [x] Made FOB request columns size themselves from their current data, with sensible maximum widths.
 - [x] Enabled wrapping and calculated row heights across LAST, STYLE, and COLOUR so lengthy labels and dual-upper combinations stay visible inside their cells.
 - [x] Kept cost cells clear and formatted as currency. Validated with a long-label Excel artifact: all three text fields wrap, the row expands to 36 points, and no column exceeds its readable cap. 127 tests and production build passed.
+
+## USD FOB Cost Reconciliation (8 Oct 2026)
+- [x] Treated the **$USD** column in `FULLCOSTLISTON20260830.xlsx` as the authoritative FOB source.
+- [x] Corrected JAQ Black Vintage and Tan Vintage from US$66.80 to **US$31.80** in both SS26 and W27.
+- [x] Added 28 previously unmatched active physical-SKU costs to each season (56 verified records), including dual-upper DIMA, DONTE, KASSY, PIXIE, RIVA, ROBYN, ROXIE, SAVANT and TABBY SKUs. Cost coverage is now **1,148 SKUs across 269 styles** in each season.
+- [x] Improved the factory importer to split slash-formatted combined colour/material fields into the correct Upper 1 / Upper 2 identity. The current factory file now safely recognises 921 exact active W27 SKUs; 47 unmatched historical/non-range rows remain excluded rather than being guessed.
+- [x] Validation: 128 tests and production build passed. Database verification confirms every imported physical-SKU FOB value within USD precision.
