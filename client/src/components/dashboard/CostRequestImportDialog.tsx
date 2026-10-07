@@ -47,7 +47,6 @@ export function CostRequestImportDialog({
   const inputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState("");
   const [parsedRows, setParsedRows] = useState<ImportedCostRow[]>([]);
-  const [fileFormat, setFileFormat] = useState<ParsedFobCostFile["format"] | null>(null);
   const [formatError, setFormatError] = useState<string | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const utils = trpc.useUtils();
@@ -95,12 +94,10 @@ export function CostRequestImportDialog({
   const loadFile = async (file: File) => {
     setIsParsing(true);
     setFileName(file.name);
-    setFileFormat(null);
     setFormatError(null);
     try {
       const result = await parseCompletedCostFile(file);
       setParsedRows(result.rows);
-      setFileFormat(result.format);
       setFormatError(result.formatError ?? null);
       if (!result.formatError) toast.success(`Read ${result.rows.length} row${result.rows.length === 1 ? "" : "s"} from ${file.name}`);
     } catch {
@@ -115,7 +112,6 @@ export function CostRequestImportDialog({
   const reset = () => {
     setFileName("");
     setParsedRows([]);
-    setFileFormat(null);
     setFormatError(null);
   };
 
@@ -129,14 +125,10 @@ export function CostRequestImportDialog({
       <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><FileSpreadsheet className="h-5 w-5" /> Import factory FOB costs</DialogTitle>
-          <DialogDescription>Drag in the factory’s returned FOB file. SKU identity is checked before any cost is saved to {season}.</DialogDescription>
+          <DialogDescription>Drag in the completed FOB file for {season}.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
-            <strong>Safe import:</strong> upload either the SKU Dash FOB request or the factory’s full cost list. Values such as <strong>US$34.50</strong>, <strong>$USD40</strong> and <strong>USD 40</strong> are read as USD. Only positive amounts with an exact active SKU match are saved.
-          </div>
-
           <div
             className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-colors hover:bg-muted/30"
             style={{ borderColor: "var(--border)" }}
@@ -145,8 +137,8 @@ export function CostRequestImportDialog({
             onDrop={(event) => { event.preventDefault(); const file = event.dataTransfer.files?.[0]; if (file) void loadFile(file); }}
           >
             {isParsing ? <Loader2 className="mb-2 h-9 w-9 animate-spin text-muted-foreground" /> : <Upload className="mb-2 h-9 w-9 text-muted-foreground" />}
-            <p className="text-sm font-medium text-foreground">{fileName || "Drop the returned factory cost file here, or click to select"}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Accepted: .xlsx, .xls or .csv · Headers supported: FOB / $USD / Cost (USD)</p>
+            <p className="text-sm font-medium text-foreground">{fileName || "Drop the completed FOB file here, or click to select"}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Accepted: .xlsx, .xls or .csv</p>
             <input ref={inputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void loadFile(file); }} />
           </div>
 
@@ -159,8 +151,6 @@ export function CostRequestImportDialog({
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3"><p className="text-xs text-emerald-800">Ready to import</p><p className="text-lg font-semibold text-emerald-900">{readyRows.length}</p></div>
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-3"><p className="text-xs text-amber-800">Skipped safely</p><p className="text-lg font-semibold text-amber-900">{issueRows.length}</p></div>
               </div>
-              <p className="text-xs text-muted-foreground">Recognised format: <strong>{fileFormat === "factory_list" ? "factory full cost list" : "SKU Dash FOB request"}</strong>.</p>
-
               <div className="overflow-hidden rounded-lg border">
                 <table className="w-full text-xs">
                   <thead className="bg-muted"><tr><th className="px-3 py-2 text-left">Style</th><th className="px-3 py-2 text-left">Colour / Leather</th><th className="px-3 py-2 text-right">FOB (USD)</th><th className="px-3 py-2 text-left">Status</th></tr></thead>
