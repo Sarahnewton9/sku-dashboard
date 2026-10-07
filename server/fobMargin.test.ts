@@ -17,6 +17,11 @@ describe("FOB margin planning", () => {
     expect(getAuGrossMarginFromFob(31.5, 199.95)).toBeCloseTo(0.7456, 4);
   });
 
+  it("can guide the margin from the highest available FOB while other colourways await costs", () => {
+    expect(getAuGrossMarginFromFob(33.5, 199.95)).toBeCloseTo(0.7298, 4);
+    expect(getSuggestedAuRrpFromFob(33.5)).toBe(219.95);
+  });
+
   it("keeps 70–74.9% within tolerance and warns below 70%", () => {
     expect(getMarginStatus(0.75)).toBe("on_target");
     expect(getMarginStatus(0.745)).toBe("within_tolerance");

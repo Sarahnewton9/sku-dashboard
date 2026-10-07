@@ -16,6 +16,9 @@ type StylePricing = {
 type FactoryCostSummary = {
   totalColourways: number;
   costedColourways: number;
+  estimatedColourways?: number;
+  missingColourways?: number;
+  rolledUpFobUsd?: number | null;
   minFobUsd?: number | null;
   maxFobUsd?: number | null;
 };
@@ -29,14 +32,13 @@ function amountFromInput(value: string): number | null {
 
 function formatFobRange(summary?: FactoryCostSummary): string {
   if (!summary?.costedColourways || summary.minFobUsd == null || summary.maxFobUsd == null) return "—";
-  if (Math.abs(summary.minFobUsd - summary.maxFobUsd) < 0.005) return `$${summary.minFobUsd.toFixed(2)}`;
-  return `$${summary.minFobUsd.toFixed(2)}–$${summary.maxFobUsd.toFixed(2)}`;
+  const estimatedMarker = (summary.estimatedColourways ?? 0) > 0 ? "*" : "";
+  if (Math.abs(summary.minFobUsd - summary.maxFobUsd) < 0.005) return `$${summary.minFobUsd.toFixed(2)}${estimatedMarker}`;
+  return `$${summary.minFobUsd.toFixed(2)}–$${summary.maxFobUsd.toFixed(2)}${estimatedMarker}`;
 }
 
-function formatMarginRange(lowMargin: number | null, highMargin: number | null): string {
-  if (lowMargin == null || highMargin == null) return "Add FOB and RRP";
-  if (Math.abs(lowMargin - highMargin) < 0.0005) return `${(lowMargin * 100).toFixed(1)}%`;
-  return `${(lowMargin * 100).toFixed(1)}–${(highMargin * 100).toFixed(1)}%`;
+function formatMargin(margin: number | null): string {
+  return margin == null ? "Add FOB and RRP" : `${(margin * 100).toFixed(1)}%`;
 }
 
 /**
@@ -62,23 +64,28 @@ export function StylePricingCard({
   }, [pricing?.rrp, style]);
 
   const rrpValue = amountFromInput(rrp);
-  const completeFobCoverage = Boolean(
+  const hasAvailableFob = Boolean(
     factoryCosts
-      && factoryCosts.totalColourways > 0
-      && factoryCosts.costedColourways === factoryCosts.totalColourways
+      && factoryCosts.costedColourways > 0
       && factoryCosts.minFobUsd != null
       && factoryCosts.maxFobUsd != null,
   );
-  const lowMargin = completeFobCoverage && rrpValue != null && factoryCosts?.maxFobUsd != null
-    ? getAuGrossMarginFromFob(factoryCosts.maxFobUsd, rrpValue)
+  const fullyCosted = Boolean(
+    hasAvailableFob
+      && factoryCosts
+      && factoryCosts.totalColourways > 0
+      && factoryCosts.costedColourways === factoryCosts.totalColourways,
+  );
+  const estimatedFobCount = factoryCosts?.estimatedColourways ?? 0;
+  const pendingFobCount = factoryCosts?.missingColourways ?? Math.max(0, (factoryCosts?.totalColourways ?? 0) - (factoryCosts?.costedColourways ?? 0));
+  const provisionalFobCoverage = estimatedFobCount > 0 || pendingFobCount > 0;
+  const rolledUpMargin = hasAvailableFob && rrpValue != null && factoryCosts?.rolledUpFobUsd != null
+    ? getAuGrossMarginFromFob(factoryCosts.rolledUpFobUsd, rrpValue)
     : null;
-  const highMargin = completeFobCoverage && rrpValue != null && factoryCosts?.minFobUsd != null
-    ? getAuGrossMarginFromFob(factoryCosts.minFobUsd, rrpValue)
-    : null;
-  const suggestedRrp = completeFobCoverage && factoryCosts?.maxFobUsd != null
+  const suggestedRrp = hasAvailableFob && factoryCosts?.maxFobUsd != null
     ? getSuggestedAuRrpFromFob(factoryCosts.maxFobUsd)
     : null;
-  const marginStatus = getMarginStatus(lowMargin);
+  const marginStatus = getMarginStatus(rolledUpMargin);
   const isBelowTolerance = marginStatus === "below_tolerance";
   const isWithinTolerance = marginStatus === "within_tolerance";
 
@@ -99,7 +106,7 @@ export function StylePricingCard({
   };
 
   const costCoverage = factoryCosts
-    ? `${factoryCosts.costedColourways} of ${factoryCosts.totalColourways} colourways costed`
+    ? `${factoryCosts.costedColourways} actual${estimatedFobCount > 0 ? ` · ${estimatedFobCount} estimated*` : ""}${pendingFobCount > 0 ? ` · ${pendingFobCount} outstanding` : ""}`
     : "No active colourways";
 
   return (
@@ -146,15 +153,16 @@ export function StylePricingCard({
               : { borderColor: "transparent", background: "color-mix(in oklab, var(--background) 70%, transparent)" }}
         >
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Current margin</p>
-          <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">{formatMarginRange(lowMargin, highMargin)}</p>
+          <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">{formatMargin(rolledUpMargin)}</p>
           {isBelowTolerance && <p className="mt-1 flex items-center gap-1 text-[10px] font-medium" style={{ color: "oklch(0.52 0.12 65)" }}><AlertTriangle className="h-3 w-3" aria-hidden="true" />Below 70% tolerance</p>}
           {isWithinTolerance && <p className="mt-1 text-[10px] text-muted-foreground">Within 70–74% tolerance</p>}
-          {!completeFobCoverage && <p className="mt-1 text-[10px] text-muted-foreground">Complete FOB costs to calculate margin</p>}
+          {!hasAvailableFob && <p className="mt-1 text-[10px] text-muted-foreground">Add FOB and RRP to calculate margin</p>}
+          {hasAvailableFob && provisionalFobCoverage && <p className="mt-1 text-[10px] text-muted-foreground">Rolled-up style margin · *same-style material estimate{pendingFobCount > 0 ? ` · ${pendingFobCount} FOB${pendingFobCount === 1 ? "" : "s"} still outstanding` : ""}</p>}
         </div>
         <div className="rounded-lg bg-background/70 px-3 py-2">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">RRP guide at 75%</p>
-          <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">{suggestedRrp != null ? `$${suggestedRrp.toFixed(2)}` : "Complete FOB costs"}</p>
-          {suggestedRrp != null && <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground"><Calculator className="h-3 w-3" aria-hidden="true" />Uses the highest FOB colourway</p>}
+          <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground">{suggestedRrp != null ? `$${suggestedRrp.toFixed(2)}` : "Add FOB"}</p>
+          {suggestedRrp != null && <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground"><Calculator className="h-3 w-3" aria-hidden="true" />Uses the highest available FOB colourway{!fullyCosted ? " · provisional" : ""}</p>}
         </div>
       </div>
     </section>

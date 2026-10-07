@@ -13,6 +13,7 @@ import { getSeasonFileLabel } from "@shared/seasonLabel";
 import { getSkuExportFields } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { hasSize11ForAllColourways } from "@shared/size11";
+import { summariseStyleFobCosts } from "@shared/fobEstimates";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
@@ -596,7 +597,7 @@ export default function StylesTab() {
   }, [styleMetaList]);
 
   const styleFobSummaryMap = useMemo(() => {
-    const summaries: Record<string, { totalColourways: number; costedColourways: number; minFobUsd: number | null; maxFobUsd: number | null }> = {};
+    const colourways: Array<{ style: string; leather: string; leather2: string; actualFobUsd: number | null }> = [];
     const seen = new Set<string>();
     for (const sku of mergedRawSkus as any[]) {
       if (cancelledSet.has(sku.style) || cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) continue;
@@ -609,16 +610,15 @@ export default function StylesTab() {
       if (seen.has(identity)) continue;
       seen.add(identity);
 
-      const summary = summaries[sku.style] ??= { totalColourways: 0, costedColourways: 0, minFobUsd: null, maxFobUsd: null };
-      summary.totalColourways += 1;
       const fobUsd = seasonCostMap.get(identity) ?? dbMeta?.costPrice ?? null;
-      if (fobUsd == null || Number(fobUsd) <= 0) continue;
-      const amount = Number(fobUsd);
-      summary.costedColourways += 1;
-      summary.minFobUsd = summary.minFobUsd == null ? amount : Math.min(summary.minFobUsd, amount);
-      summary.maxFobUsd = summary.maxFobUsd == null ? amount : Math.max(summary.maxFobUsd, amount);
+      colourways.push({
+        style: sku.style,
+        leather: sku.leather ?? "",
+        leather2,
+        actualFobUsd: fobUsd == null ? null : Number(fobUsd),
+      });
     }
-    return summaries;
+    return summariseStyleFobCosts(colourways);
   }, [mergedRawSkus, cancelledSet, cancelledSkuSet, skuMetaMap, seasonCostMap]);
 
   // Buy session item lookup — uses selected session items, or falls back to most recent session for read-only display

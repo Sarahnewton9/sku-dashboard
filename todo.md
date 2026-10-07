@@ -655,3 +655,10 @@
 - [x] Added a green **New SKU buy completion** progress bar to the Not Yet Bought view, with bought count and percentage for the active market filter.
 - [x] Extended Buy Sheet download and email attachments with **TOTAL QTY** and native Excel **% BOUGHT** columns. Each SKU’s percentage is its share of that session’s total units; the total row is 100.0%.
 - [x] Validation: 105 tests, production build, diff checks, and updated Buy Analysis visual review passed.
+
+## Material-Based FOB Estimates & Rolled-Up Margins (7 Oct 2026)
+- [x] Margin calculations now continue from available FOBs rather than blocking until every colourway is costed.
+- [x] Missing colourways inherit an **estimated FOB only from an actual same-style, same-material SKU**; estimates are never stored as factory costs and are visibly marked with `*`.
+- [x] The pricing card now shows a **rolled-up style margin** based on actual plus valid material estimates, while retaining a highest-FOB 75% RRP guide and clearly reporting any costs still outstanding.
+- [x] CHERRY validation: 8 actual US$33.50 FOBs, 4 same-material estimates (one Crinkle and three Suede), 1 unmatched Snake colourway still outstanding; rolled-up FOB is US$33.50, producing a 73.0% margin at AU$199.95 and a AU$219.95 75% guide.
+- [x] Validation: 108 tests, production build, source audit, real CHERRY coverage check, and By Style visual review passed.
