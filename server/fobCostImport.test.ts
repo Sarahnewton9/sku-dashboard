@@ -34,8 +34,8 @@ describe("factory FOB cost import", () => {
 
   it("keeps the compact SKU Dash request format compatible", () => {
     const result = parseFobCostGrid([
-      ["LAST", "Style", "Colour", "FOB"],
-      ["ROBYN", "ROBYN", "Ecru Snake/Royal Suede", "USD 49.20"],
+      ["LAST", "STYLE", "COLOUR", "FOB COST"],
+      ["ROBYN", "ROBYN", "ECRU SNAKE/ROYAL SUEDE", "USD 49.20"],
     ]);
 
     expect(result.format).toBe("fob_request");

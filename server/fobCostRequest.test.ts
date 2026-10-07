@@ -43,10 +43,10 @@ describe("FOB cost request eligibility", () => {
 });
 
 describe("FOB request workbook template", () => {
-  it("uses the concise factory colour wording and a Sydney date-stamped filename", () => {
-    expect(formatFobRequestColour({ style: "EMILY", colour: "RED", leather: "CROCO" })).toBe("Red Croco");
-    expect(formatFobRequestColour({ style: "ROBYN", colour: "ECRU", leather: "SNAKE", colour2: "ROYAL", leather2: "SUEDE" })).toBe("Ecru Snake/Royal Suede");
-    expect(getFobCostRequestFilename(new Date("2026-10-06T14:00:00.000Z"))).toBe("FOB COST NEEDED 07.10.xlsx");
+  it("uses the all-caps factory wording and compact Sydney date-stamped filename", () => {
+    expect(formatFobRequestColour({ style: "EMILY", colour: "RED", leather: "CROCO" })).toBe("RED CROCO");
+    expect(formatFobRequestColour({ style: "ROBYN", colour: "ECRU", leather: "SNAKE", colour2: "ROYAL", leather2: "SUEDE" })).toBe("ECRU SNAKE/ROYAL SUEDE");
+    expect(getFobCostRequestFilename(new Date("2026-10-06T14:00:00.000Z"))).toBe("FOBCOSTNEEDED07.10.xlsx");
   });
 
   it("maps a factory template row back to a complete dual-upper SKU only when unambiguous", () => {

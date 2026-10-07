@@ -1,4 +1,4 @@
-import { formatSkuExportLabel, toTitleCaseSkuExportLabel } from "./skuExportLabel";
+import { formatSkuExportLabel } from "./skuExportLabel";
 
 export type FobCostRequestCandidate = {
   /** True when this physical SKU is new in the active season. */
@@ -34,9 +34,9 @@ export function isFobCostRequestEligible(candidate: FobCostRequestCandidate): bo
   return !Number.isFinite(fob) || fob <= 0;
 }
 
-/** Matches the concise Colour wording used in the factory's FOB workbook. */
+/** Matches the all-caps Colour wording used in the factory's FOB workbook. */
 export function formatFobRequestColour(sku: FobRequestSku): string {
-  return toTitleCaseSkuExportLabel(formatSkuExportLabel(sku));
+  return formatSkuExportLabel(sku).toUpperCase();
 }
 
 /** Uses the Australia/Sydney business date, independent of browser locale. */
@@ -48,11 +48,11 @@ export function getFobCostRequestFilename(date = new Date()): string {
   }).formatToParts(date);
   const day = parts.find((part) => part.type === "day")?.value ?? "";
   const month = parts.find((part) => part.type === "month")?.value ?? "";
-  return `FOB COST NEEDED ${day}.${month}.xlsx`;
+  return `FOBCOSTNEEDED${day}.${month}.xlsx`;
 }
 
 /**
- * Resolves the four-column factory template (LAST, Style, Colour, FOB) back to
+ * Resolves the four-column factory template (LAST, STYLE, COLOUR, FOB COST) back to
  * a full SKU identity. This keeps Upper 1 / Upper 2 detail safe inside SKU Dash
  * without exposing it in the factory request.
  */

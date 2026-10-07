@@ -32,7 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LastMeasurementsPanel } from "./LastMeasurementsPanel";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 import SkuDetailPanel, { type SkuPanelData } from "./SkuDetailPanel";
 import { StylePricingCard } from "./StylePricingCard";
 import { CostRequestImportDialog } from "./CostRequestImportDialog";
@@ -855,16 +855,33 @@ export default function StylesTab() {
 
   function buildMissingCostRequestWorkbook() {
     const rows = missingCostRequestRows.map((sku) => ({
-      "LAST": sku.last,
-      "Style": sku.style,
-      "Colour": formatFobRequestColour(sku),
-      "FOB": "",
+      "LAST": String(sku.last ?? "").toUpperCase(),
+      "STYLE": String(sku.style ?? "").toUpperCase(),
+      "COLOUR": formatFobRequestColour(sku),
+      "FOB COST": "",
     }));
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FOB": "No received new-season SKUs are awaiting an FOB cost" }]);
+    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FOB COST": "NO RECEIVED NEW-SEASON SKUS ARE AWAITING AN FOB COST" }]);
     ws["!cols"] = [
-      { wch: 23.625 }, { wch: 13 }, { wch: 30 }, { wch: 13 },
+      { width: 14.25 }, { width: 8.625 }, { width: 21.375 }, { width: 10.375 },
     ];
+    const thinBorder = { style: "thin", color: { rgb: "000000" } };
+    const allCapsFont = { name: "Calibri", sz: 12 };
+    const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1:D1");
+    for (let rowIndex = range.s.r; rowIndex <= range.e.r; rowIndex += 1) {
+      for (let columnIndex = range.s.c; columnIndex <= range.e.c; columnIndex += 1) {
+        const address = XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex });
+        if (!ws[address]) ws[address] = { v: "", t: "s" };
+        ws[address].s = {
+          font: { ...allCapsFont, bold: rowIndex === 0 || columnIndex === 1 },
+          alignment: { horizontal: "center", vertical: "center" },
+          border: { bottom: thinBorder },
+        };
+        if (columnIndex === 3) {
+          ws[address].z = '_-"$"* #,##0.00_-;\\-"$"* #,##0.00_-;_-"$"* "-"??_-;_-@_-';
+        }
+      }
+    }
     XLSX.utils.book_append_sheet(wb, ws, "Cost Needed");
     return { wb, rowCount: rows.length, filename: getFobCostRequestFilename() };
   }

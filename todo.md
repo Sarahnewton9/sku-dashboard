@@ -687,3 +687,10 @@
 - [x] Normalise common currency entries such as `US$34.50`, `$USD40`, `USD 40`, and comma-separated amounts before validation.
 - [x] Validate factory rows against every active SKU, not just the outstanding request list, while safely skipping blank, duplicate, cancelled, markdown, or unmatched rows.
 - [x] Verified the supplied factory workbook: 997 rows recognised as the factory list, 996 valid FOB values, and one blank FOB safely excluded. Validation: 127 tests and production build passed.
+
+## Uppercase FOB Request Template (7 Oct 2026)
+- [x] Matched the supplied request workbook: worksheet **Cost Needed** with columns **LAST**, **STYLE**, **COLOUR**, and **FOB COST**.
+- [x] Made all FOB request values uppercase, including combined Upper 1/Upper 2 colour descriptions.
+- [x] Matched the supplied column widths, centered Calibri layout, bold Style column, row borders, and FOB COST currency formatting.
+- [x] Updated the date-stamped attachment name to match the supplied naming convention: `FOBCOSTNEEDED07.10.xlsx`.
+- [x] Validation: 127 tests and production build passed; the export/import resolver remains case-insensitive for returned factory files.
