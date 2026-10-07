@@ -48,7 +48,7 @@ export function getFobCostRequestFilename(date = new Date()): string {
   }).formatToParts(date);
   const day = parts.find((part) => part.type === "day")?.value ?? "";
   const month = parts.find((part) => part.type === "month")?.value ?? "";
-  return `FOBCOSTNEEDED${day}.${month}.xlsx`;
+  return `FOB COST NEEDED ${day}.${month}.xlsx`;
 }
 
 /**

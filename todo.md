@@ -692,5 +692,5 @@
 - [x] Matched the supplied request workbook: worksheet **Cost Needed** with columns **LAST**, **STYLE**, **COLOUR**, and **FOB COST**.
 - [x] Made all FOB request values uppercase, including combined Upper 1/Upper 2 colour descriptions.
 - [x] Matched the supplied column widths, centered Calibri layout, bold Style column, row borders, and FOB COST currency formatting.
-- [x] Updated the date-stamped attachment name to match the supplied naming convention: `FOBCOSTNEEDED07.10.xlsx`.
+- [x] Updated the date-stamped attachment name to the intended convention: `FOB COST NEEDED 07.10.xlsx`.
 - [x] Validation: 127 tests and production build passed; the export/import resolver remains case-insensitive for returned factory files.
