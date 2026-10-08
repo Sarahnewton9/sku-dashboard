@@ -737,3 +737,10 @@
 - [x] Safely mapped four secondary-material aliases to their active primary SKU: HALLIE Clear Vinylite/Silver → Clear Vinylite, and MILEY Black/Choc/Skin Nylon variants → their three Nylon SKU records.
 - [x] Left six supplied rows alone because they do not exist in current static or custom range data: JESSICA Black/Choc Vintage, JOEY Black Hi Shine, PALAIS Skin Capretto, and SAKAI Denim Suede/Silver Shimmer. They are already absent from the dashboard; no guessed alternative was removed.
 - [x] Verification: all 94 confirmed records have `deleted` status and are excluded by the central dashboard range filter.
+
+## Planning Analysis (8 Oct 2026)
+- [x] Added **Planning Analysis** under the Buying section. It combines every current-season Buy Session with active W27 SKU, category, FOB, RRP, markdown, and cancellation data.
+- [x] Added live merchandising measures: planned units; new-season unit mix; actual FOB spend (USD); planning landed spend (AUD); retail value; weighted gross margin; new-SKU purchase completion; FOB/RRP coverage; and an actionable count of units/SKUs still needing a buy, cost, or RRP.
+- [x] Added market allocation (AU, USA, NYC, LA), category-level new-SKU completion, style-level spend/range mix, and a visible list of new SKUs with no buy quantity.
+- [x] Spend uses only actual season-specific FOBs and margin uses a costed + priced matching unit set—no missing cost or RRP is guessed. The planning basis is explicitly shown: US$0.70 per AU$1 plus AU$1.25 freight per pair; retail RRP is treated as GST-inclusive.
+- [x] Added tested shared calculation logic. Validation: 137 tests and production build passed; no TypeScript diagnostics are attributable to the new Planning Analysis files (existing StylesTab diagnostics remain unchanged).
