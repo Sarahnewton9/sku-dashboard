@@ -17,6 +17,17 @@ export type FobRequestSku = {
   leather2?: string | null;
 };
 
+export type FobRequestExportCandidate = FobRequestSku & {
+  last?: string | null;
+};
+
+export type FobRequestExportRow = {
+  "LAST": string;
+  "STYLE": string;
+  "COLOUR": string;
+  "FOB COST": string;
+};
+
 function normaliseRequestValue(value: string | null | undefined): string {
   return String(value ?? "").trim().replace(/\s+/g, " ").toUpperCase();
 }
@@ -37,6 +48,64 @@ export function isFobCostRequestEligible(candidate: FobCostRequestCandidate): bo
 /** Matches the all-caps Colour wording used in the factory's FOB workbook. */
 export function formatFobRequestColour(sku: FobRequestSku): string {
   return formatSkuExportLabel(sku).toUpperCase();
+}
+
+/**
+ * Produces the concise factory template in a predictable style-first order.
+ * The physical Upper 1 / Upper 2 identity is deliberately retained in COLOUR.
+ */
+export function buildFobRequestExportRows(candidates: FobRequestExportCandidate[]): FobRequestExportRow[] {
+  return candidates
+    .map((sku) => ({
+      "LAST": normaliseRequestValue(sku.last),
+      "STYLE": normaliseRequestValue(sku.style),
+      "COLOUR": formatFobRequestColour(sku),
+      "FOB COST": "",
+    }))
+    .sort((left, right) => (
+      left.STYLE.localeCompare(right.STYLE, undefined, { sensitivity: "base" })
+      || left.LAST.localeCompare(right.LAST, undefined, { sensitivity: "base" })
+      || left.COLOUR.localeCompare(right.COLOUR, undefined, { sensitivity: "base" })
+    ));
+}
+
+function widthFor(values: string[], minimum: number, maximum: number, padding: number): number {
+  const longest = Math.max(...values.map((value) => String(value ?? "").length));
+  return Math.max(minimum, Math.min(maximum, longest + padding));
+}
+
+function wrappedLines(value: string, width: number): number {
+  const explicitLines = String(value ?? "").split(/\r?\n/);
+  return explicitLines.reduce((total, line) => total + Math.max(1, Math.ceil(line.length / width)), 0);
+}
+
+/**
+ * Uses Excel character widths (`wch`) rather than the unsupported raw `width`
+ * property. Long labels wrap and their rows expand, so the factory does not
+ * need to manually stretch columns or row heights.
+ */
+export function getFobRequestExportLayout(rows: FobRequestExportRow[]): {
+  columnWidths: [number, number, number, number];
+  rowHeights: number[];
+} {
+  const columnWidths: [number, number, number, number] = [
+    widthFor(["LAST", ...rows.map((row) => row.LAST)], 16, 34, 3),
+    widthFor(["STYLE", ...rows.map((row) => row.STYLE)], 15, 34, 3),
+    widthFor(["COLOUR", ...rows.map((row) => row.COLOUR)], 32, 70, 4),
+    16,
+  ];
+
+  return {
+    columnWidths,
+    rowHeights: rows.map((row) => {
+      const lines = Math.max(
+        wrappedLines(row.LAST, columnWidths[0]),
+        wrappedLines(row.STYLE, columnWidths[1]),
+        wrappedLines(row.COLOUR, columnWidths[2]),
+      );
+      return Math.max(22, lines * 18);
+    }),
+  };
 }
 
 /** Uses the Australia/Sydney business date, independent of browser locale. */

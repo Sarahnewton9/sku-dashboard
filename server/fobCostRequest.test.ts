@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildFobRequestExportRows,
   formatFobRequestColour,
   getFobCostRequestFilename,
+  getFobRequestExportLayout,
   isFobCostRequestEligible,
   resolveFobRequestSku,
 } from "../shared/fobCostRequest";
@@ -56,5 +58,20 @@ describe("FOB request workbook template", () => {
     ];
     expect(resolveFobRequestSku(knownSkus, "robyn", "Ecru Snake/Royal Suede")).toEqual(knownSkus[0]);
     expect(resolveFobRequestSku(knownSkus, "robyn", "Ecru Snake")).toBeNull();
+  });
+
+  it("sorts the factory template by style and sizes columns and wrapped rows to its content", () => {
+    const rows = buildFobRequestExportRows([
+      { last: "Maddi", style: "Maddi", colour: "Cloud", leather: "Nappa" },
+      { last: "Maddi", style: "Mack", colour: "Black", leather: "Vintage", colour2: "Black", leather2: "Patent" },
+      { last: "A very long last name to force wrapping", style: "Zeta", colour: "A very long colour description that needs more than one cell line", leather: "Suede" },
+    ]);
+
+    expect(rows.map((row) => row.STYLE)).toEqual(["MACK", "MADDI", "ZETA"]);
+    expect(rows[0]).toMatchObject({ LAST: "MADDI", COLOUR: "BLACK VINTAGE/BLACK PATENT", "FOB COST": "" });
+
+    const layout = getFobRequestExportLayout(rows);
+    expect(layout.columnWidths).toEqual([34, 15, 70, 16]);
+    expect(layout.rowHeights).toEqual([22, 22, 36]);
   });
 });

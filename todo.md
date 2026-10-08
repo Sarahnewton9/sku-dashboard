@@ -752,3 +752,10 @@
 - [x] Adds comparison cues for common lasts, categories, colours, and materials without collapsing distinct SKUs. In the requested MACK/MADDI example, it identifies the shared MADDI last and BLACK/SILVER colours.
 - [x] Images can be replaced directly in the comparison card through click or drag-and-drop, using the existing style-image override workflow. Existing product/override imagery takes precedence, followed by stored fitting imagery.
 - [x] Added shared comparison logic regression tests. Validation: 139 tests, production build, route/typecheck review, and rendered W27 MACK/MADDI visual verification passed. Existing unrelated StylesTab TypeScript diagnostics remain unchanged.
+
+## FOB Factory Export Layout (8 Oct 2026)
+- [x] Sort the factory **FOB COST NEEDED** workbook alphabetically by STYLE, then LAST and COLOUR.
+- [x] Replace the ineffective raw worksheet `width` settings with Excel-recognised `wch` column widths.
+- [x] Auto-size LAST, STYLE, and COLOUR columns from the live export data, wrap long values, and expand row heights to show every line without manual stretching.
+- [x] Retain the four-column factory template, add a filter row, and keep the FOB COST column formatted as currency.
+- [x] Validation: 140 tests and production build passed. Generated-workbook inspection confirmed alphabetic styles, widths A=34.83/B=15.83/C=70.83/D=16.83, wrapped long labels, a 36-point expanded long row, and filter `A1:D4`.

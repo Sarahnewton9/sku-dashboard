@@ -14,7 +14,7 @@ import { getSkuExportFields } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { hasSize11ForAllColourways } from "@shared/size11";
 import { summariseStyleFobCosts } from "@shared/fobEstimates";
-import { formatFobRequestColour, getFobCostRequestFilename, isFobCostRequestEligible } from "@shared/fobCostRequest";
+import { buildFobRequestExportRows, getFobCostRequestFilename, getFobRequestExportLayout, isFobCostRequestEligible } from "@shared/fobCostRequest";
 import { getAdjacentStyle } from "@shared/styleDetailNavigation";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
@@ -855,35 +855,24 @@ export default function StylesTab() {
   }, [mergedRawSkus, cancelledSet, cancelledSkuSet, markdownSkuSet, skuMetaMap]);
 
   function buildMissingCostRequestWorkbook() {
-    const rows = missingCostRequestRows.map((sku) => ({
-      "LAST": String(sku.last ?? "").toUpperCase(),
-      "STYLE": String(sku.style ?? "").toUpperCase(),
-      "COLOUR": formatFobRequestColour(sku),
+    const rows = buildFobRequestExportRows(missingCostRequestRows);
+    const worksheetRows = rows.length ? rows : [{
+      "LAST": "",
+      "STYLE": "",
+      "COLOUR": "NO RECEIVED NEW-SEASON SKUS ARE AWAITING AN FOB COST",
       "FOB COST": "",
-    }));
+    }];
+    const layout = getFobRequestExportLayout(worksheetRows);
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ "FOB COST": "NO RECEIVED NEW-SEASON SKUS ARE AWAITING AN FOB COST" }]);
-    const fitColumnWidth = (values: string[], minimum: number, maximum: number) => (
-      Math.max(minimum, Math.min(maximum, Math.max(...values.map((value) => String(value ?? "").length)) + 2))
-    );
-    const lastWidth = fitColumnWidth(rows.map((row) => row.LAST), 14.25, 30);
-    const styleWidth = fitColumnWidth(rows.map((row) => row.STYLE), 10, 30);
-    const colourWidth = fitColumnWidth(rows.map((row) => row.COLOUR), 23, 60);
-    const wrappedRowHeight = (row: typeof rows[number]) => {
-      const lines = Math.max(
-        Math.ceil(String(row.LAST ?? "").length / lastWidth),
-        Math.ceil(String(row.STYLE ?? "").length / styleWidth),
-        Math.ceil(String(row.COLOUR ?? "").length / colourWidth),
-      );
-      return Math.max(20, lines * 18);
-    };
+    const ws = XLSX.utils.json_to_sheet(worksheetRows);
     ws["!cols"] = [
-      { width: lastWidth }, { width: styleWidth }, { width: colourWidth }, { width: 12 },
+      ...layout.columnWidths.map((wch) => ({ wch })),
     ];
     ws["!rows"] = [
-      { hpt: 20 },
-      ...rows.map((row) => ({ hpt: wrappedRowHeight(row) })),
+      { hpt: 22 },
+      ...layout.rowHeights.map((hpt) => ({ hpt })),
     ];
+    ws["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: worksheetRows.length, c: 3 } }) };
     const thinBorder = { style: "thin", color: { rgb: "000000" } };
     const allCapsFont = { name: "Calibri", sz: 12 };
     const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1:D1");
