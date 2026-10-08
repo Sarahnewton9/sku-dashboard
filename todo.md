@@ -731,3 +731,9 @@
 - [x] Cleared all old Size 11 flags outside the supplied list and aligned W27 custom-style overrides, preserving the all-colourway Size 11 rule used in By Style and Buy Sheet exports.
 - [x] Database verification: 476 expected/actual Size 11 SKU records; zero listed active SKUs missing; zero unapproved flagged SKUs; zero unapproved custom-style overrides.
 - [x] Confirmed **CAMMIE**, **GEMMA**, and **RADA** do not exist in static range data, SKU metadata, custom SKUs, or custom styles. No placeholder records were created because Size 11 must remain tied to real physical colourways; add or restore their SKUs first if they should appear in SKU Dash.
+
+## User-Confirmed Markdown Removals (8 Oct 2026)
+- [x] Reconciled the supplied 100 markdown rows against exact dashboard SKU identities and marked **94 physical SKUs** as deleted markdowns. They are hidden from the active range, By Style, analysis, Specs, and exports in both SS26 and W27 while preserving a reversible Markdown audit record.
+- [x] Safely mapped four secondary-material aliases to their active primary SKU: HALLIE Clear Vinylite/Silver → Clear Vinylite, and MILEY Black/Choc/Skin Nylon variants → their three Nylon SKU records.
+- [x] Left six supplied rows alone because they do not exist in current static or custom range data: JESSICA Black/Choc Vintage, JOEY Black Hi Shine, PALAIS Skin Capretto, and SAKAI Denim Suede/Silver Shimmer. They are already absent from the dashboard; no guessed alternative was removed.
+- [x] Verification: all 94 confirmed records have `deleted` status and are excluded by the central dashboard range filter.
