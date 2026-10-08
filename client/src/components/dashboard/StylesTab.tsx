@@ -12,6 +12,7 @@ import { ALL_LASTS } from "@shared/const";
 import { getSeasonFileLabel } from "@shared/seasonLabel";
 import { getSkuExportFields } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
+import { getBuyMarketTotal, sumBuyMarketTotals, type BuyMarketQuantities } from "@shared/buyMarketTotals";
 import { hasSize11ForAllColourways } from "@shared/size11";
 import { summariseStyleFobCosts } from "@shared/fobEstimates";
 import { buildFobRequestExportRows, getFobCostRequestFilename, getFobRequestExportLayout, isFobCostRequestEligible } from "@shared/fobCostRequest";
@@ -1118,16 +1119,15 @@ export default function StylesTab() {
     if (adjacentStyle) openStyleDetail(adjacentStyle);
   }
 
-  // All-sessions buy total for a style (AU + USA + NYC combined, across every session)
-  const allQtysTyped = allSessionQtys as Record<string, { totalAu: number; totalUsa: number; totalNyc: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number }> }>;
-  function getStyleAllSessionsTotal(styleName: string): { au: number; usa: number; nyc: number; total: number } {
-    let au = 0; let usa = 0; let nyc = 0;
-    for (const sku of getSkusForStyle(styleName)) {
+  // All-session buy totals must always include the four active markets: AU,
+  // USA, NYC and LA.
+  const allQtysTyped = allSessionQtys as Record<string, BuyMarketQuantities>;
+  function getStyleAllSessionsTotal(styleName: string): { au: number; usa: number; nyc: number; la: number; total: number } {
+    const markets = sumBuyMarketTotals(getSkusForStyle(styleName).map((sku) => {
       const key = getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, (sku as any).colour2, (sku as any).leather2);
-      const d = allQtysTyped[key];
-      if (d) { au += d.totalAu; usa += d.totalUsa; nyc += d.totalNyc ?? 0; }
-    }
-    return { au, usa, nyc, total: au + usa + nyc };
+      return allQtysTyped[key];
+    }));
+    return { ...markets, total: getBuyMarketTotal(markets) };
   }
   // Legacy: session buy total for a style (current selected session only)
   function getStyleSessionTotal(styleName: string) {
@@ -1139,9 +1139,8 @@ export default function StylesTab() {
   }
   // Grand totals across all sessions
   const grandTotals = useMemo(() => {
-    let au = 0; let usa = 0; let nyc = 0;
-    for (const d of Object.values(allQtysTyped)) { au += d.totalAu; usa += d.totalUsa; nyc += d.totalNyc ?? 0; }
-    return { au, usa, nyc, total: au + usa + nyc };
+    const markets = sumBuyMarketTotals(Object.values(allQtysTyped));
+    return { ...markets, total: getBuyMarketTotal(markets) };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allSessionQtys]);
 
@@ -1256,13 +1255,21 @@ export default function StylesTab() {
           style={{ background: "oklch(0.97 0.05 65 / 0.6)", borderColor: "oklch(0.85 0.08 65)" }}
         >
           <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "oklch(0.50 0.14 55)" }}>Total Bought</span>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-3 text-sm">
             <span className="font-semibold tabular-nums" style={{ color: "oklch(0.35 0.12 55)" }}>
               AU <span className="text-base font-bold">{grandTotals.au.toLocaleString()}</span>
             </span>
             <span className="text-muted-foreground">·</span>
             <span className="font-semibold tabular-nums" style={{ color: "oklch(0.35 0.12 55)" }}>
               USA <span className="text-base font-bold">{grandTotals.usa.toLocaleString()}</span>
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span className="font-semibold tabular-nums" style={{ color: "oklch(0.45 0.16 300)" }}>
+              NYC <span className="text-base font-bold">{grandTotals.nyc.toLocaleString()}</span>
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span className="font-semibold tabular-nums" style={{ color: "oklch(0.45 0.16 160)" }}>
+              LA <span className="text-base font-bold">{grandTotals.la.toLocaleString()}</span>
             </span>
             <span className="text-muted-foreground">·</span>
             <span className="font-bold tabular-nums text-base" style={{ color: "oklch(0.45 0.16 55)" }}>
@@ -1786,7 +1793,7 @@ export default function StylesTab() {
                                 <div className="flex flex-col items-end gap-0.5">
                                   <span className="text-sm font-bold tabular-nums" style={{ color: "oklch(0.45 0.16 55)" }}>{allSessionsTotal.total}</span>
                                   <span className="text-xs tabular-nums text-muted-foreground">
-                                    AU {allSessionsTotal.au} · USA {allSessionsTotal.usa} · NYC {allSessionsTotal.nyc}
+                                    AU {allSessionsTotal.au} · USA {allSessionsTotal.usa} · NYC {allSessionsTotal.nyc} · LA {allSessionsTotal.la}
                                   </span>
                                 </div>
                               ) : (
@@ -2172,7 +2179,7 @@ export default function StylesTab() {
                                         {/* All-session total bought badge */}
                                         <div className="flex items-center gap-1.5">
                                           {allTotal > 0 ? (
-                                            <div className="flex flex-col items-center gap-0.5" title={allQtyData?.sessions.map((s) => `${s.sessionName}: AU ${s.au} / USA ${s.usa}${s.nyc ? ` / NYC ${s.nyc}` : ''}`).join('\n')}>
+                                            <div className="flex flex-col items-center gap-0.5" title={allQtyData?.sessions.map((s) => `${s.sessionName}: AU ${s.au} / USA ${s.usa}${s.nyc ? ` / NYC ${s.nyc}` : ''}${s.la ? ` / LA ${s.la}` : ''}`).join('\n')}>
                                               <span className="text-[9px] font-semibold uppercase tracking-wide leading-none" style={{ color: "oklch(0.55 0.14 55)" }}>Total</span>
                                               <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded" style={{ background: "oklch(0.94 0.08 65)", color: "oklch(0.45 0.14 55)" }}>{allTotal}</span>
                                               <span className="text-[9px] tabular-nums text-muted-foreground leading-none mt-0.5">

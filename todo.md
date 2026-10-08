@@ -765,3 +765,9 @@
 - [x] Corrected Buy Sheet category resolution: a trend label such as Toe Cap, Mesh, Slingback, or even Ballet now remains descriptive unless the base category is genuinely Ballet Flat/Loafer. It can no longer reclassify a Dress Shoe as Casual Flat.
 - [x] **ENVY** and **DONTE** therefore export as **DRESS SHOE**; true Ballet Flat/Loafer entries with their relevant trend continue to export as **CASUAL FLAT**.
 - [x] Applied saved style categories during the shared range merge so the corrected categories flow to By Style, Buy Analysis, Planning Analysis, Style Compare, exports, and filtering. Validation: 143 tests and production build passed; rendered W27 By Style/Buy Sessions checks passed. Existing unrelated StylesTab strict TypeScript diagnostics remain unchanged.
+
+## Four-Market Buy Totals (8 Oct 2026)
+- [x] Fixed the By Style **Total Bought** roll-up so it includes all four markets: **AU, USA, NYC, and LA**.
+- [x] Added NYC and LA figures to the total banner, per-style Buy Qty summaries, and per-SKU session tooltips. The total now uses a single tested four-market helper so one market cannot be dropped in a future roll-up.
+- [x] Verified against W27 buy data: **AU 15,042 · USA 9,222 · NYC 1,554 · LA 1,134 = 26,952 units**.
+- [x] Validation: 145 tests and production build passed; W27 By Style visual check confirms all four figures and the full 26,952 total.
