@@ -1590,7 +1590,19 @@ export default function StylesTab() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[1120px] table-fixed text-sm">
+                  <colgroup>
+                    <col style={{ width: "18%" }} />
+                    <col style={{ width: "13%" }} />
+                    <col style={{ width: "7%" }} />
+                    <col style={{ width: "6%" }} />
+                    <col style={{ width: "7%" }} />
+                    <col style={{ width: "14%" }} />
+                    <col style={{ width: "6%" }} />
+                    <col style={{ width: "8%" }} />
+                    <col style={{ width: "17%" }} />
+                    <col style={{ width: "4%" }} />
+                  </colgroup>
                   <thead>
                     <tr className="border-b" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                       {[
@@ -1612,8 +1624,12 @@ export default function StylesTab() {
                         </th>
                       ))}
                       <th className="px-4 py-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-left">Leathers</th>
-                      <th className="px-4 py-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-center">Sz11</th>
-                      <th className="px-4 py-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-right">Buy Qty</th>
+                      <th className="px-2 py-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-center">Size 11</th>
+                      <th className="px-2 py-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-center">Sample</th>
+                      <th className="px-3 py-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-wide text-right">
+                        <div>Buy Qty</div>
+                        <div className="mt-0.5 text-[9px] font-medium normal-case tracking-normal text-muted-foreground/80">Total · AU · USA · NYC · LA</div>
+                      </th>
                       <th className="px-4 py-2.5 w-10" />
                     </tr>
                   </thead>
@@ -1733,68 +1749,71 @@ export default function StylesTab() {
                                 {style.leathers.length > 4 && <span className="text-xs text-muted-foreground">+{style.leathers.length - 4}</span>}
                               </div>
                             </td>
-                            {/* Style-level Size 11 — badge only when true, click to toggle */}
-                            <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex items-center justify-center gap-2">
-                                {styleSize11 ? (
+                            {/* Style-level Size 11 — kept in its own aligned column */}
+                            <td className="px-2 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                              {styleSize11 ? (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleStyleSize11Toggle(style.style); }}
+                                  title="Size 11 — click to remove"
+                                  className="inline-flex min-w-8 items-center justify-center rounded px-2 py-0.5 text-xs font-semibold transition-colors"
+                                  style={{ background: "oklch(0.94 0.06 240)", color: "oklch(0.45 0.14 240)", border: "1px solid oklch(0.80 0.10 240)" }}
+                                >
+                                  11
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleStyleSize11Toggle(style.style); }}
+                                  title="Mark as Size 11"
+                                  className="inline-flex min-w-8 items-center justify-center rounded px-2 py-0.5 text-xs text-transparent transition-colors hover:text-muted-foreground"
+                                  style={{ border: "1px solid transparent" }}
+                                >
+                                  11
+                                </button>
+                              )}
+                            </td>
+                            {/* Sample receipt is a separate always-visible control for styles with new SKUs. */}
+                            <td className="px-2 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                              {hasNewSkus && (
+                                styleSampleStatus === 'all' ? (
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); handleStyleSize11Toggle(style.style); }}
-                                    title="Size 11 — click to remove"
-                                    className="px-2 py-0.5 rounded text-xs font-semibold transition-colors"
-                                    style={{ background: "oklch(0.94 0.06 240)", color: "oklch(0.45 0.14 240)", border: "1px solid oklch(0.80 0.10 240)" }}
+                                    onClick={(e) => { e.stopPropagation(); handleStyleSampleToggle(style.style); }}
+                                    title="All samples received — click to mark as waiting"
+                                    className="inline-flex min-w-[64px] items-center justify-center rounded px-1.5 py-0.5 text-xs font-medium transition-colors"
+                                    style={{ background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)", border: "1px solid oklch(0.80 0.12 155)" }}
                                   >
-                                    11
+                                    ✓ Rcvd
+                                  </button>
+                                ) : styleSampleStatus === 'some' ? (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleStyleSampleToggle(style.style); }}
+                                    title="Some samples received — click to mark all received"
+                                    className="inline-flex min-w-[64px] items-center justify-center rounded px-1.5 py-0.5 text-xs font-medium transition-colors"
+                                    style={{ background: "oklch(0.96 0.05 80)", color: "oklch(0.50 0.12 80)", border: "1px solid oklch(0.85 0.08 80)" }}
+                                  >
+                                    ~ Rcvd
                                   </button>
                                 ) : (
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); handleStyleSize11Toggle(style.style); }}
-                                    title="Mark as Size 11"
-                                    className="px-2 py-0.5 rounded text-xs text-transparent hover:text-muted-foreground transition-colors"
-                                    style={{ border: "1px solid transparent" }}
+                                    onClick={(e) => { e.stopPropagation(); handleStyleSampleToggle(style.style); }}
+                                    title="Mark all samples as received"
+                                    className="inline-flex min-w-[64px] items-center justify-center rounded border px-1.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-amber-50 hover:text-amber-800"
+                                    style={{ borderColor: "var(--border)", background: "var(--card)" }}
                                   >
-                                    11
+                                    Rcvd?
                                   </button>
-                                )}
-                                {/* Style-level Sample Rcvd toggle — only for styles with new SKUs */}
-                                {hasNewSkus && (
-                                  styleSampleStatus === 'all' ? (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); handleStyleSampleToggle(style.style); }}
-                                      title="All samples received — click to mark as waiting"
-                                      className="px-1.5 py-0.5 rounded text-xs font-medium transition-colors"
-                                      style={{ background: "oklch(0.94 0.08 155)", color: "oklch(0.40 0.14 155)", border: "1px solid oklch(0.80 0.12 155)" }}
-                                    >
-                                      ✓ Rcvd
-                                    </button>
-                                  ) : styleSampleStatus === 'some' ? (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); handleStyleSampleToggle(style.style); }}
-                                      title="Some samples received — click to mark all received"
-                                      className="px-1.5 py-0.5 rounded text-xs font-medium transition-colors"
-                                      style={{ background: "oklch(0.96 0.05 80)", color: "oklch(0.50 0.12 80)", border: "1px solid oklch(0.85 0.08 80)" }}
-                                    >
-                                      ~ Rcvd
-                                    </button>
-                                  ) : (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); handleStyleSampleToggle(style.style); }}
-                                      title="Mark all samples as received"
-                                      className="px-1.5 py-0.5 rounded text-xs text-transparent hover:text-muted-foreground transition-colors"
-                                      style={{ border: "1px solid transparent" }}
-                                    >
-                                      ✓ Rcvd
-                                    </button>
-                                  )
-                                )}
-                              </div>
+                                )
+                              )}
                             </td>
-                            <td className="px-4 py-3 text-right">
+                            <td className="px-3 py-3 text-right">
                               {allSessionsTotal.total > 0 ? (
-                                <div className="flex flex-col items-end gap-0.5">
+                                <div className="flex flex-col items-end gap-1">
                                   <span className="text-sm font-bold tabular-nums" style={{ color: "oklch(0.45 0.16 55)" }}>{allSessionsTotal.total}</span>
-                                  <span className="text-xs tabular-nums text-muted-foreground">
-                                    AU {allSessionsTotal.au} · USA {allSessionsTotal.usa} · NYC {allSessionsTotal.nyc} · LA {allSessionsTotal.la}
-                                  </span>
+                                  <div className="flex flex-wrap justify-end gap-x-2 gap-y-0.5 text-[11px] tabular-nums text-muted-foreground">
+                                    <span className="whitespace-nowrap">AU {allSessionsTotal.au}</span>
+                                    <span className="whitespace-nowrap">USA {allSessionsTotal.usa}</span>
+                                    <span className="whitespace-nowrap">NYC {allSessionsTotal.nyc}</span>
+                                    <span className="whitespace-nowrap">LA {allSessionsTotal.la}</span>
+                                  </div>
                                 </div>
                               ) : (
                                 <span className="text-xs text-muted-foreground">—</span>
@@ -1821,7 +1840,7 @@ export default function StylesTab() {
                             {/* Expanded SKU rows with inline buy qty */}
                           {expandedStyle === style.style && (
                             <tr key={`${style.style}-expanded`} className="border-b" style={{ borderColor: "var(--border)" }}>
-                              <td colSpan={8} className="px-6 py-4" style={{ background: "oklch(0.98 0.02 65 / 0.5)" }}>
+                              <td colSpan={10} className="px-6 py-4" style={{ background: "oklch(0.98 0.02 65 / 0.5)" }}>
                                 <StylePricingCard
                                   style={style.style}
                                   pricing={styleMetaMap[style.style]}
@@ -2036,9 +2055,7 @@ export default function StylesTab() {
                                         )}
                                         className="grid items-center gap-2 px-3 py-2 rounded-lg"
                                         style={{
-                                          gridTemplateColumns: isNew
-                                            ? "1.5fr 1.5fr 40px 70px 50px 130px 32px 28px"
-                                            : "1.5fr 1.5fr 40px 50px 130px 32px 28px",
+                                          gridTemplateColumns: isNew ? newCols : existingCols,
                                           border: "1px solid var(--border)",
                                           background: sessionTotalQty > 0 ? "oklch(0.97 0.06 65 / 0.5)" : "var(--card)",
                                         }}
@@ -2177,30 +2194,27 @@ export default function StylesTab() {
                                           </span>
                                         )}
                                         {/* All-session total bought badge */}
-                                        <div className="flex items-center gap-1.5">
+                                        <div className="flex items-center justify-center">
                                           {allTotal > 0 ? (
-                                            <div className="flex flex-col items-center gap-0.5" title={allQtyData?.sessions.map((s) => `${s.sessionName}: AU ${s.au} / USA ${s.usa}${s.nyc ? ` / NYC ${s.nyc}` : ''}${s.la ? ` / LA ${s.la}` : ''}`).join('\n')}>
+                                            <div className="flex flex-col items-center gap-1" title={allQtyData?.sessions.map((s) => `${s.sessionName}: AU ${s.au} / USA ${s.usa}${s.nyc ? ` / NYC ${s.nyc}` : ''}${s.la ? ` / LA ${s.la}` : ''}`).join('\n')}>
                                               <span className="text-[9px] font-semibold uppercase tracking-wide leading-none" style={{ color: "oklch(0.55 0.14 55)" }}>Total</span>
                                               <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded" style={{ background: "oklch(0.94 0.08 65)", color: "oklch(0.45 0.14 55)" }}>{allTotal}</span>
-                                              <span className="text-[9px] tabular-nums text-muted-foreground leading-none mt-0.5">
-                                                AU {allTotalAu} · USA {allTotalUsa}
-                                              </span>
-                                              {allTotalNyc > 0 && (
-                                                <span className="text-[9px] tabular-nums leading-none" style={{ color: "oklch(0.45 0.16 300)" }}>NYC {allTotalNyc}</span>
-                                              )}
-                                              {allTotalLa > 0 && (
-                                                <span className="text-[9px] tabular-nums leading-none" style={{ color: "oklch(0.45 0.16 160)" }}>LA {allTotalLa}</span>
-                                              )}
+                                              <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] tabular-nums leading-none text-muted-foreground">
+                                                <span className="whitespace-nowrap">AU {allTotalAu}</span>
+                                                <span className="whitespace-nowrap">USA {allTotalUsa}</span>
+                                                <span className="whitespace-nowrap" style={{ color: "oklch(0.45 0.16 300)" }}>NYC {allTotalNyc}</span>
+                                                <span className="whitespace-nowrap" style={{ color: "oklch(0.45 0.16 160)" }}>LA {allTotalLa}</span>
+                                              </div>
                                             </div>
                                           ) : (
-                                            <div className="flex flex-col items-center gap-0.5">
+                                            <div className="flex flex-col items-center gap-1">
                                               <span className="text-[9px] font-semibold uppercase tracking-wide leading-none text-muted-foreground">Total</span>
                                               <span className="text-xs font-mono text-muted-foreground px-1.5 py-0.5 rounded" style={{ background: "var(--muted)" }}>0</span>
                                             </div>
                                           )}
                                         </div>
                                         {/* Buy Qty — session input (always visible, disabled when no active session) */}
-                                        <div className="flex items-center gap-1.5">
+                                        <div className="grid grid-cols-4 gap-2">
                                           {(() => {
                                             const canEdit = !isSessionLocked && !!selectedSession;
                                             return (
@@ -2216,7 +2230,7 @@ export default function StylesTab() {
                                                     onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'au')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
-                                                    className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    className="w-full min-w-0 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
                                                     style={{ borderColor: sessionAuQty > 0 ? "oklch(0.72 0.16 65)" : "var(--border)" }}
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
@@ -2232,7 +2246,7 @@ export default function StylesTab() {
                                                     onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'usa')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
-                                                    className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-blue-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    className="w-full min-w-0 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-blue-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
                                                     style={{ borderColor: sessionUsaQty > 0 ? "oklch(0.65 0.14 240)" : "var(--border)" }}
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
@@ -2248,7 +2262,7 @@ export default function StylesTab() {
                                                     onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'nyc')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
-                                                    className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-purple-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    className="w-full min-w-0 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-purple-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
                                                     style={{ borderColor: sessionNycQty > 0 ? "oklch(0.55 0.18 300)" : "var(--border)" }}
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
@@ -2264,7 +2278,7 @@ export default function StylesTab() {
                                                     onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'la')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
-                                                    className="w-14 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-green-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    className="w-full min-w-0 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-green-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
                                                     style={{ borderColor: sessionLaQty > 0 ? "oklch(0.55 0.18 160)" : "var(--border)" }}
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
@@ -2312,10 +2326,9 @@ export default function StylesTab() {
                                     );
                                   };
 
-                                  // Grid template columns must match renderRow exactly
-                                  // Colour 1.5fr, Leather 1.5fr, Sz11 40px, Total 50px, Sample 70px (new only), BuyQty 130px, detail 32px, cancel 28px
-                                  const existingCols = "1.5fr 1.5fr 40px 50px 130px 32px 28px";
-                                  const newCols = "1.5fr 1.5fr 40px 70px 50px 130px 32px 28px";
+                                  // Fixed columns preserve clear headings and give every market its own readable field.
+                                  const existingCols = "minmax(230px, 1.25fr) minmax(170px, 1fr) 56px 132px 340px 36px 32px";
+                                  const newCols = "minmax(230px, 1.25fr) minmax(170px, 1fr) 56px 76px 132px 340px 36px 32px";
 
                                   return (
                                     <div className="space-y-3">
@@ -2328,12 +2341,17 @@ export default function StylesTab() {
                                             <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
                                           </div>
                                           {/* Column headers — same grid as data rows */}
-                                          <div className="grid px-3 mb-0.5" style={{ gridTemplateColumns: existingCols, gap: "0.5rem" }}>
+                                          <div className="grid items-end px-3 mb-1" style={{ gridTemplateColumns: existingCols, gap: "0.5rem" }}>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Colour</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Leather</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Sz11</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-center" style={{ color: "oklch(0.55 0.14 55)" }}>Total</span>
-                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Buy Qty</span>
+                                            <div>
+                                              <span className="mb-0.5 block text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Buy Qty</span>
+                                              <div className="grid grid-cols-4 gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">
+                                                <span>AU</span><span>USA</span><span>NYC</span><span>LA</span>
+                                              </div>
+                                            </div>
                                             <span />{/* detail btn col */}
                                             <span />{/* cancel btn col */}
                                           </div>
@@ -2351,13 +2369,18 @@ export default function StylesTab() {
                                             <div className="flex-1 h-px" style={{ background: "oklch(0.85 0.06 65)" }} />
                                           </div>
                                           {/* Column headers — same grid as data rows */}
-                                          <div className="grid px-3 mb-0.5" style={{ gridTemplateColumns: newCols, gap: "0.5rem" }}>
+                                          <div className="grid items-end px-3 mb-1" style={{ gridTemplateColumns: newCols, gap: "0.5rem" }}>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Colour</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Leather</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Sz11</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Sample</span>
                                             <span className="text-[10px] font-semibold uppercase tracking-wide text-center" style={{ color: "oklch(0.55 0.14 55)" }}>Total</span>
-                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">Buy Qty</span>
+                                            <div>
+                                              <span className="mb-0.5 block text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Buy Qty</span>
+                                              <div className="grid grid-cols-4 gap-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground text-center">
+                                                <span>AU</span><span>USA</span><span>NYC</span><span>LA</span>
+                                              </div>
+                                            </div>
                                             <span />{/* detail btn col */}
                                             <span />{/* cancel btn col */}
                                           </div>

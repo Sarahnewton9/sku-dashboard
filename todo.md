@@ -777,3 +777,9 @@
 - [x] Removed the stale `CASUAL FLAT` sub-categories and `BALLET` trend flags that were still overriding the correct saved category and making the styles appear as Ballet Flat.
 - [x] Corrected the static range source for MAMZELLE and MAXY, and added a MADDI-last protection rule through every category consumer (By Style, Buy Analysis, Planning Analysis, Style Compare, Last Approval, factory request and Buy Sheet).
 - [x] Database and static-source verification both return four MADDI-last styles, all Dress Shoe, with no remaining flat override/trend. Validation: 146 tests and production build passed; no new TypeScript diagnostics in modified category consumers.
+
+## By Style Table Alignment Repair (8 Oct 2026)
+- [x] Separated **Size 11** and **Sample** into their own aligned summary-table columns. The `Rcvd?` action is now a consistently visible button for new-season styles instead of transparent text that only appears on hover.
+- [x] Rebuilt expanded-SKU headers so they sit directly above the matching columns: Colour, Leather, Size 11, Sample (new SKUs), Total, then a clearly labelled **Buy Qty** grid for AU, USA, NYC and LA.
+- [x] Gave all four editable market quantities equal fixed grid space and widened the all-session Total panel, so market values no longer overlap or run into one another.
+- [x] Applied a desktop-fit fixed table layout, with deliberate horizontal scrolling only on narrower viewports rather than compressing labels and controls. Validation: 146 tests and production build passed; 1440px W27 By Style visual check confirms visible headings, inline Size 11 badges, dedicated Sample column, and an unobstructed Buy Qty heading.
