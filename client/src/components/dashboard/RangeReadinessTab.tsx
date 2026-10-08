@@ -98,7 +98,7 @@ function ReadinessCard({ row }: { row: RangeReadinessRow }) {
             </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {row.gates.map((gate) => <Gate key={gate.key} {...gate} />)}
+            {row.gates.map(({ key, ...gate }) => <Gate key={key} {...gate} />)}
           </div>
         </div>
       </div>
