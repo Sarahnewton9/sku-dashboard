@@ -20,6 +20,7 @@ import {
   resolveAp21SkuColourDescription,
 } from "@shared/ap21SkuColourDescription";
 import { hasSize11ForAllColourways } from "@shared/size11";
+import { resolveStyleCategory } from "@shared/styleCategory";
 import { useSeason } from "@/contexts/SeasonContext";
 import { getSeasonDisplayLabel, getSeasonFileLabel } from "@shared/seasonLabel";
 import { EmailExportDialog } from "./EmailExportDialog";
@@ -154,16 +155,23 @@ export default function BuySessionsPanel() {
     [ap21SkuColourDescriptionRows],
   );
 
-  // Resolved category: sub-category override > trend flag (CASUAL FLAT) > static category
+  // An explicit sub-category wins. Trend labels only collapse genuine Ballet
+  // Flat / Loafer bases into Casual Flat; a Toe Cap or Slingback trend must
+  // never turn a Dress Shoe into a Casual Flat in a Buy Sheet.
   const resolvedCategoryMap = useMemo(() => {
     const subCatMap: Record<string, string> = {};
     for (const sc of subCategoryList as any[]) subCatMap[sc.style] = sc.subCategory;
-    const trendStyleSet = new Set((trendFlagList as any[]).map((t: any) => t.style));
+    const trendsByStyle: Record<string, { trendFlag?: string | null; trends?: string[] | null }> = {};
+    for (const trend of trendFlagList as any[]) trendsByStyle[trend.style] = trend;
     const map: Record<string, string> = {};
     (mergedStyles as any[]).forEach((s: any) => {
-      if (subCatMap[s.style]) map[s.style] = subCatMap[s.style];
-      else if (trendStyleSet.has(s.style)) map[s.style] = "CASUAL FLAT";
-      else map[s.style] = s.category;
+      const trend = trendsByStyle[s.style];
+      map[s.style] = resolveStyleCategory({
+        baseCategory: s.category,
+        subCategory: subCatMap[s.style],
+        trendFlag: trend?.trendFlag,
+        trends: trend?.trends,
+      });
     });
     return map;
   }, [mergedStyles, subCategoryList, trendFlagList]);

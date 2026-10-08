@@ -759,3 +759,9 @@
 - [x] Auto-size LAST, STYLE, and COLOUR columns from the live export data, wrap long values, and expand row heights to show every line without manual stretching.
 - [x] Retain the four-column factory template, add a filter row, and keep the FOB COST column formatted as currency.
 - [x] Validation: 140 tests and production build passed. Generated-workbook inspection confirmed alphabetic styles, widths A=34.83/B=15.83/C=70.83/D=16.83, wrapped long labels, a 36-point expanded long row, and filter `A1:D4`.
+
+## Dress Shoe Category & Buy Sheet Correction (8 Oct 2026)
+- [x] Corrected **MADDI** and **MOMA** from Ballet Flat to **Dress Shoe** in the static range source and saved metadata. Removed their obsolete `CASUAL FLAT` sub-category records.
+- [x] Corrected Buy Sheet category resolution: a trend label such as Toe Cap, Mesh, Slingback, or even Ballet now remains descriptive unless the base category is genuinely Ballet Flat/Loafer. It can no longer reclassify a Dress Shoe as Casual Flat.
+- [x] **ENVY** and **DONTE** therefore export as **DRESS SHOE**; true Ballet Flat/Loafer entries with their relevant trend continue to export as **CASUAL FLAT**.
+- [x] Applied saved style categories during the shared range merge so the corrected categories flow to By Style, Buy Analysis, Planning Analysis, Style Compare, exports, and filtering. Validation: 143 tests and production build passed; rendered W27 By Style/Buy Sessions checks passed. Existing unrelated StylesTab strict TypeScript diagnostics remain unchanged.

@@ -7,6 +7,7 @@ import { summarizeCustomStyleSkus } from "@shared/customStyleSummary";
 import { isHiddenFromW27WorkingRange } from "@shared/w27SandalVisibility";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { dedupeSkusByCompositeIdentity } from "@shared/dedupeSkus";
+import { resolveStyleCategory } from "@shared/styleCategory";
 
 export type CustomSkuRow = {
   id: number;
@@ -104,17 +105,33 @@ export function useCustomSkus() {
     refetchOnMount: "always",
     refetchInterval: 5_000,
   });
+  const { data: styleMetaRows = [] } = trpc.style.getAll.useQuery(undefined, {
+    staleTime: 30_000,
+  });
 
   // W27 is not developing Flat or Casual Sandals. Keep their records intact,
   // but exclude them before any dashboard view builds its active range.
   const styleCategoryMap = useMemo(() => {
     const map = new Map<string, string>();
-    for (const style of skuData.styles) map.set(style.style.toUpperCase(), style.category);
+    const savedCategories = new Map(
+      (styleMetaRows as Array<{ style: string; category?: string | null }>).map((row) => [row.style.toUpperCase(), row.category]),
+    );
+    for (const style of skuData.styles) {
+      map.set(style.style.toUpperCase(), resolveStyleCategory({
+        baseCategory: style.category,
+        subCategory: savedCategories.get(style.style.toUpperCase()),
+      }));
+    }
     for (const style of customStyleRows as Array<{ style: string; category: string | null }>) {
-      if (!map.has(style.style.toUpperCase())) map.set(style.style.toUpperCase(), style.category ?? "");
+      if (!map.has(style.style.toUpperCase())) {
+        map.set(style.style.toUpperCase(), resolveStyleCategory({
+          baseCategory: style.category,
+          subCategory: savedCategories.get(style.style.toUpperCase()),
+        }));
+      }
     }
     return map;
-  }, [customStyleRows]);
+  }, [customStyleRows, styleMetaRows]);
 
   const isWorkingRangeStyle = (style: string): boolean => !isHiddenFromW27WorkingRange(
     season,
@@ -261,6 +278,7 @@ export function useCustomSkus() {
 
       return {
         ...s,
+        category: styleCategoryMap.get(s.style.toUpperCase()) ?? s.category,
         ...(overrideUrl ? { imageUrl: overrideUrl } : {}),
         colours: activeColours,
         leathers: activeLeathers,
@@ -284,7 +302,7 @@ export function useCustomSkus() {
         return {
           style: cs.style,
           last: cs.lastName,
-          category: cs.category ?? "",
+          category: styleCategoryMap.get(cs.style.toUpperCase()) ?? cs.category ?? "",
           ...skuSummary,
           imageUrl: overrideUrl ?? undefined,
           _isCustomStyle: true,

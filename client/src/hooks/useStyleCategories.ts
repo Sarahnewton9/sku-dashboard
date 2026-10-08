@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { trpc } from "@/lib/trpc";
+import { resolveStyleCategory } from "@shared/styleCategory";
 
 /**
  * Provides resolved category and trend flag for each style.
@@ -51,7 +52,13 @@ export function useStyleCategories() {
    * Falls back to the static category if no override exists.
    */
   function getCategory(style: string, staticCategory: string): string {
-    return subCategoryMap.get(style.toUpperCase()) ?? staticCategory.toUpperCase();
+    const trendRow = trendFlags.find((row) => row.style.toUpperCase() === style.toUpperCase());
+    return resolveStyleCategory({
+      baseCategory: staticCategory,
+      subCategory: subCategoryMap.get(style.toUpperCase()),
+      trendFlag: trendRow?.trendFlag,
+      trends: (trendRow as { trends?: string[] | null } | undefined)?.trends,
+    });
   }
 
   /**
