@@ -745,3 +745,10 @@
 - [x] Spend uses only actual season-specific FOBs and margin uses a costed + priced matching unit set—no missing cost or RRP is guessed. The planning basis is explicitly shown: US$0.70 per AU$1 plus AU$1.25 freight per pair; retail RRP is treated as GST-inclusive.
 - [x] Added tested shared calculation logic. Validation: 137 tests and production build passed; no TypeScript diagnostics are attributable to the new Planning Analysis files (existing StylesTab diagnostics remain unchanged).
 - [x] Registered `/planning-analysis` in the application router, fixing the sidebar link that previously fell through to Overview. Verified visually with populated W27 Planning Analysis data: 28,498 active planned units, 68.4% new-SKU completion, 7.5% FOB coverage and 74.6% weighted margin.
+
+## Style Compare Workspace (8 Oct 2026)
+- [x] Added **Style Compare** under Analysis with two searchable, swappable style selectors and a default W27 comparison of **MACK** and **MADDI**.
+- [x] Shows the selected styles side by side with their real product, override, or fitting image; last/category; RRP; FOB range; fit/size guidance; fitting notes; bought units; and every active physical SKU, including dual-upper labels, per-SKU FOB, and buy totals.
+- [x] Adds comparison cues for common lasts, categories, colours, and materials without collapsing distinct SKUs. In the requested MACK/MADDI example, it identifies the shared MADDI last and BLACK/SILVER colours.
+- [x] Images can be replaced directly in the comparison card through click or drag-and-drop, using the existing style-image override workflow. Existing product/override imagery takes precedence, followed by stored fitting imagery.
+- [x] Added shared comparison logic regression tests. Validation: 139 tests, production build, route/typecheck review, and rendered W27 MACK/MADDI visual verification passed. Existing unrelated StylesTab TypeScript diagnostics remain unchanged.

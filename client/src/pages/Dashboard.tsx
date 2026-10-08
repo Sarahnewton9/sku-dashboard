@@ -26,6 +26,7 @@ import ExportPanel from "@/components/dashboard/ExportPanel";
 import BuySessionsPanel from "@/components/dashboard/BuySessionsPanel";
 import BuyAnalysisTab from "@/components/dashboard/BuyAnalysisTab";
 import PlanningAnalysisTab from "@/components/dashboard/PlanningAnalysisTab";
+import StyleCompareTab from "@/components/dashboard/StyleCompareTab";
 import LastApprovalTab from "@/components/dashboard/LastApprovalTab";
 import { FittingTab } from "@/components/dashboard/FittingTab";
 import { MarkdownTab } from "@/components/dashboard/MarkdownTab";
@@ -46,6 +47,7 @@ import {
   BarChart3,
   Stamp,
   LineChart,
+  Columns2,
   Ruler,
   ClipboardList,
   TagsIcon,
@@ -56,11 +58,11 @@ import {
   Sparkles,
 } from "lucide-react";
 
-type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "buy-sessions" | "buy-analysis" | "planning-analysis" | "last-approval" | "fitting" | "specs" | "markdown" | "handbags";
+type Tab = "overview" | "categories" | "styles" | "leathers" | "colours" | "colourleather" | "buy-sessions" | "buy-analysis" | "planning-analysis" | "style-compare" | "last-approval" | "fitting" | "specs" | "markdown" | "handbags";
 
 const VALID_TABS = new Set<Tab>([
   "overview", "categories", "styles", "leathers", "colours",
-  "colourleather", "buy-sessions", "buy-analysis", "planning-analysis",
+  "colourleather", "buy-sessions", "buy-analysis", "planning-analysis", "style-compare",
   "last-approval", "fitting", "specs", "markdown", "handbags",
 ]);
 
@@ -75,6 +77,7 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ComponentType<any>; group
   { id: "buy-sessions", label: "Buy Sessions", icon: ShoppingCart, group: "buying" },
   { id: "buy-analysis", label: "Buy Analysis", icon: BarChart3, group: "buying" },
   { id: "planning-analysis", label: "Planning Analysis", icon: LineChart, group: "buying" },
+  { id: "style-compare", label: "Style Compare", icon: Columns2, group: "analysis" },
   { id: "last-approval", label: "Last Approval", icon: Stamp, group: "approval" },
   { id: "fitting", label: "Fitting", icon: Ruler, group: "approval" },
   { id: "specs", label: "Specs", icon: ClipboardList, group: "approval" },
@@ -301,6 +304,7 @@ export default function Dashboard() {
               {activeTab === "buy-sessions" && "Manage weekly buy rounds — create, lock, and export independently"}
               {activeTab === "buy-analysis" && "Breakdown of pairs bought per session by category, leather, and colour/leather combo"}
               {activeTab === "planning-analysis" && "Merchandising planning for units, spend, margin coverage and remaining W27 buy"}
+              {activeTab === "style-compare" && "Compare style imagery, active SKUs, FOBs, RRP, fit notes and bought units side by side"}
               {activeTab === "last-approval" && "Track approval status, samples and notes per last"}
               {activeTab === "fitting" && "Style-level fit commentary and imagery for all styles on new lasts"}
               {activeTab === "specs" && "Product specification sheets — search any active style and manage per-colour component details"}
@@ -340,6 +344,7 @@ export default function Dashboard() {
               {activeTab === "buy-sessions" && <BuySessionsPanel />}
               {activeTab === "buy-analysis" && <BuyAnalysisTab />}
               {activeTab === "planning-analysis" && <PlanningAnalysisTab />}
+              {activeTab === "style-compare" && <StyleCompareTab />}
               {activeTab === "last-approval" && <LastApprovalTab />}
               {activeTab === "fitting" && <FittingTab />}
               {activeTab === "markdown" && <MarkdownTab />}
