@@ -24,6 +24,15 @@ describe("resolveStyleCategory", () => {
     })).toBe("DRESS SHOE");
   });
 
+  it("keeps every Maddi-last style as Dress Shoe despite stale flat metadata", () => {
+    expect(resolveStyleCategory({
+      baseCategory: "Ballet Flat",
+      last: "Maddi",
+      subCategory: "Casual Flat",
+      trendFlag: "BALLET",
+    })).toBe("DRESS SHOE");
+  });
+
   it("groups genuine ballet and loafer bases as Casual Flat", () => {
     expect(resolveStyleCategory({
       baseCategory: "Ballet Flat",

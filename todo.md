@@ -771,3 +771,9 @@
 - [x] Added NYC and LA figures to the total banner, per-style Buy Qty summaries, and per-SKU session tooltips. The total now uses a single tested four-market helper so one market cannot be dropped in a future roll-up.
 - [x] Verified against W27 buy data: **AU 15,042 · USA 9,222 · NYC 1,554 · LA 1,134 = 26,952 units**.
 - [x] Validation: 145 tests and production build passed; W27 By Style visual check confirms all four figures and the full 26,952 total.
+
+## Maddi Last Dress Shoe Correction (8 Oct 2026)
+- [x] Corrected the entire **MADDI** last to **Dress Shoe**: MADDI, MAMZELLE, MAXY, and MOMA.
+- [x] Removed the stale `CASUAL FLAT` sub-categories and `BALLET` trend flags that were still overriding the correct saved category and making the styles appear as Ballet Flat.
+- [x] Corrected the static range source for MAMZELLE and MAXY, and added a MADDI-last protection rule through every category consumer (By Style, Buy Analysis, Planning Analysis, Style Compare, Last Approval, factory request and Buy Sheet).
+- [x] Database and static-source verification both return four MADDI-last styles, all Dress Shoe, with no remaining flat override/trend. Validation: 146 tests and production build passed; no new TypeScript diagnostics in modified category consumers.

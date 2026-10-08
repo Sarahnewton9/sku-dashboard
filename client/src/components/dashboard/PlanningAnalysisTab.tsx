@@ -113,7 +113,7 @@ export default function PlanningAnalysisTab() {
   const styleInfoMap = useMemo(() => {
     const map: Record<string, { category: string; last: string }> = {};
     for (const style of mergedStyles as Array<{ style: string; category: string; last: string }>) {
-      map[style.style] = { category: getCategory(style.style, style.category), last: style.last };
+      map[style.style] = { category: getCategory(style.style, style.category, style.last), last: style.last };
     }
     return map;
   }, [mergedStyles, getCategory]);

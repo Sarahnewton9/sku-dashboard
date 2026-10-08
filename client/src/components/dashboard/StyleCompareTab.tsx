@@ -384,7 +384,7 @@ export default function StyleCompareTab() {
     return {
       style: info.style,
       last: info.last,
-      category: getCategory(info.style, info.category),
+      category: getCategory(info.style, info.category, info.last),
       imageUrl: info.imageUrl,
       skus,
       rrp: meta?.rrp ?? null,

@@ -281,7 +281,7 @@ export default function LastApprovalTab() {
     const lastNewSkuCount: Record<string, number> = {};
     for (const s of mergedStyles as unknown as Array<{ style: string; last: string; category: string; newSKUs: number }>) {
       if (!lastToStyles[s.last]) lastToStyles[s.last] = [];
-      const resolvedCat = getCategory(s.style, (s as any).category ?? "");
+      const resolvedCat = getCategory(s.style, (s as any).category ?? "", s.last);
       lastToStyles[s.last].push({ style: s.style, category: resolvedCat });
       lastNewSkuCount[s.last] = (lastNewSkuCount[s.last] ?? 0) + (s.newSKUs ?? 0);
     }

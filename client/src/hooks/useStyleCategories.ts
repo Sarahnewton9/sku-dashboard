@@ -51,10 +51,11 @@ export function useStyleCategories() {
    * Returns the resolved category for a style.
    * Falls back to the static category if no override exists.
    */
-  function getCategory(style: string, staticCategory: string): string {
+  function getCategory(style: string, staticCategory: string, last?: string | null): string {
     const trendRow = trendFlags.find((row) => row.style.toUpperCase() === style.toUpperCase());
     return resolveStyleCategory({
       baseCategory: staticCategory,
+      last,
       subCategory: subCategoryMap.get(style.toUpperCase()),
       trendFlag: trendRow?.trendFlag,
       trends: (trendRow as { trends?: string[] | null } | undefined)?.trends,

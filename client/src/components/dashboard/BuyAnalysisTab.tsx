@@ -107,7 +107,7 @@ export default function BuyAnalysisTab() {
     const map: Record<string, { category: string; last: string }> = {};
     const styles = (mergedStyles as unknown) as Array<{ style: string; category: string; last: string }>;
     styles.forEach((s) => {
-      map[s.style] = { category: getCategory(s.style, s.category), last: s.last };
+      map[s.style] = { category: getCategory(s.style, s.category, s.last), last: s.last };
     });
     return map;
   }, [mergedStyles, getCategory]);

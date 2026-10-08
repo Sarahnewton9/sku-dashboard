@@ -1,5 +1,6 @@
 export type StyleCategoryResolutionInput = {
   baseCategory: string | null | undefined;
+  last?: string | null;
   subCategory?: string | null;
   trendFlag?: string | null;
   trends?: string | string[] | null;
@@ -29,13 +30,18 @@ function normalizeTrendValues(value: StyleCategoryResolutionInput["trends"]): st
  * An explicit sub-category is authoritative. Trend labels are descriptive and
  * only collapse genuine Ballet Flat / Loafer base categories into Casual Flat;
  * labels such as Toe Cap, Mesh or Slingback must never reclassify a Dress Shoe.
+ * Every style on the MADDI last is a Dress Shoe, including legacy records that
+ * still carry obsolete Ballet or Casual Flat metadata.
  */
 export function resolveStyleCategory({
   baseCategory,
+  last,
   subCategory,
   trendFlag,
   trends,
 }: StyleCategoryResolutionInput): string {
+  if (normalize(last) === "MADDI") return "DRESS SHOE";
+
   const explicitCategory = normalize(subCategory);
   if (explicitCategory) return explicitCategory;
 

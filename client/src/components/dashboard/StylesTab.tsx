@@ -811,7 +811,7 @@ export default function StylesTab() {
       })) return [];
       return [{
         style: sku.style,
-        category: styleInfo ? getCategory(sku.style, styleInfo.category) : "",
+        category: styleInfo ? getCategory(sku.style, styleInfo.category, styleInfo.last) : "",
         last: styleInfo?.last ?? "",
         colour: sku.colour,
         leather: sku.leather ?? "",
@@ -926,7 +926,7 @@ export default function StylesTab() {
           existingSKUs: activeTotal - activeNew,
           hasNew: activeNew > 0,
           isAllNew: activeNew === activeTotal && activeTotal > 0,
-          category: getCategory(s.style, s.category),
+          category: getCategory(s.style, s.category, s.last),
           trendFlag: getTrendFlag(s.style),
           trends: getTrends(s.style),
         };
