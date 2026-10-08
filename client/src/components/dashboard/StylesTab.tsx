@@ -2220,7 +2220,6 @@ export default function StylesTab() {
                                             return (
                                               <>
                                                 <div className="flex flex-col items-center gap-0.5">
-                                                  <span className="text-[9px] font-semibold uppercase tracking-wide leading-none" style={{ color: canEdit ? "var(--muted-foreground)" : "var(--muted-foreground)", opacity: canEdit ? 1 : 0.5 }}>AU</span>
                                                   <input
                                                     type="number" min={0}
                                                     disabled={!canEdit}
@@ -2236,7 +2235,6 @@ export default function StylesTab() {
                                                   />
                                                 </div>
                                                 <div className="flex flex-col items-center gap-0.5">
-                                                  <span className="text-[9px] font-semibold uppercase tracking-wide leading-none" style={{ color: "var(--muted-foreground)", opacity: canEdit ? 1 : 0.5 }}>USA</span>
                                                   <input
                                                     type="number" min={0}
                                                     disabled={!canEdit}
@@ -2252,7 +2250,6 @@ export default function StylesTab() {
                                                   />
                                                 </div>
                                                 <div className="flex flex-col items-center gap-0.5">
-                                                  <span className="text-[9px] font-semibold uppercase tracking-wide leading-none" style={{ color: "var(--muted-foreground)", opacity: canEdit ? 1 : 0.5 }}>NYC</span>
                                                   <input
                                                     type="number" min={0}
                                                     disabled={!canEdit}
@@ -2268,7 +2265,6 @@ export default function StylesTab() {
                                                   />
                                                 </div>
                                                 <div className="flex flex-col items-center gap-0.5">
-                                                  <span className="text-[9px] font-semibold uppercase tracking-wide leading-none" style={{ color: "var(--muted-foreground)", opacity: canEdit ? 1 : 0.5 }}>LA</span>
                                                   <input
                                                     type="number" min={0}
                                                     disabled={!canEdit}

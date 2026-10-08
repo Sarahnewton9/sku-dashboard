@@ -783,3 +783,4 @@
 - [x] Rebuilt expanded-SKU headers so they sit directly above the matching columns: Colour, Leather, Size 11, Sample (new SKUs), Total, then a clearly labelled **Buy Qty** grid for AU, USA, NYC and LA.
 - [x] Gave all four editable market quantities equal fixed grid space and widened the all-session Total panel, so market values no longer overlap or run into one another.
 - [x] Applied a desktop-fit fixed table layout, with deliberate horizontal scrolling only on narrower viewports rather than compressing labels and controls. Validation: 146 tests and production build passed; 1440px W27 By Style visual check confirms visible headings, inline Size 11 badges, dedicated Sample column, and an unobstructed Buy Qty heading.
+- [x] Removed the repeated AU/USA/NYC/LA labels from every SKU row. Market names now appear once in the Buy Qty heading, with each centred numeric field directly beneath its matching market name.
