@@ -725,3 +725,9 @@
 - [x] When moving to a style, the drawer opens a new-season SKU first where one exists; otherwise it opens the first active carry-over SKU.
 - [x] Removed **Sample Status** and **Order Qty** from carry-over/core SKU details. Those controls remain available only for W27 new-season SKUs, where they are relevant.
 - [x] Added navigation-boundary regression tests. Validation: 135 tests and production build passed; W27 By Style visual review passed. Existing unrelated StylesTab strict TypeScript diagnostics remain unchanged.
+
+## Approved Size 11 Master List (8 Oct 2026)
+- [x] Saved the supplied master list across all active W27 static and custom colourways: **476 individual SKU metadata records** covering **77 listed styles** are now Size 11.
+- [x] Cleared all old Size 11 flags outside the supplied list and aligned W27 custom-style overrides, preserving the all-colourway Size 11 rule used in By Style and Buy Sheet exports.
+- [x] Database verification: 476 expected/actual Size 11 SKU records; zero listed active SKUs missing; zero unapproved flagged SKUs; zero unapproved custom-style overrides.
+- [ ] The supplied names **CAMMIE**, **GEMMA**, and **RADA** do not currently have any SKU records in the range, so no placeholder records were created. Add or restore their SKUs first if they should appear in SKU Dash.
