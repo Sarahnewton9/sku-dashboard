@@ -15,6 +15,7 @@ import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { hasSize11ForAllColourways } from "@shared/size11";
 import { summariseStyleFobCosts } from "@shared/fobEstimates";
 import { formatFobRequestColour, getFobCostRequestFilename, isFobCostRequestEligible } from "@shared/fobCostRequest";
+import { getAdjacentStyle } from "@shared/styleDetailNavigation";
 import { displayColour, displayLeather, displayColourLeather } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
@@ -1060,6 +1061,12 @@ export default function StylesTab() {
     return sortedLasts.map((last) => ({ last, styles: groups[last] }));
   }, [filtered]);
 
+  // The drawer follows the same order rendered in By Style: Last, category, then style.
+  const visibleStyleNames = useMemo(
+    () => groupedByLast.flatMap((group) => group.styles.map((style) => style.style)),
+    [groupedByLast],
+  );
+
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -1080,6 +1087,46 @@ export default function StylesTab() {
       .filter((s) => s.style === styleName
         && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`)
         && !markdownSkuSet.has(markdownKey(s.style, s.colour, (s as any).leather ?? "")));
+  }
+
+  function openStyleDetail(styleName: string) {
+    const styleInfo = stylesWithCategories.find((style) => style.style === styleName);
+    const styleSkus = getSkusForStyle(styleName);
+    // A mixed style opens its new colourway first, as that is the development work.
+    const sku = styleSkus.find((row) => row.is_new) ?? styleSkus[0];
+    if (!styleInfo || !sku) return;
+
+    const sourceColour = (sku as any)._sourceColour ?? sku.colour;
+    const sourceLeather = (sku as any)._sourceLeather ?? sku.leather;
+    const dbMeta = skuMetaMap[`${sku.style}|${sourceColour}|${sourceLeather}`];
+    const colour2 = (sku as any).colour2 ?? dbMeta?.colour2 ?? null;
+    const leather2 = (sku as any).leather2 ?? dbMeta?.leather2 ?? null;
+    const seasonalCost = seasonCostMap.get(getSkuCompositeIdentity(
+      sku.style,
+      sku.colour,
+      sku.leather,
+      colour2,
+      leather2,
+    )) ?? dbMeta?.costPrice ?? null;
+
+    setSelectedSku({
+      style: sku.style,
+      colour: sku.colour,
+      leather: sku.leather,
+      colour2,
+      leather2,
+      isNew: sku.is_new === true,
+      category: styleInfo.category,
+      last: styleInfo.last,
+      imageUrl: styleInfo.imageUrl,
+      seasonalCost,
+    });
+  }
+
+  function moveStyleDetail(direction: "previous" | "next") {
+    if (!selectedSku) return;
+    const adjacentStyle = getAdjacentStyle(visibleStyleNames, selectedSku.style, direction);
+    if (adjacentStyle) openStyleDetail(adjacentStyle);
   }
 
   // All-sessions buy total for a style (AU + USA + NYC combined, across every session)
@@ -2552,6 +2599,13 @@ export default function StylesTab() {
         <SkuDetailPanel
           sku={selectedSku}
           onClose={() => setSelectedSku(null)}
+          onPreviousStyle={() => moveStyleDetail("previous")}
+          onNextStyle={() => moveStyleDetail("next")}
+          hasPreviousStyle={visibleStyleNames.indexOf(selectedSku.style) > 0}
+          hasNextStyle={visibleStyleNames.indexOf(selectedSku.style) >= 0 && visibleStyleNames.indexOf(selectedSku.style) < visibleStyleNames.length - 1}
+          stylePosition={visibleStyleNames.indexOf(selectedSku.style) >= 0
+            ? { current: visibleStyleNames.indexOf(selectedSku.style) + 1, total: visibleStyleNames.length }
+            : undefined}
           skuMeta={skuMetaMap as any}
           styleMeta={styleMetaMap as any}
           onMetaChange={handleMetaChange}

@@ -6,7 +6,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { X, CheckCircle, Clock, Save } from "lucide-react";
+import { X, CheckCircle, Clock, Save, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { displayColour, displayLeather } from "@/lib/utils";
 
@@ -27,6 +27,11 @@ export interface SkuPanelData {
 interface Props {
   sku: SkuPanelData | null;
   onClose: () => void;
+  onPreviousStyle?: () => void;
+  onNextStyle?: () => void;
+  hasPreviousStyle?: boolean;
+  hasNextStyle?: boolean;
+  stylePosition?: { current: number; total: number };
   season: string;
   // Live meta from DB (passed in from parent which fetches all at once)
   skuMeta: Record<string, {
@@ -46,7 +51,20 @@ function skuKey(style: string, colour: string, leather: string) {
   return `${style}|${colour}|${leather}`;
 }
 
-export default function SkuDetailPanel({ sku, onClose, season, skuMeta, styleMeta, onMetaChange, allStyleSkus }: Props) {
+export default function SkuDetailPanel({
+  sku,
+  onClose,
+  onPreviousStyle,
+  onNextStyle,
+  hasPreviousStyle = false,
+  hasNextStyle = false,
+  stylePosition,
+  season,
+  skuMeta,
+  styleMeta,
+  onMetaChange,
+  allStyleSkus,
+}: Props) {
   const [fobDraft, setFobDraft] = useState("");
 
   const utils = trpc.useUtils();
@@ -147,6 +165,7 @@ export default function SkuDetailPanel({ sku, onClose, season, skuMeta, styleMet
   const sampleStatus = meta?.sampleStatus ?? "waiting";
   const orderQty = meta?.orderQty ?? 0;
   const isSize11 = meta?.isSize11 ?? false;
+  const showsDevelopmentFields = sku.isNew;
 
   return (
     <div className="fixed inset-0 z-50 flex" style={{ pointerEvents: "auto" }}>
@@ -174,9 +193,36 @@ export default function SkuDetailPanel({ sku, onClose, season, skuMeta, styleMet
               {sku.category} · Last: {sku.last}
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-            <X className="w-5 h-5 text-muted-foreground" />
-          </button>
+          <div className="flex items-center gap-1">
+            {stylePosition && (
+              <span className="mr-1 text-xs tabular-nums text-muted-foreground" aria-label={`Style ${stylePosition.current} of ${stylePosition.total}`}>
+                {stylePosition.current}/{stylePosition.total}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={onPreviousStyle}
+              disabled={!hasPreviousStyle}
+              className="p-1.5 rounded-lg hover:bg-muted transition-colors disabled:cursor-not-allowed disabled:opacity-35"
+              title="Previous style"
+              aria-label="Previous style"
+            >
+              <ChevronLeft className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <button
+              type="button"
+              onClick={onNextStyle}
+              disabled={!hasNextStyle}
+              className="p-1.5 rounded-lg hover:bg-muted transition-colors disabled:cursor-not-allowed disabled:opacity-35"
+              title="Next style"
+              aria-label="Next style"
+            >
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors" aria-label="Close style details">
+              <X className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
         </div>
 
         {/* Style image */}
@@ -192,8 +238,8 @@ export default function SkuDetailPanel({ sku, onClose, season, skuMeta, styleMet
 
         <div className="flex-1 px-6 py-5 space-y-4">
 
-          {/* Sample Status + Order Qty */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Sample and order controls apply only to new season SKUs. */}
+          {showsDevelopmentFields && <div className="grid grid-cols-2 gap-4">
             {/* Sample Status */}
             <div className="rounded-xl border p-4" style={{ borderColor: "var(--border)" }}>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Sample Status</p>
@@ -229,7 +275,7 @@ export default function SkuDetailPanel({ sku, onClose, season, skuMeta, styleMet
               />
               <p className="text-xs text-muted-foreground mt-2">Units (all sizes)</p>
             </div>
-          </div>
+          </div>}
 
           {/* Size 11 + Cost + RRP */}
           <div className="rounded-xl border p-4 space-y-3" style={{ borderColor: "var(--border)" }}>

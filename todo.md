@@ -719,3 +719,9 @@
 - [x] Removed two true static duplicate records: CITY Black Nappa and NESSA Ashen Suede.
 - [x] Added a central exact physical-SKU deduplication guard to the active range merge. It keeps distinct Upper 2 constructions separate while suppressing any future exact static or custom duplicates across dashboard views and exports.
 - [x] Final audit: **0** legacy blank/dual pairs, **0** exact custom duplicates, and **0** static exact duplicates. Validation: 132 tests and production build passed; W27 dashboard visual check passed.
+
+## By Style Detail Navigation & Carry-Over Fields (8 Oct 2026)
+- [x] Added previous/next controls and a position indicator (for example, `3/270`) to the By Style detail drawer. Navigation follows the currently visible filtered style order and stops at both ends.
+- [x] When moving to a style, the drawer opens a new-season SKU first where one exists; otherwise it opens the first active carry-over SKU.
+- [x] Removed **Sample Status** and **Order Qty** from carry-over/core SKU details. Those controls remain available only for W27 new-season SKUs, where they are relevant.
+- [x] Added navigation-boundary regression tests. Validation: 135 tests and production build passed; W27 By Style visual review passed. Existing unrelated StylesTab strict TypeScript diagnostics remain unchanged.
