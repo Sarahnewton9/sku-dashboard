@@ -712,3 +712,10 @@
 - [x] Manual entries accept ordinary currency text such as `40`, `$40`, or `USD40`, validate it is positive, and save it against the active season and exact Upper 1 / Upper 2 SKU identity.
 - [x] The saved figure refreshes the current-season FOB data, feeds the style margin card, and removes eligible new-season items from the next factory FOB request.
 - [x] Added server validation for a direct one-SKU cost save, including dual-upper identity protection and zero-cost rejection. Validation: 130 tests and production build passed.
+
+## Upper-Identity Duplicate Repair (8 Oct 2026)
+- [x] Fixed PIXIE **Snow Leopard / Black Speckle** and its three sibling legacy rows (Black, Peru and Sand Nappa / Black Grosgrain): W27 now has one physical row per colourway and all associated Buy Session quantities retain their correct Upper 2 identity.
+- [x] Audited all custom SKUs across both seasons for the same legacy pattern—an earlier blank Upper 2 row followed by one exact corrected dual-upper row. Repaired all **14 safe W27 pairs**: KASSY (1), PIXIE (4), ROBYN (7), ROXIE (1), and SAVANT (1). Preserved all **2,032 units** across 29 Buy Session rows, with no identity collisions.
+- [x] Removed two true static duplicate records: CITY Black Nappa and NESSA Ashen Suede.
+- [x] Added a central exact physical-SKU deduplication guard to the active range merge. It keeps distinct Upper 2 constructions separate while suppressing any future exact static or custom duplicates across dashboard views and exports.
+- [x] Final audit: **0** legacy blank/dual pairs, **0** exact custom duplicates, and **0** static exact duplicates. Validation: 132 tests and production build passed; W27 dashboard visual check passed.

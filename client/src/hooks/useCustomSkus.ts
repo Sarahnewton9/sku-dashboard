@@ -6,6 +6,7 @@ import { buildMarkdownSkuSet, isMarkdownSku } from "@shared/markdownSku";
 import { summarizeCustomStyleSkus } from "@shared/customStyleSummary";
 import { isHiddenFromW27WorkingRange } from "@shared/w27SandalVisibility";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
+import { dedupeSkusByCompositeIdentity } from "@shared/dedupeSkus";
 
 export type CustomSkuRow = {
   id: number;
@@ -172,7 +173,7 @@ export function useCustomSkus() {
   const mergedRawSkus = useMemo<Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean; _customId?: number; _sourceColour?: string; _sourceLeather?: string }>>(() => {
     // Apply overrides to static SKUs
     // For W27 (and any non-SS26 season), all static SKUs are carry-overs — force is_new=false
-    const baseSkus = (skuData.rawSkus as unknown as ReadonlyArray<{ style: string; colour: string; leather: string; is_new: boolean }>)
+    const baseSkus = dedupeSkusByCompositeIdentity((skuData.rawSkus as unknown as ReadonlyArray<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean }>)
       .filter((sku) => isWorkingRangeStyle(sku.style))
       .filter((sku) => !isMarkdownSku(markdownSkuSet, sku.style, sku.colour, sku.leather ?? ""))
       .map((sku) => {
@@ -192,7 +193,7 @@ export function useCustomSkus() {
         } : {}),
         is_new: effectiveIsNew,
       };
-    });
+    }));
 
     if (customSkus.length === 0) return baseSkus;
 
@@ -218,13 +219,18 @@ export function useCustomSkus() {
       (s as any).colour2,
       (s as any).leather2,
     )));
-    const filtered = extra.filter((e) => !existing.has(getSkuCompositeIdentity(
-      e.style,
-      e.colour,
-      e.leather,
-      e.colour2,
-      e.leather2,
-    )));
+    const filtered = extra.filter((e) => {
+      const identity = getSkuCompositeIdentity(
+        e.style,
+        e.colour,
+        e.leather,
+        e.colour2,
+        e.leather2,
+      );
+      if (existing.has(identity)) return false;
+      existing.add(identity);
+      return true;
+    });
 
     return [...baseSkus, ...filtered];
   }, [customSkus, markdownSkuSet, season, skuNewOverrideMap, skuDescriptionOverrideMap, styleCategoryMap]);
