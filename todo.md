@@ -730,4 +730,4 @@
 - [x] Saved the supplied master list across all active W27 static and custom colourways: **476 individual SKU metadata records** covering **77 listed styles** are now Size 11.
 - [x] Cleared all old Size 11 flags outside the supplied list and aligned W27 custom-style overrides, preserving the all-colourway Size 11 rule used in By Style and Buy Sheet exports.
 - [x] Database verification: 476 expected/actual Size 11 SKU records; zero listed active SKUs missing; zero unapproved flagged SKUs; zero unapproved custom-style overrides.
-- [ ] The supplied names **CAMMIE**, **GEMMA**, and **RADA** do not currently have any SKU records in the range, so no placeholder records were created. Add or restore their SKUs first if they should appear in SKU Dash.
+- [x] Confirmed **CAMMIE**, **GEMMA**, and **RADA** do not exist in static range data, SKU metadata, custom SKUs, or custom styles. No placeholder records were created because Size 11 must remain tied to real physical colourways; add or restore their SKUs first if they should appear in SKU Dash.
