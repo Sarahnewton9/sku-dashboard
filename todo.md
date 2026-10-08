@@ -744,3 +744,4 @@
 - [x] Added market allocation (AU, USA, NYC, LA), category-level new-SKU completion, style-level spend/range mix, and a visible list of new SKUs with no buy quantity.
 - [x] Spend uses only actual season-specific FOBs and margin uses a costed + priced matching unit set—no missing cost or RRP is guessed. The planning basis is explicitly shown: US$0.70 per AU$1 plus AU$1.25 freight per pair; retail RRP is treated as GST-inclusive.
 - [x] Added tested shared calculation logic. Validation: 137 tests and production build passed; no TypeScript diagnostics are attributable to the new Planning Analysis files (existing StylesTab diagnostics remain unchanged).
+- [x] Registered `/planning-analysis` in the application router, fixing the sidebar link that previously fell through to Overview. Verified visually with populated W27 Planning Analysis data: 28,498 active planned units, 68.4% new-SKU completion, 7.5% FOB coverage and 74.6% weighted margin.
