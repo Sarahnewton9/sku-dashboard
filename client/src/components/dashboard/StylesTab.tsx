@@ -2230,7 +2230,7 @@ export default function StylesTab() {
                                                     onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'au')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
-                                                    className="w-full min-w-0 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    className="w-full min-w-0 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 text-center disabled:opacity-40 disabled:cursor-not-allowed"
                                                     style={{ borderColor: sessionAuQty > 0 ? "oklch(0.72 0.16 65)" : "var(--border)" }}
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
@@ -2246,7 +2246,7 @@ export default function StylesTab() {
                                                     onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'usa')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
-                                                    className="w-full min-w-0 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-blue-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    className="w-full min-w-0 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-blue-400/40 text-center disabled:opacity-40 disabled:cursor-not-allowed"
                                                     style={{ borderColor: sessionUsaQty > 0 ? "oklch(0.65 0.14 240)" : "var(--border)" }}
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
@@ -2262,7 +2262,7 @@ export default function StylesTab() {
                                                     onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'nyc')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
-                                                    className="w-full min-w-0 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-purple-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    className="w-full min-w-0 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-purple-400/40 text-center disabled:opacity-40 disabled:cursor-not-allowed"
                                                     style={{ borderColor: sessionNycQty > 0 ? "oklch(0.55 0.18 300)" : "var(--border)" }}
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
@@ -2278,7 +2278,7 @@ export default function StylesTab() {
                                                     onBlur={() => handleQtyBlur(sku.style, sku.colour, sku.leather, currentColour2, currentLeather2, 'la')}
                                                     onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); } }}
                                                     placeholder="0"
-                                                    className="w-full min-w-0 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-green-400/40 text-right disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    className="w-full min-w-0 px-1.5 py-1 rounded border text-sm font-mono text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-green-400/40 text-center disabled:opacity-40 disabled:cursor-not-allowed"
                                                     style={{ borderColor: sessionLaQty > 0 ? "oklch(0.55 0.18 160)" : "var(--border)" }}
                                                     onClick={(e) => e.stopPropagation()}
                                                   />
