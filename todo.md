@@ -784,3 +784,10 @@
 - [x] Gave all four editable market quantities equal fixed grid space and widened the all-session Total panel, so market values no longer overlap or run into one another.
 - [x] Applied a desktop-fit fixed table layout, with deliberate horizontal scrolling only on narrower viewports rather than compressing labels and controls. Validation: 146 tests and production build passed; 1440px W27 By Style visual check confirms visible headings, inline Size 11 badges, dedicated Sample column, and an unobstructed Buy Qty heading.
 - [x] Removed the repeated AU/USA/NYC/LA labels from every SKU row. Market names now appear once in the Buy Qty heading, with each centred numeric field directly beneath its matching market name.
+
+## Range Readiness Workspace (8 Oct 2026)
+- [x] Added **Range Readiness** under Analysis: an active W27 development worklist that deliberately ignores irrelevant core/carry-over fields.
+- [x] Each style shows only applicable gates—Fit, Last approval, Specs, FOB, RRP and Buy—plus the exact blocker, progress percentage, product image, last, category, and new SKU count.
+- [x] Last approval now follows the live W27 Last Approval workload (custom non-run-on lasts minus removed lasts), rather than an obsolete static list. Fit follows the existing new-pattern-only W27 scope; Specs, FOB, RRP and Buy apply only to active new physical SKUs.
+- [x] Added summary cards and blocker roll-up: current W27 shows 1/68 range-ready styles, 193/294 new SKUs bought, 15/294 new SKUs costed, 1/44 required fits approved, 0/34 last approvals approved, and 68/68 new-SKU Specs complete.
+- [x] Added shared readiness-calculation regression tests. Validation: 149 tests, production build, diff checks, and a populated 1440px W27 visual verification passed. Existing unrelated `StylesTab` strict TypeScript diagnostics remain unchanged.
