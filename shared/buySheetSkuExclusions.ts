@@ -1,4 +1,5 @@
 import { getSkuCompositeIdentity, normalizeSkuIdentityPart } from "./skuCompositeIdentity";
+import { isMarkdownSku } from "./markdownSku";
 
 export type BuySheetSkuIdentity = {
   style: string;
@@ -59,22 +60,25 @@ export function buildActiveBuySheetSkuIdentitySet(skus: readonly BuySheetSkuIden
 
 /**
  * A session quantity can remain in the database for history after its SKU is
- * deleted, cancelled or marked down. It must never reappear in the current Buy
- * Sheet, email attachment or live session preview.
+ * explicitly cancelled, deleted or marked down. It must never reappear in the
+ * current Buy Sheet, email attachment or live session preview.
+ *
+ * Do not require a session row to match the current active range. A locked buy
+ * session is historical: range data can evolve after it was bought (for
+ * example, an Upper 2 correction or a SKU that has not yet been restored to
+ * W27), and that must not make a valid recorded purchase disappear.
  */
 export function isActiveBuySheetSessionItem(
   item: BuySheetSessionItem,
   input: {
-    activeSkuIdentities: ReadonlySet<string>;
     cancelledStyleNames: ReadonlySet<string>;
     cancelledSkuKeys: ReadonlySet<string>;
+    markdownSkuSet?: ReadonlySet<string>;
   },
 ): boolean {
   const style = normalizeSkuIdentityPart(item.style);
   if (input.cancelledStyleNames.has(style)) return false;
   if (input.cancelledSkuKeys.has(getCancelledBuySheetSkuKey(item.style, item.colour, item.leather))) return false;
-
-  return input.activeSkuIdentities.has(
-    getSkuCompositeIdentity(item.style, item.colour, item.leather, item.colour2, item.leather2),
-  );
+  if (input.markdownSkuSet && isMarkdownSku(input.markdownSkuSet, item.style, item.colour, item.leather)) return false;
+  return true;
 }

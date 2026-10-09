@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, fittingImages, skuMeta, skuCostPrices, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, specEmailHistory, specEmailRecipientGroups, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns, customLasts, lastMeasurements, ap21StyleRefs, ap21ColourRefs } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { getSkuCompositeIdentity, normalizeSkuIdentityPart } from "../shared/skuCompositeIdentity";
+import { getStoredBuyMarketTotals } from "../shared/buyMarketTotals";
 import { getCustomSkuCarryOverSeason } from "../shared/customSkuSeasonCarryOver";
 import { getHandbagSkuEditOutcome } from "../shared/handbagSkuEdit";
 import { getSpecTemplateComponentKeys } from "../shared/specCompletionQueue";
@@ -356,10 +357,7 @@ export async function getSessionTotals(season = "SS26"): Promise<Record<number, 
   const rows = await db.select().from(buySessionItems).where(inArray(buySessionItems.sessionId, sessionIds));
   const totals: Record<number, { au: number; usa: number; nyc: number; la: number; total: number }> = {};
   for (const row of rows) {
-    const au = row.auQty ?? 0;
-    const usa = row.usaQty ?? 0;
-    const nyc = row.nycQty ?? 0;
-    const la = row.laQty ?? 0;
+    const { au, usa, nyc, la } = getStoredBuyMarketTotals(row);
     if (!totals[row.sessionId]) totals[row.sessionId] = { au: 0, usa: 0, nyc: 0, la: 0, total: 0 };
     totals[row.sessionId].au += au;
     totals[row.sessionId].usa += usa;
@@ -395,10 +393,7 @@ export async function getAllSessionQtys(season = "SS26"): Promise<Record<string,
   for (const s of sessions) sessionMap[s.id] = s.name;
   const result: Record<string, { totalAu: number; totalUsa: number; totalNyc: number; totalLa: number; total: number; sessions: Array<{ sessionId: number; sessionName: string; au: number; usa: number; nyc: number; la: number }> }> = {};
   for (const row of items) {
-    const au = row.auQty ?? 0;
-    const usa = row.usaQty ?? 0;
-    const nyc = row.nycQty ?? 0;
-    const la = row.laQty ?? 0;
+    const { au, usa, nyc, la } = getStoredBuyMarketTotals(row);
     if (au === 0 && usa === 0 && nyc === 0 && la === 0) continue;
     const key = getSkuCompositeIdentity(row.style, row.colour, row.leather, row.colour2, row.leather2);
     if (!result[key]) result[key] = { totalAu: 0, totalUsa: 0, totalNyc: 0, totalLa: 0, total: 0, sessions: [] };

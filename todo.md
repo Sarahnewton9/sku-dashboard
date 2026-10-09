@@ -798,3 +798,10 @@
 - [x] The selected Buy Session preview and its totals now apply the same exclusion rule, so it matches the exported/emailled sheet. A clear empty-state message explains when a session contains only removed SKUs.
 - [x] Preserved valid colour-name corrections through source-identity aliases and kept dual-upper identities distinct, so the guard excludes only the deleted SKU—not a different Upper 2 combination.
 - [x] Added four regression tests covering cancelled, deleted, dual-upper, and corrected-label cases. Validation: 153 tests and production build passed; Buy Sessions visual review passed. Existing unrelated StylesTab strict TypeScript diagnostics remain unchanged.
+
+## Buy Session Total Reconciliation (9 Oct 2026)
+- [x] Corrected legacy Buy Session accounting: a pre-market-split `qty` value is now counted as AU when the row has no saved AU quantity. This was a valid historic **60-pair** purchase that the session badge and Buy/Planning Analysis previously omitted.
+- [x] The current **BUY 05.10** recorded total is **19,693 pairs** (AU 11,502 · USA 6,262 · NYC 1,080 · LA 849), and is retained intact in session history.
+- [x] The current Buy Sheet intentionally contains **17,516 pairs**. The explicit difference is **2,177 pairs** on cancelled or markdown-deleted SKUs, which are now excluded from the live sheet as requested—not missing.
+- [x] The selected-session preview now displays both the current Buy Sheet total and the recorded historical total with the excluded-pair explanation, so the distinction is visible rather than alarming. Buy Analysis and all-session roll-ups use the same legacy-market fallback.
+- [x] Validation: 155 tests and production build passed; database-backed reconciliation confirmed `19,693 − 17,516 = 2,177`, and W27 Buy Sessions visual review shows the corrected recorded total.

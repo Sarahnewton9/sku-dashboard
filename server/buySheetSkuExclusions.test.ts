@@ -1,23 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildActiveBuySheetSkuIdentitySet,
   getCancelledBuySheetSkuKey,
   isActiveBuySheetSessionItem,
 } from "@shared/buySheetSkuExclusions";
+import { buildMarkdownSkuSet } from "@shared/markdownSku";
 
 describe("Buy Sheet SKU exclusions", () => {
-  const activeSkuIdentities = buildActiveBuySheetSkuIdentitySet([
-    { style: "MACK", colour: "BLACK", leather: "NAPPA" },
-    { style: "ROBYN", colour: "ECRU", leather: "SNAKE", colour2: "LIPSTICK", leather2: "SUEDE" },
-    {
-      style: "MOMA",
-      colour: "VINO",
-      leather: "CRINKLE",
-      _sourceColour: "BURGUNDY",
-      _sourceLeather: "CRINKLE",
-    },
-  ]);
-
   const noCancelledStyles = new Set<string>();
   const noCancelledSkus = new Set<string>();
 
@@ -28,33 +16,43 @@ describe("Buy Sheet SKU exclusions", () => {
 
     expect(isActiveBuySheetSessionItem(
       { style: "MACK", colour: "BLACK", leather: "NAPPA" },
-      { activeSkuIdentities, cancelledStyleNames: noCancelledStyles, cancelledSkuKeys },
+      { cancelledStyleNames: noCancelledStyles, cancelledSkuKeys },
     )).toBe(false);
   });
 
-  it("excludes a quantity for any SKU no longer in the active range", () => {
+  it("keeps a valid historical purchase even when its SKU is no longer in the current range", () => {
     expect(isActiveBuySheetSessionItem(
       { style: "MACK", colour: "TAN", leather: "NAPPA" },
-      { activeSkuIdentities, cancelledStyleNames: noCancelledStyles, cancelledSkuKeys: noCancelledSkus },
-    )).toBe(false);
+      { cancelledStyleNames: noCancelledStyles, cancelledSkuKeys: noCancelledSkus },
+    )).toBe(true);
   });
 
-  it("keeps distinct active dual-upper SKU identities eligible", () => {
+  it("keeps distinct historical dual-upper SKU identities eligible", () => {
     expect(isActiveBuySheetSessionItem(
       { style: "ROBYN", colour: "ECRU", leather: "SNAKE", colour2: "LIPSTICK", leather2: "SUEDE" },
-      { activeSkuIdentities, cancelledStyleNames: noCancelledStyles, cancelledSkuKeys: noCancelledSkus },
+      { cancelledStyleNames: noCancelledStyles, cancelledSkuKeys: noCancelledSkus },
     )).toBe(true);
 
     expect(isActiveBuySheetSessionItem(
       { style: "ROBYN", colour: "ECRU", leather: "SNAKE", colour2: "ROYAL", leather2: "SUEDE" },
-      { activeSkuIdentities, cancelledStyleNames: noCancelledStyles, cancelledSkuKeys: noCancelledSkus },
-    )).toBe(false);
+      { cancelledStyleNames: noCancelledStyles, cancelledSkuKeys: noCancelledSkus },
+    )).toBe(true);
   });
 
-  it("keeps an active SKU eligible after its display colour was corrected", () => {
+  it("keeps a historical SKU eligible after its display colour was corrected", () => {
     expect(isActiveBuySheetSessionItem(
       { style: "MOMA", colour: "BURGUNDY", leather: "CRINKLE" },
-      { activeSkuIdentities, cancelledStyleNames: noCancelledStyles, cancelledSkuKeys: noCancelledSkus },
+      { cancelledStyleNames: noCancelledStyles, cancelledSkuKeys: noCancelledSkus },
     )).toBe(true);
+  });
+
+  it("excludes a deleted markdown SKU even when a historical quantity remains", () => {
+    const markdownSkuSet = buildMarkdownSkuSet([
+      { styleCode: "MACK", colour: "TAN NAPPA", status: "deleted" },
+    ]);
+    expect(isActiveBuySheetSessionItem(
+      { style: "MACK", colour: "TAN", leather: "NAPPA" },
+      { cancelledStyleNames: noCancelledStyles, cancelledSkuKeys: noCancelledSkus, markdownSkuSet },
+    )).toBe(false);
   });
 });

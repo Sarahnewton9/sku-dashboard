@@ -14,11 +14,12 @@ import * as XLSX from "xlsx-js-style";
 import { displayColourLeather } from "@/lib/utils";
 import { formatSkuExportLabel } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
+import { getBuyMarketTotal, getStoredBuyMarketTotals } from "@shared/buyMarketTotals";
 import {
-  buildActiveBuySheetSkuIdentitySet,
   getCancelledBuySheetSkuKey,
   isActiveBuySheetSessionItem,
 } from "@shared/buySheetSkuExclusions";
+import { buildMarkdownSkuSet } from "@shared/markdownSku";
 import { formatBuyShare, getBuyShare } from "@shared/buyShare";
 import {
   buildAp21SkuColourDescriptionMap,
@@ -53,6 +54,7 @@ export default function BuySessionsPanel() {
   );
   const { data: sessionTotals = {} } = trpc.buy.getSessionTotals.useQuery({ season });
   const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery({ season });
+  const { data: markdownSkuList = [] } = trpc.markdown.list.useQuery();
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
   const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
   const { data: subCategoryList = [] } = trpc.styleSubCategory.getAll.useQuery();
@@ -156,14 +158,6 @@ export default function BuySessionsPanel() {
     return map;
   }, [mergedRawSkus]);
 
-  // Session quantities deliberately remain in the database for history after a
-  // SKU is deleted. Build a current, physical-SKU eligibility set so those
-  // historical rows cannot reappear in the Buy Sheet or its email attachment.
-  const activeBuySheetSkuIdentities = useMemo(
-    () => buildActiveBuySheetSkuIdentitySet(mergedRawSkus as any[]),
-    [mergedRawSkus],
-  );
-
   const cancelledBuySheetSkuKeys = useMemo(() => new Set(
     (cancelledSkuList as Array<{ style: string; colour: string; leather: string }>).map((sku) =>
       getCancelledBuySheetSkuKey(sku.style, sku.colour, sku.leather),
@@ -175,13 +169,18 @@ export default function BuySessionsPanel() {
     [cancelledStyleSet],
   );
 
+  const markdownBuySheetSkuSet = useMemo(
+    () => buildMarkdownSkuSet(markdownSkuList as Array<{ styleCode: string; colour: string; status: string }>),
+    [markdownSkuList],
+  );
+
   function isBuySheetActiveItem(item: {
     style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null;
   }): boolean {
     return isActiveBuySheetSessionItem(item, {
-      activeSkuIdentities: activeBuySheetSkuIdentities,
       cancelledStyleNames: cancelledBuySheetStyleNames,
       cancelledSkuKeys: cancelledBuySheetSkuKeys,
+      markdownSkuSet: markdownBuySheetSkuSet,
     });
   }
 
@@ -273,11 +272,7 @@ export default function BuySessionsPanel() {
 
     const rows: RowData[] = allItems
       .filter((item) => {
-        // Use qty (legacy) as fallback for auQty so old sessions still export correctly
-        const au = (item.auQty ?? 0) || (item.qty ?? 0);
-        const usa = item.usaQty ?? 0;
-        const nyc = item.nycQty ?? 0;
-        const la = item.laQty ?? 0;
+        const { au, usa, nyc, la } = getStoredBuyMarketTotals(item);
         return (au + usa + nyc + la) > 0 && isBuySheetActiveItem(item);
       })
       .map((item) => {
@@ -286,10 +281,7 @@ export default function BuySessionsPanel() {
           item.style, item.colour, item.leather, item.colour2, item.leather2,
         )]
           ?? displayColourLeather(item.colour, item.leather, item.style);
-        const auQty = (item.auQty ?? 0) || (item.qty ?? 0);
-        const usaQty = item.usaQty ?? 0;
-        const nycQty = item.nycQty ?? 0;
-        const laQty = item.laQty ?? 0;
+        const { au: auQty, usa: usaQty, nyc: nycQty, la: laQty } = getStoredBuyMarketTotals(item);
         return {
           category: resolvedCategoryMap[item.style] ?? styleInfo?.category ?? "",
           last: styleInfo?.last ?? "",
@@ -585,14 +577,23 @@ export default function BuySessionsPanel() {
   }
 
   const selectedSession = allSessions.find((s) => s.id === selectedSessionId);
-  const selectedActiveSessionItems = (sessionItems as Array<{
+  type SessionPreviewItem = {
     style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null;
     auQty?: number; usaQty?: number; nycQty?: number; laQty?: number; qty?: number;
-  }>).filter((item) => isBuySheetActiveItem(item));
+  };
+  const getSessionItemMarkets = (item: SessionPreviewItem) => getStoredBuyMarketTotals(item);
+  const getSessionItemTotal = (item: SessionPreviewItem) => getBuyMarketTotal(getSessionItemMarkets(item));
+  const selectedRecordedSessionItems = sessionItems as SessionPreviewItem[];
+  const selectedActiveSessionItems = selectedRecordedSessionItems.filter((item) => isBuySheetActiveItem(item));
   const selectedTotal = selectedActiveSessionItems.reduce(
-    (sum, item) => sum + (item.auQty ?? 0) + (item.usaQty ?? 0) + (item.nycQty ?? 0) + (item.laQty ?? 0),
+    (sum, item) => sum + getSessionItemTotal(item),
     0,
   );
+  const selectedRecordedTotal = selectedRecordedSessionItems.reduce(
+    (sum, item) => sum + getSessionItemTotal(item),
+    0,
+  );
+  const selectedExcludedTotal = selectedRecordedTotal - selectedTotal;
 
   return (
     <div className="space-y-6">
@@ -730,7 +731,7 @@ export default function BuySessionsPanel() {
                         )}
                         {((sessionTotals as Record<number, { au: number; usa: number; total: number }>)[session.id]?.total ?? 0) > 0 && (
                           <span className="text-xs font-semibold" style={{ color: "oklch(0.50 0.14 55)" }}>
-                            · {(sessionTotals as Record<number, { au: number; usa: number; total: number }>)[session.id].total} pairs
+                            · {(sessionTotals as Record<number, { au: number; usa: number; total: number }>)[session.id].total} recorded pairs
                           </span>
                         )}
                       </div>
@@ -807,12 +808,18 @@ export default function BuySessionsPanel() {
                   <div className="mt-4 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Active SKUs in this session ({selectedActiveSessionItems.filter((i) => ((i.auQty ?? 0) + (i.usaQty ?? 0) + (i.nycQty ?? 0) + (i.laQty ?? 0)) > 0).length} with qty)
+                        Buy Sheet SKUs in this session ({selectedActiveSessionItems.filter((item) => getSessionItemTotal(item) > 0).length} with qty)
                       </span>
                       <span className="text-sm font-bold" style={{ color: "oklch(0.50 0.14 55)" }}>
-                        {selectedTotal} total pairs
+                        {selectedTotal} Buy Sheet pairs
                       </span>
                     </div>
+                    {selectedExcludedTotal > 0 && (
+                      <p className="mb-3 text-xs text-muted-foreground">
+                        Recorded total: <strong className="text-foreground">{selectedRecordedTotal.toLocaleString()} pairs</strong>
+                        {" · "}{selectedExcludedTotal.toLocaleString()} cancelled or deleted pairs excluded from the current Buy Sheet.
+                      </p>
+                    )}
                     <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--border)" }}>
                       <table className="w-full text-xs">
                         <thead>
@@ -829,19 +836,20 @@ export default function BuySessionsPanel() {
                         </thead>
                         <tbody>
                           {selectedActiveSessionItems
-                            .filter((i) => ((i.auQty ?? 0) + (i.usaQty ?? 0) + (i.nycQty ?? 0) + (i.laQty ?? 0)) > 0)
+                            .filter((item) => getSessionItemTotal(item) > 0)
                             .sort((a, b) => a.style.localeCompare(b.style))
                             .map((item) => {
-                              const itemTotal = (item.auQty ?? 0) + (item.usaQty ?? 0) + (item.nycQty ?? 0) + ((item as any).laQty ?? 0);
+                              const markets = getSessionItemMarkets(item);
+                              const itemTotal = getSessionItemTotal(item);
                               return (
                                 <tr key={getSkuCompositeIdentity(item.style, item.colour, item.leather, item.colour2, item.leather2)}
                                   className="border-t" style={{ borderColor: "var(--border)" }}>
                                   <td className="px-3 py-2 font-medium text-foreground">{item.style}</td>
                                   <td colSpan={2} className="px-3 py-2 text-muted-foreground">{formatSkuExportLabel(item)}</td>
-                                  <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{item.auQty ?? 0}</td>
-                                  <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.15 240)" }}>{item.usaQty ?? 0}</td>
-                                  <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.55 0.18 300)" }}>{item.nycQty ?? 0}</td>
-                                  <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.16 160)" }}>{(item as any).laQty ?? 0}</td>
+                                  <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>{markets.au}</td>
+                                  <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.15 240)" }}>{markets.usa}</td>
+                                  <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.55 0.18 300)" }}>{markets.nyc}</td>
+                                  <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.16 160)" }}>{markets.la}</td>
                                   <td className="px-3 py-2 text-right font-bold tabular-nums text-foreground">{itemTotal}</td>
                                   <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{formatBuyShare(itemTotal, selectedTotal)}</td>
                                 </tr>
@@ -852,16 +860,16 @@ export default function BuySessionsPanel() {
                           <tr className="border-t" style={{ borderColor: "var(--border)", background: "var(--muted)" }}>
                             <td colSpan={3} className="px-3 py-2 font-semibold text-foreground text-xs">Total</td>
                             <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.50 0.14 55)" }}>
-                              {selectedActiveSessionItems.reduce((s, i) => s + (i.auQty ?? 0), 0)}
+                              {selectedActiveSessionItems.reduce((sum, item) => sum + getSessionItemMarkets(item).au, 0)}
                             </td>
                             <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.15 240)" }}>
-                              {selectedActiveSessionItems.reduce((s, i) => s + (i.usaQty ?? 0), 0)}
+                              {selectedActiveSessionItems.reduce((sum, item) => sum + getSessionItemMarkets(item).usa, 0)}
                             </td>
                             <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.55 0.18 300)" }}>
-                              {selectedActiveSessionItems.reduce((s, i) => s + (i.nycQty ?? 0), 0)}
+                              {selectedActiveSessionItems.reduce((sum, item) => sum + getSessionItemMarkets(item).nyc, 0)}
                             </td>
                             <td className="px-3 py-2 text-right font-bold tabular-nums" style={{ color: "oklch(0.45 0.16 160)" }}>
-                              {selectedActiveSessionItems.reduce((s, i) => s + (i.laQty ?? 0), 0)}
+                              {selectedActiveSessionItems.reduce((sum, item) => sum + getSessionItemMarkets(item).la, 0)}
                             </td>
                             <td className="px-3 py-2 text-right font-bold tabular-nums text-foreground">{selectedTotal}</td>
                             <td className="px-3 py-2 text-right font-bold tabular-nums text-muted-foreground">100.0%</td>
@@ -878,7 +886,7 @@ export default function BuySessionsPanel() {
                 )}
                 {isSelected && sessionItems.length > 0 && selectedActiveSessionItems.length === 0 && (
                   <div className="mt-3 pt-3 border-t text-xs text-muted-foreground" style={{ borderColor: "var(--border)" }}>
-                    All quantities in this session belong to deleted or cancelled SKUs, so they are excluded from the current Buy Sheet.
+                    All quantities in this session belong to cancelled or deleted SKUs, so they are excluded from the current Buy Sheet.
                   </div>
                 )}
               </div>

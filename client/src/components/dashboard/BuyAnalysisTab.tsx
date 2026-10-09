@@ -13,6 +13,7 @@ import { BarChart3, ChevronDown, Package, Check, ArrowUpDown, ArrowUp, ArrowDown
 import { displayColour, displayLeather } from "@/lib/utils";
 import { formatSkuExportLabel } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
+import { getStoredBuyMarketTotals } from "@shared/buyMarketTotals";
 import { formatBuyShare, getBuyShare } from "@shared/buyShare";
 import {
   groupBoughtStylesByLocation,
@@ -79,10 +80,7 @@ export default function BuyAnalysisTab() {
       const sessionName = (allSessions as Array<{ id: number; name: string }>).find((s) => s.id === sessionId)?.name ?? `Session ${sessionId}`;
       const items = ((sessionQueries[i]?.data ?? []) as Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; auQty?: number; usaQty?: number; nycQty?: number; laQty?: number; qty?: number }>);
       for (const item of items) {
-        const au = item.auQty ?? 0;
-        const usa = item.usaQty ?? 0;
-        const nyc = item.nycQty ?? 0;
-        const la = item.laQty ?? 0;
+        const { au, usa, nyc, la } = getStoredBuyMarketTotals(item);
         if (au === 0 && usa === 0 && nyc === 0 && la === 0) continue;
         if (!activeRangeStyleSet.has(item.style)) continue;
         const key = getSkuCompositeIdentity(item.style, item.colour, item.leather, item.colour2, item.leather2);
