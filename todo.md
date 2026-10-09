@@ -805,3 +805,9 @@
 - [x] The current Buy Sheet intentionally contains **17,516 pairs**. The explicit difference is **2,177 pairs** on cancelled or markdown-deleted SKUs, which are now excluded from the live sheet as requested—not missing.
 - [x] The selected-session preview now displays both the current Buy Sheet total and the recorded historical total with the excluded-pair explanation, so the distinction is visible rather than alarming. Buy Analysis and all-session roll-ups use the same legacy-market fallback.
 - [x] Validation: 155 tests and production build passed; database-backed reconciliation confirmed `19,693 − 17,516 = 2,177`, and W27 Buy Sessions visual review shows the corrected recorded total.
+
+## Exact Dual-Upper Cancellation Repair (9 Oct 2026)
+- [x] Restored the requested W27 cancellations as **exact physical SKU** records: **ELECTRIC Black Nylon / Ecru Snake** and **EMILY Viper Snake / Stone Suede**. Their valid sibling Upper 2 constructions remain active.
+- [x] Extended cancelled-SKU storage, router procedures, active range merging, By Style cancellation/restore controls, Buy Sheet preview, download and email paths with Upper 2 identity. New cancellations of a dual-upper SKU are now precise; existing legacy Upper 1 cancellations retain their intentionally broader historic behaviour.
+- [x] Added the safe schema migration `0073_mighty_peter_parker` and applied it. The unique cancellation identity now comprises Style, Upper 1, Upper 2, and season.
+- [x] Validation: 159 tests and production build passed; the live `cancelledSku.listExact` API returns both W27 replacement cancellations, and a 1440px W27 By Style check shows the refreshed active range at 1,104 SKUs with the preserved 19,693-buy total.

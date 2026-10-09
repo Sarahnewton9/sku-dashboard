@@ -1,5 +1,6 @@
 import { getSkuCompositeIdentity, normalizeSkuIdentityPart } from "./skuCompositeIdentity";
 import { isMarkdownSku } from "./markdownSku";
+import { isCancelledSku } from "./cancelledSkuIdentity";
 
 export type BuySheetSkuIdentity = {
   style: string;
@@ -23,10 +24,8 @@ export type BuySheetSessionItem = {
 };
 
 /**
- * Historical SKU cancellations are stored at Upper 1 level. Keep that key
- * separate from a physical composite identity so existing cancellation records
- * continue to exclude the intended item(s), while active Upper 2 variants stay
- * distinguishable everywhere else.
+ * Retained for compatibility with older callers. New code should use the
+ * Upper 2-aware cancelled SKU identity helper.
  */
 export function getCancelledBuySheetSkuKey(
   style: string | null | undefined,
@@ -78,7 +77,7 @@ export function isActiveBuySheetSessionItem(
 ): boolean {
   const style = normalizeSkuIdentityPart(item.style);
   if (input.cancelledStyleNames.has(style)) return false;
-  if (input.cancelledSkuKeys.has(getCancelledBuySheetSkuKey(item.style, item.colour, item.leather))) return false;
+  if (isCancelledSku(input.cancelledSkuKeys, item)) return false;
   if (input.markdownSkuSet && isMarkdownSku(input.markdownSkuSet, item.style, item.colour, item.leather)) return false;
   return true;
 }

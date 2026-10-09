@@ -454,10 +454,13 @@ export const cancelledSkus = mysqlTable("cancelled_skus", {
   style: varchar("style", { length: 64 }).notNull(),
   colour: varchar("colour", { length: 64 }).notNull(),
   leather: varchar("leather", { length: 64 }).notNull().default(""),
+  /** Optional Upper 2 makes a cancellation specific to one physical SKU. */
+  colour2: varchar("colour2", { length: 64 }).notNull().default(""),
+  leather2: varchar("leather2", { length: 64 }).notNull().default(""),
   season: varchar("season", { length: 16 }).notNull().default("SS26"),
   cancelledAt: timestamp("cancelledAt").defaultNow().notNull(),
 }, (t) => ({
-  uniq: uniqueIndex("cancelled_skus_season_uniq").on(t.style, t.colour, t.leather, t.season),
+  uniq: uniqueIndex("cancelled_skus_composite_season_uniq").on(t.style, t.colour, t.leather, t.colour2, t.leather2, t.season),
 }));
 
 export type CancelledSku = typeof cancelledSkus.$inferSelect;

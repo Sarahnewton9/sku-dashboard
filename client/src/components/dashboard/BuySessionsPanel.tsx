@@ -15,10 +15,8 @@ import { displayColourLeather } from "@/lib/utils";
 import { formatSkuExportLabel } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { getBuyMarketTotal, getStoredBuyMarketTotals } from "@shared/buyMarketTotals";
-import {
-  getCancelledBuySheetSkuKey,
-  isActiveBuySheetSessionItem,
-} from "@shared/buySheetSkuExclusions";
+import { isActiveBuySheetSessionItem } from "@shared/buySheetSkuExclusions";
+import { buildCancelledSkuKeySet } from "@shared/cancelledSkuIdentity";
 import { buildMarkdownSkuSet } from "@shared/markdownSku";
 import { formatBuyShare, getBuyShare } from "@shared/buyShare";
 import {
@@ -54,6 +52,7 @@ export default function BuySessionsPanel() {
   );
   const { data: sessionTotals = {} } = trpc.buy.getSessionTotals.useQuery({ season });
   const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery({ season });
+  const { data: exactCancelledSkuList = [] } = trpc.cancelledSku.listExact.useQuery({ season });
   const { data: markdownSkuList = [] } = trpc.markdown.list.useQuery();
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
   const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
@@ -158,11 +157,13 @@ export default function BuySessionsPanel() {
     return map;
   }, [mergedRawSkus]);
 
-  const cancelledBuySheetSkuKeys = useMemo(() => new Set(
-    (cancelledSkuList as Array<{ style: string; colour: string; leather: string }>).map((sku) =>
-      getCancelledBuySheetSkuKey(sku.style, sku.colour, sku.leather),
-    ),
-  ), [cancelledSkuList]);
+  const cancelledBuySheetSkuKeys = useMemo(
+    () => buildCancelledSkuKeySet([
+      ...(cancelledSkuList as Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null }>),
+      ...(exactCancelledSkuList as Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null }>),
+    ]),
+    [cancelledSkuList, exactCancelledSkuList],
+  );
 
   const cancelledBuySheetStyleNames = useMemo(
     () => new Set(Array.from(cancelledStyleSet).map((style) => style.trim().toUpperCase())),

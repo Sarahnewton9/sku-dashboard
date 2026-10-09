@@ -8,6 +8,7 @@ import { isHiddenFromW27WorkingRange } from "@shared/w27SandalVisibility";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { dedupeSkusByCompositeIdentity } from "@shared/dedupeSkus";
 import { resolveStyleCategory } from "@shared/styleCategory";
+import { buildCancelledSkuKeySet, isCancelledSku } from "@shared/cancelledSkuIdentity";
 
 export type CustomSkuRow = {
   id: number;
@@ -58,6 +59,24 @@ export function useCustomSkus() {
   const markdownSkuSet = useMemo(
     () => buildMarkdownSkuSet(markdownSkuList as Array<{ styleCode: string; colour: string; status: string }>),
     [markdownSkuList],
+  );
+
+  // Legacy records cancel an Upper 1 across its variants. Exact records carry
+  // Upper 2 and therefore remove only that physical colourway.
+  const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery({ season }, {
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+  const { data: exactCancelledSkuList = [] } = trpc.cancelledSku.listExact.useQuery({ season }, {
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+  const cancelledSkuKeys = useMemo(
+    () => buildCancelledSkuKeySet([
+      ...(cancelledSkuList as Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null }>),
+      ...(exactCancelledSkuList as Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null }>),
+    ]),
+    [cancelledSkuList, exactCancelledSkuList],
   );
 
   // Fetch DB image overrides so they take precedence over static CDN URLs everywhere
@@ -193,6 +212,7 @@ export function useCustomSkus() {
     const baseSkus = dedupeSkusByCompositeIdentity((skuData.rawSkus as unknown as ReadonlyArray<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean }>)
       .filter((sku) => isWorkingRangeStyle(sku.style))
       .filter((sku) => !isMarkdownSku(markdownSkuSet, sku.style, sku.colour, sku.leather ?? ""))
+      .filter((sku) => !isCancelledSku(cancelledSkuKeys, sku))
       .map((sku) => {
       const staticIsNew = season === "SS26" ? sku.is_new : false;
       const effectiveIsNew = resolveIsNew(sku.style, sku.colour, sku.leather ?? "", staticIsNew);
@@ -217,6 +237,7 @@ export function useCustomSkus() {
     const extra = customSkus
       .filter((c) => isWorkingRangeStyle(c.style))
       .filter((c) => !isMarkdownSku(markdownSkuSet, c.style, c.colour, c.leather ?? ""))
+      .filter((c) => !isCancelledSku(cancelledSkuKeys, c))
       .map((c) => ({
       style: c.style as string,
       colour: c.colour as string,
@@ -250,7 +271,7 @@ export function useCustomSkus() {
     });
 
     return [...baseSkus, ...filtered];
-  }, [customSkus, markdownSkuSet, season, skuNewOverrideMap, skuDescriptionOverrideMap, styleCategoryMap]);
+  }, [cancelledSkuKeys, customSkus, markdownSkuSet, season, skuNewOverrideMap, skuDescriptionOverrideMap, styleCategoryMap]);
 
   const activeSkusByStyle = useMemo(() => {
     const groups: Record<string, Array<{ style: string; colour: string; leather: string; is_new: boolean }>> = {};

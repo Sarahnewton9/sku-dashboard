@@ -163,6 +163,7 @@ export default function StylesTab() {
 
   // Cancelled SKUs
   const { data: cancelledSkuList = [], refetch: refetchCancelledSkus } = trpc.cancelledSku.list.useQuery({ season }, { staleTime: 30_000 });
+  const { data: exactCancelledSkuList = [], refetch: refetchExactCancelledSkus } = trpc.cancelledSku.listExact.useQuery({ season }, { staleTime: 30_000 });
   const [cancelledSkuSectionOpen, setCancelledSkuSectionOpen] = useState(false);
 
   const cancelledSkuSet = useMemo(() => {
@@ -197,12 +198,12 @@ export default function StylesTab() {
     `${style}|${[colour, leather].filter(Boolean).join(" ").trim().toUpperCase()}`;
 
   const cancelSkuMutation = trpc.cancelledSku.cancel.useMutation({
-    onSuccess: () => { refetchCancelledSkus(); },
+    onSuccess: () => { refetchCancelledSkus(); refetchExactCancelledSkus(); },
     onError: (err) => toast.error(`Failed to cancel SKU: ${err.message}`),
   });
 
   const restoreSkuMutation = trpc.cancelledSku.restore.useMutation({
-    onSuccess: () => { refetchCancelledSkus(); },
+    onSuccess: () => { refetchCancelledSkus(); refetchExactCancelledSkus(); },
     onError: (err) => toast.error(`Failed to restore SKU: ${err.message}`),
   });
 
@@ -2310,7 +2311,14 @@ export default function StylesTab() {
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             if (confirm(`Cancel ${sku.colour} ${sku.leather} from ${sku.style}? It will be hidden from the range.`)) {
-                                              cancelSkuMutation.mutate({ style: sku.style, colour: sourceColour, leather: sourceLeather, season });
+                                              cancelSkuMutation.mutate({
+                                                style: sku.style,
+                                                colour: sourceColour,
+                                                leather: sourceLeather,
+                                                colour2: currentColour2 || undefined,
+                                                leather2: currentLeather2 || undefined,
+                                                season,
+                                              });
                                             }
                                           }}
                                           className="p-1 rounded hover:bg-red-50 transition-colors flex-shrink-0"
@@ -2565,7 +2573,7 @@ export default function StylesTab() {
       )}
 
       {/* Cancelled SKUs section */}
-      {cancelledSkuList.length > 0 && (
+      {(cancelledSkuList.length + exactCancelledSkuList.length) > 0 && (
         <div className="mt-4 border rounded-xl overflow-hidden" style={{ borderColor: "oklch(0.82 0.06 20)" }}>
           <button
             className="w-full flex items-center justify-between px-4 py-3 transition-colors"
@@ -2575,7 +2583,7 @@ export default function StylesTab() {
             <div className="flex items-center gap-2">
               <Ban className="w-4 h-4" style={{ color: "oklch(0.55 0.12 20)" }} />
               <span className="text-sm font-semibold" style={{ color: "oklch(0.45 0.12 20)" }}>
-                Cancelled SKUs ({cancelledSkuList.length})
+                Cancelled SKUs ({cancelledSkuList.length + exactCancelledSkuList.length})
               </span>
               <span className="text-xs" style={{ color: "oklch(0.60 0.08 20)" }}>— hidden from range</span>
             </div>
@@ -2585,16 +2593,16 @@ export default function StylesTab() {
           </button>
           {cancelledSkuSectionOpen && (
             <div className="divide-y" style={{ borderColor: "oklch(0.90 0.04 20)" }}>
-              {(cancelledSkuList as Array<{ style: string; colour: string; leather: string }>).map((row) => (
-                <div key={`${row.style}|${row.colour}|${row.leather}`} className="flex items-center gap-3 px-4 py-3">
+              {[...(cancelledSkuList as Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null }>), ...(exactCancelledSkuList as Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null }>)].map((row) => (
+                <div key={`${row.style}|${row.colour}|${row.leather}|${row.colour2 ?? ""}|${row.leather2 ?? ""}`} className="flex items-center gap-3 px-4 py-3">
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-semibold text-muted-foreground line-through">{displayColourLeather(row.colour, row.leather, row.style)}</span>
+                    <span className="text-sm font-semibold text-muted-foreground line-through">{displayColourLeather(row.colour, row.leather, row.style)}{row.colour2 ? ` / ${displayColourLeather(row.colour2, row.leather2 ?? "", row.style)}` : ""}</span>
                     <span className="ml-2 text-xs text-muted-foreground">{row.style}</span>
                   </div>
                   <button
                     onClick={() => {
-                      restoreSkuMutation.mutate({ style: row.style, colour: row.colour, leather: row.leather, season });
-                      toast.success(`${displayColourLeather(row.colour, row.leather, row.style)} restored to ${row.style}`);
+                      restoreSkuMutation.mutate({ style: row.style, colour: row.colour, leather: row.leather, colour2: row.colour2 || undefined, leather2: row.leather2 || undefined, season });
+                      toast.success(`${displayColourLeather(row.colour, row.leather, row.style)}${row.colour2 ? ` / ${displayColourLeather(row.colour2, row.leather2 ?? "", row.style)}` : ""} restored to ${row.style}`);
                     }}
                     className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-muted transition-colors text-muted-foreground"
                     title="Restore this SKU"

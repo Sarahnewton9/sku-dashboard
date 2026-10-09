@@ -3,6 +3,7 @@ import {
   getCancelledBuySheetSkuKey,
   isActiveBuySheetSessionItem,
 } from "@shared/buySheetSkuExclusions";
+import { getExactCancelledSkuKey } from "@shared/cancelledSkuIdentity";
 import { buildMarkdownSkuSet } from "@shared/markdownSku";
 
 describe("Buy Sheet SKU exclusions", () => {
@@ -36,6 +37,23 @@ describe("Buy Sheet SKU exclusions", () => {
     expect(isActiveBuySheetSessionItem(
       { style: "ROBYN", colour: "ECRU", leather: "SNAKE", colour2: "ROYAL", leather2: "SUEDE" },
       { cancelledStyleNames: noCancelledStyles, cancelledSkuKeys: noCancelledSkus },
+    )).toBe(true);
+  });
+
+  it("excludes only a cancelled Upper 2 construction", () => {
+    const cancelledSkuKeys = new Set([
+      getExactCancelledSkuKey({
+        style: "ELECTRIC", colour: "BLACK", leather: "NYLON", colour2: "ECRU", leather2: "SNAKE",
+      }),
+    ]);
+
+    expect(isActiveBuySheetSessionItem(
+      { style: "ELECTRIC", colour: "BLACK", leather: "NYLON", colour2: "ECRU", leather2: "SNAKE" },
+      { cancelledStyleNames: noCancelledStyles, cancelledSkuKeys },
+    )).toBe(false);
+    expect(isActiveBuySheetSessionItem(
+      { style: "ELECTRIC", colour: "BLACK", leather: "NYLON", colour2: "BLACK", leather2: "NAPPA" },
+      { cancelledStyleNames: noCancelledStyles, cancelledSkuKeys },
     )).toBe(true);
   });
 

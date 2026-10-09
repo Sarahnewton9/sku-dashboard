@@ -24,7 +24,7 @@ import {
   addCustomSku, getAllCustomSkus, deleteCustomSku, updateCustomSku,
   unlockBuySession,
   renameBuySession,
-  cancelSku, restoreSku, listCancelledSkus,
+  cancelSku, restoreSku, listCancelledSkus, listExactCancelledSkus,
   getAllStyleSubCategories, upsertStyleSubCategory,
   getAllStyleTrendFlags, upsertStyleTrends, deleteStyleTrends,
   upsertStyleWebsiteImage,
@@ -1079,7 +1079,7 @@ export const appRouter = router({
         // Build the compound colour key the same way the spec sheet does.
         const colourKey = leather ? `${colour} ${leather}` : colour;
         await showSpecColumn(style, colourKey, season);
-        await restoreSku(style, colour, leather, season);
+        await restoreSku(style, colour, leather, season, colour2 ?? "", leather2 ?? "");
         return { id, restored: false };
       }),
 
@@ -1175,17 +1175,39 @@ export const appRouter = router({
       .input(z.object({ season: z.string().default("SS26") }))
       .query(async ({ input }) => listCancelledSkus(input.season)),
 
+    listExact: publicProcedure
+      .input(z.object({ season: z.string().default("SS26") }))
+      .query(async ({ input }) => listExactCancelledSkus(input.season)),
+
     cancel: publicProcedure
-      .input(z.object({ style: z.string(), colour: z.string(), leather: z.string(), season: z.string().default("SS26") }))
+      .input(z.object({
+        style: z.string(),
+        colour: z.string(),
+        leather: z.string(),
+        colour2: z.string().optional(),
+        leather2: z.string().optional(),
+        season: z.string().default("SS26"),
+      }).refine((input) => Boolean(input.colour2) === Boolean(input.leather2), {
+        message: "Upper 2 colour and leather must be saved together",
+      }))
       .mutation(async ({ input }) => {
-        await cancelSku(input.style, input.colour, input.leather, input.season);
+        await cancelSku(input.style, input.colour, input.leather, input.season, input.colour2 ?? "", input.leather2 ?? "");
         return { success: true };
       }),
 
     restore: publicProcedure
-      .input(z.object({ style: z.string(), colour: z.string(), leather: z.string(), season: z.string().default("SS26") }))
+      .input(z.object({
+        style: z.string(),
+        colour: z.string(),
+        leather: z.string().optional(),
+        colour2: z.string().optional(),
+        leather2: z.string().optional(),
+        season: z.string().default("SS26"),
+      }).refine((input) => Boolean(input.colour2) === Boolean(input.leather2), {
+        message: "Upper 2 colour and leather must be restored together",
+      }))
       .mutation(async ({ input }) => {
-        await restoreSku(input.style, input.colour, input.leather, input.season);
+        await restoreSku(input.style, input.colour, input.leather ?? "", input.season, input.colour2 ?? "", input.leather2 ?? "");
         return { success: true };
       }),
   }),

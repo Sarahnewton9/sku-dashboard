@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, ne, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, fittingImages, skuMeta, skuCostPrices, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, specEmailHistory, specEmailRecipientGroups, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns, customLasts, lastMeasurements, ap21StyleRefs, ap21ColourRefs } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -443,14 +443,28 @@ export async function upsertBuySessionItem(
 
 // ─── Cancelled SKUs ─────────────────────────────────────────────────────────────────────────────
 
-export async function cancelSku(style: string, colour: string, leather: string, season = "SS26") {
+export async function cancelSku(
+  style: string,
+  colour: string,
+  leather: string,
+  season = "SS26",
+  colour2 = "",
+  leather2 = "",
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(cancelledSkus).values({ style, colour, leather, season })
+  await db.insert(cancelledSkus).values({ style, colour, leather, colour2, leather2, season })
     .onDuplicateKeyUpdate({ set: { cancelledAt: new Date() } });
 }
 
-export async function restoreSku(style: string, colour: string, leather: string, season = "SS26") {
+export async function restoreSku(
+  style: string,
+  colour: string,
+  leather: string,
+  season = "SS26",
+  colour2 = "",
+  leather2 = "",
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(cancelledSkus).where(
@@ -458,6 +472,8 @@ export async function restoreSku(style: string, colour: string, leather: string,
       eq(cancelledSkus.style, style),
       eq(cancelledSkus.colour, colour),
       eq(cancelledSkus.leather, leather),
+      eq(cancelledSkus.colour2, colour2),
+      eq(cancelledSkus.leather2, leather2),
       eq(cancelledSkus.season, season)
     )
   );
@@ -466,7 +482,21 @@ export async function restoreSku(style: string, colour: string, leather: string,
 export async function listCancelledSkus(season = "SS26") {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(cancelledSkus).where(eq(cancelledSkus.season, season));
+  return db.select().from(cancelledSkus).where(and(
+    eq(cancelledSkus.season, season),
+    eq(cancelledSkus.colour2, ""),
+    eq(cancelledSkus.leather2, ""),
+  ));
+}
+
+/** Exact Upper 2 cancellations leave legacy Upper 1 cancellation behaviour unchanged. */
+export async function listExactCancelledSkus(season = "SS26") {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(cancelledSkus).where(and(
+    eq(cancelledSkus.season, season),
+    or(ne(cancelledSkus.colour2, ""), ne(cancelledSkus.leather2, "")),
+  ));
 }
 
 // ─── Style Sub-Categories ─────────────────────────────────────────────────────────────────────────
