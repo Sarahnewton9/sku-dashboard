@@ -792,3 +792,9 @@
 - [x] Added summary cards and blocker roll-up: current W27 shows 1/68 range-ready styles, 193/294 new SKUs bought, 15/294 new SKUs costed, 1/44 required fits approved, 0/34 last approvals approved, and 68/68 new-SKU Specs complete.
 - [x] Added shared readiness-calculation regression tests. Validation: 149 tests, production build, diff checks, and a populated 1440px W27 visual verification passed. Existing unrelated `StylesTab` strict TypeScript diagnostics remain unchanged.
 - [x] Fixed the Range Readiness React key warning by removing `key` from the spread props and passing it directly to each gate component. Verified with 149 regression tests, a production build, and rendered W27 Range Readiness review.
+
+## Deleted SKU Buy Sheet Exclusion (9 Oct 2026)
+- [x] Buy Sheet download and email attachments now check each exact active physical SKU identity before exporting session quantities. A deleted/markdown SKU, a cancelled SKU, a cancelled style, or a SKU no longer in the active range cannot reappear merely because a historic Buy Session row still holds quantities.
+- [x] The selected Buy Session preview and its totals now apply the same exclusion rule, so it matches the exported/emailled sheet. A clear empty-state message explains when a session contains only removed SKUs.
+- [x] Preserved valid colour-name corrections through source-identity aliases and kept dual-upper identities distinct, so the guard excludes only the deleted SKU—not a different Upper 2 combination.
+- [x] Added four regression tests covering cancelled, deleted, dual-upper, and corrected-label cases. Validation: 153 tests and production build passed; Buy Sessions visual review passed. Existing unrelated StylesTab strict TypeScript diagnostics remain unchanged.
