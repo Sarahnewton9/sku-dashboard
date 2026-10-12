@@ -22,6 +22,7 @@ vi.mock("./db", () => ({
   getAllCustomSkus: vi.fn().mockResolvedValue([
     { id: 1, style: "FERGIE", colour: "BLACK", leather: "SUEDE", season: "W27" },
   ]),
+  updateCustomSku: vi.fn().mockResolvedValue(undefined),
   updateCustomStyleDetails: vi.fn().mockResolvedValue(undefined),
   getFittingImages: vi.fn().mockResolvedValue([]),
   addFittingImage: vi.fn().mockResolvedValue({ id: 1 }),
@@ -200,6 +201,23 @@ describe("sku.setSeasonCost", () => {
       colour: "ECRU",
       cost: 0,
     })).rejects.toThrow();
+  });
+});
+
+describe("customSku.update", () => {
+  it("forwards the full edited identity so Bought quantities can be re-keyed", async () => {
+    const db = await import("./db");
+    const caller = appRouter.createCaller(createCtx());
+
+    await expect(caller.customSku.update({
+      id: 1,
+      colour: "PETAL",
+      leather: "NAPPA",
+      colour2: "LIPSTICK",
+      leather2: "SUEDE",
+    })).resolves.toEqual({ success: true });
+
+    expect(db.updateCustomSku).toHaveBeenLastCalledWith(1, "PETAL", "NAPPA", "LIPSTICK", "SUEDE");
   });
 });
 

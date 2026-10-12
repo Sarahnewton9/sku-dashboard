@@ -358,6 +358,9 @@ export default function StylesTab() {
     onSuccess: async () => {
       await Promise.all([
         utils.customSku.getAll.invalidate({ season }),
+        utils.buy.getAllSessionQtys.invalidate({ season }),
+        utils.buy.getSessionTotals.invalidate({ season }),
+        utils.buy.getItems.invalidate(),
         refetchCustomSkus(),
       ]);
       setColourEdit(null);
@@ -367,8 +370,13 @@ export default function StylesTab() {
   });
 
   const updateStaticColourMutation = trpc.sku.update.useMutation({
-    onSuccess: () => {
-      refetchSkuMeta();
+    onSuccess: async () => {
+      await Promise.all([
+        utils.buy.getAllSessionQtys.invalidate({ season }),
+        utils.buy.getSessionTotals.invalidate({ season }),
+        utils.buy.getItems.invalidate(),
+        refetchSkuMeta(),
+      ]);
       setColourEdit(null);
       toast.success("Colour and leather updated");
     },

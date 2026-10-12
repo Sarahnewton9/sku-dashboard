@@ -1,9 +1,10 @@
-import { and, desc, eq, gte, inArray, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, fittingImages, skuMeta, skuCostPrices, styleMeta, styleFittingImages, users, buySessions, buySessionItems, lastApprovals, seasonImports, seasonSkuData, InsertSeasonSkuData, styleSpecs, specDropdownOptions, styleSpecMeta, specEmailHistory, specEmailRecipientGroups, fittingSessions, fittingSessionImages, styleImageOverrides, cancelledStyles, customSkus, cancelledSkus, styleSubCategories, styleTrendFlags, fittingGroups, fittingGroupStyles, FittingGroup, specCustomRows, SpecCustomRow, deletedLasts, pptxImports, lastHeelHeights, skuNewOverride, customStyles, specRowOrder, specHiddenColumns, customLasts, lastMeasurements, ap21StyleRefs, ap21ColourRefs } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { getSkuCompositeIdentity, normalizeSkuIdentityPart } from "../shared/skuCompositeIdentity";
 import { getStoredBuyMarketTotals } from "../shared/buyMarketTotals";
+import { getCustomSkuBuyRename, getStaticSkuBuyRename, mergeRenamedBuySessionQuantities, type BuySkuIdentity } from "../shared/buySkuRename";
 import { getCustomSkuCarryOverSeason } from "../shared/customSkuSeasonCarryOver";
 import { getHandbagSkuEditOutcome } from "../shared/handbagSkuEdit";
 import { getSpecTemplateComponentKeys } from "../shared/specCompletionQueue";
@@ -160,6 +161,7 @@ export async function upsertSkuMeta(data: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const existing = await getSkuMeta(data.style, data.colour, data.leather);
+  const buyRename = getStaticSkuBuyRename(data, existing);
   if (existing) {
     const updateSet: Record<string, unknown> = {};
     if (data.sampleStatus !== undefined) updateSet.sampleStatus = data.sampleStatus;
@@ -196,6 +198,7 @@ export async function upsertSkuMeta(data: {
       leather2: data.leather2 ?? null,
     });
   }
+  if (buyRename) await rekeyBuySessionSkuIdentity(buyRename.previous, buyRename.next);
 }
 
 // ─── Style Meta ──────────────────────────────────────────────────────────────
@@ -405,6 +408,79 @@ export async function getAllSessionQtys(season = "SS26"): Promise<Record<string,
     result[key].sessions.push({ sessionId: row.sessionId, sessionName: sessionMap[row.sessionId] ?? `Session ${row.sessionId}`, au, usa, nyc, la });
   }
   return result;
+}
+
+/**
+ * Move a bought SKU to its corrected Upper 1/Upper 2 identity in every Buy
+ * Session. This deliberately includes locked sessions: a colour correction is
+ * a label correction, not a change to the recorded buy. If the corrected
+ * identity already exists in a session, quantities are merged market by market
+ * rather than overwritten.
+ */
+export async function rekeyBuySessionSkuIdentity(previous: BuySkuIdentity, next: BuySkuIdentity, season?: string): Promise<{ moved: number; merged: number }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const before = {
+    style: normalizeSkuIdentityPart(previous.style),
+    colour: normalizeSkuIdentityPart(previous.colour),
+    leather: normalizeSkuIdentityPart(previous.leather),
+    colour2: normalizeSkuIdentityPart(previous.colour2),
+    leather2: normalizeSkuIdentityPart(previous.leather2),
+  };
+  const after = {
+    style: normalizeSkuIdentityPart(next.style),
+    colour: normalizeSkuIdentityPart(next.colour),
+    leather: normalizeSkuIdentityPart(next.leather),
+    colour2: normalizeSkuIdentityPart(next.colour2),
+    leather2: normalizeSkuIdentityPart(next.leather2),
+  };
+  if (getSkuCompositeIdentity(before.style, before.colour, before.leather, before.colour2, before.leather2)
+    === getSkuCompositeIdentity(after.style, after.colour, after.leather, after.colour2, after.leather2)) {
+    return { moved: 0, merged: 0 };
+  }
+
+  const matchingRows = await db.select().from(buySessionItems).where(and(
+    eq(buySessionItems.style, before.style),
+    eq(buySessionItems.colour, before.colour),
+    eq(buySessionItems.leather, before.leather),
+    eq(buySessionItems.colour2, before.colour2),
+    eq(buySessionItems.leather2, before.leather2),
+  ));
+  const seasonSessionIds = season
+    ? new Set((await db.select({ id: buySessions.id }).from(buySessions).where(eq(buySessions.season, season))).map((row) => row.id))
+    : null;
+  const sourceRows = seasonSessionIds
+    ? matchingRows.filter((row) => seasonSessionIds.has(row.sessionId))
+    : matchingRows;
+  if (sourceRows.length === 0) return { moved: 0, merged: 0 };
+
+  let moved = 0;
+  let merged = 0;
+  await db.transaction(async (tx) => {
+    for (const source of sourceRows) {
+      const target = await tx.select().from(buySessionItems).where(and(
+        eq(buySessionItems.sessionId, source.sessionId),
+        eq(buySessionItems.style, after.style),
+        eq(buySessionItems.colour, after.colour),
+        eq(buySessionItems.leather, after.leather),
+        eq(buySessionItems.colour2, after.colour2),
+        eq(buySessionItems.leather2, after.leather2),
+      )).limit(1);
+
+      if (target[0]) {
+        await tx.update(buySessionItems)
+          .set(mergeRenamedBuySessionQuantities(source, target[0]))
+          .where(eq(buySessionItems.id, target[0].id));
+        await tx.delete(buySessionItems).where(eq(buySessionItems.id, source.id));
+        merged++;
+      } else {
+        await tx.update(buySessionItems).set(after).where(eq(buySessionItems.id, source.id));
+        moved++;
+      }
+    }
+  });
+  return { moved, merged };
 }
 
 export async function upsertBuySessionItem(
@@ -1170,7 +1246,48 @@ export async function deleteCustomSku(id: number): Promise<void> {
 export async function updateCustomSku(id: number, colour: string, leather: string, colour2?: string, leather2?: string): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(customSkus).set({ colour, leather, colour2: colour2 ?? null, leather2: leather2 ?? null }).where(eq(customSkus.id, id));
+  const existing = await db.select().from(customSkus).where(eq(customSkus.id, id)).limit(1);
+  const current = existing[0];
+  if (!current) throw new Error("SKU not found");
+  const next = {
+    style: current.style,
+    colour: normalizeSkuIdentityPart(colour),
+    leather: normalizeSkuIdentityPart(leather),
+    colour2: normalizeSkuIdentityPart(colour2),
+    leather2: normalizeSkuIdentityPart(leather2),
+  };
+  const buyRename = getCustomSkuBuyRename(current, next);
+  await db.update(customSkus).set({
+    colour: next.colour,
+    leather: next.leather,
+    colour2: next.colour2 || null,
+    leather2: next.leather2 || null,
+  }).where(eq(customSkus.id, id));
+  if (buyRename) await rekeyBuySessionSkuIdentity(buyRename.previous, buyRename.next, current.season);
+
+  // SS26 custom colourways are mirrored as W27 carry-over rows. Keep that
+  // mirror and its recorded W27 buy quantities aligned when the source label
+  // is corrected later.
+  const carryOverSeason = getCustomSkuCarryOverSeason(current.season);
+  if (!carryOverSeason) return;
+  const carryRows = await db.select().from(customSkus).where(and(
+    eq(customSkus.style, current.style),
+    eq(customSkus.colour, current.colour),
+    eq(customSkus.leather, current.leather),
+    or(eq(customSkus.colour2, current.colour2 ?? ""), isNull(customSkus.colour2)),
+    or(eq(customSkus.leather2, current.leather2 ?? ""), isNull(customSkus.leather2)),
+    eq(customSkus.season, carryOverSeason),
+  ));
+  for (const carryRow of carryRows) {
+    await db.update(customSkus).set({
+      colour: next.colour,
+      leather: next.leather,
+      colour2: next.colour2 || null,
+      leather2: next.leather2 || null,
+    }).where(eq(customSkus.id, carryRow.id));
+    const carryRename = getCustomSkuBuyRename(carryRow, next);
+    if (carryRename) await rekeyBuySessionSkuIdentity(carryRename.previous, carryRename.next, carryOverSeason);
+  }
 }
 
 // ─── Custom Styles ────────────────────────────────────────────────────────────

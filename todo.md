@@ -816,3 +816,9 @@
 - [x] Extended Specs search to find styles by an active physical SKU’s **Upper 1 colour/leather** as well as style, last, and category. Searching `petal nappa` now returns every style with Petal Nappa as Upper 1.
 - [x] Keeps Upper 2 separate: a search for `petal nappa` does not return a style where Petal Nappa appears only after the slash as the secondary upper.
 - [x] Added whitespace/case-insensitive regression coverage and updated the search prompt. Validation: 162 tests and production build passed; W27 Specs visual review confirms the updated search control. Existing unrelated StylesTab language-service diagnostics remain unchanged.
+
+## Buy Quantity Preservation on SKU Edits (12 Oct 2026)
+- [x] Re-key Buy Session rows automatically when Upper 1 or Upper 2 is edited, including locked sessions; market quantities are retained exactly.
+- [x] Merge market quantities safely if a colour correction meets an existing Buy Session line, rather than replacing either line.
+- [x] Apply the safeguard to both static/carry-over SKU overrides and custom SKUs, including the SS26 → W27 carry-over mirror.
+- [x] Refresh By Style and Buy Session totals immediately after a saved colour/leather edit. Validation: 168 tests and production build passed.
