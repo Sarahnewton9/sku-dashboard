@@ -811,3 +811,8 @@
 - [x] Extended cancelled-SKU storage, router procedures, active range merging, By Style cancellation/restore controls, Buy Sheet preview, download and email paths with Upper 2 identity. New cancellations of a dual-upper SKU are now precise; existing legacy Upper 1 cancellations retain their intentionally broader historic behaviour.
 - [x] Added the safe schema migration `0073_mighty_peter_parker` and applied it. The unique cancellation identity now comprises Style, Upper 1, Upper 2, and season.
 - [x] Validation: 159 tests and production build passed; the live `cancelledSku.listExact` API returns both W27 replacement cancellations, and a 1440px W27 By Style check shows the refreshed active range at 1,104 SKUs with the preserved 19,693-buy total.
+
+## Specs Upper 1 Colour/Leather Search (12 Oct 2026)
+- [x] Extended Specs search to find styles by an active physical SKU’s **Upper 1 colour/leather** as well as style, last, and category. Searching `petal nappa` now returns every style with Petal Nappa as Upper 1.
+- [x] Keeps Upper 2 separate: a search for `petal nappa` does not return a style where Petal Nappa appears only after the slash as the secondary upper.
+- [x] Added whitespace/case-insensitive regression coverage and updated the search prompt. Validation: 162 tests and production build passed; W27 Specs visual review confirms the updated search control. Existing unrelated StylesTab language-service diagnostics remain unchanged.

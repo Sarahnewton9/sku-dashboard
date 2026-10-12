@@ -42,6 +42,7 @@ import { selectSpecColourColumns } from "@shared/specsStyleVisibility";
 import { getSeasonDisplayLabel } from "@shared/seasonLabel";
 import { buildNewSpecColourColumns } from "@shared/specSeasonalColumns";
 import { isNewSpecStyleAwaitingCompletion, type SpecCompletionStatus } from "@shared/specCompletionQueue";
+import { matchesSpecsStyleSearch } from "@shared/specsStyleSearch";
 import {
   buildCrossStyleComponentCopies,
   resolveCrossStyleSourceSpecs,
@@ -2474,10 +2475,7 @@ export default function SpecsTab({}: SpecsTabProps) {
       .map((meta) => [meta.style, meta.specStatus ?? "not_started"]),
   ), [allSpecMeta]);
 
-  const filtered = styleList.filter((s) => {
-    const q = search.toLowerCase();
-    return !q || s.style.toLowerCase().includes(q) || s.last.toLowerCase().includes(q) || s.category.toLowerCase().includes(q);
-  });
+  const filtered = styleList.filter((s) => matchesSpecsStyleSearch(s, search));
 
   const stylesToComplete = useMemo(
     () => filtered.filter((entry) => isNewSpecStyleAwaitingCompletion({
@@ -3319,7 +3317,7 @@ export default function SpecsTab({}: SpecsTabProps) {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search styles…"
+              placeholder="Search style, last or Upper 1…"
               className="pl-8 h-8 text-xs"
             />
           </div>
