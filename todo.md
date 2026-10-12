@@ -822,3 +822,10 @@
 - [x] Merge market quantities safely if a colour correction meets an existing Buy Session line, rather than replacing either line.
 - [x] Apply the safeguard to both static/carry-over SKU overrides and custom SKUs, including the SS26 → W27 carry-over mirror.
 - [x] Refresh By Style and Buy Session totals immediately after a saved colour/leather edit. Validation: 168 tests and production build passed.
+
+## 05.10 W27 Buy Reconciliation (12 Oct 2026)
+- [x] Reconciled every one of the **152** rows in the supplied `05.10BUY.xlsx` against the locked W27 **BUY 05.10** session, exact Upper 1 + Upper 2 identity, active W27 range, saved AP21 wording, four market quantities, category, last and Size 11 metadata.
+- [x] Confirmed **152 / 152** workbook rows have exact AU/USA/NYC/LA quantities in the session and map to one active W27 physical SKU. Verified workbook totals: **AU 10,006 · USA 5,362 · NYC 984 · LA 774 = 17,126 pairs**. No workbook SKU, quantity or Upper 2 identity remains missing or ambiguous.
+- [x] Applied the user-confirmed Blossom → Petal corrections for **ESSA Petal Nappa** and **VIVID Petal Nappa**. Re-keyed their locked Buy Session rows, SKU metadata and AP21 descriptions while preserving all market quantities: ESSA 60 AU + 36 USA = **96 pairs**; VIVID 48 AU + 36 USA = **84 pairs**; **180 pairs** preserved in total.
+- [x] Explained the session/workbook total difference: `BUY 05.10` retains **19,693** historical pairs, but **2,567 pairs across 23 confirmed cancelled replacement colourways** are intentionally excluded from the supplied/current active range. They remain cancelled; none were revived.
+- [x] Category and last match the source on all 152 reconciled lines. The only source metadata inconsistency is MACK’s four rows, which are blank in workbook Size 11 but correctly remain Size 11 in the approved all-colourway master list; no MACK data was downgraded.
