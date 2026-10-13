@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchesSpecsStyleSearch } from "@shared/specsStyleSearch";
+import { matchesSpecsStyleSearch, matchesSpecsStyleSearchFilters } from "@shared/specsStyleSearch";
 
 const petalNappaStyle = {
   style: "AVANTI",
@@ -27,5 +27,44 @@ describe("Specs style search", () => {
     expect(matchesSpecsStyleSearch(petalNappaStyle, "avanti")).toBe(true);
     expect(matchesSpecsStyleSearch(petalNappaStyle, "dress shoe")).toBe(true);
     expect(matchesSpecsStyleSearch(petalNappaStyle, "choc suede")).toBe(false);
+  });
+
+  it("finds a style from Upper 2 alone", () => {
+    const dualUpperStyle = {
+      style: "ROBYN",
+      last: "ROBYN",
+      category: "Dress Shoe",
+      colourLabels: ["ECRU SNAKE/ROYAL SUEDE", "ECRU SNAKE/LIPSTICK SUEDE"],
+    };
+
+    expect(matchesSpecsStyleSearchFilters(dualUpperStyle, { upper2Query: "lipstick suede" })).toBe(true);
+    expect(matchesSpecsStyleSearchFilters(dualUpperStyle, { upper2Query: "petal nappa" })).toBe(false);
+  });
+
+  it("requires Upper 1 and Upper 2 filters to match the same physical SKU", () => {
+    const splitUpperStyle = {
+      style: "ROBYN",
+      last: "ROBYN",
+      category: "Dress Shoe",
+      colourLabels: ["ECRU SNAKE/ROYAL SUEDE", "BLACK VINTAGE/LIPSTICK SUEDE"],
+    };
+
+    expect(matchesSpecsStyleSearchFilters(splitUpperStyle, {
+      query: "ECRU SNAKE",
+      upper2Query: "ROYAL SUEDE",
+    })).toBe(true);
+    expect(matchesSpecsStyleSearchFilters(splitUpperStyle, {
+      query: "ECRU SNAKE",
+      upper2Query: "LIPSTICK SUEDE",
+    })).toBe(false);
+  });
+
+  it("accepts a compact Upper 1/Upper 2 SKU lookup in the main search", () => {
+    expect(matchesSpecsStyleSearchFilters({
+      style: "ROBYN",
+      last: "ROBYN",
+      category: "Dress Shoe",
+      colourLabels: ["ECRU SNAKE/LIPSTICK SUEDE"],
+    }, { query: "ecru snake/lipstick suede" })).toBe(true);
   });
 });

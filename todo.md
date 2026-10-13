@@ -829,3 +829,8 @@
 - [x] Applied the user-confirmed Blossom → Petal corrections for **ESSA Petal Nappa** and **VIVID Petal Nappa**. Re-keyed their locked Buy Session rows, SKU metadata and AP21 descriptions while preserving all market quantities: ESSA 60 AU + 36 USA = **96 pairs**; VIVID 48 AU + 36 USA = **84 pairs**; **180 pairs** preserved in total.
 - [x] Explained the session/workbook total difference: `BUY 05.10` retains **19,693** historical pairs, but **2,567 pairs across 23 confirmed cancelled replacement colourways** are intentionally excluded from the supplied/current active range. They remain cancelled; none were revived.
 - [x] Category and last match the source on all 152 reconciled lines. The only source metadata inconsistency is MACK’s four rows, which are blank in workbook Size 11 but correctly remain Size 11 in the approved all-colourway master list; no MACK data was downgraded.
+
+## Specs Upper 1 + Upper 2 Search (13 Oct 2026)
+- [x] Added a dedicated **Upper 2** filter to the W27 Specs library alongside the existing style/last/category/Upper 1 search.
+- [x] Filters can be used independently or together; when both Upper 1 and Upper 2 are supplied, they must match the **same physical SKU**, preventing false matches from two separate colourways on one style.
+- [x] Kept a compact direct lookup option in the main field (for example `ECRU SNAKE/LIPSTICK SUEDE`). Verified against live ROBYN W27 dual-upper SKUs and added regression coverage for Upper 2-only, exact same-SKU, false split-SKU and compact lookup cases.

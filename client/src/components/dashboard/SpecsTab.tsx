@@ -42,7 +42,7 @@ import { selectSpecColourColumns } from "@shared/specsStyleVisibility";
 import { getSeasonDisplayLabel } from "@shared/seasonLabel";
 import { buildNewSpecColourColumns } from "@shared/specSeasonalColumns";
 import { isNewSpecStyleAwaitingCompletion, type SpecCompletionStatus } from "@shared/specCompletionQueue";
-import { matchesSpecsStyleSearch } from "@shared/specsStyleSearch";
+import { matchesSpecsStyleSearchFilters } from "@shared/specsStyleSearch";
 import {
   buildCrossStyleComponentCopies,
   resolveCrossStyleSourceSpecs,
@@ -2313,6 +2313,7 @@ export default function SpecsTab({}: SpecsTabProps) {
   const utils = trpc.useUtils();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [upper2Search, setUpper2Search] = useState("");
   const [emailSpecOpen, setEmailSpecOpen] = useState(false);
   const [importParsed, setImportParsed] = useState<ParsedSpecSheet | null>(null);
   const [importLoading, setImportLoading] = useState(false);
@@ -2475,7 +2476,10 @@ export default function SpecsTab({}: SpecsTabProps) {
       .map((meta) => [meta.style, meta.specStatus ?? "not_started"]),
   ), [allSpecMeta]);
 
-  const filtered = styleList.filter((s) => matchesSpecsStyleSearch(s, search));
+  const filtered = styleList.filter((s) => matchesSpecsStyleSearchFilters(s, {
+    query: search,
+    upper2Query: upper2Search,
+  }));
 
   const stylesToComplete = useMemo(
     () => filtered.filter((entry) => isNewSpecStyleAwaitingCompletion({
@@ -3312,15 +3316,34 @@ export default function SpecsTab({}: SpecsTabProps) {
       {/* Left: style list */}
       <div className="w-64 flex-shrink-0 border-r flex flex-col bg-muted/20">
         <div className="p-3 border-b">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search style, last or Upper 1…"
-              className="pl-8 h-8 text-xs"
-            />
+          <div className="space-y-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Style, last or Upper 1…"
+                aria-label="Search style, last, category or Upper 1"
+                className="pl-8 h-8 text-xs"
+              />
+            </div>
+            <div className="relative">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-wide text-purple-700">U2</span>
+              <Input
+                value={upper2Search}
+                onChange={(e) => setUpper2Search(e.target.value)}
+                placeholder="Filter by Upper 2…"
+                aria-label="Filter results by Upper 2"
+                title="Use with Upper 1 to find the exact two-upper SKU"
+                className="pl-8 h-8 text-xs"
+              />
+            </div>
           </div>
+          {(search || upper2Search) && (
+            <p className="mt-2 text-[10px] leading-snug text-muted-foreground">
+              Upper 1 + Upper 2 match the same SKU.
+            </p>
+          )}
           <div className="flex items-center justify-between mt-2">
             <p className="text-xs text-muted-foreground">
               {filtered.length} of {styleList.length} styles
