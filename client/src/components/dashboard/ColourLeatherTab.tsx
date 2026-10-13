@@ -12,6 +12,7 @@ import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { trpc } from "@/lib/trpc";
 import { displayColourLeather } from "@/lib/utils";
 import { useSeason } from "@/contexts/SeasonContext";
+import { matchesColourLeatherUpperSearch } from "@shared/colourLeatherUpperSearch";
 
 interface ComboSku {
   style: string;
@@ -19,6 +20,8 @@ interface ComboSku {
   last: string;
   isNew: boolean;
   imageUrl: string;
+  /** Full physical secondary upper label, when this SKU is a dual upper. */
+  upper2Label?: string;
 }
 
 interface Combo {
@@ -120,6 +123,7 @@ function buildCombosFromRaw(): Combo[] {
 
 export default function ColourLeatherTab() {
   const [search, setSearch] = useState("");
+  const [upper2Search, setUpper2Search] = useState("");
   const [filter, setFilter] = useState<"all" | "new" | "existing">("all");
   const [openKeys, setOpenKeys] = useState<Set<string>>(new Set());
   const { season } = useSeason();
@@ -156,7 +160,9 @@ export default function ColourLeatherTab() {
     for (const s of skuData.styles) styleInfoMap.set(s.style, { category: s.category, last: s.last });
 
     // Filter cancelled styles and cancelled SKUs from mergedRawSkus
-    const allRawSkus = (mergedRawSkus as unknown as Array<{ style: string; colour: string; leather: string; is_new: boolean }>).filter(
+    const allRawSkus = (mergedRawSkus as unknown as Array<{
+      style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean;
+    }>).filter(
       (sku) =>
         !cancelledStyleSet.has(sku.style) &&
         !cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)
@@ -182,6 +188,7 @@ export default function ColourLeatherTab() {
         last: info?.last ?? "",
         isNew: sku.is_new,
         imageUrl: imageMap.get(sku.style) ?? "",
+        upper2Label: displayColourLeather(sku.colour2 ?? "", sku.leather2 ?? "", sku.style),
       });
     }
     return Array.from(map.values()).sort((a, b) => b.totalCount - a.totalCount || a.key.localeCompare(b.key));
@@ -189,16 +196,16 @@ export default function ColourLeatherTab() {
 
   const filtered = useMemo(() => {
     const results = ALL_COMBOS.filter((combo) => {
-      const matchesSearch =
-        !search ||
-        combo.key.toLowerCase().includes(search.toLowerCase()) ||
-        combo.colour.toLowerCase().includes(search.toLowerCase()) ||
-        combo.leather.toLowerCase().includes(search.toLowerCase());
+      const matchingSkus = combo.skus.filter((sku) => matchesColourLeatherUpperSearch({
+        upper1Label: combo.key,
+        upper2Label: sku.upper2Label,
+      }, { upper1Query: search, upper2Query: upper2Search }));
+      const matchesSearch = matchingSkus.length > 0;
 
       const matchesFilter =
         filter === "all" ||
-        (filter === "new" && combo.newCount > 0) ||
-        (filter === "existing" && combo.existingCount > 0);
+        (filter === "new" && matchingSkus.some((sku) => sku.isNew)) ||
+        (filter === "existing" && matchingSkus.some((sku) => !sku.isNew));
 
       return matchesSearch && matchesFilter;
     });
@@ -210,7 +217,7 @@ export default function ColourLeatherTab() {
     }
     // filter === "all" keeps the default totalCount order from ALL_COMBOS
     return results;
-  }, [search, filter]);
+  }, [search, upper2Search, filter, ALL_COMBOS]);
 
   const toggleKey = (key: string) => {
     setOpenKeys((prev) => {
@@ -263,16 +270,31 @@ export default function ColourLeatherTab() {
       </div>
 
       {/* Search + expand/collapse */}
-      <div className="flex gap-3 items-center">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search colour or leather…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400"
-          />
+      <div className="flex gap-3 items-center flex-wrap">
+        <div className="flex flex-1 min-w-[18rem] max-w-2xl gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Filter by Upper 1…"
+              aria-label="Filter Colour Leather results by Upper 1"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400"
+            />
+          </div>
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-wide text-purple-700">U2</span>
+            <input
+              type="text"
+              placeholder="Filter by Upper 2…"
+              aria-label="Filter Colour Leather results by Upper 2"
+              title="Use with Upper 1 to find the exact two-upper SKU"
+              value={upper2Search}
+              onChange={(e) => setUpper2Search(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400"
+            />
+          </div>
         </div>
         <div className="flex gap-2">
           <button
@@ -291,9 +313,9 @@ export default function ColourLeatherTab() {
       </div>
 
       {/* Results count */}
-      {search && (
+      {(search || upper2Search) && (
         <p className="text-xs text-muted-foreground">
-          Showing {filtered.length} of {ALL_COMBOS.length} combinations
+          Showing {filtered.length} of {ALL_COMBOS.length} Upper 1 combinations. Upper 1 + Upper 2 match the same SKU.
         </p>
       )}
 
@@ -307,20 +329,21 @@ export default function ColourLeatherTab() {
 
         {filtered.map((combo) => {
           const isOpen = openKeys.has(combo.key);
-          // When filter=new, only show new skus in dropdown; when filter=existing, only existing
+          const matchingSkus = combo.skus.filter((sku) => matchesColourLeatherUpperSearch({
+            upper1Label: combo.key,
+            upper2Label: sku.upper2Label,
+          }, { upper1Query: search, upper2Query: upper2Search }));
+          // When a colour filter is active, show matching SKU rows only.
           const visibleSkus =
             filter === "new"
-              ? combo.skus.filter((s) => s.isNew)
+              ? matchingSkus.filter((s) => s.isNew)
               : filter === "existing"
-              ? combo.skus.filter((s) => !s.isNew)
-              : combo.skus;
+              ? matchingSkus.filter((s) => !s.isNew)
+              : matchingSkus;
 
-          const displayCount =
-            filter === "new"
-              ? combo.newCount
-              : filter === "existing"
-              ? combo.existingCount
-              : combo.totalCount;
+          const displayCount = visibleSkus.length;
+          const matchingNewCount = matchingSkus.filter((sku) => sku.isNew).length;
+          const matchingExistingCount = matchingSkus.length - matchingNewCount;
 
           return (
             <div
@@ -354,26 +377,26 @@ export default function ColourLeatherTab() {
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-foreground/10 text-foreground border border-border">
                     {displayCount} SKU{displayCount !== 1 ? "s" : ""}
                   </span>
-                  {combo.newCount > 0 ? (
+                  {matchingNewCount > 0 ? (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500 text-white">
                       <Star className="w-2.5 h-2.5" />
-                      {combo.newCount} new
+                      {matchingNewCount} new
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
                       0 new
                     </span>
                   )}
-                  {combo.existingCount > 0 && (
+                  {matchingExistingCount > 0 && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                      {combo.existingCount} existing
+                      {matchingExistingCount} existing
                     </span>
                   )}
                   {/* Mini image strip (up to 4 thumbnails) */}
                   <div className="hidden sm:flex -space-x-2">
                     {Array.from(
                       new Map(
-                        combo.skus.map((s) => [s.style, s.imageUrl])
+                        visibleSkus.map((s) => [s.style, s.imageUrl])
                       ).values()
                     )
                       .filter(Boolean)
@@ -437,6 +460,12 @@ export default function ColourLeatherTab() {
                         <span className="text-[10px] text-muted-foreground leading-tight">
                           {sku.category}
                         </span>
+
+                        {sku.upper2Label && (
+                          <span className="text-[10px] font-medium leading-tight text-purple-700">
+                            Upper 2 · {sku.upper2Label}
+                          </span>
+                        )}
 
                         {/* New/Existing badge */}
                         {sku.isNew ? (
