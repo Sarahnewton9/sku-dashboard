@@ -7,119 +7,24 @@
  */
 import { useState, useMemo } from "react";
 import { ChevronDown, ChevronRight, Search, Star } from "lucide-react";
-import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { trpc } from "@/lib/trpc";
-import { displayColourLeather } from "@/lib/utils";
 import { useSeason } from "@/contexts/SeasonContext";
-import { matchesColourLeatherUpperSearch } from "@shared/colourLeatherUpperSearch";
+import {
+  buildColourLeatherMaterialGroups,
+  type ColourLeatherMaterialGroup,
+  type ColourLeatherMaterialUsage,
+} from "@shared/colourLeatherGroups";
 
-interface ComboSku {
-  style: string;
+interface ComboSku extends ColourLeatherMaterialUsage {
   category: string;
   last: string;
-  isNew: boolean;
   imageUrl: string;
-  /** Full physical secondary upper label, when this SKU is a dual upper. */
-  upper2Label?: string;
 }
 
-interface Combo {
-  key: string;
-  colour: string;
-  leather: string;
-  totalCount: number;
-  newCount: number;
-  existingCount: number;
+interface Combo extends Omit<ColourLeatherMaterialGroup, "skus"> {
   skus: ComboSku[];
 }
-
-function buildCombos(): Combo[] {
-  const map = new Map<string, Combo>();
-
-  for (const style of skuData.styles) {
-    for (const sku of (style as any).rawSkus ?? []) {
-      const col: string = sku.colour ?? "";
-      const lth: string = sku.leather ?? "";
-      const key = displayColourLeather(col, lth);
-      if (!key) continue;
-
-      if (!map.has(key)) {
-        map.set(key, {
-          key,
-          colour: col,
-          leather: lth,
-          totalCount: 0,
-          newCount: 0,
-          existingCount: 0,
-          skus: [],
-        });
-      }
-      const combo = map.get(key)!;
-      combo.totalCount++;
-      if (sku.isNew) combo.newCount++;
-      else combo.existingCount++;
-      combo.skus.push({
-        style: style.style,
-        category: style.category,
-        last: style.last,
-        isNew: sku.isNew,
-        imageUrl: style.imageUrl ?? "",
-      });
-    }
-  }
-
-  return Array.from(map.values()).sort((a, b) => a.key.localeCompare(b.key));
-}
-
-// Build combos from rawSkus embedded in skuData
-function buildCombosFromRaw(): Combo[] {
-  const map = new Map<string, Combo>();
-  const rawSkus: Array<{
-    style: string; category: string; last: string;
-    colour: string; leather: string; is_new: boolean;
-  }> = (skuData as any).rawSkus ?? [];
-
-  // Build a quick imageUrl lookup
-  const imageMap = new Map<string, string>();
-  for (const s of skuData.styles) {
-    imageMap.set(s.style, (s as any).imageUrl ?? "");
-  }
-
-  for (const sku of rawSkus) {
-    const col = sku.colour ?? "";
-    const lth = sku.leather ?? "";
-    const key = displayColourLeather(col, lth);
-    if (!key) continue;
-
-    if (!map.has(key)) {
-      map.set(key, {
-        key,
-        colour: col,
-        leather: lth,
-        totalCount: 0,
-        newCount: 0,
-        existingCount: 0,
-        skus: [],
-      });
-    }
-    const combo = map.get(key)!;
-    combo.totalCount++;
-      if (sku.is_new) combo.newCount++;
-      else combo.existingCount++;
-      combo.skus.push({
-        style: sku.style,
-        category: sku.category,
-        last: sku.last,
-        isNew: sku.is_new,
-      imageUrl: imageMap.get(sku.style) ?? "",
-    });
-  }
-
-  return Array.from(map.values()).sort((a, b) => b.totalCount - a.totalCount || a.key.localeCompare(b.key));
-}
-
-// ALL_COMBOS is now built dynamically inside the component to include custom SKUs
 
 export default function ColourLeatherTab() {
   const [search, setSearch] = useState("");
@@ -148,17 +53,16 @@ export default function ColourLeatherTab() {
     [cancelledSkusRaw]
   );
 
-  // Build combos dynamically from mergedRawSkus (already includes custom SKUs)
-  const ALL_COMBOS = useMemo(() => {
-    // Build image map from mergedStyles
+  // Build material groups dynamically from the active physical SKU range. Each
+  // secondary upper is a first-class material group, not just a label below a
+  // primary-upper group.
+  const materialData = useMemo(() => {
     const imageMap = new Map<string, string>();
     for (const s of mergedStyles) imageMap.set(s.style, (s as any).imageUrl ?? "");
 
-    // Build style info map for category/last
     const styleInfoMap = new Map<string, { category: string; last: string }>();
-    for (const s of skuData.styles) styleInfoMap.set(s.style, { category: s.category, last: s.last });
+    for (const s of mergedStyles) styleInfoMap.set(s.style, { category: s.category, last: s.last });
 
-    // Filter cancelled styles and cancelled SKUs from mergedRawSkus
     const allRawSkus = (mergedRawSkus as unknown as Array<{
       style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean;
     }>).filter(
@@ -167,39 +71,34 @@ export default function ColourLeatherTab() {
         !cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)
     );
 
-    const map = new Map<string, Combo>();
-    for (const sku of allRawSkus) {
-      const col = sku.colour ?? "";
-      const lth = sku.leather ?? "";
-      const key = displayColourLeather(col, lth);
-      if (!key) continue;
-      if (!map.has(key)) {
-        map.set(key, { key, colour: col, leather: lth, totalCount: 0, newCount: 0, existingCount: 0, skus: [] });
-      }
-      const combo = map.get(key)!;
-      combo.totalCount++;
-      if (sku.is_new) combo.newCount++;
-      else combo.existingCount++;
-      const info = styleInfoMap.get(sku.style);
-      combo.skus.push({
-        style: sku.style,
-        category: info?.category ?? "",
-        last: info?.last ?? "",
-        isNew: sku.is_new,
-        imageUrl: imageMap.get(sku.style) ?? "",
-        upper2Label: displayColourLeather(sku.colour2 ?? "", sku.leather2 ?? "", sku.style),
-      });
-    }
-    return Array.from(map.values()).sort((a, b) => b.totalCount - a.totalCount || a.key.localeCompare(b.key));
+    const grouped = buildColourLeatherMaterialGroups(allRawSkus.map((sku) => ({
+      ...sku,
+      isNew: sku.is_new,
+    })));
+
+    return {
+      ...grouped,
+      groups: grouped.groups.map<Combo>((group) => ({
+        ...group,
+        skus: group.skus.map((sku) => {
+          const info = styleInfoMap.get(sku.style);
+          return {
+            ...sku,
+            category: info?.category ?? "",
+            last: info?.last ?? "",
+            imageUrl: imageMap.get(sku.style) ?? "",
+          };
+        }),
+      })),
+    };
   }, [mergedRawSkus, mergedStyles, cancelledStyleSet, cancelledSkuSet]);
+  const ALL_COMBOS = materialData.groups;
+  const normalizedSearch = search.trim().toLocaleLowerCase();
 
   const filtered = useMemo(() => {
     const results = ALL_COMBOS.filter((combo) => {
-      const matchingSkus = combo.skus.filter((sku) => matchesColourLeatherUpperSearch({
-        upper1Label: combo.key,
-        upper2Label: sku.upper2Label,
-      }, search));
-      const matchesSearch = matchingSkus.length > 0;
+      const matchingSkus = combo.skus;
+      const matchesSearch = !normalizedSearch || combo.key.toLocaleLowerCase().includes(normalizedSearch);
 
       const matchesFilter =
         filter === "all" ||
@@ -216,7 +115,7 @@ export default function ColourLeatherTab() {
     }
     // filter === "all" keeps the default totalCount order from ALL_COMBOS
     return results;
-  }, [search, filter, ALL_COMBOS]);
+  }, [normalizedSearch, filter, ALL_COMBOS]);
 
   const toggleKey = (key: string) => {
     setOpenKeys((prev) => {
@@ -230,8 +129,8 @@ export default function ColourLeatherTab() {
   const expandAll = () => setOpenKeys(new Set(filtered.map((c) => c.key)));
   const collapseAll = () => setOpenKeys(new Set());
 
-  const totalNew = useMemo(() => ALL_COMBOS.reduce((s, c) => s + c.newCount, 0), [ALL_COMBOS]);
-  const totalExisting = useMemo(() => ALL_COMBOS.reduce((s, c) => s + c.existingCount, 0), [ALL_COMBOS]);
+  const totalNew = materialData.newSkus;
+  const totalExisting = materialData.existingSkus;
 
   return (
     <div className="space-y-5">
@@ -242,7 +141,7 @@ export default function ColourLeatherTab() {
             Colour / Leather
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {ALL_COMBOS.length} combinations · {totalNew} new SKUs · {totalExisting} existing
+            {ALL_COMBOS.length} materials · {totalNew} new SKUs · {totalExisting} existing
           </p>
         </div>
 
@@ -300,7 +199,7 @@ export default function ColourLeatherTab() {
       {/* Results count */}
       {search && (
         <p className="text-xs text-muted-foreground">
-          Showing {filtered.length} of {ALL_COMBOS.length} Upper 1 combinations with a match in either Upper 1 or Upper 2.
+          Showing {filtered.length} of {ALL_COMBOS.length} materials used in either Upper 1 or Upper 2.
         </p>
       )}
 
@@ -314,11 +213,9 @@ export default function ColourLeatherTab() {
 
         {filtered.map((combo) => {
           const isOpen = openKeys.has(combo.key);
-          const matchingSkus = combo.skus.filter((sku) => matchesColourLeatherUpperSearch({
-            upper1Label: combo.key,
-            upper2Label: sku.upper2Label,
-          }, search));
-          // When a material search is active, show matching physical SKU rows only.
+          const matchingSkus = combo.skus;
+          // Each card represents one physical SKU using this material in the
+          // labelled upper position.
           const visibleSkus =
             filter === "new"
               ? matchingSkus.filter((s) => s.isNew)
@@ -405,9 +302,9 @@ export default function ColourLeatherTab() {
               {isOpen && (
                 <div className="border-t border-border bg-muted/20 px-4 py-3">
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                    {visibleSkus.map((sku, i) => (
+                    {visibleSkus.map((sku) => (
                       <div
-                        key={`${sku.style}-${i}`}
+                        key={sku.identity}
                         className={`rounded-lg border p-2.5 flex flex-col items-center gap-2 text-center transition-all ${
                           sku.isNew
                             ? "border-amber-300 bg-amber-50"
@@ -446,11 +343,9 @@ export default function ColourLeatherTab() {
                           {sku.category}
                         </span>
 
-                        {sku.upper2Label && (
-                          <span className="text-[10px] font-medium leading-tight text-purple-700">
-                            Upper 2 · {sku.upper2Label}
-                          </span>
-                        )}
+                        <span className="text-[10px] font-medium leading-tight text-purple-700">
+                          {sku.upperRole} · {combo.key}
+                        </span>
 
                         {/* New/Existing badge */}
                         {sku.isNew ? (

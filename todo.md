@@ -839,3 +839,8 @@
 - [x] Replaced the two-filter version with one practical material search on the W27 Colour/Leather page.
 - [x] The search returns a physical SKU when the term occurs in **either Upper 1 or Upper 2**, so users do not need to know where a material sits; expanded cards show the relevant Upper 2 label.
 - [x] Added regression coverage for Upper 1, Upper 2, either-upper, spacing/case and no-secondary-upper cases.
+
+## Colour/Leather Complete Upper 2 Material Groups (13 Oct 2026)
+- [x] Corrected the Colour/Leather data model so every active dual-upper SKU appears under **both** physical material groups, rather than only under Upper 1.
+- [x] Verified live W27 DIMA is saved as `CLOUD SUEDE/CLOUD SNAKE`, is not cancelled, and now appears in the `CLOUD SNAKE` group explicitly labelled **Upper 2 · CLOUD SNAKE**.
+- [x] A physical SKU using the same material in both uppers is counted once in that material group and labelled **Upper 1 + Upper 2**; different two-upper constructions remain separate physical SKUs.
