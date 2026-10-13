@@ -123,7 +123,6 @@ function buildCombosFromRaw(): Combo[] {
 
 export default function ColourLeatherTab() {
   const [search, setSearch] = useState("");
-  const [upper2Search, setUpper2Search] = useState("");
   const [filter, setFilter] = useState<"all" | "new" | "existing">("all");
   const [openKeys, setOpenKeys] = useState<Set<string>>(new Set());
   const { season } = useSeason();
@@ -199,7 +198,7 @@ export default function ColourLeatherTab() {
       const matchingSkus = combo.skus.filter((sku) => matchesColourLeatherUpperSearch({
         upper1Label: combo.key,
         upper2Label: sku.upper2Label,
-      }, { upper1Query: search, upper2Query: upper2Search }));
+      }, search));
       const matchesSearch = matchingSkus.length > 0;
 
       const matchesFilter =
@@ -217,7 +216,7 @@ export default function ColourLeatherTab() {
     }
     // filter === "all" keeps the default totalCount order from ALL_COMBOS
     return results;
-  }, [search, upper2Search, filter, ALL_COMBOS]);
+  }, [search, filter, ALL_COMBOS]);
 
   const toggleKey = (key: string) => {
     setOpenKeys((prev) => {
@@ -271,30 +270,16 @@ export default function ColourLeatherTab() {
 
       {/* Search + expand/collapse */}
       <div className="flex gap-3 items-center flex-wrap">
-        <div className="flex flex-1 min-w-[18rem] max-w-2xl gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Filter by Upper 1…"
-              aria-label="Filter Colour Leather results by Upper 1"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400"
-            />
-          </div>
-          <div className="relative flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-wide text-purple-700">U2</span>
-            <input
-              type="text"
-              placeholder="Filter by Upper 2…"
-              aria-label="Filter Colour Leather results by Upper 2"
-              title="Use with Upper 1 to find the exact two-upper SKU"
-              value={upper2Search}
-              onChange={(e) => setUpper2Search(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400"
-            />
-          </div>
+        <div className="relative flex-1 min-w-[18rem] max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search Upper 1 or Upper 2…"
+            aria-label="Search Colour Leather results by Upper 1 or Upper 2"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400"
+          />
         </div>
         <div className="flex gap-2">
           <button
@@ -313,9 +298,9 @@ export default function ColourLeatherTab() {
       </div>
 
       {/* Results count */}
-      {(search || upper2Search) && (
+      {search && (
         <p className="text-xs text-muted-foreground">
-          Showing {filtered.length} of {ALL_COMBOS.length} Upper 1 combinations. Upper 1 + Upper 2 match the same SKU.
+          Showing {filtered.length} of {ALL_COMBOS.length} Upper 1 combinations with a match in either Upper 1 or Upper 2.
         </p>
       )}
 
@@ -332,8 +317,8 @@ export default function ColourLeatherTab() {
           const matchingSkus = combo.skus.filter((sku) => matchesColourLeatherUpperSearch({
             upper1Label: combo.key,
             upper2Label: sku.upper2Label,
-          }, { upper1Query: search, upper2Query: upper2Search }));
-          // When a colour filter is active, show matching SKU rows only.
+          }, search));
+          // When a material search is active, show matching physical SKU rows only.
           const visibleSkus =
             filter === "new"
               ? matchingSkus.filter((s) => s.isNew)

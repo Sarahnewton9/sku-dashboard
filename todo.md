@@ -835,7 +835,7 @@
 - [x] Filters can be used independently or together; when both Upper 1 and Upper 2 are supplied, they must match the **same physical SKU**, preventing false matches from two separate colourways on one style.
 - [x] Kept a compact direct lookup option in the main field (for example `ECRU SNAKE/LIPSTICK SUEDE`). Verified against live ROBYN W27 dual-upper SKUs and added regression coverage for Upper 2-only, exact same-SKU, false split-SKU and compact lookup cases.
 
-## Colour/Leather Upper 1 + Upper 2 Search (13 Oct 2026)
-- [x] Added independent Upper 1 and Upper 2 filters to the W27 Colour/Leather analysis page.
-- [x] Search runs against each physical SKU under its Upper 1 group, so combined filters only return a genuine two-upper SKU; expanded cards now show the matching Upper 2 label.
-- [x] Added compact `UPPER 1/UPPER 2` lookup support and regression coverage for Upper 1-only, Upper 2-only, same-SKU combined, compact and no-Upper-2 cases.
+## Colour/Leather Either-Upper Search (13 Oct 2026)
+- [x] Replaced the two-filter version with one practical material search on the W27 Colour/Leather page.
+- [x] The search returns a physical SKU when the term occurs in **either Upper 1 or Upper 2**, so users do not need to know where a material sits; expanded cards show the relevant Upper 2 label.
+- [x] Added regression coverage for Upper 1, Upper 2, either-upper, spacing/case and no-secondary-upper cases.
