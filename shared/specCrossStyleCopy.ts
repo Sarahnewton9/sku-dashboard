@@ -1,4 +1,5 @@
 import { getSpecColourKeyCandidates, normalizeSpecColourPart } from "./specColourKey";
+import { getKnownSpecComponent, type SpecComponent } from "./specTemplates";
 
 export type CrossStyleSpecMap = Record<string, Record<string, string>>;
 
@@ -16,6 +17,25 @@ export type CrossStyleCustomRowCopy = {
   value: string;
   sortOrder: number;
 };
+
+export type CrossStyleComponentCopyPlan = {
+  /** Values whose semantic component exists in the target style template. */
+  componentRows: Array<{ style: string; colour: string; component: string; value: string }>;
+  /** Source-only components promoted into visible custom rows on the target. */
+  customRows: CrossStyleCustomRowCopy[];
+};
+
+function normaliseComponentLabel(value: string): string {
+  return value.trim().replace(/\s+/g, " ").toUpperCase();
+}
+
+function humaniseComponentKey(key: string): string {
+  return key
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 /**
  * Finds the source SKU's component values whether legacy data is stored using a
@@ -58,6 +78,84 @@ export function buildCrossStyleComponentCopies(
     component,
     value,
   })));
+}
+
+/**
+ * Plans a cross-style copy against the target template instead of blindly
+ * persisting source component IDs. Style-specific IDs (for example
+ * `roxie_leather_bow`) are not part of another style's template and would
+ * otherwise save successfully but never be rendered. When the target exposes a
+ * component with the same display label, its target key is used. Otherwise the
+ * source component is kept as a visible custom row with its original label.
+ */
+export function planCrossStyleComponentCopies(
+  targetStyle: string,
+  targetColourLabels: readonly string[],
+  sourceValues: Record<string, string>,
+  targetTemplate: readonly SpecComponent[],
+): CrossStyleComponentCopyPlan {
+  const targetByKey = new Map(targetTemplate.map((component) => [component.key, component]));
+  const targetByLabel = new Map<string, SpecComponent>();
+  for (const component of targetTemplate) {
+    const label = normaliseComponentLabel(component.label);
+    if (!targetByLabel.has(label)) targetByLabel.set(label, component);
+  }
+
+  type Candidate = {
+    value: string;
+    priority: number;
+    component?: SpecComponent;
+    custom?: CrossStyleCustomRowCopy;
+  };
+  const chosen = new Map<string, Candidate>();
+
+  for (const [sourceKey, rawValue] of Object.entries(sourceValues)) {
+    const value = rawValue.trim();
+    if (!value || sourceKey === "upper_1") continue;
+
+    const sourceComponent = getKnownSpecComponent(sourceKey);
+    const targetComponent = targetByKey.get(sourceKey)
+      ?? (sourceComponent ? targetByLabel.get(normaliseComponentLabel(sourceComponent.label)) : undefined);
+    const priority = targetByKey.has(sourceKey) ? 2 : 1;
+
+    if (targetComponent) {
+      const destination = `template:${targetComponent.key}`;
+      const previous = chosen.get(destination);
+      if (!previous || priority >= previous.priority) {
+        chosen.set(destination, { value, priority, component: targetComponent });
+      }
+      continue;
+    }
+
+    const title = sourceComponent?.label ?? humaniseComponentKey(sourceKey);
+    const section = sourceComponent?.section ?? "components";
+    const destination = `custom:${section}:${normaliseComponentLabel(title)}`;
+    const previous = chosen.get(destination);
+    if (!previous || priority >= previous.priority) {
+      chosen.set(destination, {
+        value,
+        priority,
+        custom: {
+          section,
+          title,
+          value,
+          sortOrder: targetTemplate.length + chosen.size,
+        },
+      });
+    }
+  }
+
+  const componentValues: Record<string, string> = {};
+  const customRows: CrossStyleCustomRowCopy[] = [];
+  for (const candidate of Array.from(chosen.values())) {
+    if (candidate.component) componentValues[candidate.component.key] = candidate.value;
+    if (candidate.custom) customRows.push(candidate.custom);
+  }
+
+  return {
+    componentRows: buildCrossStyleComponentCopies(targetStyle, targetColourLabels, componentValues),
+    customRows: customRows.sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title)),
+  };
 }
 
 /**

@@ -44,7 +44,7 @@ import { buildNewSpecColourColumns } from "@shared/specSeasonalColumns";
 import { isNewSpecStyleAwaitingCompletion, type SpecCompletionStatus } from "@shared/specCompletionQueue";
 import { matchesSpecsStyleSearchFilters } from "@shared/specsStyleSearch";
 import {
-  buildCrossStyleComponentCopies,
+  planCrossStyleComponentCopies,
   resolveCrossStyleSourceSpecs,
   selectCrossStyleCustomRowCopies,
 } from "@shared/specCrossStyleCopy";
@@ -926,7 +926,7 @@ interface SpecFormProps {
   onShowColumn: (colour: string) => void;
   onResetColour: (colour: string) => void;
   tableScrollRef?: React.MutableRefObject<HTMLDivElement | null>; // lifted up for external colour navigation
-  onBulkCopyCustomRowsFromStyle: (targetColours: string[], rows: Array<{ section: string; title: string; value: string; sortOrder: number }>, sourceRowKeys?: string[]) => void;
+  onBulkCopyCustomRowsFromStyle: (targetColours: string[], rows: Array<{ section: string; title: string; value: string; sortOrder: number }>) => void;
   /** Called once on mount so SpecsTab can register a swap function that replaces oldKey with newKey in localRowKeys.
    * If localRowKeys is null (no saved order yet), it initialises from the current unifiedRowIds first
    * so the row stays in its current position instead of jumping to the bottom. */
@@ -1036,7 +1036,7 @@ interface CrossStyleCopyPanelProps {
   currentColours: string[];
   currentColourLabels: string[];
   allStyleEntries: StyleEntry[];
-  onCopy: (sourceColourLabel: string, sourceRawColour: string, targetColours: string[], sourceSpecs: Record<string, string>, sourceCustomRows: CustomRowData[], sourceRowKeys?: string[]) => void;
+  onCopy: (sourceColourLabel: string, sourceRawColour: string, targetColours: string[], sourceSpecs: Record<string, string>, sourceCustomRows: CustomRowData[]) => void;
 }
 function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels, allStyleEntries, onCopy }: CrossStyleCopyPanelProps) {
   const [open, setOpen] = useState(false);
@@ -1056,11 +1056,6 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
   );
   // Fetch custom rows for the selected source style
   const { data: sourceCustomRowsRaw = [] } = trpc.specCustomRow.getByStyle.useQuery(
-    { style: sourceStyle! },
-    { enabled: !!sourceStyle }
-  );
-  // Fetch row order for the selected source style (to preserve custom row positions)
-  const { data: sourceRowOrderData } = trpc.specRowOrder.get.useQuery(
     { style: sourceStyle! },
     { enabled: !!sourceStyle }
   );
@@ -1110,7 +1105,7 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
     const sourceIndex = sourceEntry?.colours.indexOf(sourceColour) ?? -1;
     const sourceLabel = sourceEntry?.colourLabels[sourceIndex] ?? sourceColour;
     const sourceValues = resolveCrossStyleSourceSpecs(sourceSpecsMap, sourceLabel, sourceColour);
-    onCopy(sourceLabel, sourceColour, Array.from(targets), sourceValues, sourceCustomRowsRaw as CustomRowData[], sourceRowOrderData?.rowKeys ?? undefined);
+    onCopy(sourceLabel, sourceColour, Array.from(targets), sourceValues, sourceCustomRowsRaw as CustomRowData[]);
     reset();
   }
   function handleFullCopy() {
@@ -1122,10 +1117,7 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
       const targetLabel = colourMap[srcLabel];
       if (!targetLabel) continue; // skipped
       const sourceValues = resolveCrossStyleSourceSpecs(sourceSpecsMap, srcLabel, srcColourKey);
-      // Only pass sourceRowKeys on the first actual copy (row order is per-style,
-      // not per-colour). This also works when earlier source columns are skipped.
-      const rowKeys = copiedCount === 0 ? (sourceRowOrderData?.rowKeys ?? undefined) : undefined;
-      onCopy(srcLabel, srcColourKey, [targetLabel], sourceValues, sourceCustomRowsRaw as CustomRowData[], rowKeys);
+      onCopy(srcLabel, srcColourKey, [targetLabel], sourceValues, sourceCustomRowsRaw as CustomRowData[]);
       copiedCount++;
     }
     if (copiedCount === 0) {
@@ -1776,26 +1768,28 @@ function SpecForm({
           currentColours={entry.colours}
           currentColourLabels={entry.colourLabels}
           allStyleEntries={allStyleEntries}
-          onCopy={(sourceColourLabel, sourceRawColour, targetColours, sourceSpecs, sourceCustomRows, sourceRowKeys) => {
-            // Copy every populated component from the chosen source SKU into only
-            // the selected target SKU columns. Upper 1 is excluded by the helper.
-            const componentRows = buildCrossStyleComponentCopies(entry.style, targetColours, sourceSpecs);
-            if (componentRows.length > 0) onBulkCopy(componentRows);
+          onCopy={(sourceColourLabel, sourceRawColour, targetColours, sourceSpecs, sourceCustomRows) => {
+            // Components with a source-style-only key must be converted into a
+            // target custom row (or matched to the target's semantic component).
+            // Otherwise they save in the DB but cannot appear in the target grid.
+            const copyPlan = planCrossStyleComponentCopies(entry.style, targetColours, sourceSpecs, template);
+            if (copyPlan.componentRows.length > 0) onBulkCopy(copyPlan.componentRows);
 
-            // Copy custom rows from source style using the dedicated bulk procedure
-            // and preserves unselected target SKU columns.
-            if (sourceCustomRows.length > 0) {
-              const rowsToCopy = selectCrossStyleCustomRowCopies(
-                sourceCustomRows,
-                sourceColourLabel,
-                sourceRawColour,
-              );
-              if (rowsToCopy.length > 0) {
-                onBulkCopyCustomRowsFromStyle(targetColours, rowsToCopy, sourceRowKeys);
-              }
-            } else if (sourceRowKeys && sourceRowKeys.length > 0) {
-              // No custom rows but there is a row order to copy (template-only reorder)
-              onBulkCopyCustomRowsFromStyle(targetColours, [], sourceRowKeys);
+            // Copy manually added source rows as well, preserving only selected
+            // target SKU columns. Generated component rows take precedence when
+            // a manual row happens to share the same title.
+            const rowByIdentity = new Map(
+              selectCrossStyleCustomRowCopies(sourceCustomRows, sourceColourLabel, sourceRawColour)
+                .map((row) => [`${row.section}\u0000${row.title.trim().toUpperCase()}`, row]),
+            );
+            for (const row of copyPlan.customRows) {
+              rowByIdentity.set(`${row.section}\u0000${row.title.trim().toUpperCase()}`, row);
+            }
+            const customRowsToCopy = Array.from(rowByIdentity.values());
+            if (customRowsToCopy.length > 0) {
+              // Keep the target's existing row layout. Source row keys may name
+              // source-only template fields, which cannot be rendered on target.
+              onBulkCopyCustomRowsFromStyle(targetColours, customRowsToCopy);
             }
             toast.success(`Copied specs from ${sourceColourLabel} to ${targetColours.length} colour(s) (Upper 1 kept per-colour)`);
           }}
@@ -3893,7 +3887,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                 }
               }}
               onResetColour={handleResetColour}
-              onBulkCopyCustomRowsFromStyle={(targetColours, rows, sourceRowKeys) => {
+              onBulkCopyCustomRowsFromStyle={(targetColours, rows) => {
                 if (!selectedStyle) return;
                 bulkCopyFromStyleMutation.mutate(
                   {
@@ -3906,27 +3900,24 @@ export default function SpecsTab({}: SpecsTabProps) {
                   },
                   {
                     onSuccess: (data) => {
-                      // Remap source row order to target style using the returned new row IDs
-                      if (sourceRowKeys && sourceRowKeys.length > 0 && data.rowIds && data.rowIds.length > 0) {
-                        // Build section||title → newId map from the returned rowIds
-                        const idMap = new Map<string, number>();
-                        for (const r of data.rowIds) idMap.set(`${r.section}||${r.title}`, r.newId);
-                        // Remap c:{sourceId} keys in sourceRowKeys to c:{newId}
-                        // We need the source custom rows to do the remapping — fetch them from the query cache
-                        // The sourceRowKeys may contain c:{id} keys — we need to map those to new IDs
-                        // Since we don't have the source custom rows here, we pass the sourceRowKeys as-is
-                        // and let the server handle the remapping via the idMap
-                        // For now: apply the source row order directly, replacing any c:{id} keys
-                        // with the new c:{newId} keys using the idMap
-                        const remappedKeys = sourceRowKeys.map((key) => {
-                          if (!key.startsWith('c:')) return key;
-                          // We can't remap without knowing source section/title — skip custom key remapping
-                          // The custom rows will appear at the end (fallback position)
-                          return null;
-                        }).filter(Boolean) as string[];
-                        // Append the new custom row keys at the end of the remapped template keys
-                        const newCustomKeys = Array.from(idMap.values()).map((id) => `c:${id}`);
-                        const finalKeys = [...remappedKeys, ...newCustomKeys];
+                      if (data.rowIds && data.rowIds.length > 0) {
+                        // Preserve the target's layout. Appending only the returned
+                        // custom rows makes source-only fields visible without
+                        // importing source template keys that the target cannot render.
+                        const currentKeys = getRowKeysRef.current?.()
+                          ?? exportRowOrderData?.rowKeys
+                          ?? [];
+                        const newCustomKeys = data.rowIds.map((row) => `c:${row.newId}`);
+                        const newKeySet = new Set(newCustomKeys);
+                        const restoredOrExisting = currentKeys.map((key) => {
+                          const deletedKey = key.startsWith("deleted:") ? key.slice("deleted:".length) : key;
+                          return newKeySet.has(deletedKey) ? deletedKey : key;
+                        });
+                        const knownKeys = new Set(restoredOrExisting);
+                        const finalKeys = [
+                          ...restoredOrExisting,
+                          ...newCustomKeys.filter((key) => !knownKeys.has(key)),
+                        ];
                         if (finalKeys.length > 0) {
                           upsertRowOrderForColourExplosionMutation.mutate({ style: selectedStyle, rowKeys: finalKeys });
                         }

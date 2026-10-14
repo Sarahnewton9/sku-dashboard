@@ -844,3 +844,9 @@
 - [x] Corrected the Colour/Leather data model so every active dual-upper SKU appears under **both** physical material groups, rather than only under Upper 1.
 - [x] Verified live W27 DIMA is saved as `CLOUD SUEDE/CLOUD SNAKE`, is not cancelled, and now appears in the `CLOUD SNAKE` group explicitly labelled **Upper 2 · CLOUD SNAKE**.
 - [x] A physical SKU using the same material in both uppers is counted once in that material group and labelled **Upper 1 + Upper 2**; different two-upper constructions remain separate physical SKUs.
+
+## Cross-Style Specs Copy Visibility Repair (14 Oct 2026)
+- [x] Fixed cross-style copying of style-specific spec components. Previously a source-only component ID (for example ROXIE's `roxie_leather_bow`) was written to the target but the target template could not render it, so the value looked missing.
+- [x] Copy now maps a same-named component to the target style's own key where available; otherwise it creates a visible target custom row with the original component label and copies only the selected SKU columns.
+- [x] Stopped copying a source style's row-order keys into the target, preserving the target layout and avoiding invisible source-only template keys.
+- [x] Repaired the existing ROXIE → RAZZLE TIGER PONY copy: **Grosgrain Topline = Matching**, **Leather Bow = Upper 1**, and **Toe Cap = Upper 1** are now saved against the correct RAZZLE SKU and visible in its sheet.

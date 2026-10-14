@@ -209,6 +209,23 @@ export const STYLE_COMPONENT_OVERRIDES: Record<string, StyleOverride> = {
 };
 
 /**
+ * Resolves the durable metadata for any known spec component key. This is used
+ * when a component is copied to a different style: a style-only component can
+ * then be displayed as a named custom row rather than becoming invisible data.
+ */
+export function getKnownSpecComponent(key: string): SpecComponent | undefined {
+  const universal = UNIVERSAL_TEMPLATE.find((component) => component.key === key);
+  if (universal) return universal;
+  if (BUCKLE_COMPONENT.key === key) return BUCKLE_COMPONENT;
+  if (SLING_BACK_COMPONENT.key === key) return SLING_BACK_COMPONENT;
+  for (const override of Object.values(STYLE_COMPONENT_OVERRIDES)) {
+    const component = override.add?.find((candidate) => candidate.key === key);
+    if (component) return component;
+  }
+  return undefined;
+}
+
+/**
  * Get the full component list for a style, injecting optional components based on meta
  * and applying any per-style overrides.
  */
