@@ -1669,15 +1669,14 @@ function SpecForm({
       )}
 
       {/* Factory-facing comments are always visible, rather than hidden in Settings. */}
-      <div className="rounded-lg border border-yellow-300 bg-yellow-50/70 p-3 dark:border-yellow-800 dark:bg-yellow-950/20">
-        <Label className="text-sm font-semibold block mb-1.5 text-yellow-950 dark:text-yellow-100">Comments</Label>
+      <div className="rounded-lg border bg-muted/20 p-3">
+        <Label className="text-sm font-semibold block mb-1.5">Comments</Label>
         <Textarea
           value={comments}
           onChange={(e) => onMetaChange({ notes: e.target.value })}
           placeholder="Add factory-facing comments for this style…"
-          className="text-xs min-h-[60px] resize-none border-yellow-300 bg-white/80 dark:border-yellow-800 dark:bg-background"
+          className="text-xs min-h-[60px] resize-none bg-background"
         />
-        <p className="mt-1.5 text-[11px] text-yellow-800 dark:text-yellow-200">Saved automatically. Exported sheets show a yellow COMMENTS row only when this has content.</p>
       </div>
 
       {/* Copy panels — collapsible */}

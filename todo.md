@@ -857,3 +857,5 @@
 - [x] Reformatted downloaded and emailed spec sheets to the approved factory order: Date, Last, Style Name, Brand, Season, optional **yellow COMMENTS** row, then the grey Components/Colour table. Blank comments omit the heading entirely.
 - [x] Preserved the supplied RAZZLE factory instruction as W27 Comments: **VAMP HEIGHT TO BE THE SAME AS COMMA**.
 - [x] Added import/export regression coverage and rendered an Excel/PDF visual check against the supplied RAZZLE example. Validation: production build passed; 175 isolated regression tests passed (the separate Resend account-validation test was unavailable because its external request stalled).
+
+- [x] Refined the on-screen Comments field to the standard neutral Specs style and removed the explanatory helper sentence; the yellow treatment is reserved for a populated exported factory COMMENTS row only.
