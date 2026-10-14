@@ -29,6 +29,8 @@ export interface ParsedSpecSheet {
   styleName: string;
   last: string;
   season: string;
+  /** Factory-facing comments from the optional yellow COMMENTS row. */
+  comments: string;
   /** colour name → component key → value */
   colourSpecs: Record<string, Record<string, string>>;
   /** columns that had no colour name (skipped) */
@@ -102,13 +104,16 @@ export async function parseSpecSheetFile(file: File): Promise<ParsedSpecSheet> {
   let styleName = "";
   let last = "";
   let season = "";
+  let comments = "";
 
   for (const row of raw) {
     const label = cellStr(row[0]).toUpperCase();
+    const normalizedLabel = label.replace(/\s+:/g, ":");
     const value = cellStr(row[1]);
-    if (label === "STYLE NAME:" || label === "STYLE NAME") styleName = value;
-    else if (label === "LAST:" || label === "LAST") last = value;
-    else if (label === "SEASON:" || label === "SEASON") season = value;
+    if (normalizedLabel === "STYLE NAME:" || normalizedLabel === "STYLE NAME") styleName = value;
+    else if (normalizedLabel === "LAST:" || normalizedLabel === "LAST") last = value;
+    else if (normalizedLabel === "SEASON:" || normalizedLabel === "SEASON") season = value;
+    else if (normalizedLabel === "COMMENTS:" || normalizedLabel === "COMMENTS" || normalizedLabel === "COMMENT:" || normalizedLabel === "COMMENT") comments = value;
   }
 
   // ── Find the COMPONENTS header row ────────────────────────────────────────
@@ -266,5 +271,5 @@ export async function parseSpecSheetFile(file: File): Promise<ParsedSpecSheet> {
 
   const detectedColours = Object.values(colourNames);
 
-  return { styleName, last, season, colourSpecs, skippedCols, unmatchedComponents, detectedColours };
+  return { styleName, last, season, comments, colourSpecs, skippedCols, unmatchedComponents, detectedColours };
 }

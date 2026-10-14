@@ -850,3 +850,10 @@
 - [x] Copy now maps a same-named component to the target style's own key where available; otherwise it creates a visible target custom row with the original component label and copies only the selected SKU columns.
 - [x] Stopped copying a source style's row-order keys into the target, preserving the target layout and avoiding invisible source-only template keys.
 - [x] Repaired the existing ROXIE → RAZZLE TIGER PONY copy: **Grosgrain Topline = Matching**, **Leather Bow = Upper 1**, and **Toe Cap = Upper 1** are now saved against the correct RAZZLE SKU and visible in its sheet.
+
+## Specs Comments and Factory Export Template (14 Oct 2026)
+- [x] Removed the category selector and its Settings dropdown from Specs. Category remains controlled by the range data, while a simple always-visible **Comments** field replaces the old Notes setting.
+- [x] Comments save automatically to the existing seasonal spec metadata and are now read from factory spec imports as well as stored from the editor.
+- [x] Reformatted downloaded and emailed spec sheets to the approved factory order: Date, Last, Style Name, Brand, Season, optional **yellow COMMENTS** row, then the grey Components/Colour table. Blank comments omit the heading entirely.
+- [x] Preserved the supplied RAZZLE factory instruction as W27 Comments: **VAMP HEIGHT TO BE THE SAME AS COMMA**.
+- [x] Added import/export regression coverage and rendered an Excel/PDF visual check against the supplied RAZZLE example. Validation: production build passed; 175 isolated regression tests passed (the separate Resend account-validation test was unavailable because its external request stalled).

@@ -917,7 +917,6 @@ interface SpecFormProps {
   onDeleteCustomRow: (id: number) => void;
   onReorderCustomRows: (section: string, orderedIds: number[]) => void;
   dbCategory: string | null;
-  onSetCategory: (category: string | null) => void;
   allCustomRowTitles: string[]; // for autocomplete
   allStyleEntries: StyleEntry[]; // for cross-style copy
   onHideColumn: (colour: string) => void;
@@ -934,20 +933,6 @@ interface SpecFormProps {
   /** Called once on mount so SpecsTab can register a getter that returns the current localRowKeys (or unifiedRowIds if null). */
   onRegisterGetRowKeys?: (getFn: () => string[]) => void;
 }
-
-const STYLE_CATEGORIES = [
-  "Dress Sandal",
-  "Dress Shoe",
-  "Casual Flat",
-  "Dress Wedge",
-  "Casual Wedge",
-  "Casual Ankle Boot",
-  "Dress Ankle Boot",
-  "Dress Calf Boot",
-  "Casual Calf Boot",
-  "Casual Sandal",
-  "Flat Sandal",
-];
 
 // ─── Fixed Bottom Scrollbar ──────────────────────────────────────────────────
 // A standard horizontal scrollbar anchored at the bottom of the open spec.
@@ -1265,7 +1250,7 @@ type UnifiedRow =
 function SpecForm({
   entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allDropdownOptionIds, allColourLeatherOptions, imageOverride, customRows,
   onUpsert, onBulkAutoFill, onBulkCopy, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption, onMetaChange, onAddSku, editableCustomSkus, onEditSku, onAddCustomRow, onUpdateCustomRow, onUpdateCustomRowForColour, onDeleteCustomRow, onReorderCustomRows,
-  dbCategory, onSetCategory, allCustomRowTitles, allStyleEntries,
+  dbCategory, allCustomRowTitles, allStyleEntries,
   onHideColumn, hiddenColumns, showHiddenColumns, onShowColumn, onResetColour,
   tableScrollRef: externalTableScrollRef,
   onBulkCopyCustomRowsFromStyle,
@@ -1274,7 +1259,6 @@ function SpecForm({
 }: SpecFormProps) {
   const [showAddSku, setShowAddSku] = useState(false);
   const [hideEmptyRows, setHideEmptyRows] = useState(true); // hide rows with no values by default
-  const [showSettings, setShowSettings] = useState(false); // collapse settings panel by default
   const [showCopyPanel, setShowCopyPanel] = useState(false); // collapse copy panel by default
   const [newSkuColour, setNewSkuColour] = useState("");
   const [newSkuLeather, setNewSkuLeather] = useState("");
@@ -1351,7 +1335,7 @@ function SpecForm({
   }, [customRowGroups]);
   const hasBuckle = specMeta?.hasBuckle ?? false;
   const dressShoeSubType = specMeta?.dressShoeSubType ?? null;
-  const notes = specMeta?.notes ?? "";
+  const comments = specMeta?.notes ?? "";
   // Use DB category override if set, otherwise fall back to static skuData category
   const effectiveCategory = dbCategory ?? entry.category;
   const isDressShoe = effectiveCategory === "Dress Shoe";
@@ -1684,67 +1668,17 @@ function SpecForm({
         </div>
       )}
 
-      {/* Style-level settings — collapsible */}
-      <div className="border rounded-lg overflow-hidden">
-        <button
-          onClick={() => setShowSettings(v => !v)}
-          className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/30 transition-colors"
-        >
-          <span>Settings (Category, Sub-type, Notes)</span>
-          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showSettings ? "rotate-180" : ""}`} />
-        </button>
-      {showSettings && <div className="flex flex-wrap gap-6 items-start p-3 bg-muted/30">
-        {/* Category selector */}
-        <div className="flex items-center gap-2">
-          <Label className="text-sm font-medium whitespace-nowrap">Category:</Label>
-          <Select
-            value={dbCategory ?? "__none__"}
-            onValueChange={(v) => onSetCategory(v === "__none__" ? null : v)}
-          >
-            <SelectTrigger className="h-8 w-44 text-xs">
-              <SelectValue placeholder="— not set —" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__" className="text-xs text-muted-foreground">— not set —</SelectItem>
-              {STYLE_CATEGORIES.map((cat) => (
-                <SelectItem key={cat} value={cat} className="text-xs">{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Dress shoe sub-type */}
-        {isDressShoe && (
-          <div className="flex items-center gap-2">
-            <Label className="text-sm font-medium">Sub-type:</Label>
-            <Select
-              value={dressShoeSubType ?? "none"}
-              onValueChange={(v) => onMetaChange({ dressShoeSubType: v === "none" ? null : v as "court" | "sling" })}
-            >
-              <SelectTrigger className="h-8 w-36 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none" className="text-xs">— not set —</SelectItem>
-                <SelectItem value="court" className="text-xs">Court (full)</SelectItem>
-                <SelectItem value="sling" className="text-xs">Sling Back</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {/* Notes */}
-        <div className="flex-1 min-w-[200px]">
-          <Label className="text-sm font-medium block mb-1">Notes</Label>
-          <Textarea
-            value={notes}
-            onChange={(e) => onMetaChange({ notes: e.target.value })}
-            placeholder="Free-text notes for this style…"
-            className="text-xs min-h-[60px] resize-none"
-          />
-        </div>
-      </div>}{/* end showSettings */}
-      </div>{/* end settings border */}
+      {/* Factory-facing comments are always visible, rather than hidden in Settings. */}
+      <div className="rounded-lg border border-yellow-300 bg-yellow-50/70 p-3 dark:border-yellow-800 dark:bg-yellow-950/20">
+        <Label className="text-sm font-semibold block mb-1.5 text-yellow-950 dark:text-yellow-100">Comments</Label>
+        <Textarea
+          value={comments}
+          onChange={(e) => onMetaChange({ notes: e.target.value })}
+          placeholder="Add factory-facing comments for this style…"
+          className="text-xs min-h-[60px] resize-none border-yellow-300 bg-white/80 dark:border-yellow-800 dark:bg-background"
+        />
+        <p className="mt-1.5 text-[11px] text-yellow-800 dark:text-yellow-200">Saved automatically. Exported sheets show a yellow COMMENTS row only when this has content.</p>
+      </div>
 
       {/* Copy panels — collapsible */}
       <div className="border rounded-lg overflow-hidden">
@@ -2983,22 +2917,12 @@ export default function SpecsTab({}: SpecsTabProps) {
   }
 
   // ── Style category (DB-stored, overrides static skuData category) ──────────
-  const { data: allStyleMeta = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery();
+  const { data: allStyleMeta = [] } = trpc.style.getAll.useQuery();
   const styleMetaMap = useMemo(
     () => Object.fromEntries(allStyleMeta.map((m: any) => [m.style, m])),
     [allStyleMeta]
   );
   const dbCategory: string | null = selectedStyle ? (styleMetaMap[selectedStyle]?.category ?? null) : null;
-
-  const setCategoryMutation = trpc.style.setCategory.useMutation({
-    onSuccess: () => { refetchStyleMeta(); },
-    onError: () => toast.error("Failed to save category"),
-  });
-
-  function handleSetCategory(category: string | null) {
-    if (!selectedStyle) return;
-    setCategoryMutation.mutate({ style: selectedStyle, category });
-  }
 
   // ── Mutations ─────────────────────────────────────────────────────────────
   const upsertMutation = trpc.specs.upsert.useMutation({
@@ -3217,7 +3141,10 @@ export default function SpecsTab({}: SpecsTabProps) {
     try {
       const rows = buildBulkRows(importParsed, selectedStyle);
       const result = await bulkUpsertMutation.mutateAsync({ rows, overwrite: importOverwrite });
-      toast.success(`Imported ${result.count} spec values for ${selectedStyle}`);
+      if (importParsed.comments.trim()) {
+        await upsertMetaMutation.mutateAsync({ style: selectedStyle, season, notes: importParsed.comments.trim() });
+      }
+      toast.success(`Imported ${result.count} spec values for ${selectedStyle}${importParsed.comments.trim() ? " and saved Comments" : ""}`);
       setImportParsed(null);
     } catch {
       toast.error("Failed to save imported specs");
@@ -3291,6 +3218,9 @@ export default function SpecsTab({}: SpecsTabProps) {
       try {
         const rows = buildBulkRows(item.parsed, effectiveStyle);
         const result = await bulkUpsertMutation.mutateAsync({ rows, overwrite: bulkOverwrite });
+        if (item.parsed.comments.trim()) {
+          await upsertMetaMutation.mutateAsync({ style: effectiveStyle, season, notes: item.parsed.comments.trim() });
+        }
         updatedResults[idx] = { ...updatedResults[idx], status: "done", savedCount: result.count };
         setBulkResults([...updatedResults]);
       } catch (e) {
@@ -3547,9 +3477,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                       customRows: rawCustomRows as any[],
                       // Pass saved row order so export respects on-screen order and omits deleted rows
                       rowKeys: getRowKeysRef.current?.() ?? exportRowOrderData?.rowKeys ?? null,
-                      // Fitting info from style meta
-                      fitRating: styleMetaMap[selectedEntry.style]?.fitRating ?? null,
-                      fittingNotes: styleMetaMap[selectedEntry.style]?.fittingNotes ?? null,
+                      comments: specMeta?.notes ?? null,
                     });
                     // Export is the hand-off point for a new SKU spec sheet.
                     // Once sent out, it should leave the To Be Completed queue.
@@ -3588,8 +3516,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                 imageUrl: imageOverrides[selectedEntry.style] ?? selectedEntry.imageUrl,
                 customRows: rawCustomRows as any[],
                 rowKeys: getRowKeysRef.current?.() ?? exportRowOrderData?.rowKeys ?? null,
-                fitRating: styleMetaMap[selectedEntry.style]?.fitRating ?? null,
-                fittingNotes: styleMetaMap[selectedEntry.style]?.fittingNotes ?? null,
+                comments: specMeta?.notes ?? null,
               })}
               onSent={() => {
                 // Sending is also a completed hand-off for a new SKU Specs sheet.
@@ -3873,7 +3800,6 @@ export default function SpecsTab({}: SpecsTabProps) {
               onDeleteCustomRow={handleDeleteCustomRow}
               onReorderCustomRows={handleReorderCustomRows}
               dbCategory={dbCategory}
-              onSetCategory={handleSetCategory}
               allCustomRowTitles={allCustomRowTitles}
               allStyleEntries={styleList}
               onHideColumn={handleHideColumn}

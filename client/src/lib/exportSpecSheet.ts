@@ -7,11 +7,11 @@
  * - Font: Arial throughout
  * - Row 1: "Tony Bianco" bold 12pt | "Product Specification Report" regular 12pt
  * - Row 2: blank spacer
- * - Rows 3-7: DATE / LAST / STYLE NAME / BRAND / SEASON (Arial Bold 8pt)
- * - Row 8: blank spacer
- * - Row 9: COMPONENTS + "COLOUR 1" … "COLOUR 7" headers (Arial Bold 8pt, grey fill)
- * - Row 10: blank (colour labels row — empty in ROXIE, but we use it for colour names)
- * - Row 11+: component rows, blank spacer rows between groups
+ * - Rows 2-6: DATE / LAST / STYLE NAME / BRAND / SEASON (Arial Bold 8pt)
+ * - Optional COMMENTS row: yellow highlight, immediately before the component table
+ * - Next row: COMPONENTS + "COLOUR 1" … "COLOUR 7" headers (Arial Bold 8pt, grey fill)
+ * - Following row: colour labels
+ * - Remaining rows: component values
  * - After last component row: second block header (COMPONENTS / COLOUR 8…14) if needed
  * - Single column per colour (not merged pairs)
  * - Image in top-right area (rows 1-8)
@@ -52,10 +52,8 @@ export interface ExportSpecSheetParams {
   customRows?: CustomSpecRow[];
   /** Saved row order from spec_row_order.rowKeys — used to preserve on-screen order and omit deleted rows */
   rowKeys?: string[] | null;
-  /** Fit rating for this style: 'tts' | 'runs_small' | 'runs_large' */
-  fitRating?: string | null;
-  /** Free-text fitting notes, e.g. "Recommend half size down" */
-  fittingNotes?: string | null;
+  /** Factory-facing style comments, shown as a yellow COMMENTS row when present. */
+  comments?: string | null;
 }
 
 async function getImageNaturalSize(base64: string, mimeType: string): Promise<{ width: number; height: number }> {
@@ -135,6 +133,7 @@ const COLOURS_PER_BLOCK = 7;
 const LABEL_COL_WIDTH = 22;   // narrow label column — text wraps if needed
 const COLOUR_COL_WIDTH = 19;  // colour columns — text wraps if needed
 const GREY_FILL: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9D9D9" } };
+const COMMENT_FILL: ExcelJS.Fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFF00" } };
 
 export async function buildSpecSheetWorkbook(params: ExportSpecSheetParams): Promise<ExcelJS.Workbook> {
   const {
@@ -150,17 +149,8 @@ export async function buildSpecSheetWorkbook(params: ExportSpecSheetParams): Pro
     imageUrl,
     customRows = [],
     rowKeys,
-    fitRating,
-    fittingNotes,
+    comments,
   } = params;
-
-  // Build a human-readable fit label for the export header
-  const FIT_LABEL_MAP: Record<string, string> = {
-    tts: "True to Size",
-    runs_small: "Runs Small — Recommend Half Size Up",
-    runs_large: "Runs Large — Recommend Half Size Down",
-  };
-  const fitLabel = fitRating ? (FIT_LABEL_MAP[fitRating] ?? fitRating) : null;
 
   // Build custom rows lookup: repId → {title, section, valuesByColour}
   // Per-colour rows share the same title but have different ids. We group them by title,
@@ -390,25 +380,33 @@ export async function buildSpecSheetWorkbook(params: ExportSpecSheetParams): Pro
       r1c2.font = arialRegular12();
       currentRow++;
 
-      // ── Rows 2-6: metadata ────────────────────────────────────────────────
-      const headerRows: [string, string][] = [
-        ["DATE:", today],
-        ["LAST:", last.toUpperCase()],
-        ["STYLE NAME:", style.toUpperCase()],
-        ["BRAND:", "Tony Bianco"],
-        ["SEASON:", season],
-        ...(fitLabel ? [["FIT:", fitLabel] as [string, string]] : []),
-        ...(fittingNotes ? [["FIT NOTES:", fittingNotes] as [string, string]] : []),
+      // ── Metadata and optional factory comments ────────────────────────────
+      // The supplied RAZZLE reference sheet places comments directly after
+      // SEASON, highlighted in yellow, then starts the Components table.
+      const headerRows: Array<{ label: string; value: string; isComment?: boolean }> = [
+        { label: "DATE:", value: today },
+        { label: "LAST:", value: last.toUpperCase() },
+        { label: "STYLE NAME:", value: style.toUpperCase() },
+        { label: "BRAND:", value: "Tony Bianco" },
+        { label: "SEASON:", value: season },
+        ...(comments?.trim() ? [{ label: "COMMENTS :", value: comments.trim(), isComment: true }] : []),
       ];
-      for (const [label, value] of headerRows) {
-        ws.getRow(currentRow).height = 14;
+      for (const { label, value, isComment } of headerRows) {
+        ws.getRow(currentRow).height = isComment
+          ? Math.max(14, estimateRowHeight(value, COLOUR_COL_WIDTH * 3))
+          : 14;
         const lc = ws.getCell(currentRow, 1);
         lc.value = label;
         lc.font = arialBold8();
         ws.mergeCells(currentRow, 2, currentRow, Math.min(4, 1 + COLOURS_PER_BLOCK));
         const vc = ws.getCell(currentRow, 2);
         vc.value = value;
-        vc.font = arialBold8();
+        vc.font = isComment ? arialRegular8() : arialBold8();
+        if (isComment) {
+          lc.fill = COMMENT_FILL;
+          vc.fill = COMMENT_FILL;
+          vc.alignment = { vertical: "top", wrapText: true };
+        }
         currentRow++;
       }
 
