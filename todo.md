@@ -859,3 +859,9 @@
 - [x] Added import/export regression coverage and rendered an Excel/PDF visual check against the supplied RAZZLE example. Validation: production build passed; 175 isolated regression tests passed (the separate Resend account-validation test was unavailable because its external request stalled).
 
 - [x] Refined the on-screen Comments field to the standard neutral Specs style and removed the explanatory helper sentence; the yellow treatment is reserved for a populated exported factory COMMENTS row only.
+
+## Optional Buy Sheet FOB Cost Export (16 Oct 2026)
+- [x] Kept **Export Buy Sheet** as the clean operational export and added a separate **Export with Costs** action on every Buy Session.
+- [x] The cost version adds an optional `FOB (USD)` column using the saved W27 seasonal cost keyed to the full Upper 1 + Upper 2 identity, with legacy SKU FOB as a historical fallback. Blank cost data remains blank rather than being shown as zero.
+- [x] Removed `% BOUGHT` from every downloaded and emailed Buy Sheet; it remains an on-screen analysis measure only.
+- [x] Verified the live W27 `BUY 05.10` source has 220 purchased lines, including 179 lines with a saved FOB available to the new optional export. Added column-layout coverage; 177 isolated regression tests and the production build pass.

@@ -8,7 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
-import { Lock, Download, Mail, Plus, Clock, CheckCircle, Package, Trash2, Pencil, FileText, X, Send } from "lucide-react";
+import { Lock, Download, Mail, Plus, Clock, CheckCircle, Package, Trash2, Pencil, FileText, X, Send, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx-js-style";
 import { displayColourLeather } from "@/lib/utils";
@@ -18,7 +18,8 @@ import { getBuyMarketTotal, getStoredBuyMarketTotals } from "@shared/buyMarketTo
 import { isActiveBuySheetSessionItem } from "@shared/buySheetSkuExclusions";
 import { buildCancelledSkuKeySet } from "@shared/cancelledSkuIdentity";
 import { buildMarkdownSkuSet } from "@shared/markdownSku";
-import { formatBuyShare, getBuyShare } from "@shared/buyShare";
+import { formatBuyShare } from "@shared/buyShare";
+import { getBuySheetExportHeaders } from "@shared/buySheetExportColumns";
 import {
   buildAp21SkuColourDescriptionMap,
   resolveAp21SkuColourDescription,
@@ -55,7 +56,7 @@ export default function BuySessionsPanel() {
   const { data: exactCancelledSkuList = [] } = trpc.cancelledSku.listExact.useQuery({ season });
   const { data: markdownSkuList = [] } = trpc.markdown.list.useQuery();
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
-  const { data: styleMetaList = [] } = trpc.style.getAll.useQuery();
+  const { data: seasonCostList = [] } = trpc.sku.getSeasonCosts.useQuery({ season });
   const { data: subCategoryList = [] } = trpc.styleSubCategory.getAll.useQuery();
   const { data: trendFlagList = [] } = trpc.trendFlag.getAll.useQuery();
   const { data: ap21SkuColourDescriptionRows = [] } = trpc.ap21SkuColour.getAll.useQuery();
@@ -212,12 +213,24 @@ export default function BuySessionsPanel() {
   }, [mergedStyles, subCategoryList, trendFlagList]);
 
   const skuMetaMap = useMemo(() => {
-    const map: Record<string, { costPrice?: number | null; isSize11?: boolean }> = {};
+    const map: Record<string, { costPrice?: number | null; isSize11?: boolean; colour2?: string | null; leather2?: string | null }> = {};
     for (const m of skuMetaList as any[]) {
       map[`${m.style}|${m.colour}|${m.leather}`] = m;
     }
     return map;
   }, [skuMetaList]);
+
+  // Current-season FOBs are keyed to the complete Upper 1 + Upper 2 identity.
+  // This prevents one dual-upper SKU from borrowing another's factory cost.
+  const seasonCostMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const cost of seasonCostList as Array<{
+      style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; cost: number;
+    }>) {
+      map.set(getSkuCompositeIdentity(cost.style, cost.colour, cost.leather, cost.colour2, cost.leather2), Number(cost.cost));
+    }
+    return map;
+  }, [seasonCostList]);
 
   // Style-level Size 11 applies only when every active colourway is confirmed.
   const styleSize11Map = useMemo(() => {
@@ -233,14 +246,6 @@ export default function BuySessionsPanel() {
     return map;
   }, [mergedRawSkus, skuMetaMap]);
 
-  const styleMetaMap = useMemo(() => {
-    const map: Record<string, { rrp?: number | null }> = {};
-    for (const m of styleMetaList as any[]) {
-      map[m.style] = m;
-    }
-    return map;
-  }, [styleMetaList]);
-
   function handleCreate() {
     const name = newName.trim() || `Buy — ${new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" })}`;
     createMutation.mutate({ name });
@@ -251,7 +256,7 @@ export default function BuySessionsPanel() {
     lockMutation.mutate({ sessionId });
   }
 
-  function buildBuySessionWorkbook(sessionId: number, sessionName: string) {
+  function buildBuySessionWorkbook(sessionId: number, sessionName: string, includeCosts = false) {
     // Find the session object to get its date
     const session = allSessions.find((s) => s.id === sessionId);
 
@@ -263,7 +268,8 @@ export default function BuySessionsPanel() {
 
     type RowData = {
       category: string; last: string; size11: string;
-      style: string; colourDesc: string; ap21SkuColour: string; auQty: number; usaQty: number; nycQty: number; laQty: number; totalQty: number;
+      style: string; colourDesc: string; ap21SkuColour: string; fobUsd: number | null;
+      auQty: number; usaQty: number; nycQty: number; laQty: number; totalQty: number;
     };
 
     const allItems = items as Array<{
@@ -278,8 +284,12 @@ export default function BuySessionsPanel() {
       })
       .map((item) => {
         const styleInfo = styleInfoMap[item.style];
+        const sourceMeta = skuMetaMap[`${item.style}|${item.colour}|${item.leather}`];
+        const upper2Colour = item.colour2 ?? sourceMeta?.colour2 ?? "";
+        const upper2Leather = item.leather2 ?? sourceMeta?.leather2 ?? "";
+        const identity = getSkuCompositeIdentity(item.style, item.colour, item.leather, upper2Colour, upper2Leather);
         const colourDesc = skuExportLabelMap[getSkuCompositeIdentity(
-          item.style, item.colour, item.leather, item.colour2, item.leather2,
+          item.style, item.colour, item.leather, upper2Colour, upper2Leather,
         )]
           ?? displayColourLeather(item.colour, item.leather, item.style);
         const { au: auQty, usa: usaQty, nyc: nycQty, la: laQty } = getStoredBuyMarketTotals(item);
@@ -292,6 +302,10 @@ export default function BuySessionsPanel() {
           // Exact factory-approved AP21 wording, scoped to the full Upper 1 +
           // Upper 2 identity. Development wording remains a safe fallback.
           ap21SkuColour: resolveAp21SkuColourDescription(item, colourDesc, ap21SkuColourDescriptionMap),
+          // Prefer the current-season, composite-identity FOB. Legacy costs are
+          // retained only as a fallback for historical records without a newer
+          // seasonal cost.
+          fobUsd: seasonCostMap.get(identity) ?? sourceMeta?.costPrice ?? null,
           auQty,
           usaQty,
           nycQty,
@@ -319,17 +333,20 @@ export default function BuySessionsPanel() {
     const hasLa = rows.some((r) => r.laQty > 0);
 
     // Filename includes the active range season and session name.
-    const fileName = `${getSeasonFileLabel(season)}_${sessionName}_BUY.xlsx`;
+    const fileName = `${getSeasonFileLabel(season)}_${sessionName}_${includeCosts ? "BUY_WITH_COSTS" : "BUY"}.xlsx`;
 
     // ── Layout ────────────────────────────────────────────────────────────────────
-    // Columns: CATEGORY | LAST | SIZE 11 | STYLE | COLOUR | AP21 SKU COLOUR | market qty columns | TOTAL QTY | % BOUGHT
+    // Columns: CATEGORY | LAST | SIZE 11 | STYLE | COLOUR | AP21 SKU COLOUR |
+    // optional FOB (USD) | market qty columns | TOTAL QTY. Buy share stays in
+    // dashboard analysis and is intentionally omitted from all Buy Sheet files.
     // Row 1: Title merged across all columns
     // Row 2: Empty spacer
     // Row 3: Bold header row
     // Rows 4+: Data rows (plain white)
     // Last row: TOTAL
 
-    const COLS = 9 + (hasUsa ? 1 : 0) + (hasNyc ? 1 : 0) + (hasLa ? 1 : 0);
+    const headers = getBuySheetExportHeaders({ includeCosts, hasUsa, hasNyc, hasLa });
+    const COLS = headers.length;
     const sheetRows: (string | number)[][] = [];
     const rowTypes: string[] = [];
 
@@ -343,22 +360,18 @@ export default function BuySessionsPanel() {
     sheetRows.push([...emptyRow]);
     rowTypes.push("spacer");
     // Header
-    const headerRow = ["CATEGORY", "LAST", "SIZE 11", "STYLE", "COLOUR", "AP21 SKU COLOUR", "AU QTY"];
-    if (hasUsa) headerRow.push("USA QTY");
-    if (hasNyc) headerRow.push("NYC QTY");
-    if (hasLa) headerRow.push("LA QTY");
-    headerRow.push("TOTAL QTY", "% BOUGHT");
-    sheetRows.push(headerRow);
+    sheetRows.push(headers);
     rowTypes.push("header");
 
     // Data rows
     const sessionTotal = rows.reduce((sum, row) => sum + row.totalQty, 0);
     for (const r of rows) {
       const dataRow: (string | number)[] = [r.category, r.last, r.size11, r.style, r.colourDesc, r.ap21SkuColour, r.auQty];
+      if (includeCosts) dataRow.splice(6, 0, r.fobUsd != null && r.fobUsd > 0 ? r.fobUsd : "");
       if (hasUsa) dataRow.push(r.usaQty > 0 ? r.usaQty : "");
       if (hasNyc) dataRow.push(r.nycQty > 0 ? r.nycQty : "");
       if (hasLa) dataRow.push(r.laQty > 0 ? r.laQty : "");
-      dataRow.push(r.totalQty, getBuyShare(r.totalQty, sessionTotal) / 100);
+      dataRow.push(r.totalQty);
       sheetRows.push(dataRow);
       rowTypes.push("data");
     }
@@ -368,11 +381,13 @@ export default function BuySessionsPanel() {
     const totalUsa = rows.reduce((s, r) => s + r.usaQty, 0);
     const totalNyc = rows.reduce((s, r) => s + r.nycQty, 0);
     const totalLa = rows.reduce((s, r) => s + r.laQty, 0);
-    const totalRow: (string | number)[] = ["TOTAL", "", "", "", "", "", totalAu];
+    const totalRow: (string | number)[] = ["TOTAL", "", "", "", "", ""];
+    if (includeCosts) totalRow.push("");
+    totalRow.push(totalAu);
     if (hasUsa) totalRow.push(totalUsa);
     if (hasNyc) totalRow.push(totalNyc);
     if (hasLa) totalRow.push(totalLa);
-    totalRow.push(sessionTotal, 1);
+    totalRow.push(sessionTotal);
     sheetRows.push(totalRow);
     rowTypes.push("total");
 
@@ -383,7 +398,7 @@ export default function BuySessionsPanel() {
     if (hasUsa) qtyColWidths.push({ wch: 10.875 }); // USA QTY
     if (hasNyc) qtyColWidths.push({ wch: 10.875 }); // NYC QTY
     if (hasLa) qtyColWidths.push({ wch: 10.875 }); // LA QTY
-    qtyColWidths.push({ wch: 11.875 }, { wch: 11.875 }); // TOTAL QTY, % BOUGHT
+    qtyColWidths.push({ wch: 11.875 }); // TOTAL QTY
     ws["!cols"] = [
       { wch: 20.875 }, // CATEGORY
       { wch: 14.875 }, // LAST
@@ -391,6 +406,7 @@ export default function BuySessionsPanel() {
       { wch: 12.875 }, // STYLE
       { wch: 23.875 }, // COLOUR
       { wch: 25.875 }, // AP21 SKU COLOUR
+      ...(includeCosts ? [{ wch: 12.875 }] : []), // FOB (USD)
       ...qtyColWidths,
     ];
 
@@ -410,7 +426,8 @@ export default function BuySessionsPanel() {
     const darkFill = { patternType: "solid", fgColor: { rgb: "1A1A1A" } };
     const whiteFont = { name: "Calibri", sz: 12, bold: true, color: { rgb: "FFFFFF" } };
     const plainFont = { name: "Calibri", sz: 12, bold: false };
-    const qtyColIndices = Array.from({ length: COLS - 6 }, (_, index) => 6 + index);
+    const firstQtyCol = includeCosts ? 7 : 6;
+    const qtyColIndices = Array.from({ length: COLS - firstQtyCol }, (_, index) => firstQtyCol + index);
 
     // Apply styles
     for (let R = 0; R < sheetRows.length; R++) {
@@ -421,9 +438,10 @@ export default function BuySessionsPanel() {
 
         const isQtyCol = qtyColIndices.includes(C);
 
-        // The final column is stored as a decimal for Excel's native percentage formatting.
-        if (C === COLS - 1 && (type === "data" || type === "total")) {
-          ws[addr].z = "0.0%";
+        // Costed Buy Sheets use a numeric USD column. Missing costs stay blank
+        // instead of being represented as a zero cost.
+        if (includeCosts && C === 6 && type === "data" && typeof ws[addr].v === "number") {
+          ws[addr].z = 'US$#,##0.00';
         }
 
         if (type === "title") {
@@ -460,11 +478,11 @@ export default function BuySessionsPanel() {
     return { wb, fileName, rowCount: rows.length };
   }
 
-  function exportSession(sessionId: number, sessionName: string) {
+  function exportSession(sessionId: number, sessionName: string, includeCosts = false) {
     try {
-      const { wb, fileName, rowCount } = buildBuySessionWorkbook(sessionId, sessionName);
-    XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
-      toast.success(`Exported ${rowCount} SKUs to ${fileName}`);
+      const { wb, fileName, rowCount } = buildBuySessionWorkbook(sessionId, sessionName, includeCosts);
+      XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
+      toast.success(`Exported ${rowCount} SKUs${includeCosts ? " with saved FOB costs" : ""} to ${fileName}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to export the buy sheet.");
       if (sessionId !== selectedSessionId) setSelectedSessionId(sessionId);
@@ -784,6 +802,15 @@ export default function BuySessionsPanel() {
                     >
                       <Download className="w-3.5 h-3.5" />
                       Export Buy Sheet
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); exportSession(session.id, session.name, true); }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700"
+                      style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+                      title="Export this Buy Sheet with the saved FOB cost for each SKU"
+                    >
+                      <DollarSign className="w-3.5 h-3.5" />
+                      Export with Costs
                     </button>
                     <button
                       onClick={(e) => {
