@@ -19,7 +19,7 @@ import { isActiveBuySheetSessionItem } from "@shared/buySheetSkuExclusions";
 import { buildCancelledSkuKeySet } from "@shared/cancelledSkuIdentity";
 import { buildMarkdownSkuSet } from "@shared/markdownSku";
 import { formatBuyShare } from "@shared/buyShare";
-import { BUY_SHEET_FOB_USD_NUMBER_FORMAT, getBuySheetExportHeaders } from "@shared/buySheetExportColumns";
+import { getBuySheetExportHeaders } from "@shared/buySheetExportColumns";
 import {
   buildAp21SkuColourDescriptionMap,
   resolveAp21SkuColourDescription,
@@ -437,12 +437,6 @@ export default function BuySessionsPanel() {
         if (!ws[addr]) ws[addr] = { v: "", t: "s" };
 
         const isQtyCol = qtyColIndices.includes(C);
-
-        // Costed Buy Sheets use a numeric USD column. Missing costs stay blank
-        // instead of being represented as a zero cost.
-        if (includeCosts && C === 6 && type === "data" && typeof ws[addr].v === "number") {
-          ws[addr].z = BUY_SHEET_FOB_USD_NUMBER_FORMAT;
-        }
 
         if (type === "title") {
           ws[addr].s = {

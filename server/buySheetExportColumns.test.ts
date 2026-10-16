@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as XLSX from "xlsx-js-style";
-import { BUY_SHEET_FOB_USD_NUMBER_FORMAT, getBuySheetExportHeaders } from "@shared/buySheetExportColumns";
+import { getBuySheetExportHeaders } from "@shared/buySheetExportColumns";
 
 describe("Buy Sheet export columns", () => {
   it("keeps the standard Buy Sheet free of buy share and cost columns", () => {
@@ -17,10 +17,9 @@ describe("Buy Sheet export columns", () => {
     ]);
   });
 
-  it("keeps FOB values numeric when the workbook is read back", () => {
+  it("keeps FOB values numeric without adding a custom currency format", () => {
     const workbook = XLSX.utils.book_new();
     const sheet = XLSX.utils.aoa_to_sheet([["FOB (USD)"], [31.5]]);
-    sheet.A2.z = BUY_SHEET_FOB_USD_NUMBER_FORMAT;
     XLSX.utils.book_append_sheet(workbook, sheet, "Buy Sheet");
 
     const output = XLSX.write(workbook, { type: "buffer", bookType: "xlsx", cellStyles: true });
@@ -29,6 +28,6 @@ describe("Buy Sheet export columns", () => {
 
     expect(fob?.t).toBe("n");
     expect(fob?.v).toBe(31.5);
-    expect(fob?.z).toBe(BUY_SHEET_FOB_USD_NUMBER_FORMAT);
+    expect(fob?.z).toBe("General");
   });
 });

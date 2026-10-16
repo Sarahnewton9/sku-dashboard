@@ -867,3 +867,5 @@
 - [x] Verified the live W27 `BUY 05.10` source has 220 purchased lines, including 179 lines with a saved FOB available to the new optional export. Added column-layout coverage; 177 isolated regression tests and the production build pass.
 
 - [x] Repaired the first cost-export workbook format: the unquoted `US$` number format could be interpreted as a date/time token by spreadsheet readers. FOB now uses the standards-safe literal format `"US$"#,##0.00`. Added a workbook round-trip regression test and verified the generated XLSX opens through OpenPyXL and LibreOffice. Validation: 178 isolated regression tests and production build pass.
+
+- [x] Replaced the fragile custom FOB currency format completely after Microsoft Excel still flagged the file. The `FOB (USD)` header now carries the currency context and each cost is written as a plain numeric cell with no custom number-format XML. Verified ZIP structure, OpenPyXL readback, LibreOffice conversion, 178 isolated tests and production build.
