@@ -869,3 +869,8 @@
 - [x] Repaired the first cost-export workbook format: the unquoted `US$` number format could be interpreted as a date/time token by spreadsheet readers. FOB now uses the standards-safe literal format `"US$"#,##0.00`. Added a workbook round-trip regression test and verified the generated XLSX opens through OpenPyXL and LibreOffice. Validation: 178 isolated regression tests and production build pass.
 
 - [x] Replaced the fragile custom FOB currency format completely after Microsoft Excel still flagged the file. The `FOB (USD)` header now carries the currency context and each cost is written as a plain numeric cell with no custom number-format XML. Verified ZIP structure, OpenPyXL readback, LibreOffice conversion, 178 isolated tests and production build.
+
+## Larger Specs Product Image (20 Oct 2026)
+- [x] Moved the Specs product image from the small cropped style thumbnail into the centred header area beneath the toolbar.
+- [x] Enlarged the preview to 240 × 160 px and changed it to `object-contain`, so the whole shoe is visible without cropping.
+- [x] Added the latest recorded sample date/type as a bottom-left overlay when available; blank sample metadata produces no overlay. Added regression coverage; 181 isolated tests and production build pass.

@@ -43,6 +43,7 @@ import { getSeasonDisplayLabel } from "@shared/seasonLabel";
 import { buildNewSpecColourColumns } from "@shared/specSeasonalColumns";
 import { isNewSpecStyleAwaitingCompletion, type SpecCompletionStatus } from "@shared/specCompletionQueue";
 import { matchesSpecsStyleSearchFilters } from "@shared/specsStyleSearch";
+import { getSpecImageSampleOverlay } from "@shared/specImageSampleOverlay";
 import {
   planCrossStyleComponentCopies,
   resolveCrossStyleSourceSpecs,
@@ -898,7 +899,6 @@ interface SpecFormProps {
   allDropdownOptions: Record<string, string[]>;
   allDropdownOptionIds: Record<string, Record<string, number>>;
   allColourLeatherOptions: string[];
-  imageOverride?: string;
   customRows: CustomRowData[];
   onUpsert: (colour: string, component: string, value: string) => void;
   onBulkAutoFill: (rows: Array<{ style: string; colour: string; component: string; value: string }>) => void;
@@ -1248,7 +1248,7 @@ type UnifiedRow =
   | { kind: "custom"; id: string; row: CustomRowData; rowGroup: Map<string, CustomRowData> };
 
 function SpecForm({
-  entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allDropdownOptionIds, allColourLeatherOptions, imageOverride, customRows,
+  entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allDropdownOptionIds, allColourLeatherOptions, customRows,
   onUpsert, onBulkAutoFill, onBulkCopy, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption, onMetaChange, onAddSku, editableCustomSkus, onEditSku, onAddCustomRow, onUpdateCustomRow, onUpdateCustomRowForColour, onDeleteCustomRow, onReorderCustomRows,
   dbCategory, allCustomRowTitles, allStyleEntries,
   onHideColumn, hiddenColumns, showHiddenColumns, onShowColumn, onResetColour,
@@ -1592,9 +1592,6 @@ function SpecForm({
     <div className="space-y-4">
       {/* Style header */}
       <div className="flex items-start gap-4 pb-4 border-b">
-        {(imageOverride || entry.imageUrl) && (
-          <img src={imageOverride ?? entry.imageUrl} alt={entry.style} className="w-16 h-16 object-cover rounded-lg border" />
-        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-semibold">{entry.style}</h2>
@@ -2618,6 +2615,14 @@ export default function SpecsTab({}: SpecsTabProps) {
   // Style image overrides
   const { data: imageOverrideList = [], refetch: refetchImageOverrides } = trpc.styleImage.getAll.useQuery();
   const imageOverrides = imageOverrideList.reduce<Record<string, string>>((acc, o) => { acc[o.style] = o.imageUrl; return acc; }, {});
+  const { data: selectedStyleFittingSessions = [] } = trpc.fittingSession.getForStyle.useQuery(
+    { style: selectedStyle ?? "", season },
+    { enabled: !!selectedStyle, staleTime: 30_000 },
+  );
+  const selectedImageSampleOverlay = useMemo(
+    () => getSpecImageSampleOverlay(selectedStyleFittingSessions),
+    [selectedStyleFittingSessions],
+  );
   const imageUploadRef = React.useRef<HTMLInputElement>(null);
   const uploadImageMutation = trpc.styleImage.upload.useMutation({
     onSuccess: () => { refetchImageOverrides(); toast.success("Image updated"); },
@@ -3524,40 +3529,68 @@ export default function SpecsTab({}: SpecsTabProps) {
                 }
               }}
             />
-            {/* AP21 size range selector */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground font-medium">AP21 Size Range:</span>
-              <Select
-                value={(ap21SizeRangeMap as Record<string, string>)[selectedStyle ?? ""] ?? "AU5-11"}
-                onValueChange={(val) => {
-                  if (!selectedStyle) return;
-                  setAp21SizeRangeMutation.mutate({ style: selectedStyle, sizeRange: val as any });
-                }}
-              >
-                <SelectTrigger className="h-7 text-xs w-36 border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="AU5-11" className="text-xs">AU 5–11 (half sizes)</SelectItem>
-                  <SelectItem value="AU6-9" className="text-xs">AU 6–9 (half sizes)</SelectItem>
-                  <SelectItem value="AU5-10" className="text-xs">AU 5–10 (full sizes)</SelectItem>
-                  <SelectItem value="EU35-42" className="text-xs">EU 35–42</SelectItem>
-                  <SelectItem value="EU35-41" className="text-xs">EU 36–41</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {/* AP21 Refs panel toggle */}
-            <div className="flex items-center gap-2">
-              <button
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setShowAp21RefsPanel((v) => !v)}
-              >
-                <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAp21RefsPanel ? "rotate-90" : ""}`} />
-                <span className="font-medium">AP21 Reference Fields</span>
-                {ap21StyleRefsData && Object.values(ap21StyleRefsData).some(v => v && typeof v === 'string' && v.length > 0) && (
-                  <span className="text-xs text-green-600 dark:text-green-400">✓ saved</span>
+            {/* The product image is intentionally centred beneath the toolbar so
+                it can display the full shoe instead of being cropped into the
+                small style header thumbnail. */}
+            <div className="grid min-h-40 grid-cols-1 items-center gap-4 lg:grid-cols-[minmax(0,1fr)_240px_minmax(0,1fr)]">
+              <div className="space-y-4 self-start">
+                {/* AP21 size range selector */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground font-medium">AP21 Size Range:</span>
+                  <Select
+                    value={(ap21SizeRangeMap as Record<string, string>)[selectedStyle ?? ""] ?? "AU5-11"}
+                    onValueChange={(val) => {
+                      if (!selectedStyle) return;
+                      setAp21SizeRangeMutation.mutate({ style: selectedStyle, sizeRange: val as any });
+                    }}
+                  >
+                    <SelectTrigger className="h-7 text-xs w-36 border-border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AU5-11" className="text-xs">AU 5–11 (half sizes)</SelectItem>
+                      <SelectItem value="AU6-9" className="text-xs">AU 6–9 (half sizes)</SelectItem>
+                      <SelectItem value="AU5-10" className="text-xs">AU 5–10 (full sizes)</SelectItem>
+                      <SelectItem value="EU35-42" className="text-xs">EU 35–42</SelectItem>
+                      <SelectItem value="EU35-41" className="text-xs">EU 36–41</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* AP21 Refs panel toggle */}
+                <div className="flex items-center gap-2">
+                  <button
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setShowAp21RefsPanel((v) => !v)}
+                  >
+                    <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAp21RefsPanel ? "rotate-90" : ""}`} />
+                    <span className="font-medium">AP21 Reference Fields</span>
+                    {ap21StyleRefsData && Object.values(ap21StyleRefsData).some(v => v && typeof v === 'string' && v.length > 0) && (
+                      <span className="text-xs text-green-600 dark:text-green-400">✓ saved</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="relative mx-auto h-40 w-full max-w-60 overflow-hidden rounded-xl border bg-muted/20 shadow-sm">
+                {(imageOverrides[selectedEntry.style] ?? selectedEntry.imageUrl) ? (
+                  <img
+                    src={imageOverrides[selectedEntry.style] ?? selectedEntry.imageUrl}
+                    alt={`${selectedEntry.style} product reference`}
+                    className="h-full w-full object-contain p-1"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center px-4 text-center text-xs text-muted-foreground">
+                    No product image yet
+                  </div>
                 )}
-              </button>
+                {selectedImageSampleOverlay && (
+                  <div className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] rounded-md bg-black/75 px-2 py-1 text-[10px] font-medium leading-tight text-white shadow-sm">
+                    {selectedImageSampleOverlay.sampleDate && <div>{selectedImageSampleOverlay.sampleDate}</div>}
+                    {selectedImageSampleOverlay.sampleType && <div>{selectedImageSampleOverlay.sampleType}</div>}
+                  </div>
+                )}
+              </div>
+              <div className="hidden lg:block" aria-hidden="true" />
             </div>
             {showAp21RefsPanel && selectedStyle && (
               <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-4">
@@ -3781,7 +3814,6 @@ export default function SpecsTab({}: SpecsTabProps) {
               allDropdownOptions={allDropdownOptions}
               allDropdownOptionIds={allDropdownOptionIds}
               allColourLeatherOptions={ALL_COLOUR_LEATHER_OPTIONS}
-              imageOverride={imageOverrides[selectedEntry.style]}
               customRows={rawCustomRows as any[]}
               onUpsert={handleUpsert}
               onBulkAutoFill={handleBulkAutoFill}
