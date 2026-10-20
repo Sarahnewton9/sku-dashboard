@@ -874,3 +874,9 @@
 - [x] Moved the Specs product image from the small cropped style thumbnail into the centred header area beneath the toolbar.
 - [x] Enlarged the preview to 240 × 160 px and changed it to `object-contain`, so the whole shoe is visible without cropping.
 - [x] Kept the enlarged image fully clean: it contains no sample date, sample type or other commentary overlay. Verified with 178 isolated tests and a production build.
+
+## W27 Sample Receipts — 15–17 Oct (20 Oct 2026)
+- [x] Marked 24 exact active W27 physical SKUs as **Received**, with sample type **#7**, across INVSP2200, INVSP2203 and INVSP2205.
+- [x] Confirmed slash identities before updating: EMILY `SERPE SNAKE/ESPRESSO SUEDE`, ELECTRIC `GEM NYLON/GEM SNAKE`, ROBYN `VINO PONY/VINO PATENT`, and ROBYN `ECRU SNAKE/ROYAL SUEDE` each now have an exact received record. ROBYN `ECRU SNAKE/LIPSTICK SUEDE` remains waiting.
+- [x] Made sample-status save/read/summary paths Upper-2-aware, with a backward-compatible primary-only fallback for existing single-upper metadata.
+- [ ] Awaiting confirmation for two lines not present as specified in W27: **ESTELLE Espresso Vintage** (only Espresso Suede exists) and **VIVID Garmen Leather** (no Garmen Leather colourway exists; active VIVID SKUs are Nappa).

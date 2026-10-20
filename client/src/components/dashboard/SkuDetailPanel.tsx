@@ -9,6 +9,7 @@ import { trpc } from "@/lib/trpc";
 import { X, CheckCircle, Clock, Save, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { displayColour, displayLeather } from "@/lib/utils";
+import { getSkuMetaCompositeKey } from "@shared/skuMetaIdentity";
 
 export interface SkuPanelData {
   style: string;
@@ -47,10 +48,6 @@ interface Props {
   allStyleSkus?: Array<{ colour: string; leather: string }>;
 }
 
-function skuKey(style: string, colour: string, leather: string) {
-  return `${style}|${colour}|${leather}`;
-}
-
 export default function SkuDetailPanel({
   sku,
   onClose,
@@ -69,7 +66,7 @@ export default function SkuDetailPanel({
 
   const utils = trpc.useUtils();
 
-  const meta = sku ? skuMeta[skuKey(sku.style, sku.colour, sku.leather)] : undefined;
+  const meta = sku ? skuMeta[getSkuMetaCompositeKey(sku)] : undefined;
   const effectiveCost = sku?.seasonalCost ?? meta?.costPrice;
   const styleRrp = sku ? styleMeta[sku.style]?.rrp : undefined;
   const effectiveRrp = meta?.rrpOverride ?? styleRrp;
@@ -119,7 +116,14 @@ export default function SkuDetailPanel({
       received: "waiting",
     };
     const next = cycle[current] ?? "fitting_sample";
-    updateMutation.mutate({ style: sku.style, colour: sku.colour, leather: sku.leather, sampleStatus: next });
+    updateMutation.mutate({
+      style: sku.style,
+      colour: sku.colour,
+      leather: sku.leather,
+      colour2: sku.colour2 ?? undefined,
+      leather2: sku.leather2 ?? undefined,
+      sampleStatus: next,
+    });
   }, [sku, meta, updateMutation]);
 
   const handleOrderQty = useCallback((val: string) => {

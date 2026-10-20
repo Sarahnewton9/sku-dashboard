@@ -12,6 +12,7 @@ import { ALL_LASTS } from "@shared/const";
 import { getSeasonFileLabel } from "@shared/seasonLabel";
 import { getSkuExportFields } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
+import { buildSkuMetaLookup, resolveSkuMeta } from "@shared/skuMetaIdentity";
 import { getBuyMarketTotal, sumBuyMarketTotals, type BuyMarketQuantities } from "@shared/buyMarketTotals";
 import { hasSize11ForAllColourways } from "@shared/size11";
 import { summariseStyleFobCosts } from "@shared/fobEstimates";
@@ -566,12 +567,26 @@ export default function StylesTab() {
     onError: (err) => toast.error(`Failed to update sample status: ${err.message}`),
   });
 
-  function handleSampleToggle(style: string, colour: string, leather: string, currentStatus: string | null | undefined) {
+  function handleSampleToggle(
+    style: string,
+    colour: string,
+    leather: string,
+    colour2: string | null | undefined,
+    leather2: string | null | undefined,
+    currentStatus: string | null | undefined,
+  ) {
     // Simple two-state toggle: waiting ↔ received
     // fitting_sample is set only via the Fittings tab, not here
     const newStatus: "waiting" | "received" =
       (currentStatus === "received") ? "waiting" : "received";
-    updateSampleStatusMutation.mutate({ style, colour, leather: leather ?? "", sampleStatus: newStatus });
+    updateSampleStatusMutation.mutate({
+      style,
+      colour,
+      leather: leather ?? "",
+      colour2: colour2 || undefined,
+      leather2: leather2 || undefined,
+      sampleStatus: newStatus,
+    });
   }
 
   // Style-level Size 11 mutation — updates ALL SKUs in the style
@@ -584,13 +599,19 @@ export default function StylesTab() {
   type SkuMetaItem = { style: string; colour: string; leather: string; sampleStatus?: string | null; orderQty?: number | null; isSize11?: boolean | null; costPrice?: number | null; rrpOverride?: number | null; fitRating?: string | null; fittingNotes?: string | null; colourOverride?: string | null; colour2?: string | null; leather2?: string | null; };
   type StyleMetaItem = { style: string; landedCost?: number | null; targetMargin?: number | null; rrp?: number | null; pricingSource?: string | null; fitRating?: string | null; fittingNotes?: string | null; fitApproved?: boolean | null; websiteImageUrl?: string | null; sizeRecommendation?: string | null; };
 
-  const skuMetaMap = useMemo(() => {
-    const map: Record<string, SkuMetaItem> = {};
-    for (const m of skuMetaList as SkuMetaItem[]) {
-      map[`${m.style}|${m.colour}|${m.leather}`] = m;
-    }
-    return map;
-  }, [skuMetaList]);
+  const skuMetaLookup = useMemo(
+    () => buildSkuMetaLookup(skuMetaList as SkuMetaItem[]),
+    [skuMetaList],
+  );
+  const skuMetaMap = skuMetaLookup.byPrimary;
+  const skuMetaByComposite = skuMetaLookup.byComposite;
+  const getSkuMetaFor = useCallback((sku: any) => resolveSkuMeta(skuMetaLookup, {
+    style: sku.style,
+    colour: sku._sourceColour ?? sku.colour,
+    leather: sku._sourceLeather ?? sku.leather,
+    colour2: sku.colour2 ?? "",
+    leather2: sku.leather2 ?? "",
+  }), [skuMetaLookup]);
 
   const seasonCostMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -613,9 +634,7 @@ export default function StylesTab() {
     const seen = new Set<string>();
     for (const sku of mergedRawSkus as any[]) {
       if (cancelledSet.has(sku.style) || cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) continue;
-      const sourceColour = sku._sourceColour ?? sku.colour;
-      const sourceLeather = sku._sourceLeather ?? sku.leather;
-      const dbMeta = skuMetaMap[`${sku.style}|${sourceColour}|${sourceLeather}`];
+      const dbMeta = getSkuMetaFor(sku);
       const colour2 = sku.colour2 ?? dbMeta?.colour2 ?? "";
       const leather2 = sku.leather2 ?? dbMeta?.leather2 ?? "";
       const identity = getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, colour2, leather2);
@@ -631,7 +650,7 @@ export default function StylesTab() {
       });
     }
     return summariseStyleFobCosts(colourways);
-  }, [mergedRawSkus, cancelledSet, cancelledSkuSet, skuMetaMap, seasonCostMap]);
+  }, [mergedRawSkus, cancelledSet, cancelledSkuSet, getSkuMetaFor, seasonCostMap]);
 
   // Buy session item lookup — uses selected session items, or falls back to most recent session for read-only display
   const sessionItemMap = useMemo(() => {
@@ -752,10 +771,7 @@ export default function StylesTab() {
         return categoryFilter === "All" || meta?.category === categoryFilter;
       })
       .map((sku) => {
-        const sourceColour = (sku as any)._sourceColour ?? sku.colour;
-        const sourceLeather = (sku as any)._sourceLeather ?? sku.leather;
-        const skuKey = `${sku.style}|${sourceColour}|${sourceLeather}` as string;
-        const dbMeta = skuMetaMap[skuKey];
+        const dbMeta = getSkuMetaFor(sku);
         const exportFields = getSkuExportFields({
           style: sku.style,
           colour: sku.colour,
@@ -803,9 +819,7 @@ export default function StylesTab() {
       if (cancelledSet.has(sku.style)) return [];
       if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) return [];
       if (markdownSkuSet.has(markdownKey(sku.style, sku.colour, sku.leather))) return [];
-      const sourceColour = (sku as any)._sourceColour ?? sku.colour;
-      const sourceLeather = (sku as any)._sourceLeather ?? sku.leather;
-      const dbMeta = skuMetaMap[`${sku.style}|${sourceColour}|${sourceLeather}`];
+      const dbMeta = getSkuMetaFor(sku);
       const colour2 = (sku as any).colour2 ?? dbMeta?.colour2 ?? "";
       const leather2 = (sku as any).leather2 ?? dbMeta?.leather2 ?? "";
       const compositeKey = getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, colour2, leather2);
@@ -834,7 +848,7 @@ export default function StylesTab() {
 
   const missingCostRequestRows = useMemo(
     () => getMissingCostRequestRows(),
-    [mergedRawSkus, mergedStyles, cancelledSet, cancelledSkuSet, markdownSkuSet, skuMetaMap, seasonCostMap, getCategory],
+    [mergedRawSkus, mergedStyles, cancelledSet, cancelledSkuSet, markdownSkuSet, getSkuMetaFor, seasonCostMap, getCategory],
   );
 
   // The returned factory file can be either the compact request spreadsheet or
@@ -846,9 +860,7 @@ export default function StylesTab() {
       if (cancelledSet.has(sku.style)) return [];
       if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) return [];
       if (markdownSkuSet.has(markdownKey(sku.style, sku.colour, sku.leather))) return [];
-      const sourceColour = (sku as any)._sourceColour ?? sku.colour;
-      const sourceLeather = (sku as any)._sourceLeather ?? sku.leather;
-      const dbMeta = skuMetaMap[`${sku.style}|${sourceColour}|${sourceLeather}`];
+      const dbMeta = getSkuMetaFor(sku);
       const colour2 = (sku as any).colour2 ?? dbMeta?.colour2 ?? "";
       const leather2 = (sku as any).leather2 ?? dbMeta?.leather2 ?? "";
       const key = getSkuCompositeIdentity(sku.style, sku.colour, sku.leather ?? "", colour2, leather2);
@@ -862,7 +874,7 @@ export default function StylesTab() {
         leather2,
       }];
     });
-  }, [mergedRawSkus, cancelledSet, cancelledSkuSet, markdownSkuSet, skuMetaMap]);
+  }, [mergedRawSkus, cancelledSet, cancelledSkuSet, markdownSkuSet, getSkuMetaFor]);
 
   function buildMissingCostRequestWorkbook() {
     const rows = buildFobRequestExportRows(missingCostRequestRows);
@@ -1095,9 +1107,7 @@ export default function StylesTab() {
     const sku = styleSkus.find((row) => row.is_new) ?? styleSkus[0];
     if (!styleInfo || !sku) return;
 
-    const sourceColour = (sku as any)._sourceColour ?? sku.colour;
-    const sourceLeather = (sku as any)._sourceLeather ?? sku.leather;
-    const dbMeta = skuMetaMap[`${sku.style}|${sourceColour}|${sourceLeather}`];
+    const dbMeta = getSkuMetaFor(sku);
     const colour2 = (sku as any).colour2 ?? dbMeta?.colour2 ?? null;
     const leather2 = (sku as any).leather2 ?? dbMeta?.leather2 ?? null;
     const seasonalCost = seasonCostMap.get(getSkuCompositeIdentity(
@@ -1161,8 +1171,7 @@ export default function StylesTab() {
     }
     const styleSkus = getSkusForStyle(styleName);
     return hasSize11ForAllColourways(styleSkus, (sku) => {
-      const key = `${sku.style}|${sku.colour}|${sku.leather}`;
-      return skuMetaMap[key]?.isSize11 === true;
+      return getSkuMetaFor(sku)?.isSize11 === true;
     });
   }
 
@@ -1202,8 +1211,7 @@ export default function StylesTab() {
     const newSkus = getSkusForStyle(styleName).filter((s) => s.is_new);
     if (newSkus.length === 0) return 'none';
     const receivedCount = newSkus.filter((sku) => {
-      const key = `${sku.style}|${sku.colour}|${sku.leather}`;
-      const s = skuMetaMap[key]?.sampleStatus;
+      const s = getSkuMetaFor(sku)?.sampleStatus;
       return s === 'received' || s === 'fitting_sample';
     }).length;
     if (receivedCount === 0) return 'none';
@@ -1224,7 +1232,16 @@ export default function StylesTab() {
     const newStatus = currentStatus === 'all' ? 'waiting' : 'received';
     // Fire mutations sequentially using Promise chain to avoid race conditions
     newSkus.reduce<Promise<void>>((p, sku) =>
-      p.then(() => { updateStyleSampleMutation.mutateAsync({ style: sku.style, colour: sku.colour, leather: sku.leather ?? '', sampleStatus: newStatus }); }),
+      p.then(async () => {
+        await updateStyleSampleMutation.mutateAsync({
+          style: sku.style,
+          colour: sku.colour,
+          leather: sku.leather ?? '',
+          colour2: (sku as any).colour2 || undefined,
+          leather2: (sku as any).leather2 || undefined,
+          sampleStatus: newStatus,
+        });
+      }),
       Promise.resolve()
     );
   }
@@ -2027,7 +2044,7 @@ export default function StylesTab() {
                                     const sourceColour = (sku as any)._sourceColour ?? sku.colour;
                                     const sourceLeather = (sku as any)._sourceLeather ?? sku.leather;
                                     const skuKey2 = `${sku.style}|${sourceColour}|${sourceLeather}`;
-                                    const dbMeta = skuMetaMap[skuKey2];
+                                    const dbMeta = getSkuMetaFor(sku);
                                     const currentColour2 = (sku as any).colour2 || dbMeta?.colour2 || "";
                                     const currentLeather2 = (sku as any).leather2 || dbMeta?.leather2 || "";
                                     const buySkuKey = getSkuCompositeIdentity(
@@ -2183,7 +2200,17 @@ export default function StylesTab() {
                                         {isNew && (
                                           <span className="text-xs text-center" onClick={(e) => e.stopPropagation()}>
                                             <button
-                                              onClick={(e) => { e.stopPropagation(); handleSampleToggle(sku.style, sourceColour, sourceLeather, dbMeta?.sampleStatus); }}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleSampleToggle(
+                                                  sku.style,
+                                                  sourceColour,
+                                                  sourceLeather,
+                                                  currentColour2,
+                                                  currentLeather2,
+                                                  dbMeta?.sampleStatus,
+                                                );
+                                              }}
                               title={
                                 dbMeta?.sampleStatus === "received" ? "Sample received — click to reset to waiting" :
                                 dbMeta?.sampleStatus === "fitting_sample" ? "Fitting sample received (set via Fittings tab)" :
@@ -2637,7 +2664,7 @@ export default function StylesTab() {
           stylePosition={visibleStyleNames.indexOf(selectedSku.style) >= 0
             ? { current: visibleStyleNames.indexOf(selectedSku.style) + 1, total: visibleStyleNames.length }
             : undefined}
-          skuMeta={skuMetaMap as any}
+          skuMeta={skuMetaByComposite as any}
           styleMeta={styleMetaMap as any}
           onMetaChange={handleMetaChange}
           season={season}

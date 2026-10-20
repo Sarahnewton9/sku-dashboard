@@ -225,7 +225,13 @@ export default function SummaryCards() {
     const newSkuKeys = new Set(
       mergedRawSkus
         .filter((s) => s.is_new && !cancelledStyleSet.has(s.style) && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`))
-        .map((s) => `${s.style}|${s.colour}|${s.leather}`)
+        .map((s) => getSkuCompositeIdentity(
+          s.style,
+          s.colour,
+          s.leather,
+          (s as any).colour2,
+          (s as any).leather2,
+        ))
     );
     const newSkuCount = newSkuKeys.size;
 
@@ -234,7 +240,7 @@ export default function SummaryCards() {
     let explicitlyWaiting = 0;
     const trackedNewKeys = new Set<string>();
     for (const m of skuMetaList) {
-      const key = `${m.style}|${m.colour}|${m.leather}`;
+      const key = getSkuCompositeIdentity(m.style, m.colour, m.leather, m.colour2, m.leather2);
       if (!newSkuKeys.has(key)) continue; // skip carry-over SKUs
       trackedNewKeys.add(key);
       if (m.sampleStatus === "received") received++;
@@ -255,7 +261,7 @@ export default function SummaryCards() {
     // Build a set of SKU keys that are in the DB with a status
     const skuStatusMap: Record<string, "waiting" | "fitting_sample" | "received"> = {};
     for (const m of skuMetaList) {
-      const key = `${m.style}|${m.colour}|${m.leather}`;
+      const key = getSkuCompositeIdentity(m.style, m.colour, m.leather, m.colour2, m.leather2);
       skuStatusMap[key] = m.sampleStatus as "waiting" | "fitting_sample" | "received";
     }
 
@@ -263,7 +269,6 @@ export default function SummaryCards() {
       if (!sku.is_new) continue;
       if (cancelledStyleSet.has(sku.style)) continue;
       if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) continue;
-      const statusKey = `${sku.style}|${sku.colour}|${sku.leather}`;
       const key = getSkuCompositeIdentity(
         sku.style,
         sku.colour,
@@ -272,9 +277,9 @@ export default function SummaryCards() {
         (sku as any).leather2,
       );
       const label = `${sku.style} — ${formatSkuExportLabel(sku)}`;
-      if (skuStatusMap[statusKey] === "received") {
+      if (skuStatusMap[key] === "received") {
         receivedSkus.push({ key, label });
-      } else if (skuStatusMap[statusKey] === "fitting_sample") {
+      } else if (skuStatusMap[key] === "fitting_sample") {
         receivedSkus.push({ key, label: `${label} (fitting)` });
       } else {
         waitingSkus.push({ key, label });

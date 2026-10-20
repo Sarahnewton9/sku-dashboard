@@ -134,11 +134,25 @@ export async function upsertSeasonSkuCosts(items: Array<{
   }
 }
 
-export async function getSkuMeta(style: string, colour: string, leather: string) {
+export async function getSkuMeta(
+  style: string,
+  colour: string,
+  leather: string,
+  colour2?: string | null,
+  leather2?: string | null,
+) {
   const db = await getDb();
   if (!db) return undefined;
+  const primaryIdentity = and(eq(skuMeta.style, style), eq(skuMeta.colour, colour), eq(skuMeta.leather, leather));
+  const hasSecondaryIdentity = colour2 !== undefined || leather2 !== undefined;
   const result = await db.select().from(skuMeta)
-    .where(and(eq(skuMeta.style, style), eq(skuMeta.colour, colour), eq(skuMeta.leather, leather)))
+    .where(hasSecondaryIdentity
+      ? and(
+        primaryIdentity,
+        eq(skuMeta.colour2, normalizeSkuIdentityPart(colour2)),
+        eq(skuMeta.leather2, normalizeSkuIdentityPart(leather2)),
+      )
+      : primaryIdentity)
     .limit(1);
   return result[0];
 }
@@ -160,7 +174,19 @@ export async function upsertSkuMeta(data: {
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const existing = await getSkuMeta(data.style, data.colour, data.leather);
+  // A sample status is a physical-SKU attribute. When Upper 2 is supplied,
+  // resolve only that exact construction instead of updating a sibling that
+  // shares Upper 1. Colour corrections still use the legacy primary lookup so
+  // their source metadata can be renamed safely.
+  const requestedColour2 = normalizeSkuIdentityPart(data.colour2);
+  const requestedLeather2 = normalizeSkuIdentityPart(data.leather2);
+  const useSecondaryIdentity = data.sampleStatus !== undefined
+    && Boolean(requestedColour2 || requestedLeather2)
+    && data.colourOverride === undefined
+    && data.leatherOverride === undefined;
+  const existing = useSecondaryIdentity
+    ? await getSkuMeta(data.style, data.colour, data.leather, requestedColour2, requestedLeather2)
+    : await getSkuMeta(data.style, data.colour, data.leather);
   const buyRename = getStaticSkuBuyRename(data, existing);
   if (existing) {
     const updateSet: Record<string, unknown> = {};
@@ -178,7 +204,12 @@ export async function upsertSkuMeta(data: {
     if (data.leather2 !== undefined) updateSet.leather2 = data.leather2;
     await db.update(skuMeta)
       .set(updateSet)
-      .where(and(eq(skuMeta.style, data.style), eq(skuMeta.colour, data.colour), eq(skuMeta.leather, data.leather)));
+      // Legacy metadata rows have no Upper 2, so retain their established
+      // primary-upper update behaviour. Exact two-upper rows update only the
+      // matching physical SKU.
+      .where(useSecondaryIdentity
+        ? eq(skuMeta.id, existing.id)
+        : and(eq(skuMeta.style, data.style), eq(skuMeta.colour, data.colour), eq(skuMeta.leather, data.leather)));
   } else {
     await db.insert(skuMeta).values({
       style: data.style,
