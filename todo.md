@@ -873,4 +873,4 @@
 ## Larger Specs Product Image (20 Oct 2026)
 - [x] Moved the Specs product image from the small cropped style thumbnail into the centred header area beneath the toolbar.
 - [x] Enlarged the preview to 240 × 160 px and changed it to `object-contain`, so the whole shoe is visible without cropping.
-- [x] Added the latest recorded sample date/type as a bottom-left overlay when available; blank sample metadata produces no overlay. Added regression coverage; 181 isolated tests and production build pass.
+- [x] Kept the enlarged image fully clean: it contains no sample date, sample type or other commentary overlay. Verified with 178 isolated tests and a production build.

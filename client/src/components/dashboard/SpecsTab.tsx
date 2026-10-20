@@ -43,7 +43,6 @@ import { getSeasonDisplayLabel } from "@shared/seasonLabel";
 import { buildNewSpecColourColumns } from "@shared/specSeasonalColumns";
 import { isNewSpecStyleAwaitingCompletion, type SpecCompletionStatus } from "@shared/specCompletionQueue";
 import { matchesSpecsStyleSearchFilters } from "@shared/specsStyleSearch";
-import { getSpecImageSampleOverlay } from "@shared/specImageSampleOverlay";
 import {
   planCrossStyleComponentCopies,
   resolveCrossStyleSourceSpecs,
@@ -2615,14 +2614,6 @@ export default function SpecsTab({}: SpecsTabProps) {
   // Style image overrides
   const { data: imageOverrideList = [], refetch: refetchImageOverrides } = trpc.styleImage.getAll.useQuery();
   const imageOverrides = imageOverrideList.reduce<Record<string, string>>((acc, o) => { acc[o.style] = o.imageUrl; return acc; }, {});
-  const { data: selectedStyleFittingSessions = [] } = trpc.fittingSession.getForStyle.useQuery(
-    { style: selectedStyle ?? "", season },
-    { enabled: !!selectedStyle, staleTime: 30_000 },
-  );
-  const selectedImageSampleOverlay = useMemo(
-    () => getSpecImageSampleOverlay(selectedStyleFittingSessions),
-    [selectedStyleFittingSessions],
-  );
   const imageUploadRef = React.useRef<HTMLInputElement>(null);
   const uploadImageMutation = trpc.styleImage.upload.useMutation({
     onSuccess: () => { refetchImageOverrides(); toast.success("Image updated"); },
@@ -3571,7 +3562,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                 </div>
               </div>
 
-              <div className="relative mx-auto h-40 w-full max-w-60 overflow-hidden rounded-xl border bg-muted/20 shadow-sm">
+              <div className="mx-auto h-40 w-full max-w-60 overflow-hidden rounded-xl border bg-muted/20 shadow-sm">
                 {(imageOverrides[selectedEntry.style] ?? selectedEntry.imageUrl) ? (
                   <img
                     src={imageOverrides[selectedEntry.style] ?? selectedEntry.imageUrl}
@@ -3581,12 +3572,6 @@ export default function SpecsTab({}: SpecsTabProps) {
                 ) : (
                   <div className="flex h-full items-center justify-center px-4 text-center text-xs text-muted-foreground">
                     No product image yet
-                  </div>
-                )}
-                {selectedImageSampleOverlay && (
-                  <div className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] rounded-md bg-black/75 px-2 py-1 text-[10px] font-medium leading-tight text-white shadow-sm">
-                    {selectedImageSampleOverlay.sampleDate && <div>{selectedImageSampleOverlay.sampleDate}</div>}
-                    {selectedImageSampleOverlay.sampleType && <div>{selectedImageSampleOverlay.sampleType}</div>}
                   </div>
                 )}
               </div>
