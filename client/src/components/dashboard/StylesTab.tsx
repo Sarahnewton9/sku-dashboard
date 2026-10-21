@@ -1100,6 +1100,26 @@ export default function StylesTab() {
         && !markdownSkuSet.has(markdownKey(s.style, s.colour, (s as any).leather ?? "")));
   }
 
+  // Supplier invoices must match against the current merged season range, not
+  // the static SS26 source. This includes newly added W27 SKUs and preserves
+  // Upper 2 for the importer’s exact physical-SKU match.
+  const sampleInvoiceSkus = useMemo(() => (
+    (mergedRawSkus as any[])
+      .filter((sku) => !cancelledSet.has(sku.style)
+        && !cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)
+        && !markdownSkuSet.has(markdownKey(sku.style, sku.colour, sku.leather ?? "")))
+      .map((sku) => {
+        const meta = getSkuMetaFor(sku);
+        return {
+          style: sku.style,
+          colour: sku.colour,
+          leather: sku.leather ?? "",
+          colour2: sku.colour2 ?? meta?.colour2 ?? undefined,
+          leather2: sku.leather2 ?? meta?.leather2 ?? undefined,
+        };
+      })
+  ), [mergedRawSkus, cancelledSet, cancelledSkuSet, markdownSkuSet, getSkuMetaFor]);
+
   function openStyleDetail(styleName: string) {
     const styleInfo = stylesWithCategories.find((style) => style.style === styleName);
     const styleSkus = getSkusForStyle(styleName);
@@ -2675,7 +2695,7 @@ export default function StylesTab() {
       {/* Sample Invoice Import Dialog */}
       {showInvoiceImport && (
         <InvoiceImportDialog
-          allSkus={skuData.rawSkus.map((s) => ({ style: s.style, colour: s.colour, leather: s.leather ?? "" }))}
+          allSkus={sampleInvoiceSkus}
           onClose={() => setShowInvoiceImport(false)}
           onDone={() => { refetchSkuMeta(); setShowInvoiceImport(false); }}
         />
@@ -2991,6 +3011,8 @@ type InvoiceMatch = {
   matchedStyle: string | null;
   matchedColour: string | null;
   matchedLeather: string | null;
+  matchedColour2: string | null;
+  matchedLeather2: string | null;
   confidence: number;
   status: "matched" | "no_match";
 };
@@ -3000,7 +3022,7 @@ function InvoiceImportDialog({
   onClose,
   onDone,
 }: {
-  allSkus: { style: string; colour: string; leather: string }[];
+  allSkus: { style: string; colour: string; leather: string; colour2?: string; leather2?: string }[];
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -3049,6 +3071,8 @@ function InvoiceImportDialog({
           style: r.matchedStyle,
           colour: r.matchedColour,
           leather: r.matchedLeather ?? "",
+          colour2: r.matchedColour2 ?? undefined,
+          leather2: r.matchedLeather2 ?? undefined,
           sampleStatus: "received",
           sampleType: mappedType,
         });
@@ -3192,6 +3216,8 @@ function InvoiceImportDialog({
                           <span className="text-xs font-medium text-foreground">{r.matchedStyle}</span>
                           <span className="text-xs text-muted-foreground">{r.matchedColour}</span>
                           {r.matchedLeather && <span className="text-xs text-muted-foreground">{r.matchedLeather}</span>}
+                          {r.matchedColour2 && <span className="text-xs text-muted-foreground">/ {r.matchedColour2}</span>}
+                          {r.matchedLeather2 && <span className="text-xs text-muted-foreground">{r.matchedLeather2}</span>}
                           <span
                             className="text-[10px] px-1.5 py-0.5 rounded ml-1"
                             style={{

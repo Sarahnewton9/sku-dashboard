@@ -242,6 +242,9 @@ export default function SummaryCards() {
     for (const m of skuMetaList) {
       const key = getSkuCompositeIdentity(m.style, m.colour, m.leather, m.colour2, m.leather2);
       if (!newSkuKeys.has(key)) continue; // skip carry-over SKUs
+      // Historical metadata can contain more than one record for an older
+      // single-upper SKU. It remains one physical SKU for range readiness.
+      if (trackedNewKeys.has(key)) continue;
       trackedNewKeys.add(key);
       if (m.sampleStatus === "received") received++;
       else if (m.sampleStatus === "fitting_sample") received++; // count fitting samples as received for progress
