@@ -19,6 +19,22 @@ import { fileToEmailAttachment, type UserEmailAttachment } from "@/lib/exportEma
 
 type SpecsAttachment = { filename: string; base64: string };
 type AdditionalAttachment = UserEmailAttachment & { size: number };
+type FittingUpdateSession = {
+  sessionDate: string;
+  fitModel?: string | null;
+  notes?: string | null;
+  sampleDate?: string | null;
+  sampleType?: string | null;
+  sampleSize?: string | null;
+  imageUrls: string[];
+};
+type FittingUpdate = {
+  fitRating?: string | null;
+  sizeRecommendation?: string | null;
+  fitApproved?: boolean | null;
+  styleNotes?: string | null;
+  sessions: FittingUpdateSession[];
+};
 
 const MAX_ADDITIONAL_ATTACHMENTS = 10;
 const MAX_ADDITIONAL_ATTACHMENT_BYTES = 20 * 1024 * 1024;
@@ -65,6 +81,7 @@ export function EmailSpecDialog({
   season,
   defaultSubject,
   buildAttachment,
+  fittingUpdate,
   onSent,
 }: {
   open: boolean;
@@ -74,7 +91,8 @@ export function EmailSpecDialog({
   category: string;
   season: string;
   defaultSubject: string;
-  buildAttachment: () => Promise<SpecsAttachment>;
+  buildAttachment?: () => Promise<SpecsAttachment>;
+  fittingUpdate?: FittingUpdate;
   onSent?: () => void;
 }) {
   const utils = trpc.useUtils();
@@ -93,6 +111,7 @@ export function EmailSpecDialog({
   const recipientGroups = trpc.email.listRecipientGroups.useQuery(undefined, { enabled: open });
   const emailHistory = trpc.email.getSpecsHistory.useQuery({ style, season }, { enabled: open });
   const sendSpecsEmail = trpc.email.sendSpecs.useMutation();
+  const sendFittingUpdate = trpc.email.sendFittingUpdate.useMutation();
   const saveRecipientGroup = trpc.email.saveRecipientGroup.useMutation({
     onSuccess: async (result) => {
       await utils.email.listRecipientGroups.invalidate();
@@ -212,6 +231,32 @@ export function EmailSpecDialog({
 
     setIsPreparing(true);
     try {
+      if (fittingUpdate) {
+        await sendFittingUpdate.mutateAsync({
+          recipients,
+          cc: cc.length ? cc : undefined,
+          replyTo: normalizedReplyTo || undefined,
+          subject: subject.trim(),
+          message: message.trim() || undefined,
+          style,
+          last,
+          category,
+          season,
+          fitRating: fittingUpdate.fitRating ?? undefined,
+          sizeRecommendation: fittingUpdate.sizeRecommendation ?? undefined,
+          fitApproved: fittingUpdate.fitApproved ?? undefined,
+          styleNotes: fittingUpdate.styleNotes ?? undefined,
+          sessions: fittingUpdate.sessions,
+        });
+        await utils.email.getSpecsHistory.invalidate({ style, season });
+        toast.success(`Sent fitting update for ${style.toUpperCase()} to ${recipients.length} recipient${recipients.length === 1 ? "" : "s"}`);
+        setMessage("");
+        onOpenChange(false);
+        onSent?.();
+        return;
+      }
+
+      if (!buildAttachment) throw new Error("The Specs attachment could not be prepared.");
       const attachment = await buildAttachment();
       await sendSpecsEmail.mutateAsync({
         recipients,
@@ -245,15 +290,18 @@ export function EmailSpecDialog({
   const selectedGroup = selectedGroupId === "manual"
     ? undefined
     : (recipientGroups.data as RecipientGroup[] | undefined)?.find((entry) => String(entry.id) === selectedGroupId);
-  const isSending = isPreparing || sendSpecsEmail.isPending;
+  const isSending = isPreparing || sendSpecsEmail.isPending || sendFittingUpdate.isPending;
+  const isFittingUpdate = Boolean(fittingUpdate);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Mail className="h-5 w-5" /> Email Specs sheet</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><Mail className="h-5 w-5" /> {isFittingUpdate ? "Email fitting update" : "Email Specs sheet"}</DialogTitle>
           <DialogDescription>
-            Sends the Excel specification sheet for {style.toUpperCase()} as an attachment.
+            {isFittingUpdate
+              ? `Sends the current fit notes and fitting images for ${style.toUpperCase()} directly in the email.`
+              : `Sends the Excel specification sheet for ${style.toUpperCase()} as an attachment.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -344,7 +392,7 @@ export function EmailSpecDialog({
             <Textarea id="spec-email-message" value={message} onChange={(event) => setMessage(event.target.value)} rows={4} placeholder="Add any notes for the recipient…" />
           </div>
 
-          <section className="space-y-2">
+          {!isFittingUpdate && <section className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium"><Paperclip className="h-4 w-4" /> Extra attachments (optional)</div>
             <input
               ref={fileInputRef}
@@ -395,7 +443,7 @@ export function EmailSpecDialog({
               </div>
             )}
             <p className="text-xs text-muted-foreground">Files are used for this email only and are not saved in SKU Dash.</p>
-          </section>
+          </section>}
 
           <section className="space-y-2 border-t pt-4">
             <div className="flex items-center gap-2 text-sm font-medium"><History className="h-4 w-4" /> Email history for {style.toUpperCase()}</div>

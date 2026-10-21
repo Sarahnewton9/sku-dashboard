@@ -10,7 +10,7 @@ const emailDb = vi.hoisted(() => ({
   getDashboardExportEmailHistory: vi.fn(),
 }));
 
-const delivery = vi.hoisted(() => ({ sendSpecsEmail: vi.fn(), sendDashboardExportEmail: vi.fn() }));
+const delivery = vi.hoisted(() => ({ sendSpecsEmail: vi.fn(), sendFittingUpdateEmail: vi.fn(), sendDashboardExportEmail: vi.fn() }));
 
 vi.mock("./db", () => ({
   getSpecEmailRecipientGroups: emailDb.getSpecEmailRecipientGroups,
@@ -23,6 +23,7 @@ vi.mock("./db", () => ({
 
 vi.mock("./resendSpecsEmail", () => ({
   sendSpecsEmail: delivery.sendSpecsEmail,
+  sendFittingUpdateEmail: delivery.sendFittingUpdateEmail,
   sendDashboardExportEmail: delivery.sendDashboardExportEmail,
 }));
 
@@ -42,6 +43,7 @@ describe("Specs email recipient and history router", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delivery.sendSpecsEmail.mockResolvedValue({ id: "resend_123" });
+    delivery.sendFittingUpdateEmail.mockResolvedValue({ id: "resend_fitting_123" });
     delivery.sendDashboardExportEmail.mockResolvedValue({ id: "resend_export_123" });
     emailDb.getSpecEmailRecipientGroups.mockResolvedValue([]);
     emailDb.upsertSpecEmailRecipientGroup.mockResolvedValue({ id: 12, name: "Factory", recipients: ["factory@example.com"], cc: ["developer@example.com"], replyTo: "product@tonybianco.info" });
@@ -129,6 +131,38 @@ describe("Specs email recipient and history router", () => {
     }));
     await expect(caller.email.getExportHistory({ exportType: "Buy Sheet", exportScope: "LA Week 1", season: "Winter 27" })).resolves.toEqual([]);
     expect(emailDb.getDashboardExportEmailHistory).toHaveBeenCalledWith("Buy Sheet", "LA Week 1", "Winter 27", 20);
+  });
+
+  it("sends and records an inline per-style fitting update with images", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    await expect(caller.email.sendFittingUpdate({
+      recipients: ["factory@example.com"],
+      subject: "W27 Fitting update — VIBE",
+      style: "VIBE",
+      last: "VIVID",
+      category: "Casual Flat",
+      season: "Winter 27",
+      fitRating: "runs_small",
+      sizeRecommendation: "half_size_up",
+      sessions: [{
+        sessionDate: "2026-10-21",
+        fitModel: "TRINITY",
+        notes: "Raise the vamp.",
+        imageUrls: ["https://cdn.example.com/vibe-fitting.jpg"],
+      }],
+    })).resolves.toEqual({ id: "resend_fitting_123" });
+
+    expect(delivery.sendFittingUpdateEmail).toHaveBeenCalledWith(expect.objectContaining({
+      style: "VIBE",
+      sessions: [expect.objectContaining({ imageUrls: ["https://cdn.example.com/vibe-fitting.jpg"] })],
+    }));
+    expect(emailDb.recordSpecEmailHistory).toHaveBeenCalledWith(expect.objectContaining({
+      style: "VIBE",
+      exportType: "Fitting Update",
+      exportScope: "VIBE",
+      attachmentFilename: "Inline fitting update",
+      resendEmailId: "resend_fitting_123",
+    }));
   });
 
   it("removes a recipient group without touching delivery history", async () => {

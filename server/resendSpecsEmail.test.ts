@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildDashboardExportEmailHtml, buildSpecsEmailHtml, getResendSpecsEmailConfiguration } from "./resendSpecsEmail";
+import { buildDashboardExportEmailHtml, buildFittingUpdateEmailHtml, buildSpecsEmailHtml, getResendSpecsEmailConfiguration } from "./resendSpecsEmail";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -72,5 +72,31 @@ describe("Specs email delivery", () => {
     expect(html).toContain("LA &lt;Week 1&gt;");
     expect(html).toContain("Please use the &lt;final&gt; order &amp; confirm.");
     expect(html).not.toContain("LA <Week 1>");
+  });
+
+  it("renders a per-style fitting update with notes and inline fitting images", () => {
+    const html = buildFittingUpdateEmailHtml({
+      style: "Vibe",
+      last: "Vivid",
+      category: "Casual Flat",
+      season: "Winter 27",
+      fitRating: "runs_small",
+      sizeRecommendation: "half_size_up",
+      styleNotes: "Check <counter> before production.",
+      sessions: [{
+        sessionDate: "2026-10-21",
+        fitModel: "Trinity",
+        notes: "Raise the vamp 3mm & confirm.",
+        sampleType: "#7",
+        imageUrls: ["https://cdn.example.com/vibe-fitting.jpg"],
+      }],
+    });
+
+    expect(html).toContain("Fitting update — VIBE");
+    expect(html).toContain("Runs Small");
+    expect(html).toContain("Go up half a size");
+    expect(html).toContain("Check &lt;counter&gt; before production.");
+    expect(html).toContain("Raise the vamp 3mm &amp; confirm.");
+    expect(html).toContain('src="https://cdn.example.com/vibe-fitting.jpg"');
   });
 });

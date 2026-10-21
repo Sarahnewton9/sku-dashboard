@@ -881,3 +881,9 @@
 - [x] Made sample-status save/read/summary paths Upper-2-aware, with a backward-compatible primary-only fallback for existing single-upper metadata.
 - [x] Added the user-confirmed W27 SKU **ESTELLE Espresso Vintage** and the user-confirmed **VIVID Black Supra**, then marked both Received / #7.
 - [x] Fixed Sample Invoice Import to match against the current active merged W27 range instead of only the old static SS26 SKU data. Newly added W27 SKUs such as ESSA Chocolate/Vino Nappa, JERZY Suedes and LUCKY Chocolate/Vanilla Nappa now resolve correctly; the importer also carries a complete Upper 2 match through review and saving.
+
+## Per-Style Fitting Update Email (21 Oct 2026)
+- [x] Added **Email fitting update** to each expanded style in Fitting, while preserving the existing date-based report for internal daily recaps.
+- [x] A per-style email contains the current fit status/rating/size recommendation, style-level notes, selected fitting-session notes, sample details and fitting photos together in the email body. Images are displayed inline rather than sent as an oversized attachment bundle.
+- [x] It includes the latest fitting day by default (all models fitted that day) and offers **Include full fitting history** when the factory needs earlier feedback too.
+- [x] Uses the established recipient groups, To/CC/reply-to controls and email history. Added session-selection, router and HTML content coverage; 201 tests and production build passed, plus a rendered email preview using live fitting imagery.

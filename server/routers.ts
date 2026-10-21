@@ -108,7 +108,7 @@ import * as os from "os";
 import nodemailer from "nodemailer";
 import { ENV } from "./_core/env";
 import { formatSkuExportLabel } from "@shared/skuExportLabel";
-import { sendDashboardExportEmail, sendSpecsEmail } from "./resendSpecsEmail";
+import { sendDashboardExportEmail, sendFittingUpdateEmail, sendSpecsEmail } from "./resendSpecsEmail";
 
 export const appRouter = router({
   system: systemRouter,
@@ -148,6 +148,51 @@ export const appRouter = router({
           replyTo: input.replyTo,
           subject: input.subject,
           attachmentFilename: input.attachment.filename,
+          resendEmailId: delivery.id,
+          sentByUserId: ctx.user.id,
+          sentByName: ctx.user.name,
+        });
+        return delivery;
+      }),
+
+    /** Sends a factory-facing fitting update for one style with inline photos. */
+    sendFittingUpdate: protectedProcedure
+      .input(z.object({
+        recipients: z.array(z.string().trim().email()).min(1).max(20),
+        cc: z.array(z.string().trim().email()).max(20).optional(),
+        replyTo: z.string().trim().email().optional(),
+        subject: z.string().trim().min(1).max(200),
+        message: z.string().trim().max(2_000).optional(),
+        style: z.string().trim().min(1).max(100),
+        last: z.string().trim().min(1).max(100),
+        category: z.string().trim().min(1).max(100),
+        season: z.string().trim().min(1).max(100),
+        fitRating: z.string().trim().max(50).optional(),
+        sizeRecommendation: z.string().trim().max(50).optional(),
+        fitApproved: z.boolean().optional(),
+        styleNotes: z.string().trim().max(10_000).optional(),
+        sessions: z.array(z.object({
+          sessionDate: z.string().trim().min(1).max(32),
+          fitModel: z.string().trim().max(128).optional(),
+          notes: z.string().trim().max(10_000).optional(),
+          sampleDate: z.string().trim().max(32).optional(),
+          sampleType: z.string().trim().max(100).optional(),
+          sampleSize: z.string().trim().max(32).optional(),
+          imageUrls: z.array(z.string().url().max(2_000)).max(16),
+        })).min(1).max(40),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const delivery = await sendFittingUpdateEmail(input);
+        await recordSpecEmailHistory({
+          style: input.style,
+          season: input.season,
+          exportType: "Fitting Update",
+          exportScope: input.style,
+          recipients: input.recipients,
+          cc: input.cc,
+          replyTo: input.replyTo,
+          subject: input.subject,
+          attachmentFilename: "Inline fitting update",
           resendEmailId: delivery.id,
           sentByUserId: ctx.user.id,
           sentByName: ctx.user.name,
