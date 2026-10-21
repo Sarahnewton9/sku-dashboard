@@ -885,5 +885,5 @@
 ## Per-Style Fitting Update Email (21 Oct 2026)
 - [x] Added **Email fitting update** to each expanded style in Fitting, while preserving the existing date-based report for internal daily recaps.
 - [x] A per-style email contains the current fit status/rating/size recommendation, style-level notes, selected fitting-session notes, sample details and fitting photos together in the email body. Images are displayed inline rather than sent as an oversized attachment bundle.
-- [x] It includes the latest fitting day by default (all models fitted that day) and offers **Include full fitting history** when the factory needs earlier feedback too.
+- [x] It includes the latest fitting day by default (all models fitted that day) and offers **Include full fitting history** for earlier notes. In every case, the image gallery uses only the newest fitting session that contains photos, so historical images are never re-sent.
 - [x] Uses the established recipient groups, To/CC/reply-to controls and email history. Added session-selection, router and HTML content coverage; 201 tests and production build passed, plus a rendered email preview using live fitting imagery.

@@ -33,6 +33,15 @@ export function selectFittingEmailSessions(
   return ordered.filter((session) => session.sessionDate === latestDate);
 }
 
+/** Images are deliberately taken from the newest session that has photos, even if the email includes older notes. */
+export function selectLatestFittingEmailImageSession(
+  sessions: readonly FittingEmailSession[],
+): FittingEmailSession | undefined {
+  return [...sessions]
+    .filter((session) => (session.images?.length ?? 0) > 0)
+    .sort(compareNewestFirst)[0];
+}
+
 export function countFittingEmailImages(sessions: readonly FittingEmailSession[]): number {
   return sessions.reduce((count, session) => count + (session.images?.length ?? 0), 0);
 }

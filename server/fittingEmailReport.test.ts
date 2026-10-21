@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countFittingEmailImages, selectFittingEmailSessions } from "@shared/fittingEmailReport";
+import { countFittingEmailImages, selectFittingEmailSessions, selectLatestFittingEmailImageSession } from "@shared/fittingEmailReport";
 
 const sessions = [
   { id: 1, sessionDate: "2026-10-10", notes: "Earlier fit", images: [{ imageUrl: "https://example.com/earlier.jpg" }] },
@@ -11,12 +11,15 @@ describe("per-style fitting email session selection", () => {
   it("uses every session from the latest fitting day by default", () => {
     const selected = selectFittingEmailSessions(sessions, false);
     expect(selected.map((session) => session.id)).toEqual([3, 2]);
-    expect(countFittingEmailImages(selected)).toBe(2);
+    const newestImages = selectLatestFittingEmailImageSession(sessions);
+    expect(newestImages?.id).toBe(2);
+    expect(countFittingEmailImages(newestImages ? [newestImages] : [])).toBe(2);
   });
 
-  it("keeps the full fitting history in newest-first order when requested", () => {
+  it("keeps full note history without adding earlier fitting images", () => {
     const selected = selectFittingEmailSessions(sessions, true);
     expect(selected.map((session) => session.id)).toEqual([3, 2, 1]);
-    expect(countFittingEmailImages(selected)).toBe(3);
+    const newestImages = selectLatestFittingEmailImageSession(sessions);
+    expect(countFittingEmailImages(newestImages ? [newestImages] : [])).toBe(2);
   });
 });

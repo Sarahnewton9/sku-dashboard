@@ -20,7 +20,7 @@ import { getNewLastsForSeason } from "@shared/const";
 import { getSeasonDisplayLabel, getSeasonFileLabel } from "@shared/seasonLabel";
 import { getW27NewPatternStyleNames, isEligibleFittingStyle } from "@shared/fittingStyleScope";
 import { getSameDayFittingDefaults, getSydneyBusinessDate } from "@shared/fittingSessionDefaults";
-import { countFittingEmailImages, selectFittingEmailSessions } from "@shared/fittingEmailReport";
+import { countFittingEmailImages, selectFittingEmailSessions, selectLatestFittingEmailImageSession } from "@shared/fittingEmailReport";
 import { EmailExportDialog } from "./EmailExportDialog";
 import { EmailSpecDialog } from "./EmailSpecDialog";
 import { workbookToEmailAttachment } from "@/lib/exportEmailAttachment";
@@ -500,7 +500,8 @@ function StyleFitRow({
   const totalImages = sessions.reduce((sum, s) => sum + s.images.length, 0);
   const effectiveImageUrl = imageOverrides[entry.style] ?? entry.imageUrl;
   const emailSessions = selectFittingEmailSessions(sessions, includeFullFittingHistory);
-  const emailImageCount = countFittingEmailImages(emailSessions);
+  const latestImageSession = selectLatestFittingEmailImageSession(sessions);
+  const emailImageCount = countFittingEmailImages(latestImageSession ? [latestImageSession] : []);
 
   const handleFitChange = (val: string) => {
     const newVal = val === "none" ? null : val;
@@ -674,7 +675,7 @@ function StyleFitRow({
                   onChange={(event) => setIncludeFullFittingHistory(event.target.checked)}
                   className="h-3.5 w-3.5 rounded border-border accent-amber-600"
                 />
-                Include full fitting history
+                Include full fitting history (notes)
               </label>
               <Button
                 size="sm"
@@ -685,7 +686,7 @@ function StyleFitRow({
                 title={emailSessions.length === 0 ? "Add a fitting session before sending an update" : undefined}
               >
                 <Mail className="w-3.5 h-3.5" />
-                Email fitting update{emailImageCount ? ` · ${emailImageCount} image${emailImageCount === 1 ? "" : "s"}` : ""}
+                Email fitting update{emailImageCount ? ` · ${emailImageCount} latest image${emailImageCount === 1 ? "" : "s"}` : ""}
               </Button>
             </div>
             {!isApproved ? (
@@ -732,7 +733,9 @@ function StyleFitRow({
               sampleDate: session.sampleDate ?? null,
               sampleType: session.sampleType ?? null,
               sampleSize: session.sampleSize ?? null,
-              imageUrls: session.images.map((image) => image.imageUrl),
+              imageUrls: session.id === latestImageSession?.id
+                ? session.images.map((image) => image.imageUrl)
+                : [],
             })),
           }}
         />
