@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getW27SandalCategory,
   isHiddenFromW27WorkingRange,
+  isW27ExistingCarryOverLast,
 } from "@shared/w27SandalVisibility";
 
 describe("W27 sandal working-range visibility", () => {
@@ -21,10 +22,13 @@ describe("W27 sandal working-range visibility", () => {
     expect(isHiddenFromW27WorkingRange("SS26", "KIMBA", "Dress Sandal")).toBe(false);
   });
 
-  it("keeps confirmed AYLA-last existing carry-overs visible in W27", () => {
+  it("keeps every AYLA-last existing carry-over visible in W27", () => {
     expect(isHiddenFromW27WorkingRange("W27", "AYLA", "Flat Sandal")).toBe(false);
     expect(isHiddenFromW27WorkingRange("W27", "ALEXI", "Flat Sandal")).toBe(false);
     expect(isHiddenFromW27WorkingRange("W27", "ALLY", "Flat Sandal")).toBe(false);
+    expect(isW27ExistingCarryOverLast("W27", "AYLA")).toBe(true);
+    expect(isHiddenFromW27WorkingRange("W27", "AVAR", "Flat Sandal", "AYLA")).toBe(false);
+    expect(isHiddenFromW27WorkingRange("W27", "AVAR", "Flat Sandal", "OTHER LAST")).toBe(true);
   });
 
   it("hides Flat and Casual Sandals in W27 only", () => {

@@ -889,12 +889,13 @@
 - [x] Uses the established recipient groups, To/CC/reply-to controls and email history. Added session-selection, router and HTML content coverage; 201 tests and production build passed, plus a rendered email preview using live fitting imagery.
 
 ## AYLA Last — W27 Existing Carry-Over (23 Oct 2026)
-- [x] Verified the AYLA last and its W27 Flat Sandal style shells are already stored as existing carry-over: **AYLA** (9 SKUs), **ALEXI** (3) and **ALLY** (10). All 22 active SKUs are marked existing, so no W27 fitting workload has been created.
+- [x] Verified the AYLA last and its W27 Flat Sandal style shells are existing carry-over: **AYLA** (9 SKUs), **ALEXI** (3), **ALLY** (10), plus **AVAR** (1). All 23 active SKUs are marked existing, so no W27 fitting workload has been created.
 - [x] Applied the requested season-specific **ALYSE** cancellation in W27 (4 carry-over SKUs), so it is excluded across the dashboard, Specs, exports and analyses.
 - [x] Preserved the pre-existing W27 cancellation of **AIMEE** (3 SKUs); it was not revived. **ALYSE** and **AIMEE** remain excluded by their cancellation records.
-- [x] Added a narrow AYLA-family exception to the W27 Flat/Casual Sandal hide rule, so active carry-overs **AYLA**, **ALEXI** and **ALLY** now appear in W27 By Style as **Existing**. All other Flat/Casual Sandals retain the W27 development hide policy.
-- [x] Reconciled all five AYLA-last style shells / 29 stored carry-over SKUs and passed 202 regression tests plus the production build.
+- [x] Added a last-based AYLA exception to the W27 Flat/Casual Sandal hide rule, so every active AYLA-last carry-over—including a newly entered style—appears in W27 By Style as **Existing**. All other Flat/Casual Sandals retain the W27 development hide policy.
+- [x] Reconciled all six AYLA-last style shells / 30 stored carry-over SKUs and passed 204 regression tests plus the production build.
 
 - [x] Fixed the W27 Add Style **Last** dropdown so it derives options from live seasonal style records as well as the new-last registry. **AYLA** is now available as an existing last without being converted into a new W27 last.
 - [x] Converted Add Style into a proper form: pressing **Enter** in any eligible field confirms Add Style, while Escape and non-submit controls remain safe.
-- [x] Added live last-option regression coverage and verified the W27 option list contains AYLA from its five existing AYLA-last style records. Validation: 204 tests and production build pass.
+- [x] Added live last-option regression coverage and verified the W27 option list contains AYLA from its active AYLA-last style records. Validation: 204 tests and production build pass.
+- [x] Repaired the newly added **AVAR — ECRU SNAKE**: it is now an active **Existing** W27 AYLA-last SKU. New AYLA-last SKUs now automatically inherit this status and flow through the same shared range source used by By Style and Specs.

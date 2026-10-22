@@ -13,8 +13,21 @@ const W27_EXISTING_CARRYOVER_STYLE_EXCEPTIONS = new Set([
   "ALYSE",
 ]);
 
+// AYLA is an established carry-over last. A newly entered AYLA-last style is
+// still an existing pattern for W27, so it must not be hidden simply because
+// its Flat Sandal category would normally be outside W27 development work.
+const W27_EXISTING_CARRYOVER_LAST_EXCEPTIONS = new Set(["AYLA"]);
+
 function normalize(value: string | null | undefined): string {
   return String(value ?? "").trim().toUpperCase().replace(/\s+/g, " ");
+}
+
+export function isW27ExistingCarryOverLast(
+  season: string | null | undefined,
+  lastName: string | null | undefined,
+): boolean {
+  return normalize(season) === "W27"
+    && W27_EXISTING_CARRYOVER_LAST_EXCEPTIONS.has(normalize(lastName));
 }
 
 /**
@@ -47,8 +60,10 @@ export function isHiddenFromW27WorkingRange(
   season: string | null | undefined,
   style: string | null | undefined,
   category: string | null | undefined,
+  lastName?: string | null,
 ): boolean {
   if (normalize(season) !== "W27") return false;
+  if (isW27ExistingCarryOverLast(season, lastName)) return false;
   if (W27_EXISTING_CARRYOVER_STYLE_EXCEPTIONS.has(normalize(style))) return false;
   return getW27SandalCategory(style, category) !== null;
 }

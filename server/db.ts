@@ -8,6 +8,7 @@ import { getCustomSkuBuyRename, getStaticSkuBuyRename, mergeRenamedBuySessionQua
 import { getCustomSkuCarryOverSeason } from "../shared/customSkuSeasonCarryOver";
 import { getHandbagSkuEditOutcome } from "../shared/handbagSkuEdit";
 import { getSpecTemplateComponentKeys } from "../shared/specCompletionQueue";
+import { isW27ExistingCarryOverLast } from "../shared/w27SandalVisibility";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -1248,9 +1249,22 @@ export async function addCustomSku(style: string, colour: string, leather: strin
     leather2: normalizeSkuIdentityPart(leather2),
     season: normalizeSkuIdentityPart(season),
   };
+  const parentStyle = await db.select({ lastName: customStyles.lastName })
+    .from(customStyles)
+    .where(and(
+      eq(customStyles.style, normalized.style),
+      eq(customStyles.season, normalized.season),
+    ))
+    .limit(1);
+  const isExistingCarryOver = isW27ExistingCarryOverLast(
+    normalized.season,
+    parentStyle[0]?.lastName,
+  );
+
   // Upper 2 is part of the physical SKU identity. For example, ECRU
   // SNAKE/ROYAL SUEDE and ECRU SNAKE/LIPSTICK SUEDE must both be addable.
-  const id = await upsertCustomSkuForSeason(db, normalized, true);
+  // AYLA-last additions are established W27 carry-overs, not new-season work.
+  const id = await upsertCustomSkuForSeason(db, normalized, !isExistingCarryOver);
 
   // W27 treats SS26 as its carry-over range. Mirror each SS26 custom
   // colourway as an existing W27 record so it reaches every W27 view and

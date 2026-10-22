@@ -152,10 +152,22 @@ export function useCustomSkus() {
     return map;
   }, [customStyleRows, styleMetaRows]);
 
+  const styleLastMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const style of skuData.styles) {
+      map.set(style.style.toUpperCase(), style.last);
+    }
+    for (const style of customStyleRows as Array<{ style: string; lastName: string }>) {
+      map.set(style.style.toUpperCase(), style.lastName);
+    }
+    return map;
+  }, [customStyleRows]);
+
   const isWorkingRangeStyle = (style: string): boolean => !isHiddenFromW27WorkingRange(
     season,
     style,
     styleCategoryMap.get(style.toUpperCase()),
+    styleLastMap.get(style.toUpperCase()),
   );
 
   // Fetch website images scraped from tonybianco.com.au (used as fallback when no manual override)
