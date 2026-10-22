@@ -887,3 +887,9 @@
 - [x] A per-style email contains the current fit status/rating/size recommendation, style-level notes, selected fitting-session notes, sample details and fitting photos together in the email body. Images are displayed inline rather than sent as an oversized attachment bundle.
 - [x] It includes the latest fitting day by default (all models fitted that day) and offers **Include full fitting history** for earlier notes. In every case, the image gallery uses only the newest fitting session that contains photos, so historical images are never re-sent.
 - [x] Uses the established recipient groups, To/CC/reply-to controls and email history. Added session-selection, router and HTML content coverage; 201 tests and production build passed, plus a rendered email preview using live fitting imagery.
+
+## AYLA Last — W27 Existing Carry-Over (23 Oct 2026)
+- [x] Verified the AYLA last and its W27 Flat Sandal style shells are already stored as existing carry-over: **AYLA** (9 SKUs), **ALEXI** (3) and **ALLY** (10). All 22 active SKUs are marked existing, so no W27 fitting workload has been created.
+- [x] Applied the requested season-specific **ALYSE** cancellation in W27 (4 carry-over SKUs), so it is excluded across the dashboard, Specs, exports and analyses.
+- [x] Preserved the pre-existing W27 cancellation of **AIMEE** (3 SKUs); it was not revived. AYLA-family data remains available in W27 but, as Flat Sandals, is intentionally hidden from the W27 development working views under the established seasonal policy.
+- [x] Reconciled all five AYLA-last style shells / 29 stored carry-over SKUs and passed 201 regression tests plus the production build.
