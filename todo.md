@@ -894,3 +894,7 @@
 - [x] Preserved the pre-existing W27 cancellation of **AIMEE** (3 SKUs); it was not revived. **ALYSE** and **AIMEE** remain excluded by their cancellation records.
 - [x] Added a narrow AYLA-family exception to the W27 Flat/Casual Sandal hide rule, so active carry-overs **AYLA**, **ALEXI** and **ALLY** now appear in W27 By Style as **Existing**. All other Flat/Casual Sandals retain the W27 development hide policy.
 - [x] Reconciled all five AYLA-last style shells / 29 stored carry-over SKUs and passed 202 regression tests plus the production build.
+
+- [x] Fixed the W27 Add Style **Last** dropdown so it derives options from live seasonal style records as well as the new-last registry. **AYLA** is now available as an existing last without being converted into a new W27 last.
+- [x] Converted Add Style into a proper form: pressing **Enter** in any eligible field confirms Add Style, while Escape and non-submit controls remain safe.
+- [x] Added live last-option regression coverage and verified the W27 option list contains AYLA from its five existing AYLA-last style records. Validation: 204 tests and production build pass.

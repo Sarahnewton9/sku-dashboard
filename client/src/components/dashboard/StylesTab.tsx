@@ -9,6 +9,7 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { skuData } from "@/lib/skuData";
 import { ALL_LASTS } from "@shared/const";
+import { buildStyleLastOptions } from "@shared/styleLastOptions";
 import { getSeasonFileLabel } from "@shared/seasonLabel";
 import { getSkuExportFields } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
@@ -455,19 +456,16 @@ export default function StylesTab() {
   });
   // Custom lasts from DB
   const { data: customLastsData = [] } = trpc.customLast.getAll.useQuery({ season }, { staleTime: 300_000 });
-  // All unique lasts: ALL_LASTS (shared canonical list) + skuData lasts + custom DB lasts — deduplicated
+  // All live last options include established seasonal carry-overs. These may
+  // not exist in the new-last registry, e.g. the existing AYLA last in W27.
   const allKnownLasts = useMemo(() => {
-    const s = new Set<string>();
-    // Always include the canonical list (same as LastApprovalTab)
-    for (const l of ALL_LASTS) s.add(l);
-    // Also include any lasts that appear in skuData but aren't in ALL_LASTS
-    for (const style of skuData.styles) { if (style.last) s.add(style.last); }
-    // And any custom lasts added via the Last Approval tab
-    for (const l of (customLastsData as Array<{ lastName: string; isRunOn: boolean } | string>)) {
-      s.add(typeof l === "string" ? l : l.lastName);
-    }
-    return Array.from(s).sort();
-  }, [customLastsData]);
+    return buildStyleLastOptions({
+      canonicalLasts: ALL_LASTS,
+      staticStyleLasts: skuData.styles.flatMap((style) => style.last ? [style.last] : []),
+      customLasts: customLastsData as Array<{ lastName: string; isRunOn: boolean } | string>,
+      seasonalStyleLasts: customStyleRows,
+    });
+  }, [customLastsData, customStyleRows]);
   // Add Style drag-and-drop handlers
   function handleAddStyleDrop(e: React.DragEvent) {
     e.preventDefault();
@@ -2788,15 +2786,19 @@ export default function StylesTab() {
       {/* Add Style Modal */}
       {showAddStyleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddStyleModal(false)}>
-          <div
+          <form
             className="relative bg-card rounded-2xl shadow-2xl border w-full max-w-md mx-4 p-6 flex flex-col gap-5"
             style={{ borderColor: "var(--border)" }}
             onClick={(e) => e.stopPropagation()}
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleAddStyleSubmit();
+            }}
           >
             {/* Header */}
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-foreground">Add New Style</h2>
-              <button onClick={() => setShowAddStyleModal(false)} className="p-1 rounded hover:bg-muted transition-colors">
+              <button type="button" onClick={() => setShowAddStyleModal(false)} className="p-1 rounded hover:bg-muted transition-colors">
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
@@ -2808,7 +2810,7 @@ export default function StylesTab() {
                 type="text"
                 value={newStyleName}
                 onChange={(e) => setNewStyleName(e.target.value.toUpperCase())}
-                onKeyDown={(e) => { if (e.key === "Enter" && newStyleName.trim() && newStyleLast) handleAddStyleSubmit(); if (e.key === "Escape") setShowAddStyleModal(false); }}
+                onKeyDown={(e) => { if (e.key === "Escape") setShowAddStyleModal(false); }}
                 placeholder="e.g. CORFU"
                 className="px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-400/40"
                 style={{ borderColor: "var(--border)" }}
@@ -2935,6 +2937,7 @@ export default function StylesTab() {
                     <img src={newStyleImagePreview} alt="Preview" className="w-full max-h-48 object-contain rounded-lg" style={{ display: 'block' }} />
                     <span className="text-xs text-muted-foreground">{newStyleImageFile?.name}</span>
                     <button
+                      type="button"
                       className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-red-100 transition-colors"
                       onClick={(e) => { e.stopPropagation(); setNewStyleImageFile(null); setNewStyleImagePreview(null); }}
                     >
@@ -2965,6 +2968,7 @@ export default function StylesTab() {
             {/* Actions */}
             <div className="flex gap-3 justify-end pt-1">
               <button
+                type="button"
                 onClick={() => setShowAddStyleModal(false)}
                 className="px-4 py-2 text-sm font-medium rounded-lg border hover:bg-muted transition-colors"
                 style={{ borderColor: "var(--border)" }}
@@ -2972,14 +2976,14 @@ export default function StylesTab() {
                 Cancel
               </button>
               <button
-                onClick={handleAddStyleSubmit}
+                type="submit"
                 disabled={isAddingStyle || !newStyleName.trim() || !newStyleLast}
                 className="px-4 py-2 text-sm font-medium rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isAddingStyle ? "Adding…" : "Add Style"}
               </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
       {/* Hidden file input for Add Style image */}
