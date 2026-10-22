@@ -2,6 +2,17 @@ export type W27SandalCategory = "FLAT SANDAL" | "CASUAL SANDAL";
 
 const FLAT_SANDAL_STYLES = new Set(["KIMBA", "KALI"]);
 
+// These are confirmed existing AYLA-last carry-overs. They remain visible in
+// W27 By Style despite the wider seasonal Flat/Casual Sandal development hide.
+// Any season-specific cancellation still takes precedence in dashboard views.
+const W27_EXISTING_CARRYOVER_STYLE_EXCEPTIONS = new Set([
+  "AYLA",
+  "AIMEE",
+  "ALEXI",
+  "ALLY",
+  "ALYSE",
+]);
+
 function normalize(value: string | null | undefined): string {
   return String(value ?? "").trim().toUpperCase().replace(/\s+/g, " ");
 }
@@ -37,5 +48,7 @@ export function isHiddenFromW27WorkingRange(
   style: string | null | undefined,
   category: string | null | undefined,
 ): boolean {
-  return normalize(season) === "W27" && getW27SandalCategory(style, category) !== null;
+  if (normalize(season) !== "W27") return false;
+  if (W27_EXISTING_CARRYOVER_STYLE_EXCEPTIONS.has(normalize(style))) return false;
+  return getW27SandalCategory(style, category) !== null;
 }

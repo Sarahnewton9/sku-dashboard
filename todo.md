@@ -891,5 +891,6 @@
 ## AYLA Last — W27 Existing Carry-Over (23 Oct 2026)
 - [x] Verified the AYLA last and its W27 Flat Sandal style shells are already stored as existing carry-over: **AYLA** (9 SKUs), **ALEXI** (3) and **ALLY** (10). All 22 active SKUs are marked existing, so no W27 fitting workload has been created.
 - [x] Applied the requested season-specific **ALYSE** cancellation in W27 (4 carry-over SKUs), so it is excluded across the dashboard, Specs, exports and analyses.
-- [x] Preserved the pre-existing W27 cancellation of **AIMEE** (3 SKUs); it was not revived. AYLA-family data remains available in W27 but, as Flat Sandals, is intentionally hidden from the W27 development working views under the established seasonal policy.
-- [x] Reconciled all five AYLA-last style shells / 29 stored carry-over SKUs and passed 201 regression tests plus the production build.
+- [x] Preserved the pre-existing W27 cancellation of **AIMEE** (3 SKUs); it was not revived. **ALYSE** and **AIMEE** remain excluded by their cancellation records.
+- [x] Added a narrow AYLA-family exception to the W27 Flat/Casual Sandal hide rule, so active carry-overs **AYLA**, **ALEXI** and **ALLY** now appear in W27 By Style as **Existing**. All other Flat/Casual Sandals retain the W27 development hide policy.
+- [x] Reconciled all five AYLA-last style shells / 29 stored carry-over SKUs and passed 202 regression tests plus the production build.

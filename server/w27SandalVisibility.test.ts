@@ -21,6 +21,12 @@ describe("W27 sandal working-range visibility", () => {
     expect(isHiddenFromW27WorkingRange("SS26", "KIMBA", "Dress Sandal")).toBe(false);
   });
 
+  it("keeps confirmed AYLA-last existing carry-overs visible in W27", () => {
+    expect(isHiddenFromW27WorkingRange("W27", "AYLA", "Flat Sandal")).toBe(false);
+    expect(isHiddenFromW27WorkingRange("W27", "ALEXI", "Flat Sandal")).toBe(false);
+    expect(isHiddenFromW27WorkingRange("W27", "ALLY", "Flat Sandal")).toBe(false);
+  });
+
   it("hides Flat and Casual Sandals in W27 only", () => {
     expect(isHiddenFromW27WorkingRange("W27", "KIMBA", "Dress Sandal")).toBe(true);
     expect(isHiddenFromW27WorkingRange("W27", "JAZZY", "Sandal")).toBe(true);
