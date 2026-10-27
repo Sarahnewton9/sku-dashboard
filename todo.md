@@ -899,3 +899,9 @@
 - [x] Converted Add Style into a proper form: pressing **Enter** in any eligible field confirms Add Style, while Escape and non-submit controls remain safe.
 - [x] Added live last-option regression coverage and verified the W27 option list contains AYLA from its active AYLA-last style records. Validation: 204 tests and production build pass.
 - [x] Repaired the newly added **AVAR — ECRU SNAKE**: it is now an active **Existing** W27 AYLA-last SKU. New AYLA-last SKUs now automatically inherit this status and flow through the same shared range source used by By Style and Specs.
+
+## TAMMY Last — W27 New Style Visibility (27 Oct 2026)
+- [x] Verified the newly added W27 style is **TROYE — ECRU SNAKE**, correctly saved on last **TAMMY** as a new Flat Sandal SKU.
+- [x] Added TAMMY as an actively worked W27 Flat Sandal last, so TROYE and future TAMMY-last additions pass through the shared active range used by both By Style and Specs.
+- [x] Kept status separate from visibility: TROYE remains **New**, while AYLA's separate carry-over rule continues to mark AYLA-last additions as **Existing**.
+- [x] Added coverage for the TAMMY-new/AYLA-existing distinction; verified live data and passed 205 regression tests plus the production build.

@@ -3,6 +3,7 @@ import {
   getW27SandalCategory,
   isHiddenFromW27WorkingRange,
   isW27ExistingCarryOverLast,
+  isW27WorkingRangeLast,
 } from "@shared/w27SandalVisibility";
 
 describe("W27 sandal working-range visibility", () => {
@@ -29,6 +30,12 @@ describe("W27 sandal working-range visibility", () => {
     expect(isW27ExistingCarryOverLast("W27", "AYLA")).toBe(true);
     expect(isHiddenFromW27WorkingRange("W27", "AVAR", "Flat Sandal", "AYLA")).toBe(false);
     expect(isHiddenFromW27WorkingRange("W27", "AVAR", "Flat Sandal", "OTHER LAST")).toBe(true);
+  });
+
+  it("keeps new TAMMY-last styles visible without calling them existing", () => {
+    expect(isW27WorkingRangeLast("W27", "TAMMY")).toBe(true);
+    expect(isW27ExistingCarryOverLast("W27", "TAMMY")).toBe(false);
+    expect(isHiddenFromW27WorkingRange("W27", "TROYE", "Flat Sandal", "TAMMY")).toBe(false);
   });
 
   it("hides Flat and Casual Sandals in W27 only", () => {

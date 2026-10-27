@@ -18,6 +18,12 @@ const W27_EXISTING_CARRYOVER_STYLE_EXCEPTIONS = new Set([
 // its Flat Sandal category would normally be outside W27 development work.
 const W27_EXISTING_CARRYOVER_LAST_EXCEPTIONS = new Set(["AYLA"]);
 
+// These Flat Sandal lasts are actively worked in W27. Keeping visibility
+// separate from existing/carry-over status lets a genuinely new TAMMY-last
+// style appear in By Style and Specs without incorrectly relabelling it as
+// an existing SKU.
+const W27_WORKING_RANGE_LAST_EXCEPTIONS = new Set(["AYLA", "TAMMY"]);
+
 function normalize(value: string | null | undefined): string {
   return String(value ?? "").trim().toUpperCase().replace(/\s+/g, " ");
 }
@@ -28,6 +34,14 @@ export function isW27ExistingCarryOverLast(
 ): boolean {
   return normalize(season) === "W27"
     && W27_EXISTING_CARRYOVER_LAST_EXCEPTIONS.has(normalize(lastName));
+}
+
+export function isW27WorkingRangeLast(
+  season: string | null | undefined,
+  lastName: string | null | undefined,
+): boolean {
+  return normalize(season) === "W27"
+    && W27_WORKING_RANGE_LAST_EXCEPTIONS.has(normalize(lastName));
 }
 
 /**
@@ -63,7 +77,7 @@ export function isHiddenFromW27WorkingRange(
   lastName?: string | null,
 ): boolean {
   if (normalize(season) !== "W27") return false;
-  if (isW27ExistingCarryOverLast(season, lastName)) return false;
+  if (isW27WorkingRangeLast(season, lastName)) return false;
   if (W27_EXISTING_CARRYOVER_STYLE_EXCEPTIONS.has(normalize(style))) return false;
   return getW27SandalCategory(style, category) !== null;
 }
