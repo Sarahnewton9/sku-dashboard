@@ -910,3 +910,9 @@
 - [x] Replaced the server-controlled Comments textarea with a local draft editor, so keystrokes update only the small Comments control instead of forcing the complete Specs grid to re-render.
 - [x] Comments save once after a 500 ms typing pause, immediately on blur, and when moving to another style; imports and exports keep using the same saved Comments value.
 - [x] Removed the redundant second debounce at the parent level. Validation: 205 regression tests and production build pass.
+
+## Material Label Standardisation (27 Oct 2026)
+- [x] Renamed all active **BLUE NAPPA METALLIC** to **BLUE METALLIC**, **PINK NAPPA METALLIC** to **PINK METALLIC**, and every physical **CHOC NAPPA** identity to **CHOCOLATE NAPPA** across W27/SS26 range records.
+- [x] Kept Upper 2 identities intact, including DEVYN `CHOC NYLON/CHOCOLATE NAPPA`; updated AP21 identity links, cancelled records, Specs columns/custom rows, SKU metadata and seasonal FOB keys.
+- [x] Preserved Buy quantities. The three affected Buy Session lines remain: DEVYN 84 units (AU 48 / USA 36), LENI 80 AU units and ISLA 0 units. Matching duplicate PHOEBE cost records had the same USD cost and were consolidated safely.
+- [x] Verified there are no remaining active legacy identities or old Specs labels for the three corrected names. Full validation: 205 regression tests and production build pass.
