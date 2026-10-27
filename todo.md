@@ -905,3 +905,8 @@
 - [x] Added TAMMY as an actively worked W27 Flat Sandal last, so TROYE and future TAMMY-last additions pass through the shared active range used by both By Style and Specs.
 - [x] Kept status separate from visibility: TROYE remains **New**, while AYLA's separate carry-over rule continues to mark AYLA-last additions as **Existing**.
 - [x] Added coverage for the TAMMY-new/AYLA-existing distinction; verified live data and passed 205 regression tests plus the production build.
+
+## Responsive Specs Comments (27 Oct 2026)
+- [x] Replaced the server-controlled Comments textarea with a local draft editor, so keystrokes update only the small Comments control instead of forcing the complete Specs grid to re-render.
+- [x] Comments save once after a 500 ms typing pause, immediately on blur, and when moving to another style; imports and exports keep using the same saved Comments value.
+- [x] Removed the redundant second debounce at the parent level. Validation: 205 regression tests and production build pass.

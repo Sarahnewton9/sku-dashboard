@@ -517,6 +517,71 @@ function TextCell({ value, onSave }: TextCellProps) {
   );
 }
 
+// ─── Specs Comments Editor ────────────────────────────────────────────────────
+// Comments must remain immediately responsive even though the complete Specs
+// form is large. Keep keystrokes in this small local component and save only
+// after a short pause (or immediately when focus leaves the field).
+interface SpecCommentsEditorProps {
+  value: string;
+  onSave: (value: string) => void;
+}
+
+function SpecCommentsEditor({ value, onSave }: SpecCommentsEditorProps) {
+  const [draft, setDraft] = useState(value);
+  const draftRef = useRef(value);
+  const lastSentRef = useRef(value);
+  const onSaveRef = useRef(onSave);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    onSaveRef.current = onSave;
+  }, [onSave]);
+
+  // Accept an external change (for example, an import) without replacing an
+  // optimistic local draft that is waiting for its own save response.
+  useEffect(() => {
+    if (value === lastSentRef.current) return;
+    lastSentRef.current = value;
+    draftRef.current = value;
+    setDraft(value);
+  }, [value]);
+
+  const flush = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    const nextValue = draftRef.current;
+    if (nextValue === lastSentRef.current) return;
+    lastSentRef.current = nextValue;
+    onSaveRef.current(nextValue);
+  }, []);
+
+  const scheduleSave = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(flush, 500);
+  }, [flush]);
+
+  // A style change unmounts this keyed editor. Flush its latest local draft so
+  // comments cannot be lost when moving directly to another style.
+  useEffect(() => () => flush(), [flush]);
+
+  return (
+    <Textarea
+      value={draft}
+      onChange={(e) => {
+        const nextValue = e.target.value;
+        draftRef.current = nextValue;
+        setDraft(nextValue);
+        scheduleSave();
+      }}
+      onBlur={flush}
+      placeholder="Add factory-facing comments for this style…"
+      className="text-xs min-h-[60px] resize-none bg-background"
+    />
+  );
+}
+
 // ─── Unified Template Row (sortable template row) ────────────────────────────────────────────
 interface UnifiedTemplateRowProps {
   id: string;
@@ -1667,11 +1732,10 @@ function SpecForm({
       {/* Factory-facing comments are always visible, rather than hidden in Settings. */}
       <div className="rounded-lg border bg-muted/20 p-3">
         <Label className="text-sm font-semibold block mb-1.5">Comments</Label>
-        <Textarea
+        <SpecCommentsEditor
+          key={entry.style}
           value={comments}
-          onChange={(e) => onMetaChange({ notes: e.target.value })}
-          placeholder="Add factory-facing comments for this style…"
-          className="text-xs min-h-[60px] resize-none bg-background"
+          onSave={(notes) => onMetaChange({ notes })}
         />
       </div>
 
@@ -3019,9 +3083,6 @@ export default function SpecsTab({}: SpecsTabProps) {
     onError: () => toast.error("Failed to update Specs completion status"),
   });
 
-  // Debounced notes save
-  const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   function handleUpsert(colour: string, component: string, value: string) {
     if (!selectedStyle) return;
     // Pass colours + rowKeys so server can auto-check completion status
@@ -3078,15 +3139,9 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   function handleMetaChange(patch: Partial<{ hasBuckle: boolean; dressShoeSubType: "court" | "sling" | null; notes: string | null }>) {
     if (!selectedStyle) return;
-    if ("notes" in patch) {
-      // Debounce notes saves
-      if (notesTimer.current) clearTimeout(notesTimer.current);
-      notesTimer.current = setTimeout(() => {
-        upsertMetaMutation.mutate({ style: selectedStyle, season, ...patch });
-      }, 800);
-    } else {
-      upsertMetaMutation.mutate({ style: selectedStyle, season, ...patch });
-    }
+    // Comments are already locally debounced by SpecCommentsEditor, while
+    // other style settings should save immediately.
+    upsertMetaMutation.mutate({ style: selectedStyle, season, ...patch });
   }
 
   // ── Import handler ────────────────────────────────────────────────────────
