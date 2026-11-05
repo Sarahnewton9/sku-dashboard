@@ -306,7 +306,7 @@ export default function SummaryCards() {
               <FlaskConical className="w-4 h-4 text-muted-foreground" />
             </div>
             <div>
-              <p className="font-semibold text-foreground text-sm">Sample Tracking</p>
+              <p className="font-semibold text-foreground text-sm">{season} Sample Tracking</p>
               <p className="text-xs text-muted-foreground">{sampleCounts.total} new SKUs total</p>
             </div>
             <div className="ml-auto text-right">
@@ -330,8 +330,8 @@ export default function SummaryCards() {
 
           {/* Searchable worklists share the exact same records as the counts. */}
           <div className="grid grid-cols-2 gap-3">
-            <SampleReceiptDropdown received rows={sampleWorklist.receivedSkus} pending={pendingReceipts} onToggle={toggleReceipt} />
-            <SampleReceiptDropdown received={false} rows={sampleWorklist.waitingSkus} pending={pendingReceipts} onToggle={toggleReceipt} />
+            <SampleReceiptDropdown key={`${season}:received`} season={season} received rows={sampleWorklist.receivedSkus} pending={pendingReceipts} onToggle={toggleReceipt} />
+            <SampleReceiptDropdown key={`${season}:waiting`} season={season} received={false} rows={sampleWorklist.waitingSkus} pending={pendingReceipts} onToggle={toggleReceipt} />
           </div>
         </div>
       </div>

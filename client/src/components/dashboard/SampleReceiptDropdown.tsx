@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { buildSampleReceiptWorklist } from "@shared/sampleReceiptTracking";
+import type { Season } from "@/contexts/SeasonContext";
 
 type ReceiptRow = ReturnType<typeof buildSampleReceiptWorklist>["receivedSkus"][number];
 
-export function SampleReceiptDropdown({ received, rows, pending, onToggle }: {
+export function SampleReceiptDropdown({ season, received, rows, pending, onToggle }: {
+  season?: Season;
   received: boolean;
   rows: ReceiptRow[];
   pending: ReadonlySet<string>;
@@ -27,7 +29,7 @@ export function SampleReceiptDropdown({ received, rows, pending, onToggle }: {
         </button>
       </PopoverTrigger>
       <PopoverContent align={received ? "start" : "end"} className="w-[min(30rem,calc(100vw-2rem))] p-3">
-        <h4 className="text-sm font-semibold mb-2">{title}</h4>
+        <h4 className="text-sm font-semibold mb-2">{season ? `${season} — ${title}` : title}</h4>
         <input aria-label={`Search ${title.toLowerCase()}`} placeholder="Search style or colour/leather…"
           value={search} onChange={(event) => setSearch(event.target.value)}
           className="w-full rounded-md border bg-background px-3 py-2 text-sm mb-2" />
