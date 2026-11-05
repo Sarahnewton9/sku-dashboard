@@ -14,6 +14,7 @@ import { getSeasonFileLabel } from "@shared/seasonLabel";
 import { getSkuExportFields } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { buildSkuMetaLookup, resolveSkuMeta } from "@shared/skuMetaIdentity";
+import { buildSampleReceiptLookup, resolveSampleReceiptStatus, sampleReceiptIdentity } from "@shared/sampleReceiptTracking";
 import { getBuyMarketTotal, sumBuyMarketTotals, type BuyMarketQuantities } from "@shared/buyMarketTotals";
 import { hasSize11ForAllColourways } from "@shared/size11";
 import { summariseStyleFobCosts } from "@shared/fobEstimates";
@@ -601,15 +602,27 @@ export default function StylesTab() {
     () => buildSkuMetaLookup(skuMetaList as SkuMetaItem[]),
     [skuMetaList],
   );
+  const sampleReceiptLookup = useMemo(() => buildSampleReceiptLookup(
+    skuMetaList, mergedRawSkus.filter((sku) => !cancelledSet.has(sku.style)),
+  ), [skuMetaList, mergedRawSkus, cancelledSet]);
   const skuMetaMap = skuMetaLookup.byPrimary;
-  const skuMetaByComposite = skuMetaLookup.byComposite;
-  const getSkuMetaFor = useCallback((sku: any) => resolveSkuMeta(skuMetaLookup, {
-    style: sku.style,
-    colour: sku._sourceColour ?? sku.colour,
-    leather: sku._sourceLeather ?? sku.leather,
-    colour2: sku.colour2 ?? "",
-    leather2: sku.leather2 ?? "",
-  }), [skuMetaLookup]);
+  const skuMetaByComposite = useMemo(() => {
+    const map = { ...skuMetaLookup.byComposite };
+    for (const sku of mergedRawSkus) {
+      const identity = sampleReceiptIdentity(sku);
+      const meta = resolveSkuMeta(skuMetaLookup, identity);
+      if (!meta) continue;
+      map[getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, sku.colour2, sku.leather2)] = {
+        ...meta, sampleStatus: resolveSampleReceiptStatus(sampleReceiptLookup, sku),
+      };
+    }
+    return map;
+  }, [skuMetaLookup, sampleReceiptLookup, mergedRawSkus]);
+  const getSkuMetaFor = useCallback((sku: any) => {
+    const identity = sampleReceiptIdentity(sku);
+    const meta = resolveSkuMeta(skuMetaLookup, identity);
+    return meta ? { ...meta, sampleStatus: resolveSampleReceiptStatus(sampleReceiptLookup, sku) } : undefined;
+  }, [skuMetaLookup, sampleReceiptLookup]);
 
   const seasonCostMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -1253,8 +1266,8 @@ export default function StylesTab() {
       p.then(async () => {
         await updateStyleSampleMutation.mutateAsync({
           style: sku.style,
-          colour: sku.colour,
-          leather: sku.leather ?? '',
+          colour: (sku as any)._sourceColour ?? sku.colour,
+          leather: (sku as any)._sourceLeather ?? sku.leather ?? '',
           colour2: (sku as any).colour2 || undefined,
           leather2: (sku as any).leather2 || undefined,
           sampleStatus: newStatus,

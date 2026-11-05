@@ -150,8 +150,8 @@ export async function getSkuMeta(
     .where(hasSecondaryIdentity
       ? and(
         primaryIdentity,
-        eq(skuMeta.colour2, normalizeSkuIdentityPart(colour2)),
-        eq(skuMeta.leather2, normalizeSkuIdentityPart(leather2)),
+        sql`UPPER(TRIM(COALESCE(${skuMeta.colour2}, ''))) = ${normalizeSkuIdentityPart(colour2)}`,
+        sql`UPPER(TRIM(COALESCE(${skuMeta.leather2}, ''))) = ${normalizeSkuIdentityPart(leather2)}`,
       )
       : primaryIdentity)
     .limit(1);
@@ -182,13 +182,14 @@ export async function upsertSkuMeta(data: {
   const requestedColour2 = normalizeSkuIdentityPart(data.colour2);
   const requestedLeather2 = normalizeSkuIdentityPart(data.leather2);
   const useSecondaryIdentity = data.sampleStatus !== undefined
-    && Boolean(requestedColour2 || requestedLeather2)
     && data.colourOverride === undefined
     && data.leatherOverride === undefined;
   const existing = useSecondaryIdentity
     ? await getSkuMeta(data.style, data.colour, data.leather, requestedColour2, requestedLeather2)
     : await getSkuMeta(data.style, data.colour, data.leather);
-  const buyRename = getStaticSkuBuyRename(data, existing);
+  // In a receipt update, Upper 2 identifies the sample; it is not an edit to
+  // construction and must never move purchase quantities to another SKU.
+  const buyRename = useSecondaryIdentity ? null : getStaticSkuBuyRename(data, existing);
   if (existing) {
     const updateSet: Record<string, unknown> = {};
     if (data.sampleStatus !== undefined) updateSet.sampleStatus = data.sampleStatus;
@@ -205,27 +206,36 @@ export async function upsertSkuMeta(data: {
     if (data.leather2 !== undefined) updateSet.leather2 = data.leather2;
     await db.update(skuMeta)
       .set(updateSet)
-      // Legacy metadata rows have no Upper 2, so retain their established
-      // primary-upper update behaviour. Exact two-upper rows update only the
-      // matching physical SKU.
+      // Receipt updates cover all NULL/blank duplicates of this exact physical
+      // SKU, including a single-upper SKU, but never a different Upper 2.
       .where(useSecondaryIdentity
-        ? eq(skuMeta.id, existing.id)
+        ? and(
+          eq(skuMeta.style, data.style), eq(skuMeta.colour, data.colour), eq(skuMeta.leather, data.leather),
+          sql`UPPER(TRIM(COALESCE(${skuMeta.colour2}, ''))) = ${requestedColour2}`,
+          sql`UPPER(TRIM(COALESCE(${skuMeta.leather2}, ''))) = ${requestedLeather2}`,
+        )
         : and(eq(skuMeta.style, data.style), eq(skuMeta.colour, data.colour), eq(skuMeta.leather, data.leather)));
   } else {
+    // Adding an exact receipt record must not discard the pre-existing Size 11,
+    // pricing or fit details held in a legacy primary-only row. Its sample
+    // status is deliberately not inherited: only the requested receipt is saved.
+    const legacy = useSecondaryIdentity && Boolean(requestedColour2 || requestedLeather2)
+      ? await getSkuMeta(data.style, data.colour, data.leather, "", "")
+      : undefined;
     await db.insert(skuMeta).values({
       style: data.style,
       colour: data.colour,
       leather: data.leather,
       sampleStatus: data.sampleStatus ?? "waiting",
-      orderQty: data.orderQty ?? 0,
-      isSize11: data.isSize11 ?? false,
-      costPrice: data.costPrice ?? null,
-      rrpOverride: data.rrpOverride ?? null,
-      fitRating: data.fitRating ?? null,
-      fittingNotes: data.fittingNotes ?? null,
-      sampleType: data.sampleType ?? null,
-      colourOverride: data.colourOverride ?? null,
-      leatherOverride: data.leatherOverride ?? null,
+      orderQty: data.orderQty ?? legacy?.orderQty ?? 0,
+      isSize11: data.isSize11 ?? legacy?.isSize11 ?? false,
+      costPrice: data.costPrice !== undefined ? data.costPrice : legacy?.costPrice ?? null,
+      rrpOverride: data.rrpOverride !== undefined ? data.rrpOverride : legacy?.rrpOverride ?? null,
+      fitRating: data.fitRating !== undefined ? data.fitRating : legacy?.fitRating ?? null,
+      fittingNotes: data.fittingNotes !== undefined ? data.fittingNotes : legacy?.fittingNotes ?? null,
+      sampleType: data.sampleType !== undefined ? data.sampleType : legacy?.sampleType ?? null,
+      colourOverride: data.colourOverride !== undefined ? data.colourOverride : legacy?.colourOverride ?? null,
+      leatherOverride: data.leatherOverride !== undefined ? data.leatherOverride : legacy?.leatherOverride ?? null,
       colour2: data.colour2 ?? null,
       leather2: data.leather2 ?? null,
     });

@@ -13,7 +13,9 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
 import { Package, Sparkles, Archive, Layers, Star, RefreshCw, FlaskConical, CheckCircle2 } from "lucide-react";
 import { getNewLastsForSeason } from "@shared/const";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
-import { formatSkuExportLabel } from "@shared/skuExportLabel";
+import { buildSampleReceiptWorklist } from "@shared/sampleReceiptTracking";
+import { SampleReceiptDropdown } from "./SampleReceiptDropdown";
+import { toast } from "sonner";
 import { useSeason } from "@/contexts/SeasonContext";
 
 const CATEGORY_COLOURS: Record<string, string> = {
@@ -188,7 +190,12 @@ export default function SummaryCards() {
   };
 
   // Fetch live sample status counts
-  const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
+  const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery(undefined, {
+    staleTime: 0, refetchOnMount: "always", refetchOnWindowFocus: true,
+  });
+  const utils = trpc.useUtils();
+  const [pendingReceipts, setPendingReceipts] = useState<Set<string>>(new Set());
+  const updateReceipt = trpc.sku.update.useMutation();
 
   // Fetch last approval data — same sources as LastApprovalTab
   const { data: lastApprovals = [] } = trpc.lastApproval.getAll.useQuery({ season });
@@ -220,77 +227,38 @@ export default function SummaryCards() {
   const totalLastsCount = visibleLasts.length;
   const approvedLastsCount = visibleLasts.filter((l) => approvalMap[l] === "approved").length;
 
-  const sampleCounts = useMemo(() => {
-    // Build a set of new SKU keys for fast lookup (use merged+filtered list)
-    const newSkuKeys = new Set(
-      mergedRawSkus
-        .filter((s) => s.is_new && !cancelledStyleSet.has(s.style) && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`))
-        .map((s) => getSkuCompositeIdentity(
-          s.style,
-          s.colour,
-          s.leather,
-          (s as any).colour2,
-          (s as any).leather2,
-        ))
-    );
-    const newSkuCount = newSkuKeys.size;
+  const sampleWorklist = useMemo(() => buildSampleReceiptWorklist(
+    mergedRawSkus, skuMetaList, cancelledStyleSet,
+  ), [skuMetaList, mergedRawSkus, cancelledStyleSet]);
+  const sampleCounts = sampleWorklist.counts;
 
-    // Only count sample status for NEW SKUs
-    let received = 0;
-    let explicitlyWaiting = 0;
-    const trackedNewKeys = new Set<string>();
-    for (const m of skuMetaList) {
-      const key = getSkuCompositeIdentity(m.style, m.colour, m.leather, m.colour2, m.leather2);
-      if (!newSkuKeys.has(key)) continue; // skip carry-over SKUs
-      // Historical metadata can contain more than one record for an older
-      // single-upper SKU. It remains one physical SKU for range readiness.
-      if (trackedNewKeys.has(key)) continue;
-      trackedNewKeys.add(key);
-      if (m.sampleStatus === "received") received++;
-      else if (m.sampleStatus === "fitting_sample") received++; // count fitting samples as received for progress
-      else explicitlyWaiting++;
+  async function toggleReceipt(row: typeof sampleWorklist.receivedSkus[number]) {
+    const identity = row.identity;
+    const key = getSkuCompositeIdentity(identity.style, identity.colour, identity.leather, identity.colour2, identity.leather2);
+    const matches = (meta: typeof skuMetaList[number]) => getSkuCompositeIdentity(
+      meta.style, meta.colour, meta.leather, meta.colour2, meta.leather2,
+    ) === key;
+    const status = row.status === "waiting" ? "received" : "waiting";
+    setPendingReceipts((previous) => new Set(previous).add(row.key));
+    await utils.sku.getAll.cancel();
+    const previousRows = (utils.sku.getAll.getData() ?? []).filter(matches);
+    utils.sku.getAll.setData(undefined, (previous) => {
+      const rows = previous ?? [];
+      if (!rows.some(matches)) return [...rows, { ...identity, sampleStatus: status } as typeof rows[number]];
+      return rows.map((meta) => matches(meta) ? { ...meta, sampleStatus: status } : meta);
+    });
+    try {
+      await updateReceipt.mutateAsync({ ...identity, leather: identity.leather ?? "", sampleStatus: status });
+    } catch (error) {
+      utils.sku.getAll.setData(undefined, (previous) => [
+        ...(previous ?? []).filter((meta) => !matches(meta)), ...previousRows,
+      ]);
+      toast.error(`Could not save sample receipt: ${error instanceof Error ? error.message : "Please try again"}`);
+    } finally {
+      await utils.sku.getAll.invalidate();
+      setPendingReceipts((previous) => { const next = new Set(previous); next.delete(row.key); return next; });
     }
-    // New SKUs not yet in DB are implicitly "waiting"
-    const untrackedWaiting = newSkuCount - trackedNewKeys.size;
-    const waiting = explicitlyWaiting + Math.max(0, untrackedWaiting);
-    return { waiting, received, total: newSkuCount };
-  }, [skuMetaList, mergedRawSkus, cancelledStyleSet, cancelledSkuSet]);
-
-  // SKU lists for hover tooltips
-  const sampleSkuLists = useMemo(() => {
-    const receivedSkus: Array<{ key: string; label: string }> = [];
-    const waitingSkus: Array<{ key: string; label: string }> = [];
-
-    // Build a set of SKU keys that are in the DB with a status
-    const skuStatusMap: Record<string, "waiting" | "fitting_sample" | "received"> = {};
-    for (const m of skuMetaList) {
-      const key = getSkuCompositeIdentity(m.style, m.colour, m.leather, m.colour2, m.leather2);
-      skuStatusMap[key] = m.sampleStatus as "waiting" | "fitting_sample" | "received";
-    }
-
-    for (const sku of mergedRawSkus) {
-      if (!sku.is_new) continue;
-      if (cancelledStyleSet.has(sku.style)) continue;
-      if (cancelledSkuSet.has(`${sku.style}|${sku.colour}|${sku.leather}`)) continue;
-      const key = getSkuCompositeIdentity(
-        sku.style,
-        sku.colour,
-        sku.leather,
-        (sku as any).colour2,
-        (sku as any).leather2,
-      );
-      const label = `${sku.style} — ${formatSkuExportLabel(sku)}`;
-      if (skuStatusMap[key] === "received") {
-        receivedSkus.push({ key, label });
-      } else if (skuStatusMap[key] === "fitting_sample") {
-        receivedSkus.push({ key, label: `${label} (fitting)` });
-      } else {
-        waitingSkus.push({ key, label });
-      }
-    }
-
-    return { receivedSkus, waitingSkus };
-  }, [skuMetaList, mergedRawSkus, cancelledStyleSet, cancelledSkuSet]);
+  }
 
   const pctReceived = sampleCounts.total > 0
     ? Math.round((sampleCounts.received / sampleCounts.total) * 100)
@@ -360,59 +328,10 @@ export default function SummaryCards() {
             />
           </div>
 
-          {/* Counts row with hover tooltips */}
+          {/* Searchable worklists share the exact same records as the counts. */}
           <div className="grid grid-cols-2 gap-3">
-            {/* Received tile */}
-            <div className="group relative">
-              <div
-                className="rounded-lg px-4 py-3 flex items-center justify-between cursor-default"
-                style={{ background: "oklch(0.94 0.08 155)", border: "1px solid oklch(0.85 0.12 155)" }}
-              >
-                <span className="text-sm font-medium" style={{ color: "oklch(0.40 0.14 155)" }}>Received</span>
-                <span className="text-xl font-display font-bold tabular-nums" style={{ color: "oklch(0.40 0.14 155)" }}>
-                  <AnimatedNumber value={sampleCounts.received} />
-                </span>
-              </div>
-              {sampleSkuLists.receivedSkus.length > 0 && (
-                <div
-                  className="absolute left-0 top-full mt-1 z-50 hidden group-hover:block w-72 max-h-64 overflow-y-auto rounded-lg shadow-lg border p-3"
-                  style={{ background: "var(--card)", borderColor: "var(--border)" }}
-                >
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Received Samples</p>
-                  <ul className="space-y-1">
-                    {sampleSkuLists.receivedSkus.map((sku) => (
-                      <li key={sku.key} className="text-xs text-foreground">{sku.label}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* Waiting tile */}
-            <div className="group relative">
-              <div
-                className="rounded-lg px-4 py-3 flex items-center justify-between cursor-default"
-                style={{ background: "oklch(0.97 0.06 65)", border: "1px solid oklch(0.88 0.10 65)" }}
-              >
-                <span className="text-sm font-medium" style={{ color: "oklch(0.45 0.14 55)" }}>Waiting</span>
-                <span className="text-xl font-display font-bold tabular-nums" style={{ color: "oklch(0.45 0.14 55)" }}>
-                  <AnimatedNumber value={sampleCounts.waiting} />
-                </span>
-              </div>
-              {sampleSkuLists.waitingSkus.length > 0 && (
-                <div
-                  className="absolute right-0 top-full mt-1 z-50 hidden group-hover:block w-72 max-h-64 overflow-y-auto rounded-lg shadow-lg border p-3"
-                  style={{ background: "var(--card)", borderColor: "var(--border)" }}
-                >
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Waiting on Samples</p>
-                  <ul className="space-y-1">
-                    {sampleSkuLists.waitingSkus.map((sku) => (
-                      <li key={sku.key} className="text-xs text-foreground">{sku.label}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+            <SampleReceiptDropdown received rows={sampleWorklist.receivedSkus} pending={pendingReceipts} onToggle={toggleReceipt} />
+            <SampleReceiptDropdown received={false} rows={sampleWorklist.waitingSkus} pending={pendingReceipts} onToggle={toggleReceipt} />
           </div>
         </div>
       </div>
