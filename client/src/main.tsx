@@ -7,6 +7,7 @@ import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import { SeasonProvider } from "./contexts/SeasonContext";
+import { requireTrpcJsonResponse } from "./lib/trpcResponse";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -43,11 +44,12 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      fetch(input, init) {
-        return globalThis.fetch(input, {
+      async fetch(input, init) {
+        const response = await globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
         });
+        return requireTrpcJsonResponse(response);
       },
     }),
   ],

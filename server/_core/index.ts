@@ -13,6 +13,7 @@ import { parsePptxBuffer } from "../pptx_parser";
 import { storagePut } from "../storage";
 import { recordPptxImport, flagMarkdownSkus } from "../db";
 import { fetchSaleProducts } from "../markdownScanner";
+import { apiNotFound, apiErrorHandler } from "../apiResponseGuards";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -119,6 +120,9 @@ async function startServer() {
       createContext,
     })
   );
+  // Never send the SPA/login HTML as a missing or malformed API response.
+  app.use("/api", apiNotFound);
+  app.use(apiErrorHandler);
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);

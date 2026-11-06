@@ -15,6 +15,7 @@ import { getNewLastsForSeason } from "@shared/const";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { buildSampleReceiptWorklist } from "@shared/sampleReceiptTracking";
 import { SampleReceiptDropdown } from "./SampleReceiptDropdown";
+import { saveSampleReceipt } from "@/lib/sampleReceiptSave";
 import { toast } from "sonner";
 import { useSeason } from "@/contexts/SeasonContext";
 
@@ -239,25 +240,28 @@ export default function SummaryCards() {
       meta.style, meta.colour, meta.leather, meta.colour2, meta.leather2,
     ) === key;
     const status = row.status === "waiting" ? "received" : "waiting";
-    setPendingReceipts((previous) => new Set(previous).add(row.key));
-    await utils.sku.getAll.cancel();
-    const previousRows = (utils.sku.getAll.getData() ?? []).filter(matches);
-    utils.sku.getAll.setData(undefined, (previous) => {
-      const rows = previous ?? [];
-      if (!rows.some(matches)) return [...rows, { ...identity, sampleStatus: status } as typeof rows[number]];
-      return rows.map((meta) => matches(meta) ? { ...meta, sampleStatus: status } : meta);
+    await saveSampleReceipt({
+      setPending: (pending) => setPendingReceipts((previous) => {
+        const next = new Set(previous);
+        if (pending) next.add(row.key); else next.delete(row.key);
+        return next;
+      }),
+      prepare: async () => {
+        await utils.sku.getAll.cancel();
+        const previousRows = (utils.sku.getAll.getData() ?? []).filter(matches);
+        utils.sku.getAll.setData(undefined, (previous) => {
+          const rows = previous ?? [];
+          if (!rows.some(matches)) return [...rows, { ...identity, sampleStatus: status } as typeof rows[number]];
+          return rows.map((meta) => matches(meta) ? { ...meta, sampleStatus: status } : meta);
+        });
+        return () => utils.sku.getAll.setData(undefined, (previous) => [
+          ...(previous ?? []).filter((meta) => !matches(meta)), ...previousRows,
+        ]);
+      },
+      save: () => updateReceipt.mutateAsync({ ...identity, leather: identity.leather ?? "", sampleStatus: status }),
+      onError: (error) => toast.error(`Could not confirm sample receipt: ${error instanceof Error ? error.message : "Refresh and check the sample status before retrying"}`),
+      reconcile: () => utils.sku.getAll.invalidate(),
     });
-    try {
-      await updateReceipt.mutateAsync({ ...identity, leather: identity.leather ?? "", sampleStatus: status });
-    } catch (error) {
-      utils.sku.getAll.setData(undefined, (previous) => [
-        ...(previous ?? []).filter((meta) => !matches(meta)), ...previousRows,
-      ]);
-      toast.error(`Could not save sample receipt: ${error instanceof Error ? error.message : "Please try again"}`);
-    } finally {
-      await utils.sku.getAll.invalidate();
-      setPendingReceipts((previous) => { const next = new Set(previous); next.delete(row.key); return next; });
-    }
   }
 
   const pctReceived = sampleCounts.total > 0
