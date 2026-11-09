@@ -54,7 +54,7 @@ export default function BuySessionsPanel() {
   const { data: sessionTotals = {} } = trpc.buy.getSessionTotals.useQuery({ season });
   const { data: cancelledSkuList = [] } = trpc.cancelledSku.list.useQuery({ season });
   const { data: exactCancelledSkuList = [] } = trpc.cancelledSku.listExact.useQuery({ season });
-  const { data: markdownSkuList = [] } = trpc.markdown.list.useQuery();
+  const { data: markdownSkuList = [] } = trpc.markdown.list.useQuery({});
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery();
   const { data: seasonCostList = [] } = trpc.sku.getSeasonCosts.useQuery({ season });
   const { data: subCategoryList = [] } = trpc.styleSubCategory.getAll.useQuery();
