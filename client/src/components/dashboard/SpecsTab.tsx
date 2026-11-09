@@ -38,7 +38,7 @@ import { EmailSpecDialog } from "@/components/dashboard/EmailSpecDialog";
 import { parseSpecSheetFile, type ParsedSpecSheet } from "@/lib/importSpecSheet";
 import { useSeason } from "@/contexts/SeasonContext";
 import { findSpecColourMapValue, normalizeStoredSpecColourKey } from "@shared/specColourKey";
-import { selectSpecColourColumns } from "@shared/specsStyleVisibility";
+import { excludeCancelledSpecStyles, selectSpecColourColumns } from "@shared/specsStyleVisibility";
 import { getSeasonDisplayLabel } from "@shared/seasonLabel";
 import { buildNewSpecColourColumns } from "@shared/specSeasonalColumns";
 import { isNewSpecStyleAwaitingCompletion, type SpecCompletionStatus } from "@shared/specCompletionQueue";
@@ -2388,72 +2388,16 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   // Individually cancelled SKUs (style|colour|leather)
   const { data: cancelledSkusRaw = [] } = trpc.cancelledSku.list.useQuery({ season });
-  const cancelledSkuSet = useMemo(() => {
-    const set = new Set<string>();
-    for (const row of cancelledSkusRaw as any[]) {
-      set.add(`${row.style}|${row.colour}|${row.leather}`);
-    }
-    return set;
-  }, [cancelledSkusRaw]);
 
-  // Build a map: style → colourKey (as used in SpecsTab, e.g. "BLACK SPECKLE") → isCancelled
-  // This is needed because SpecsTab uses compound colour keys ("BLACK SPECKLE") for multi-leather styles,
-  // but cancelledSkuSet stores raw style|colour|leather ("DONTE|BLACK|SPECKLE").
-  const cancelledColourKeySet = useMemo(() => {
-    // Build style → colour → Set<leather> from mergedRawSkus (same logic as NEW_COLOURS_PER_STYLE)
-    const leatherCount: Record<string, Record<string, Set<string>>> = {};
-    for (const sku of mergedRawSkus as any[]) {
-      const style = sku.style as string;
-      const colour = sku.colour as string;
-      const leather = (sku.leather as string) ?? "";
-      if (!leatherCount[style]) leatherCount[style] = {};
-      if (!leatherCount[style][colour]) leatherCount[style][colour] = new Set();
-      leatherCount[style][colour].add(leather);
-    }
-    // Now build a set of "style|colourKey" strings for cancelled SKUs
-    const set = new Set<string>();
-    for (const row of cancelledSkusRaw as any[]) {
-      const style = normalizeSpecColourPart(row.style as string);
-      const colour = normalizeSpecColourPart(row.colour as string);
-      const leather = normalizeSpecColourPart((row.leather as string) ?? "");
-      const colourKey = SPEC_COLOUR_KEY_BY_SKU.get(getSpecSkuIdentity(style, colour, leather)) ?? colour;
-      set.add(`${style}|${colourKey}`);
-    }
-    return set;
-  }, [cancelledSkusRaw, SPEC_COLOUR_KEY_BY_SKU]);
-
-  // Filter cancelled styles + cancelled SKUs from the base list
-  // (custom SKUs are already merged into baseStyleList via mergedRawSkus)
+  // useCustomSkus already excludes exact physical cancellations and markdowns.
+  // Only style-level cancellations remain; a second display-key cancellation
+  // pass would wrongly hide BLACK NAPPA when BLACK SUPRA has been removed.
   const styleList = useMemo(() => {
-    return baseStyleList
-      .filter((s) => !cancelledSet.has(s.style))
-      .map((s) => {
-        // Filter out individually cancelled colours using compound-key-aware lookup
-        const filteredColours: string[] = [];
-        const filteredLabels: string[] = [];
-        for (let i = 0; i < s.colours.length; i++) {
-          const colour = s.colours[i]; // may be compound key like "BLACK SPECKLE"
-          if (!cancelledColourKeySet.has(`${s.style}|${colour}`)) {
-            filteredColours.push(colour);
-            filteredLabels.push(s.colourLabels[i]);
-          }
-        }
-        // Also filter toeCapsPerColour to only include non-cancelled colours
-        const filteredToeCaps: Record<string, string> = {};
-        for (const colour of filteredColours) {
-          if (s.toeCapsPerColour[colour]) filteredToeCaps[colour] = s.toeCapsPerColour[colour];
-        }
-        return {
-          ...s,
-          colours: filteredColours,
-          colourLabels: filteredLabels,
-          toeCapsPerColour: filteredToeCaps,
-        };
-      })
+    return excludeCancelledSpecStyles(baseStyleList, cancelledSet)
       // Keep zero-colour custom styles visible so their library entry is ready
       // before colours are confirmed.
       .filter((s) => s.colours.length > 0 || (s as any)._isCustomStyle);
-  }, [baseStyleList, cancelledSet, cancelledColourKeySet]);
+  }, [baseStyleList, cancelledSet]);
 
   // The completion queue only applies to styles with new SKU columns. Existing
   // core/carry-over styles remain organised under their normal category.
