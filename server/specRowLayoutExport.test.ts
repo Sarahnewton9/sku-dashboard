@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
-import { describe, expect, it } from "vitest";
-import { buildSpecSheetWorkbook, type CustomSpecRow, type ExportSpecSheetParams } from "@/lib/exportSpecSheet";
+import { saveAs } from "file-saver";
+import { describe, expect, it, vi } from "vitest";
+import { buildSpecSheetAttachment, buildSpecSheetWorkbook, exportSpecSheet, type CustomSpecRow, type ExportSpecSheetParams } from "@/lib/exportSpecSheet";
 import {
   getCustomSpecRowAliases,
   getOrderedSpecRowKeys,
@@ -9,7 +10,10 @@ import {
   mergeSpecRowOrder,
   normalizeSpecRowLayout,
 } from "../shared/specRowLayout";
+import { buildCrossStyleComponentCopies } from "../shared/specCrossStyleCopy";
 import { getTemplateForCategory } from "../shared/specTemplates";
+
+vi.mock("file-saver", () => ({ saveAs: vi.fn() }));
 
 const baseParams: ExportSpecSheetParams = {
   style: "RAZZLE",
@@ -57,7 +61,135 @@ function labels(workbook: ExcelJS.Workbook): string[] {
   return componentRows(workbook).map((row) => row[0]);
 }
 
+async function downloadedAndAttachedWorkbooks(params: ExportSpecSheetParams): Promise<ExcelJS.Workbook[]> {
+  vi.mocked(saveAs).mockClear();
+  await exportSpecSheet(params);
+  expect(saveAs).toHaveBeenCalledTimes(1);
+  const [blob, filename] = vi.mocked(saveAs).mock.calls[0];
+  expect(blob).toBeInstanceOf(Blob);
+  const downloaded = new ExcelJS.Workbook();
+  await downloaded.xlsx.load(await (blob as Blob).arrayBuffer());
+
+  const attachment = await buildSpecSheetAttachment(params);
+  expect(attachment.filename).toBe(filename);
+  const attached = new ExcelJS.Workbook();
+  const bytes = Uint8Array.from(Buffer.from(attachment.base64, "base64"));
+  await attached.xlsx.load(bytes.buffer);
+  return [downloaded, attached];
+}
+
 describe("factory exports use the shared Specs row layout", () => {
+  it("omits a populated Bow copied from CHELSEA to CASA in the downloaded workbook and decoded email attachment", async () => {
+    const sourceSpecs = {
+      "BLACK NAPPA": { upper_1: "BLACK NAPPA", bow: "MATCHING ELASTIC", lining: "BLACK SHEEP" },
+    };
+    const sourceBefore = structuredClone(sourceSpecs);
+    const colours = ["BLACK SUEDE", "STONE SUEDE"];
+    const specs: ExportSpecSheetParams["specs"] = Object.fromEntries(colours.map((colour) => [colour, { upper_1: colour }]));
+    const copied = buildCrossStyleComponentCopies("CASA", colours, sourceSpecs["BLACK NAPPA"]);
+    for (const row of copied) specs[row.colour][row.component] = row.value;
+    const rowKeys = ["t:upper_1", "t:bow", "deleted:t:bow", "t:lining"];
+    const params: ExportSpecSheetParams = { ...baseParams, style: "CASA", colours, colourLabels: colours, specs, rowKeys };
+    const before = structuredClone(params);
+    expect(specs["BLACK SUEDE"].bow).toBe("MATCHING ELASTIC");
+    expect(specs["STONE SUEDE"].bow).toBe("MATCHING ELASTIC");
+
+    for (const workbook of await downloadedAndAttachedWorkbooks(params)) {
+      expect(workbook.getWorksheet("Sheet1")!.getCell("B4").value).toBe("CASA");
+      expect(componentRows(workbook)).toEqual([
+        ["UPPER 1", "BLACK SUEDE", "STONE SUEDE"],
+        ["LINING", "BLACK SHEEP", "BLACK SHEEP"],
+      ]);
+      expect(labels(workbook)).not.toContain("BOW");
+    }
+    expect(sourceSpecs).toEqual(sourceBefore);
+    expect(params).toEqual(before);
+  });
+
+  it.each(["template", "grouped custom"] as const)("omits hidden $0 Bow from every seven-colour block in downloads and attachments", async (kind) => {
+    const colours = Array.from({ length: 9 }, (_, index) => `COLOUR-${index + 1}`);
+    const specs = Object.fromEntries(colours.map((colour) => [colour, {
+      upper_1: colour, bow: `TEMPLATE BOW ${colour}`, lining: `LINING ${colour}`,
+    }]));
+    const customRows = colours.map((colour, index) => customRow(100 + index, {
+      style: "CASA", title: index === 0 ? "Bow" : " bow ", colour, value: `CUSTOM BOW ${colour}`,
+    }));
+    const rowKeys = kind === "template"
+      ? ["t:upper_1", "t:bow", "deleted:t:bow", "t:lining"]
+      : ["c:100", "c:108", "deleted:c:108", "deleted:t:bow", "t:lining"];
+    const params: ExportSpecSheetParams = {
+      ...baseParams, style: "CASA", colours, colourLabels: colours, specs,
+      customRows: kind === "grouped custom" ? customRows : [], rowKeys,
+    };
+    const before = structuredClone(params);
+    // Confirm the custom members really are one populated Bow group before hiding any member.
+    if (kind === "grouped custom") {
+      expect(groupSpecCustomRows(customRows)).toHaveLength(1);
+      expect(getCustomSpecRowAliases(groupSpecCustomRows(customRows)).get("c:108")).toBe("c:100");
+    }
+
+    for (const workbook of await downloadedAndAttachedWorkbooks(params)) {
+      const sheet = workbook.getWorksheet("Sheet1")!;
+      const headers: number[] = [];
+      sheet.eachRow((row) => { if (row.getCell(1).value === "COMPONENTS") headers.push(row.number); });
+      expect(headers).toHaveLength(2);
+      expect(labels(workbook)).toEqual(["UPPER 1", "LINING", "UPPER 1", "LINING"]);
+      expect(labels(workbook)).not.toContain("BOW");
+      const upperValues: string[] = [];
+      const liningValues: string[] = [];
+      for (const header of headers) {
+        for (let column = 2; column <= 8; column++) {
+          if (sheet.getCell(header, column).value === null) continue;
+          upperValues.push(String(sheet.getCell(header + 2, column).value));
+          liningValues.push(String(sheet.getCell(header + 3, column).value));
+        }
+      }
+      expect(upperValues).toEqual(colours);
+      expect(liningValues).toEqual(colours.map((colour) => `LINING ${colour}`));
+      expect(sheet.getCell(headers[1], 2).value).toBe("COLOUR 8");
+      expect(sheet.getCell(headers[1], 3).value).toBe("COLOUR 9");
+    }
+    expect(params).toEqual(before);
+  });
+
+  it("keeps EIFFEL Topline and Bow hidden in old and newly copied colours across both export blocks", async () => {
+    const colours = Array.from({ length: 9 }, (_, index) => `COLOUR-${index + 1}`);
+    const sourceValues = { upper_1: "SOURCE NAPPA", topline: "COPIED GROSGRAIN", bow: "COPIED ELASTIC", lining: "COPIED SHEEP" };
+    const sourceBefore = structuredClone(sourceValues);
+    const specs: ExportSpecSheetParams["specs"] = Object.fromEntries(colours.map((colour, index) => [colour,
+      index < 7
+        ? { upper_1: colour, topline: `OLD TOPLINE ${colour}`, bow: `OLD BOW ${colour}`, lining: `OLD LINING ${colour}` }
+        : { upper_1: colour },
+    ]));
+    for (const row of buildCrossStyleComponentCopies("EIFFEL", colours.slice(7), sourceValues)) {
+      specs[row.colour][row.component] = row.value;
+    }
+    const rowKeys = ["t:upper_1", "deleted:t:topline", "deleted:t:bow", "t:lining"];
+    const params: ExportSpecSheetParams = { ...baseParams, style: "EIFFEL", colours, colourLabels: colours, specs, rowKeys };
+    const before = structuredClone(params);
+    expect(specs[colours[0]].bow).toBe(`OLD BOW ${colours[0]}`);
+    expect(specs[colours[7]].bow).toBe("COPIED ELASTIC");
+    expect(specs[colours[8]].topline).toBe("COPIED GROSGRAIN");
+
+    for (const workbook of await downloadedAndAttachedWorkbooks(params)) {
+      const sheet = workbook.getWorksheet("Sheet1")!;
+      expect(labels(workbook)).toEqual(["UPPER 1", "LINING", "UPPER 1", "LINING"]);
+      expect(labels(workbook)).not.toContain("TOPLINE");
+      expect(labels(workbook)).not.toContain("BOW");
+      const blockHeaders: number[] = [];
+      sheet.eachRow((row) => { if (row.getCell(1).value === "COMPONENTS") blockHeaders.push(row.number); });
+      expect(blockHeaders).toHaveLength(2);
+      expect(sheet.getCell(blockHeaders[0] + 3, 2).value).toBe(`OLD LINING ${colours[0]}`);
+      expect(sheet.getCell(blockHeaders[1], 2).value).toBe("COLOUR 8");
+      expect(sheet.getCell(blockHeaders[1] + 2, 2).value).toBe(colours[7]);
+      expect(sheet.getCell(blockHeaders[1] + 2, 3).value).toBe(colours[8]);
+      expect(sheet.getCell(blockHeaders[1] + 3, 2).value).toBe("COPIED SHEEP");
+      expect(sheet.getCell(blockHeaders[1] + 3, 3).value).toBe("COPIED SHEEP");
+    }
+    expect(params).toEqual(before);
+    expect(sourceValues).toEqual(sourceBefore);
+  });
+
   it.each([
     ["t:upper_1", "t:stitch", "deleted:t:stitch", "t:lining"],
     ["deleted:t:stitch", "t:upper_1", "t:stitch", "t:lining"],

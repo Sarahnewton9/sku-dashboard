@@ -44,6 +44,7 @@ import { buildNewSpecColourColumns } from "@shared/specSeasonalColumns";
 import { isNewSpecStyleAwaitingCompletion, type SpecCompletionStatus } from "@shared/specCompletionQueue";
 import { matchesSpecsStyleSearchFilters } from "@shared/specsStyleSearch";
 import { enqueueSpecRowSave, getCustomSpecRowAliases, getOrderedSpecRowKeys, groupSpecCustomRows, hideSpecRow, mergeSpecRowOrder, normalizeSpecRowLayout, replaceSpecRowKey, restoreSpecRow } from "@shared/specRowLayout";
+import { getLatestSpecExportLayout, type RegisteredSpecRowLayout } from "@shared/specExportLayout";
 import { buildSavedSpecCopySnapshot } from "@shared/specCopySnapshot";
 import {
   planSavedSpecReplacement,
@@ -992,8 +993,8 @@ interface SpecFormProps {
    * If localRowKeys is null (no saved order yet), it initialises from the current unifiedRowIds first
    * so the row stays in its current position instead of jumping to the bottom. */
   onRegisterReplaceRowKey?: (swapFn: (oldKey: string, newKey: string) => void) => void;
-  /** Called once on mount so SpecsTab can register a getter that returns the current localRowKeys (or unifiedRowIds if null). */
-  onRegisterGetRowKeys?: (getFn: () => string[]) => void;
+  /** Returns only a local edited layout; null means fetch the latest saved layout. */
+  onRegisterGetRowKeys?: (getFn: (() => string[] | null) | null) => void;
   /** Apply identity changes through the same optimistic, serialized layout writer. */
   onRegisterUpdateRowKeys?: (updateFn: (update: (keys: string[]) => string[]) => Promise<void>) => void;
 }
@@ -1503,8 +1504,9 @@ export function SpecForm({
       const base = localRowKeysRef.current ?? mergeSpecRowOrder(unifiedRowIdsRef.current, savedRowKeysRef.current);
       void saveRowKeysRef.current(replaceSpecRowKey(base, oldKey, newKey)).catch(() => undefined);
     });
-    onRegisterGetRowKeys?.(getCurrentRowKeys);
+    onRegisterGetRowKeys?.(() => localRowKeysRef.current !== null ? getCurrentRowKeys() : null);
     onRegisterUpdateRowKeys?.((update) => saveRowKeysRef.current(update(getCurrentRowKeys())));
+    return () => onRegisterGetRowKeys?.(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1523,10 +1525,9 @@ export function SpecForm({
     for (const [key, row] of Array.from(incoming)) replacements.set(key, row);
     await onBulkCopy(plan.componentRows);
     if (replacements.size > 0) await onBulkCopyCustomRowsFromStyle(targetColours, Array.from(replacements.values()));
-    // Only source rows with a real value should re-open a hidden target row.
-    let keys = getCurrentRowKeys();
-    for (const row of plan.componentRows) if (row.value.trim()) keys = restoreSpecRow(keys, `t:${row.component}`);
-    await saveRowKeys(keys);
+    // Copy updates the selected cells, not the target style's row visibility.
+    // Explicitly removed components stay removed until the user chooses Restore.
+    await saveRowKeys(getCurrentRowKeys());
   }
 
   async function handleCopyFrom(sourceColour: string, targetColours: string[]) {
@@ -2187,6 +2188,7 @@ export default function SpecsTab({}: SpecsTabProps) {
   const [search, setSearch] = useState("");
   const [upper2Search, setUpper2Search] = useState("");
   const [emailSpecOpen, setEmailSpecOpen] = useState(false);
+  const [specExporting, setSpecExporting] = useState(false);
   const [importParsed, setImportParsed] = useState<ParsedSpecSheet | null>(null);
   const [importLoading, setImportLoading] = useState(false);
   const [importSaving, setImportSaving] = useState(false);
@@ -2535,8 +2537,19 @@ export default function SpecsTab({}: SpecsTabProps) {
   function swapLocalRowKey(oldKey: string, newKey: string) {
     replaceRowKeySetterRef.current?.(oldKey, newKey);
   }
-  // Ref to SpecForm's getRowKeys function — returns the current in-memory row order (localRowKeys or unifiedRowIds)
-  const getRowKeysRef = useRef<(() => string[]) | null>(null);
+  // Never let an unmounting/previous style provide the next style's export layout.
+  const getRowKeysRef = useRef<RegisteredSpecRowLayout | null>(null);
+  function getCurrentStyleRowKeys() {
+    return getRowKeysRef.current?.style === selectedStyle ? getRowKeysRef.current.read() : null;
+  }
+  function getExportRowKeys(style: string) {
+    return getLatestSpecExportLayout({
+      style,
+      readLocal: () => getRowKeysRef.current,
+      waitForSaves: () => enqueueSpecRowSave(style, async () => undefined),
+      loadSaved: async () => (await utils.specRowOrder.get.fetch({ style }, { staleTime: 0 })).rowKeys,
+    });
+  }
   const updateRowKeysRef = useRef<((update: (keys: string[]) => string[]) => Promise<void>) | null>(null);
 
   const { data: rawCustomRows = [], refetch: refetchCustomRows } = trpc.specCustomRow.getByStyle.useQuery(
@@ -2899,7 +2912,7 @@ export default function SpecsTab({}: SpecsTabProps) {
     if (!selectedStyle) return;
     // Pass colours + rowKeys so server can auto-check completion status
     const colours = (selectedEntry?.colours ?? []).map(normalizeStoredSpecColourKey);
-    const rowKeys = getRowKeysRef.current?.() ?? exportRowOrderData?.rowKeys ?? [];
+    const rowKeys = getCurrentStyleRowKeys() ?? exportRowOrderData?.rowKeys ?? [];
     upsertMutation.mutate(
       { style: selectedStyle, colour: normalizeStoredSpecColourKey(colour), component, value, colours, rowKeys, season },
       {
@@ -3316,36 +3329,45 @@ export default function SpecsTab({}: SpecsTabProps) {
                   size="sm"
                   variant="outline"
                   className="gap-2"
-                  onClick={() => {
-                    exportSpecSheet({
-                      style: selectedEntry.style,
-                      last: selectedEntry.last,
-                      category: selectedEntry.category,
-                      season: getSeasonDisplayLabel(season),
-                      // Export uses the unfiltered entry so hidden columns are still exported
-                      colours: selectedEntryRaw?.colours ?? selectedEntry.colours,
-                      colourLabels: selectedEntryRaw?.colourLabels ?? selectedEntry.colourLabels,
-                      specs,
-                      hasBuckle: specMeta?.hasBuckle ?? false,
-                      dressShoeSubType: specMeta?.dressShoeSubType ?? null,
-                      imageUrl: imageOverrides[selectedEntry.style] ?? selectedEntry.imageUrl,
-                      customRows: rawCustomRows as any[],
-                      // Pass saved row order so export respects on-screen order and omits deleted rows
-                      rowKeys: getRowKeysRef.current?.() ?? exportRowOrderData?.rowKeys ?? null,
-                      comments: specMeta?.notes ?? null,
-                    });
-                    // Export is the hand-off point for a new SKU spec sheet.
-                    // Once sent out, it should leave the To Be Completed queue.
-                    if (selectedEntry.newSKUs > 0 && specMeta?.specStatus !== "complete") {
-                      setSpecStatusMutation.mutate({ style: selectedEntry.style, status: "complete", season });
-                      toast.success(`Exported ${selectedEntry.style} and marked its new SKU specs complete`);
-                    } else {
-                      toast.success(`Exported ${selectedEntry.style} spec sheet`);
+                  disabled={specExporting}
+                  onClick={async () => {
+                    setSpecExporting(true);
+                    try {
+                      const rowKeys = await getExportRowKeys(selectedEntry.style);
+                      await exportSpecSheet({
+                        style: selectedEntry.style,
+                        last: selectedEntry.last,
+                        category: dbCategory ?? selectedEntry.category,
+                        season: getSeasonDisplayLabel(season),
+                        // Export uses the unfiltered entry so hidden columns are still exported
+                        colours: selectedEntryRaw?.colours ?? selectedEntry.colours,
+                        colourLabels: selectedEntryRaw?.colourLabels ?? selectedEntry.colourLabels,
+                        specs,
+                        hasBuckle: specMeta?.hasBuckle ?? false,
+                        dressShoeSubType: specMeta?.dressShoeSubType ?? null,
+                        imageUrl: imageOverrides[selectedEntry.style] ?? selectedEntry.imageUrl,
+                        customRows: rawCustomRows as any[],
+                        // Use the latest saved/local row order, including explicit hidden rows.
+                        rowKeys,
+                        comments: specMeta?.notes ?? null,
+                      });
+                      // Export is the hand-off point for a new SKU spec sheet.
+                      // Only a successfully generated workbook completes the hand-off.
+                      if (selectedEntry.newSKUs > 0 && specMeta?.specStatus !== "complete") {
+                        setSpecStatusMutation.mutate({ style: selectedEntry.style, status: "complete", season });
+                        toast.success(`Exported ${selectedEntry.style} and marked its new SKU specs complete`);
+                      } else {
+                        toast.success(`Exported ${selectedEntry.style} spec sheet`);
+                      }
+                    } catch (error) {
+                      toast.error(`Could not export spec sheet: ${error instanceof Error ? error.message : "Please retry"}`);
+                    } finally {
+                      setSpecExporting(false);
                     }
                   }}
                 >
                   <FileSpreadsheet className="w-4 h-4" />
-                  Export to Excel
+                  {specExporting ? "Exporting…" : "Export to Excel"}
                 </Button>
               </div>
             </div>
@@ -3357,10 +3379,10 @@ export default function SpecsTab({}: SpecsTabProps) {
               category={selectedEntry.category}
               season={getSeasonDisplayLabel(season)}
               defaultSubject={`${selectedEntry.style.toUpperCase()} — TONY BIANCO DEV WINTER 2027`}
-              buildAttachment={() => buildSpecSheetAttachment({
+              buildAttachment={async () => buildSpecSheetAttachment({
                 style: selectedEntry.style,
                 last: selectedEntry.last,
-                category: selectedEntry.category,
+                category: dbCategory ?? selectedEntry.category,
                 season: getSeasonDisplayLabel(season),
                 // The attachment includes all columns, including those temporarily hidden in the editor.
                 colours: selectedEntryRaw?.colours ?? selectedEntry.colours,
@@ -3370,7 +3392,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                 dressShoeSubType: specMeta?.dressShoeSubType ?? null,
                 imageUrl: imageOverrides[selectedEntry.style] ?? selectedEntry.imageUrl,
                 customRows: rawCustomRows as any[],
-                rowKeys: getRowKeysRef.current?.() ?? exportRowOrderData?.rowKeys ?? null,
+                rowKeys: await getExportRowKeys(selectedEntry.style),
                 comments: specMeta?.notes ?? null,
               })}
               onSent={() => {
@@ -3709,7 +3731,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                     for (const group of before.filter(group => sameRow(group.rep, returned))) {
                       for (const member of group.rows) keys = replaceSpecRowKey(keys, `c:${member.id}`, newKey);
                     }
-                    if (rows.some(row => sameRow(row, returned) && row.value.trim())) keys = restoreSpecRow(keys, newKey);
+                    // A populated copied cell must not resurrect an explicitly hidden target row.
                     if (!keys.includes(newKey) && !keys.includes(`deleted:${newKey}`)) keys = [...keys, newKey];
                   }
                   return normalizeSpecRowLayout(keys);
@@ -3728,7 +3750,8 @@ export default function SpecsTab({}: SpecsTabProps) {
                 replaceRowKeySetterRef.current = swapFn;
               }}
               onRegisterGetRowKeys={(getFn) => {
-                getRowKeysRef.current = getFn;
+                if (getFn) getRowKeysRef.current = { style: selectedEntry.style, read: getFn };
+                else if (getRowKeysRef.current?.style === selectedEntry.style) getRowKeysRef.current = null;
               }}
               onRegisterUpdateRowKeys={(updateFn) => {
                 updateRowKeysRef.current = updateFn;

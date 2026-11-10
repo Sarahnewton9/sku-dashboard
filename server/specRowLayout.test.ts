@@ -34,6 +34,13 @@ describe('Specs row layout and deletion', () => {
     expect(normalizeSpecRowLayout(['t:lining', 'deleted:t:lining', 'deleted:t:lining', 'deleted:t:upper_1'])).toEqual(['deleted:t:lining', 't:upper_1']);
     expect(hideSpecRow(available, 't:upper_1')).toEqual(available);
   });
+  it('honours legacy template/custom hide markers in both the editor and export', () => {
+    const aliases = new Map([['c:12', 'c:10']]);
+    const saved = ['template:upper_1', 't:bow', 'deleted:template:bow', 'custom:10', 'deleted:custom:12'];
+    expect(normalizeSpecRowLayout(saved, aliases)).toEqual(['t:upper_1', 'deleted:t:bow', 'deleted:c:10']);
+    expect(getOrderedSpecRowKeys(available, saved, aliases)).toEqual(['t:upper_1', 't:lining']);
+    expect(normalizeSpecRowLayout(['deleted:template:upper_1'])).toEqual(['t:upper_1']);
+  });
   it('leaves unnamed custom rows independently editable', () => {
     expect(groupSpecCustomRows([10, 11].map(id => ({ id, section: 'components', colour: '__all__', title: '', sortOrder: 0 })))).toHaveLength(2);
   });

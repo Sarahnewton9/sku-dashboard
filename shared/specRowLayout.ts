@@ -27,7 +27,8 @@ export function getCustomSpecRowAliases<T extends SpecLayoutCustomRow>(groups: r
 export function normalizeSpecRowLayout(keys: readonly string[], aliases: ReadonlyMap<string, string> = new Map()): string[] {
   const canonical = keys.map((key) => {
     const deleted = key.startsWith("deleted:");
-    const inner = deleted ? key.slice(8) : key;
+    const stored = deleted ? key.slice(8) : key;
+    const inner = stored.replace(/^template:/, "t:").replace(/^custom:/, "c:");
     const resolved = aliases.get(inner) ?? inner;
     return deleted && resolved !== "t:upper_1" ? `deleted:${resolved}` : resolved;
   });
