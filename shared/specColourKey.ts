@@ -102,7 +102,8 @@ export function readSpecColourValue(
   }
   for (const candidate of getSpecColourKeyCandidates(colour, rawColour)) {
     const value = valuesByNormalizedKey.get(candidate);
-    if (value !== undefined && value !== "") return value;
+    // A saved blank is intentional and must not revive a less-specific legacy value.
+    if (value !== undefined) return value;
   }
   return undefined;
 }

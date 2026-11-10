@@ -68,9 +68,10 @@ export function buildCrossStyleComponentCopies(
   targetStyle: string,
   targetColourLabels: readonly string[],
   sourceValues: Record<string, string>,
+  includeEmptyValues = false,
 ): Array<{ style: string; colour: string; component: string; value: string }> {
   const components = Object.entries(sourceValues)
-    .filter(([component, value]) => component !== "upper_1" && value.trim().length > 0);
+    .filter(([component, value]) => component !== "upper_1" && (includeEmptyValues || value.trim().length > 0));
 
   return targetColourLabels.flatMap((colour) => components.map(([component, value]) => ({
     style: targetStyle,
@@ -110,8 +111,8 @@ export function planCrossStyleComponentCopies(
   const chosen = new Map<string, Candidate>();
 
   for (const [sourceKey, rawValue] of Object.entries(sourceValues)) {
-    const value = rawValue.trim();
-    if (!value || sourceKey === "upper_1") continue;
+    const value = rawValue;
+    if (sourceKey === "upper_1") continue;
 
     const sourceComponent = getKnownSpecComponent(sourceKey);
     const targetComponent = targetByKey.get(sourceKey)
@@ -127,6 +128,7 @@ export function planCrossStyleComponentCopies(
       continue;
     }
 
+    if (!value.trim()) continue; // No need to create an empty source-only custom row.
     const title = sourceComponent?.label ?? humaniseComponentKey(sourceKey);
     const section = sourceComponent?.section ?? "components";
     const destination = `custom:${section}:${normaliseComponentLabel(title)}`;
@@ -153,7 +155,7 @@ export function planCrossStyleComponentCopies(
   }
 
   return {
-    componentRows: buildCrossStyleComponentCopies(targetStyle, targetColourLabels, componentValues),
+    componentRows: buildCrossStyleComponentCopies(targetStyle, targetColourLabels, componentValues, true),
     customRows: customRows.sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title)),
   };
 }
@@ -174,9 +176,6 @@ export function selectCrossStyleCustomRowCopies(
   const chosen = new Map<string, { row: CrossStyleCustomRow; rank: number }>();
 
   for (const row of rows) {
-    const value = row.value?.trim() ?? "";
-    if (!value) continue;
-
     const colour = normalizeSpecColourPart(row.colour);
     const rank = colour === "__ALL__" ? Number.MAX_SAFE_INTEGER : candidateRank.get(colour);
     if (rank === undefined) continue;
@@ -187,6 +186,7 @@ export function selectCrossStyleCustomRowCopies(
   }
 
   return Array.from(chosen.values())
+    .filter(({ row }) => !!row.value?.trim())
     .map(({ row }) => ({
       section: row.section,
       title: row.title,
@@ -194,4 +194,22 @@ export function selectCrossStyleCustomRowCopies(
       sortOrder: row.sortOrder,
     }))
     .sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title));
+}
+
+/** Replace the selected target SKU's component cells, not an additive merge.
+ * Rows absent/hidden on the source must not leave old copied target data behind.
+ * Upper 1 is never cleared or replaced. Unselected SKU columns are untouched.
+ */
+export function planSavedSpecReplacement(
+  targetStyle: string,
+  targetColours: readonly string[],
+  sourceValues: Record<string, string>,
+  targetTemplate: readonly SpecComponent[],
+): CrossStyleComponentCopyPlan {
+  const plan = planCrossStyleComponentCopies(targetStyle, targetColours, sourceValues, targetTemplate);
+  const copiedByCell = new Map(plan.componentRows.map(row => [`${row.colour}\u0000${row.component}`, row.value]));
+  const componentRows = targetColours.flatMap(colour => targetTemplate
+    .filter(comp => comp.key !== 'upper_1')
+    .map(comp => ({ style: targetStyle, colour, component: comp.key, value: copiedByCell.get(`${colour}\u0000${comp.key}`) ?? '' })));
+  return { componentRows, customRows: plan.customRows };
 }

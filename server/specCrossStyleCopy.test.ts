@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildCrossStyleComponentCopies,
   planCrossStyleComponentCopies,
+  planSavedSpecReplacement,
   resolveCrossStyleSourceSpecs,
   selectCrossStyleCustomRowCopies,
 } from "@shared/specCrossStyleCopy";
@@ -87,5 +88,22 @@ describe("cross-style Specs copying", () => {
       { section: "components", title: "Wedge Cover", value: "UPPER 1", sortOrder: 2 },
       { section: "components", title: "Binding", value: "MATCHING", sortOrder: 3 },
     ]);
+  });
+
+  it("replaces only selected target component cells and clears stale fields absent on source", () => {
+    const plan = planSavedSpecReplacement("TARGET", ["BLACK SUEDE/BLACK VINTAGE"], { lining: "LATEST", bow: "" }, getTemplateForCategory("Dress Shoe", { style: "TARGET" }));
+    expect(plan.componentRows).toContainEqual({ style: "TARGET", colour: "BLACK SUEDE/BLACK VINTAGE", component: "lining", value: "LATEST" });
+    expect(plan.componentRows).toContainEqual({ style: "TARGET", colour: "BLACK SUEDE/BLACK VINTAGE", component: "bow", value: "" });
+    expect(plan.componentRows).toContainEqual({ style: "TARGET", colour: "BLACK SUEDE/BLACK VINTAGE", component: "wedge_cover", value: "" });
+    expect(plan.componentRows.some(row => row.component === "upper_1" || row.colour !== "BLACK SUEDE/BLACK VINTAGE")).toBe(false);
+  });
+
+  it("keeps multiline component text literally and does not fall back to an old shared custom value after clearing", () => {
+    const plan = planSavedSpecReplacement("TARGET", ["BLACK"], { lining: "  MATCHING\nNO BACK SEAM  " }, getTemplateForCategory("Dress Shoe", { style: "TARGET" }));
+    expect(plan.componentRows.find(row => row.component === "lining")?.value).toBe("  MATCHING\nNO BACK SEAM  ");
+    expect(selectCrossStyleCustomRowCopies([
+      { colour: "__all__", section: "components", title: "Binding", value: "STALE SHARED", sortOrder: 2 },
+      { colour: "BLACK SUEDE", section: "components", title: "Binding", value: "", sortOrder: 2 },
+    ], "BLACK SUEDE", "BLACK")).toEqual([]);
   });
 });

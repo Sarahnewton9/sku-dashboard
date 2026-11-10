@@ -43,10 +43,11 @@ import { getSeasonDisplayLabel } from "@shared/seasonLabel";
 import { buildNewSpecColourColumns } from "@shared/specSeasonalColumns";
 import { isNewSpecStyleAwaitingCompletion, type SpecCompletionStatus } from "@shared/specCompletionQueue";
 import { matchesSpecsStyleSearchFilters } from "@shared/specsStyleSearch";
+import { enqueueSpecRowSave, getCustomSpecRowAliases, getOrderedSpecRowKeys, groupSpecCustomRows, hideSpecRow, mergeSpecRowOrder, normalizeSpecRowLayout, replaceSpecRowKey, restoreSpecRow } from "@shared/specRowLayout";
+import { buildSavedSpecCopySnapshot } from "@shared/specCopySnapshot";
 import {
-  planCrossStyleComponentCopies,
-  resolveCrossStyleSourceSpecs,
-  selectCrossStyleCustomRowCopies,
+  planSavedSpecReplacement,
+  type CrossStyleCustomRowCopy,
 } from "@shared/specCrossStyleCopy";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -690,6 +691,7 @@ interface UnifiedCustomRowProps {
   /** Map of colour key → per-colour row. If the row is __all__, this map has one entry with key "__all__". */
   rowGroup: Map<string, CustomRowData>;
   colours: string[];
+  colourLabels: string[];
   /** Called when the title or value of the __all__ row changes (still-shared row). */
   onUpdate: (id: number, title: string, value: string) => void;
   /** Called when a specific colour cell is edited. Triggers explosion of __all__ into per-colour rows. */
@@ -704,7 +706,7 @@ interface UnifiedCustomRowProps {
   onDeleteDropdownOption: (key: string, value: string) => void;
   onEditDropdownOption?: (id: number, newValue: string) => void;
 }
-function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForColour, onDelete, allTitles, isActive, allDropdownOptions, allDropdownOptionIds, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption }: UnifiedCustomRowProps) {
+function UnifiedCustomRow({ id, row, rowGroup, colours, colourLabels, onUpdate, onUpdateForColour, onDelete, allTitles, isActive, allDropdownOptions, allDropdownOptionIds, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption }: UnifiedCustomRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({ id });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -750,13 +752,9 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForCol
         // Try the full colour key first (e.g. "BLUSH NUBUCK"), then the short colour name
         // (first word, e.g. "BLUSH") as a fallback for legacy values entered before a second
         // leather was added to the style and the colour key changed from "BLUSH" to "BLUSH NUBUCK".
-        let cellValue: string;
-        if (isAllRow) {
-          cellValue = row.value ?? "";
-        } else {
-          const colourRow = findSpecColourMapValue(rowGroup, colour);
-          cellValue = colourRow ? (colourRow.value ?? "") : "";
-        }
+        const label = colourLabels[colIdx] ?? colour;
+        const colourRow = findSpecColourMapValue(rowGroup, label, colour) ?? rowGroup.get("__all__");
+        const cellValue = colourRow?.value ?? "";
         // Normalise to lowercase so it matches the normalised allDropdownOptions keys
         const optKey = `custom:${row.title}`.toLowerCase();
         const opts = allDropdownOptions[optKey] ?? [];
@@ -768,16 +766,10 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForCol
               options={opts}
               optionIds={optIds}
               onSave={(v) => {
-                if (isAllRow) {
-                  onUpdateForColour(row.id, row.title, colour, v, sharedValue, row.section, row.sortOrder);
+                if (!colourRow || colourRow.colour === "__all__") {
+                  onUpdateForColour(row.id, row.title, label, v, sharedValue, row.section, row.sortOrder);
                 } else {
-                  // Try full colour key first, then short-colour fallback (legacy values stored under short name)
-                  const colourRow = findSpecColourMapValue(rowGroup, colour);
-                  if (colourRow) {
-                    onUpdate(colourRow.id, colourRow.title, v);
-                  } else {
-                    onUpdateForColour(row.id, row.title, colour, v, "", row.section, row.sortOrder);
-                  }
+                  onUpdate(colourRow.id, colourRow.title, v);
                 }
               }}
               onAddOption={(val) => onAddDropdownOption(optKey, val)}
@@ -797,7 +789,7 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, onUpdate, onUpdateForCol
 interface ColourCopyPanelProps {
   colours: string[];       // raw colour keys (used for copy logic)
   colourLabels: string[];  // full display labels e.g. "BLACK NAPPA"
-  onCopy: (source: string, targets: string[]) => void;
+  onCopy: (source: string, targets: string[]) => Promise<void>;
 }
 
 function ColourCopyPanel({ colours, colourLabels, onCopy }: ColourCopyPanelProps) {
@@ -805,6 +797,7 @@ function ColourCopyPanel({ colours, colourLabels, onCopy }: ColourCopyPanelProps
   const labels = colourLabels.length === colours.length ? colourLabels : colours;
   const [source, setSource] = useState<string | null>(null);
   const [targets, setTargets] = useState<Set<string>>(new Set());
+  const [copying, setCopying] = useState(false);
 
   function toggleTarget(label: string) {
     setTargets((prev) => {
@@ -814,11 +807,16 @@ function ColourCopyPanel({ colours, colourLabels, onCopy }: ColourCopyPanelProps
     });
   }
 
-  function handleCopy() {
-    if (!source || targets.size === 0) return;
-    onCopy(source, Array.from(targets));
-    setSource(null);
-    setTargets(new Set());
+  async function handleCopy() {
+    if (!source || targets.size === 0 || copying) return;
+    setCopying(true);
+    try {
+      await onCopy(source, Array.from(targets));
+      setSource(null);
+      setTargets(new Set());
+    } catch (error) {
+      toast.error(`Could not copy saved spec: ${error instanceof Error ? error.message : "please retry"}`);
+    } finally { setCopying(false); }
   }
 
   return (
@@ -853,11 +851,11 @@ function ColourCopyPanel({ colours, colourLabels, onCopy }: ColourCopyPanelProps
           <Button
             size="sm"
             className="h-7 text-xs gap-1"
-            disabled={targets.size === 0}
+            disabled={targets.size === 0 || copying}
             onClick={handleCopy}
           >
             <Copy className="w-3 h-3" />
-            Copy
+            {copying ? "Copying…" : "Copy"}
           </Button>
           <button
             onClick={() => { setSource(null); setTargets(new Set()); }}
@@ -966,7 +964,7 @@ interface SpecFormProps {
   customRows: CustomRowData[];
   onUpsert: (colour: string, component: string, value: string) => void;
   onBulkAutoFill: (rows: Array<{ style: string; colour: string; component: string; value: string }>) => void;
-  onBulkCopy: (rows: Array<{ style: string; colour: string; component: string; value: string }>) => void;
+  onBulkCopy: (rows: Array<{ style: string; colour: string; component: string; value: string }>) => Promise<void>;
   onAddDropdownOption: (component: string, value: string) => void;
   onDeleteDropdownOption: (component: string, value: string) => void;
   onEditDropdownOption: (id: number, newValue: string) => void;
@@ -989,13 +987,15 @@ interface SpecFormProps {
   onShowColumn: (colour: string) => void;
   onResetColour: (colour: string) => void;
   tableScrollRef?: React.MutableRefObject<HTMLDivElement | null>; // lifted up for external colour navigation
-  onBulkCopyCustomRowsFromStyle: (targetColours: string[], rows: Array<{ section: string; title: string; value: string; sortOrder: number }>) => void;
+  onBulkCopyCustomRowsFromStyle: (targetColours: string[], rows: Array<{ section: string; title: string; value: string; sortOrder: number }>) => Promise<void>;
   /** Called once on mount so SpecsTab can register a swap function that replaces oldKey with newKey in localRowKeys.
    * If localRowKeys is null (no saved order yet), it initialises from the current unifiedRowIds first
    * so the row stays in its current position instead of jumping to the bottom. */
   onRegisterReplaceRowKey?: (swapFn: (oldKey: string, newKey: string) => void) => void;
   /** Called once on mount so SpecsTab can register a getter that returns the current localRowKeys (or unifiedRowIds if null). */
   onRegisterGetRowKeys?: (getFn: () => string[]) => void;
+  /** Apply identity changes through the same optimistic, serialized layout writer. */
+  onRegisterUpdateRowKeys?: (updateFn: (update: (keys: string[]) => string[]) => Promise<void>) => void;
 }
 
 // ─── Fixed Bottom Scrollbar ──────────────────────────────────────────────────
@@ -1085,7 +1085,7 @@ interface CrossStyleCopyPanelProps {
   currentColours: string[];
   currentColourLabels: string[];
   allStyleEntries: StyleEntry[];
-  onCopy: (sourceColourLabel: string, sourceRawColour: string, targetColours: string[], sourceSpecs: Record<string, string>, sourceCustomRows: CustomRowData[]) => void;
+  onCopy: (sourceColourLabel: string, sourceRawColour: string, targetColours: string[], sourceSpecs: Record<string, string>, sourceCustomRows: CrossStyleCustomRowCopy[]) => Promise<void>;
 }
 function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels, allStyleEntries, onCopy }: CrossStyleCopyPanelProps) {
   const [open, setOpen] = useState(false);
@@ -1093,31 +1093,29 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
   const [sourceStyle, setSourceStyle] = useState<string | null>(null);
   const [sourceColour, setSourceColour] = useState<string | null>(null);
   const [targets, setTargets] = useState<Set<string>>(new Set());
+  const [copying, setCopying] = useState(false);
+  const utils = trpc.useUtils();
+  const { season } = useSeason();
   // Full-style mode: mapping from source colour label → target colour label (or "" to skip)
   const [colourMap, setColourMap] = useState<Record<string, string>>({});
 
   const sourceEntry = allStyleEntries.find((s) => s.style === sourceStyle);
 
-  // Fetch specs for the selected source style
-  const { data: sourceSpecsRaw = [] } = trpc.specs.getForStyle.useQuery(
-    { style: sourceStyle! },
-    { enabled: !!sourceStyle }
-  );
-  // Fetch custom rows for the selected source style
-  const { data: sourceCustomRowsRaw = [] } = trpc.specCustomRow.getByStyle.useQuery(
-    { style: sourceStyle! },
-    { enabled: !!sourceStyle }
-  );
-  // Build a stored colour-label → component → value map. The stored key may be a
-  // full colour/leather label, while the picker exposes a raw colour key.
-  const sourceSpecsMap = useMemo(() => {
-    const map: Record<string, Record<string, string>> = {};
-    for (const row of sourceSpecsRaw as any[]) {
-      if (!map[row.colour]) map[row.colour] = {};
-      if (row.value) map[row.colour][row.component] = row.value;
-    }
-    return map;
-  }, [sourceSpecsRaw]);
+  async function loadSavedSource(entry: StyleEntry) {
+    // Wait for prior layout saves if the user has just edited the source style.
+    await enqueueSpecRowSave(entry.style, async () => undefined);
+    const [specRows, customRows, order, meta] = await Promise.all([
+      utils.specs.getForStyle.fetch({ style: entry.style }, { staleTime: 0 }),
+      utils.specCustomRow.getByStyle.fetch({ style: entry.style }, { staleTime: 0 }),
+      utils.specRowOrder.get.fetch({ style: entry.style }, { staleTime: 0 }),
+      utils.specs.getMeta.fetch({ style: entry.style, season }, { staleTime: 0 }),
+    ]);
+    const template = getTemplateForCategory(entry.category, {
+      style: entry.style, hasBuckle: meta?.hasBuckle ?? false,
+      dressShoeSubType: meta?.dressShoeSubType as "court" | "sling" | null,
+    });
+    return { specRows, customRows, rowKeys: order.rowKeys, template };
+  }
 
   // Auto-build colour map when source style changes in full mode
   useEffect(() => {
@@ -1149,31 +1147,40 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
     });
   }
 
-  function handleSingleCopy() {
-    if (!sourceStyle || !sourceColour || targets.size === 0) return;
-    const sourceIndex = sourceEntry?.colours.indexOf(sourceColour) ?? -1;
-    const sourceLabel = sourceEntry?.colourLabels[sourceIndex] ?? sourceColour;
-    const sourceValues = resolveCrossStyleSourceSpecs(sourceSpecsMap, sourceLabel, sourceColour);
-    onCopy(sourceLabel, sourceColour, Array.from(targets), sourceValues, sourceCustomRowsRaw as CustomRowData[]);
-    reset();
+  async function handleSingleCopy() {
+    if (!sourceEntry || !sourceColour || targets.size === 0 || copying) return;
+    setCopying(true);
+    try {
+      const sourceIndex = sourceEntry.colours.indexOf(sourceColour);
+      const sourceLabel = sourceEntry.colourLabels[sourceIndex] ?? sourceColour;
+      const saved = await loadSavedSource(sourceEntry);
+      const snapshot = buildSavedSpecCopySnapshot({ ...saved, sourceColourLabel: sourceLabel, sourceRawColour: sourceColour });
+      await onCopy(sourceLabel, sourceColour, Array.from(targets), snapshot.components, snapshot.customRows);
+      reset();
+    } catch (error) {
+      toast.error(`Could not copy saved spec: ${error instanceof Error ? error.message : "please retry"}`);
+    } finally { setCopying(false); }
   }
-  function handleFullCopy() {
-    if (!sourceEntry) return;
+  async function handleFullCopy() {
+    if (!sourceEntry || copying) return;
     let copiedCount = 0;
-    for (let i = 0; i < sourceEntry.colours.length; i++) {
-      const srcColourKey = sourceEntry.colours[i];
-      const srcLabel = sourceEntry.colourLabels[i] ?? srcColourKey;
-      const targetLabel = colourMap[srcLabel];
-      if (!targetLabel) continue; // skipped
-      const sourceValues = resolveCrossStyleSourceSpecs(sourceSpecsMap, srcLabel, srcColourKey);
-      onCopy(srcLabel, srcColourKey, [targetLabel], sourceValues, sourceCustomRowsRaw as CustomRowData[]);
-      copiedCount++;
-    }
-    if (copiedCount === 0) {
-      toast.error("No colour mappings set — nothing to copy");
-      return;
-    }
-    reset();
+    setCopying(true);
+    try {
+      const saved = await loadSavedSource(sourceEntry);
+      for (let i = 0; i < sourceEntry.colours.length; i++) {
+        const srcColourKey = sourceEntry.colours[i];
+        const srcLabel = sourceEntry.colourLabels[i] ?? srcColourKey;
+        const targetLabel = colourMap[srcLabel];
+        if (!targetLabel) continue;
+        const snapshot = buildSavedSpecCopySnapshot({ ...saved, sourceColourLabel: srcLabel, sourceRawColour: srcColourKey });
+        await onCopy(srcLabel, srcColourKey, [targetLabel], snapshot.components, snapshot.customRows);
+        copiedCount++;
+      }
+      if (copiedCount === 0) toast.error("No colour mappings set — nothing to copy");
+      else reset();
+    } catch (error) {
+      toast.error(`Could not copy saved spec: ${error instanceof Error ? error.message : "please retry"}`);
+    } finally { setCopying(false); }
   }
 
   if (!open) {
@@ -1294,12 +1301,12 @@ function CrossStyleCopyPanel({ currentStyle, currentColours, currentColourLabels
       )}
       {/* Action buttons */}
       {mode === "single" && targets.size > 0 && (
-        <Button size="sm" onClick={handleSingleCopy} className="h-7 text-xs bg-amber-600 hover:bg-amber-700">
+        <Button size="sm" disabled={copying} onClick={handleSingleCopy} className="h-7 text-xs bg-amber-600 hover:bg-amber-700">
           Copy {targets.size} colour{targets.size > 1 ? "s" : ""}
         </Button>
       )}
       {mode === "full" && sourceEntry && Object.values(colourMap).some((v) => v) && (
-        <Button size="sm" onClick={handleFullCopy} className="h-7 text-xs bg-amber-600 hover:bg-amber-700">
+        <Button size="sm" disabled={copying} onClick={handleFullCopy} className="h-7 text-xs bg-amber-600 hover:bg-amber-700">
           Copy entire style ({Object.values(colourMap).filter((v) => v).length} colour{Object.values(colourMap).filter((v) => v).length !== 1 ? "s" : ""})
         </Button>
       )}
@@ -1311,7 +1318,7 @@ type UnifiedRow =
   | { kind: "template"; id: string; comp: SpecComponent }
   | { kind: "custom"; id: string; row: CustomRowData; rowGroup: Map<string, CustomRowData> };
 
-function SpecForm({
+export function SpecForm({
   entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allDropdownOptionIds, allColourLeatherOptions, customRows,
   onUpsert, onBulkAutoFill, onBulkCopy, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption, onMetaChange, onAddSku, editableCustomSkus, onEditSku, onAddCustomRow, onUpdateCustomRow, onUpdateCustomRowForColour, onDeleteCustomRow, onReorderCustomRows,
   dbCategory, allCustomRowTitles, allStyleEntries,
@@ -1320,6 +1327,7 @@ function SpecForm({
   onBulkCopyCustomRowsFromStyle,
   onRegisterReplaceRowKey,
   onRegisterGetRowKeys,
+  onRegisterUpdateRowKeys,
 }: SpecFormProps) {
   const [showAddSku, setShowAddSku] = useState(false);
   const [hideEmptyRows, setHideEmptyRows] = useState(true); // hide rows with no values by default
@@ -1378,16 +1386,12 @@ function SpecForm({
   // Key: title → Map<colour, row>. The representative row is the first one seen (lowest id).
   const customRowGroups = useMemo(() => {
     const groups = new Map<string, { rep: CustomRowData; colourMap: Map<string, CustomRowData> }>();
-    for (const r of allCustomRowsSorted) {
-      const key = r.title;
-      if (!groups.has(key)) {
-        groups.set(key, { rep: r, colourMap: new Map([[r.colour, r]]) });
-      } else {
-        groups.get(key)!.colourMap.set(r.colour, r);
-      }
+    for (const group of groupSpecCustomRows(customRows)) {
+      groups.set(`c:${group.rep.id}`, group);
     }
     return groups;
-  }, [allCustomRowsSorted]);
+  }, [customRows]);
+  const customRowAliases = useMemo(() => getCustomSpecRowAliases(groupSpecCustomRows(customRows)), [customRows]);
 
   // For unifiedRows: use the representative row's id as the canonical key (c:{rep.id})
   const customRepMap = useMemo(() => {
@@ -1422,81 +1426,14 @@ function SpecForm({
   const unifiedRows = useMemo((): UnifiedRow[] => {
     const templateMap = new Map(template.map((c) => [`t:${c.key}`, c]));
     const savedKeys = localRowKeys ?? rowOrderData?.rowKeys ?? null;
-    // Build a title→key map for self-healing: if a saved c: key is stale/wrong,
-    // we can find the correct current key by matching the custom row title.
-    const titleToCurrentKey = new Map<string, string>();
-    for (const [key, group] of Array.from(customRepMap)) {
-      const title = group.rep.title.toUpperCase();
-      if (!titleToCurrentKey.has(title)) titleToCurrentKey.set(title, key);
-    }
-    // Build a set of all deleted keys (both template and custom) so we never re-append them
-    const deletedKeys = new Set<string>();
-    if (savedKeys) {
-      for (const key of savedKeys) {
-        if (key.startsWith("deleted:")) deletedKeys.add(key.slice("deleted:".length));
-      }
-    }
-    let result: UnifiedRow[];
-    let needsRepair = false;
-    if (savedKeys && savedKeys.length > 0) {
-      // Use saved order, adding any new rows not in saved order at the end
-      result = [];
-      const usedKeys = new Set<string>();
-      for (const key of savedKeys) {
-        if (key.startsWith("deleted:")) {
-          // Mark the underlying key as used so it doesn't get re-appended below
-          usedKeys.add(key.slice("deleted:".length));
-          continue;
-        }
-        // Never place upper_1 via saved order — it will be pinned to position 0 below
-        if (key === "t:upper_1") { usedKeys.add(key); continue; }
-        if (key.startsWith("t:") && templateMap.has(key)) {
-          result.push({ kind: "template", id: key, comp: templateMap.get(key)! });
-          usedKeys.add(key);
-        } else if (key.startsWith("c:") && customRepMap.has(key)) {
-          const group = customRepMap.get(key)!;
-          result.push({ kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap });
-          usedKeys.add(key);
-        } else if (key.startsWith("c:") && !customRepMap.has(key)) {
-          // Stale/wrong custom row key — try to self-heal by matching title
-          // (This happens when the temp→real ID swap wrote a wrong ID to the DB)
-          // We can't know the title from just the key, so skip it but mark as needing repair
-          needsRepair = true;
-          // Don't add to usedKeys — the correct key will be picked up below
-        }
-      }
-      // Add any template rows not in saved order AND not deleted (new template rows added after order was saved)
-      for (const [key, comp] of Array.from(templateMap)) {
-        if (!usedKeys.has(key) && !deletedKeys.has(key)) result.push({ kind: "template", id: key, comp });
-      }
-      // Add any custom rows not in saved order AND not deleted (newly added custom rows)
-      for (const [key, group] of Array.from(customRepMap)) {
-        if (!usedKeys.has(key) && !deletedKeys.has(key)) {
-          result.push({ kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap });
-          if (needsRepair) {
-            // Insert at the position where the stale key was — find by title match
-            // For now, we just append and let the user drag to reposition.
-            // The important thing is the order gets re-saved correctly next drag.
-          }
-        }
-      }
-    } else {
-      // Default: template rows in template order, then custom rows (one row per title group)
-      result = [
-        ...template.map((c): UnifiedRow => ({ kind: "template", id: `t:${c.key}`, comp: c })),
-        ...Array.from(customRepMap).map(([key, group]): UnifiedRow => ({ kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap })),
-      ];
-    }
-    // Always pin upper_1 to position 0 (cannot be moved or deleted)
-    const upper1Comp = templateMap.get("t:upper_1");
-    if (upper1Comp) {
-      const upper1Row: UnifiedRow = { kind: "template", id: "t:upper_1", comp: upper1Comp };
-      // Remove it from wherever it ended up (if present) and prepend
-      const filteredResult = result.filter((r) => r.id !== "t:upper_1");
-      return [upper1Row, ...filteredResult];
-    }
-    return result;
-  }, [template, customRepMap, rowOrderData, localRowKeys]);
+    const available = [...Array.from(templateMap.keys()), ...Array.from(customRepMap.keys())];
+    return getOrderedSpecRowKeys(available, savedKeys, customRowAliases).map((key): UnifiedRow => {
+      const comp = templateMap.get(key);
+      if (comp) return { kind: "template", id: key, comp };
+      const group = customRepMap.get(key)!;
+      return { kind: "custom", id: key, row: group.rep, rowGroup: group.colourMap };
+    });
+  }, [template, customRepMap, customRowAliases, rowOrderData, localRowKeys]);
 
   const unifiedRowIds = useMemo(() => unifiedRows.map((r) => r.id), [unifiedRows]);
   // Compute which rows have at least one value filled (for hide-empty-rows toggle)
@@ -1514,8 +1451,8 @@ function SpecForm({
         result[uRow.id] = hasVal;
       } else {
         // Custom rows: check if any colour has a value
-        const hasVal = entry.colours.some((colour) => {
-          const row = uRow.rowGroup.get(colour) ?? uRow.rowGroup.get("__all__");
+        const hasVal = entry.colours.some((colour, i) => {
+          const row = findSpecColourMapValue(uRow.rowGroup, entry.colourLabels[i] ?? colour, colour) ?? uRow.rowGroup.get("__all__");
           return !!(row?.value?.trim());
         });
         result[uRow.id] = hasVal;
@@ -1540,75 +1477,64 @@ function SpecForm({
   useEffect(() => { unifiedRowIdsRef.current = unifiedRowIds; }, [unifiedRowIds]);
   // Keep a ref to localRowKeys so the parent can read the current value synchronously
   const localRowKeysRef = useRef<string[] | null>(null);
-  useEffect(() => { localRowKeysRef.current = localRowKeys; }, [localRowKeys]);
+  const savedRowKeysRef = useRef<string[] | null>(null);
+  savedRowKeysRef.current = rowOrderData?.rowKeys ?? null;
+  const rowAliasesRef = useRef(customRowAliases);
+  rowAliasesRef.current = customRowAliases;
+  unifiedRowIdsRef.current = unifiedRowIds;
+  function getCurrentRowKeys() {
+    return normalizeSpecRowLayout([...(localRowKeysRef.current ?? savedRowKeysRef.current ?? []), ...unifiedRowIdsRef.current], rowAliasesRef.current);
+  }
+  async function saveRowKeys(keys: string[]) {
+    const normalized = normalizeSpecRowLayout(keys, rowAliasesRef.current);
+    localRowKeysRef.current = normalized;
+    setLocalRowKeys(normalized);
+    try {
+      await enqueueSpecRowSave(entry.style, () => upsertRowOrderMutation.mutateAsync({ style: entry.style, rowKeys: normalized }));
+    } catch (error) {
+      toast.error("Could not save row layout — use Save order to retry");
+      throw error;
+    }
+  }
+  const saveRowKeysRef = useRef(saveRowKeys);
+  saveRowKeysRef.current = saveRowKeys;
   useEffect(() => {
     onRegisterReplaceRowKey?.((oldKey: string, newKey: string) => {
-      setLocalRowKeys((prev) => {
-        const base = prev ?? unifiedRowIdsRef.current;
-        if (!base.includes(oldKey)) return prev;
-        return base.map((k) => k === oldKey ? newKey : k);
-      });
+      const base = localRowKeysRef.current ?? mergeSpecRowOrder(unifiedRowIdsRef.current, savedRowKeysRef.current);
+      void saveRowKeysRef.current(replaceSpecRowKey(base, oldKey, newKey)).catch(() => undefined);
     });
-    onRegisterGetRowKeys?.(() => localRowKeysRef.current ?? unifiedRowIdsRef.current);
+    onRegisterGetRowKeys?.(getCurrentRowKeys);
+    onRegisterUpdateRowKeys?.((update) => saveRowKeysRef.current(update(getCurrentRowKeys())));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleCopyFrom(sourceColour: string, targetColours: string[]) {
-    const sourceValues = specs[sourceColour] ?? {};
-
-    // Build a map from colourLabel → raw colour key so we can look up the correct DB key.
-    // e.g. "BLUSH NUBUCK" → "BLUSH", "INDIGO NUBUCK" → "INDIGO"
-    // Custom row values are stored under the raw colour key (entry.colours), not the label.
-    const labelToRaw = new Map<string, string>();
-    entry.colourLabels.forEach((label, i) => {
-      labelToRaw.set(label, entry.colours[i] ?? label);
-    });
-
-    // Source: try the label first, then the raw key, then the short colour name
-    const rawSourceColour = labelToRaw.get(sourceColour) ?? sourceColour;
-    const shortSourceColour = rawSourceColour.split(" ")[0];
-
-    // Collect ALL template row copies into a single bulk upsert to avoid race conditions.
-    // Firing individual mutations per row causes optimistic-update conflicts when many rows
-    // are copied simultaneously — some values get rolled back before they can be confirmed.
-    const bulkRows: Array<{ style: string; colour: string; component: string; value: string }> = [];
-
-    for (const colour of targetColours) {
-      // Map the target colourLabel back to the raw colour key for DB storage
-      const rawTargetColour = labelToRaw.get(colour) ?? colour;
-
-      // Collect template rows (keyed by colourLabel in specs object)
-      for (const comp of template) {
-        // Never copy Upper 1 — each colour has its own upper material
-        if (comp.key === "upper_1") continue;
-        const val = sourceValues[comp.key];
-        if (val) bulkRows.push({ style: entry.style, colour, component: comp.key, value: val });
-      }
-      // Copy custom (manually added) rows — these use individual mutations (different procedure)
-      for (const [, group] of Array.from(customRowGroups)) {
-        const { rep, colourMap } = group;
-        // Look up source value using raw colour key (how DB stores it), with fallbacks:
-        // 1. exact raw source colour (e.g. "BLUSH")
-        // 2. short colour name (first word, for legacy compound keys)
-        // 3. __all__ (shared value row)
-        const sourceRow = findSpecColourMapValue(colourMap, sourceColour, rawSourceColour)
-          ?? colourMap.get("__all__");
-        const sourceVal = sourceRow?.value ?? null;
-        if (!sourceVal) continue; // nothing to copy
-        // Current shared value (used by server to decide whether to explode __all__ row)
-        const sharedRow = colourMap.get("__all__");
-        const currentSharedValue = sharedRow?.value ?? "";
-        // Use rawTargetColour so the value is stored under the same key as existing rows
-        onUpdateCustomRowForColour(rep.id, rep.title, rawTargetColour, sourceVal, currentSharedValue, rep.section, rep.sortOrder);
-      }
+  async function applySavedCopy(targetColours: string[], sourceSpecs: Record<string, string>, sourceCustomRows: CrossStyleCustomRowCopy[]) {
+    const plan = planSavedSpecReplacement(entry.style, targetColours, sourceSpecs, template);
+    // Current visible manual rows win over generated component aliases.
+    const keyFor = (row: { section: string; title: string }) => `${row.section}\u0000${row.title.trim().replace(/\s+/g, " ").toUpperCase()}`;
+    const incoming = new Map(plan.customRows.map(row => [keyFor(row), row]));
+    for (const row of sourceCustomRows) incoming.set(keyFor(row), row);
+    // Clear old custom cells only in the selected target columns. This removes
+    // leftovers from an earlier copy while keeping unselected SKUs unchanged.
+    const replacements = new Map<string, CrossStyleCustomRowCopy>();
+    for (const group of groupSpecCustomRows(customRows)) {
+      if (group.rep.title.trim()) replacements.set(keyFor(group.rep), { ...group.rep, value: "" });
     }
+    for (const [key, row] of Array.from(incoming)) replacements.set(key, row);
+    await onBulkCopy(plan.componentRows);
+    if (replacements.size > 0) await onBulkCopyCustomRowsFromStyle(targetColours, Array.from(replacements.values()));
+    // Only source rows with a real value should re-open a hidden target row.
+    let keys = getCurrentRowKeys();
+    for (const row of plan.componentRows) if (row.value.trim()) keys = restoreSpecRow(keys, `t:${row.component}`);
+    await saveRowKeys(keys);
+  }
 
-    // Fire all template row copies as a single atomic bulk upsert via the parent's handler
-    // (overwrite: true so existing values are replaced with the copied values)
-    if (bulkRows.length > 0) {
-      onBulkCopy(bulkRows);
-    }
-    toast.success(`Copied specs from ${sourceColour} to ${targetColours.length} colour(s) (Upper 1 kept per-colour)`);
+  async function handleCopyFrom(sourceColour: string, targetColours: string[]) {
+    const i = entry.colourLabels.indexOf(sourceColour);
+    const specRows = Object.entries(specs).flatMap(([colour, values]) => Object.entries(values).map(([component, value], id) => ({ id, colour, component, value })));
+    const snapshot = buildSavedSpecCopySnapshot({ specRows, customRows, template, rowKeys: getCurrentRowKeys(), sourceColourLabel: sourceColour, sourceRawColour: entry.colours[i] ?? sourceColour });
+    await applySavedCopy(targetColours, snapshot.components, snapshot.customRows);
+    toast.success(`Copied saved specs to ${targetColours.length} colour(s) — Upper 1 kept`);
   }
 
   // Auto-fill upper_1 with the colour+leather label, and toe cap with the toe cap leather,
@@ -1761,30 +1687,9 @@ function SpecForm({
           currentColours={entry.colours}
           currentColourLabels={entry.colourLabels}
           allStyleEntries={allStyleEntries}
-          onCopy={(sourceColourLabel, sourceRawColour, targetColours, sourceSpecs, sourceCustomRows) => {
-            // Components with a source-style-only key must be converted into a
-            // target custom row (or matched to the target's semantic component).
-            // Otherwise they save in the DB but cannot appear in the target grid.
-            const copyPlan = planCrossStyleComponentCopies(entry.style, targetColours, sourceSpecs, template);
-            if (copyPlan.componentRows.length > 0) onBulkCopy(copyPlan.componentRows);
-
-            // Copy manually added source rows as well, preserving only selected
-            // target SKU columns. Generated component rows take precedence when
-            // a manual row happens to share the same title.
-            const rowByIdentity = new Map(
-              selectCrossStyleCustomRowCopies(sourceCustomRows, sourceColourLabel, sourceRawColour)
-                .map((row) => [`${row.section}\u0000${row.title.trim().toUpperCase()}`, row]),
-            );
-            for (const row of copyPlan.customRows) {
-              rowByIdentity.set(`${row.section}\u0000${row.title.trim().toUpperCase()}`, row);
-            }
-            const customRowsToCopy = Array.from(rowByIdentity.values());
-            if (customRowsToCopy.length > 0) {
-              // Keep the target's existing row layout. Source row keys may name
-              // source-only template fields, which cannot be rendered on target.
-              onBulkCopyCustomRowsFromStyle(targetColours, customRowsToCopy);
-            }
-            toast.success(`Copied specs from ${sourceColourLabel} to ${targetColours.length} colour(s) (Upper 1 kept per-colour)`);
+          onCopy={async (sourceColourLabel, _sourceRawColour, targetColours, sourceSpecs, sourceCustomRows) => {
+            await applySavedCopy(targetColours, sourceSpecs, sourceCustomRows);
+            toast.success(`Copied latest saved specs from ${sourceColourLabel} — Upper 1 kept`);
           }}
         />
       </div>}{/* end showCopyPanel */}
@@ -1807,8 +1712,7 @@ function SpecForm({
           if (newIdx === 0 && unifiedRowIds[0] === "t:upper_1") newIdx = 1;
           if (oldIdx === newIdx) return;
           const newKeys = arrayMove(unifiedRowIds, oldIdx, newIdx);
-          setLocalRowKeys(newKeys);
-          upsertRowOrderMutation.mutate({ style: entry.style, rowKeys: newKeys });
+          void saveRowKeys(mergeSpecRowOrder(newKeys, getCurrentRowKeys())).catch(() => undefined);
         }}
         onDragCancel={() => setActiveId(null)}
       >
@@ -1837,10 +1741,7 @@ function SpecForm({
                  </button>
                   <button
                     onClick={() => {
-                      const keys = unifiedRowIds;
-                      setLocalRowKeys(keys);
-                      upsertRowOrderMutation.mutate({ style: entry.style, rowKeys: keys });
-                      toast.success("Row order saved");
+                      void saveRowKeys(getCurrentRowKeys()).then(() => toast.success("Row order saved")).catch(() => undefined);
                     }}
                     title="Save current row order to database"
                     className="text-xs px-1.5 py-0.5 rounded border transition-colors bg-muted text-muted-foreground border-border hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
@@ -1980,11 +1881,7 @@ function SpecForm({
                       onEditDropdownOption={onEditDropdownOption}
                       isActive={activeId === uRow.id}
                       onDelete={(id) => {
-                        // Mark as deleted (prefix with "deleted:") so it's hidden but restorable
-                        const currentKeys = localRowKeys ?? rowOrderData?.rowKeys ?? unifiedRowIds;
-                        const newKeys = currentKeys.map((k) => k === id ? `deleted:${id}` : k);
-                        setLocalRowKeys(newKeys);
-                        upsertRowOrderMutation.mutate({ style: entry.style, rowKeys: newKeys });
+                        void saveRowKeys(hideSpecRow(getCurrentRowKeys(), id)).catch(() => undefined);
                       }}
                     />
                   );
@@ -1997,21 +1894,11 @@ function SpecForm({
                       row={row}
                       rowGroup={uRow.rowGroup}
                       colours={entry.colours}
+                      colourLabels={entry.colourLabels}
                       onUpdate={onUpdateCustomRow}
                       onUpdateForColour={onUpdateCustomRowForColour}
                       onDelete={(id) => {
-                        // Mark as deleted in rowKeys (soft delete — keeps DB rows for restore)
-                        const rowKey = `c:${id}`;
-                        const currentKeys = localRowKeys ?? rowOrderData?.rowKeys ?? unifiedRowIds;
-                        let newKeys: string[];
-                        if (currentKeys.includes(rowKey)) {
-                          newKeys = currentKeys.map((k) => k === rowKey ? `deleted:${rowKey}` : k);
-                        } else {
-                          // Row not yet in rowKeys (newly added) — append as deleted
-                          newKeys = [...currentKeys, `deleted:${rowKey}`];
-                        }
-                        setLocalRowKeys(newKeys);
-                        upsertRowOrderMutation.mutate({ style: entry.style, rowKeys: newKeys });
+                        void saveRowKeys(hideSpecRow(getCurrentRowKeys(), `c:${id}`)).catch(() => undefined);
                       }}
                       allTitles={allCustomRowTitles}
                       isActive={activeId === uRow.id}
@@ -2038,7 +1925,7 @@ function SpecForm({
                   </button>
                   {/* Restore hidden rows */}
                   {(() => {
-                    const currentKeys = localRowKeys ?? rowOrderData?.rowKeys ?? null;
+                    const currentKeys = getCurrentRowKeys();
                     if (!currentKeys) return null;
                     const deletedEntries = currentKeys
                       .filter((k) => k.startsWith("deleted:"))
@@ -2076,11 +1963,7 @@ function SpecForm({
                                   <button
                                     key={key}
                                     onClick={() => {
-                                      const newKeys = (localRowKeys ?? rowOrderData?.rowKeys ?? []).map(
-                                        (k) => k === key ? inner : k
-                                      );
-                                      setLocalRowKeys(newKeys);
-                                      upsertRowOrderMutation.mutate({ style: entry.style, rowKeys: newKeys });
+                                      void saveRowKeys(restoreSpecRow(getCurrentRowKeys(), inner)).catch(() => undefined);
                                     }}
                                     className="flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-amber-50 dark:hover:bg-amber-900/20 text-left w-full group transition-colors"
                                   >
@@ -2299,6 +2182,8 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   const utils = trpc.useUtils();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const activeStyleRef = useRef(selectedStyle);
+  activeStyleRef.current = selectedStyle;
   const [search, setSearch] = useState("");
   const [upper2Search, setUpper2Search] = useState("");
   const [emailSpecOpen, setEmailSpecOpen] = useState(false);
@@ -2652,6 +2537,7 @@ export default function SpecsTab({}: SpecsTabProps) {
   }
   // Ref to SpecForm's getRowKeys function — returns the current in-memory row order (localRowKeys or unifiedRowIds)
   const getRowKeysRef = useRef<(() => string[]) | null>(null);
+  const updateRowKeysRef = useRef<((update: (keys: string[]) => string[]) => Promise<void>) | null>(null);
 
   const { data: rawCustomRows = [], refetch: refetchCustomRows } = trpc.specCustomRow.getByStyle.useQuery(
     { style: selectedStyle! },
@@ -2719,21 +2605,12 @@ export default function SpecsTab({}: SpecsTabProps) {
       ]);
       return { prev, tempId };
     },
-    onSuccess: (realRow, _vars, ctx) => {
+    onSuccess: (realRow, vars, ctx) => {
       // Swap the temp key for the real key in SpecForm's localRowKeys so dragged
       // position is preserved after the server responds with the actual row id.
       const tempId = ctx?.tempId;
-      if (tempId !== undefined && realRow?.id && realRow.id !== tempId) {
+      if (vars.style === selectedStyle && tempId !== undefined && realRow?.id && realRow.id !== tempId) {
         swapLocalRowKey(`c:${tempId}`, `c:${realRow.id}`);
-        // Persist the updated row order to the DB so position survives a page reload.
-        // Use a short timeout to let the state update from swapLocalRowKey propagate first.
-        setTimeout(() => {
-          const currentKeys = getRowKeysRef.current?.();
-          if (currentKeys && selectedStyle) {
-            const updatedKeys = currentKeys.map((k) => k === `c:${tempId}` ? `c:${realRow.id}` : k);
-            upsertRowOrderForColourExplosionMutation.mutate({ style: selectedStyle, rowKeys: updatedKeys });
-          }
-        }, 50);
       }
     },
     onError: (_err, newRow, ctx) => {
@@ -2823,17 +2700,11 @@ export default function SpecsTab({}: SpecsTabProps) {
       // If the __all__ row was exploded into per-colour rows, the old row id is gone.
       // Update the saved rowKeys to replace the old c:{allRowId} with c:{newRepId} so the
       // export can still find the custom row.
-      if (result.wasExploded && result.newRepId !== null && result.newRepId !== vars.allRowId && selectedStyle) {
+      if (result.wasExploded && result.newRepId !== null && result.newRepId !== vars.allRowId && vars.style === selectedStyle) {
         const oldKey = `c:${vars.allRowId}`;
         const newKey = `c:${result.newRepId}`;
-        // 1. Swap in SpecForm's localRowKeys so the row stays in its dragged position
+        // The form's one layout writer also preserves hidden markers and saves the new key.
         swapLocalRowKey(oldKey, newKey);
-        // 2. Also update the persisted DB rowKeys so export and future loads are correct
-        const currentKeys = exportRowOrderData?.rowKeys ?? null;
-        if (currentKeys && currentKeys.includes(oldKey)) {
-          const updatedKeys = currentKeys.map((k) => k === oldKey ? newKey : k);
-          upsertRowOrderForColourExplosion({ style: selectedStyle, rowKeys: updatedKeys });
-        }
       }
     },
     onSettled: () => {
@@ -2843,8 +2714,8 @@ export default function SpecsTab({}: SpecsTabProps) {
   });
 
   const bulkCopyFromStyleMutation = trpc.specCustomRow.bulkCopyFromStyle.useMutation({
-    onSettled: () => {
-      if (selectedStyle) utils.specCustomRow.getByStyle.invalidate({ style: selectedStyle });
+    onSettled: (_data, _err, vars) => {
+      utils.specCustomRow.getByStyle.invalidate({ style: vars.targetStyle });
     },
     onError: () => toast.error("Failed to copy custom rows"),
   });
@@ -2855,9 +2726,6 @@ export default function SpecsTab({}: SpecsTabProps) {
       utils.specRowOrder.get.invalidate({ style: vars.style });
     },
   });
-  function upsertRowOrderForColourExplosion(args: { style: string; rowKeys: string[] }) {
-    upsertRowOrderForColourExplosionMutation.mutate(args);
-  }
 
   function handleUpdateCustomRowForColour(
     representativeId: number,
@@ -3031,7 +2899,7 @@ export default function SpecsTab({}: SpecsTabProps) {
     if (!selectedStyle) return;
     // Pass colours + rowKeys so server can auto-check completion status
     const colours = (selectedEntry?.colours ?? []).map(normalizeStoredSpecColourKey);
-    const rowKeys = exportRowOrderData?.rowKeys ?? [];
+    const rowKeys = getRowKeysRef.current?.() ?? exportRowOrderData?.rowKeys ?? [];
     upsertMutation.mutate(
       { style: selectedStyle, colour: normalizeStoredSpecColourKey(colour), component, value, colours, rowKeys, season },
       {
@@ -3056,17 +2924,10 @@ export default function SpecsTab({}: SpecsTabProps) {
   }
 
   // Bulk copy: same as auto-fill but with overwrite: true so existing values are replaced
-  function handleBulkCopy(rows: Array<{ style: string; colour: string; component: string; value: string }>) {
+  async function handleBulkCopy(rows: Array<{ style: string; colour: string; component: string; value: string }>) {
     if (rows.length === 0) return;
-    bulkUpsertMutation.mutate(
-      { rows: rows.map((row) => ({ ...row, colour: normalizeStoredSpecColourKey(row.colour) })), overwrite: true },
-      {
-        onSuccess: () => {
-          utils.specs.getForStyle.invalidate({ style: rows[0].style });
-        },
-        onError: () => toast.error("Copy failed — please try again"),
-      }
-    );
+    await bulkUpsertMutation.mutateAsync({ rows: rows.map((row) => ({ ...row, colour: normalizeStoredSpecColourKey(row.colour) })), overwrite: true });
+    await utils.specs.getForStyle.invalidate({ style: rows[0].style });
   }
 
   function handleAddDropdownOption(component: string, value: string) {
@@ -3828,50 +3689,49 @@ export default function SpecsTab({}: SpecsTabProps) {
                 }
               }}
               onResetColour={handleResetColour}
-              onBulkCopyCustomRowsFromStyle={(targetColours, rows) => {
+              onBulkCopyCustomRowsFromStyle={async (targetColours, rows) => {
                 if (!selectedStyle) return;
-                bulkCopyFromStyleMutation.mutate(
-                  {
+                const style = selectedStyle;
+                const before = groupSpecCustomRows(utils.specCustomRow.getByStyle.getData({ style }) ?? []);
+                const data = await bulkCopyFromStyleMutation.mutateAsync({
                     targetStyle: selectedStyle,
-                    targetColours,
+                    targetColours: targetColours.map(normalizeStoredSpecColourKey),
                     // Use the unfiltered style entry so hidden columns retain
                     // their existing custom-row values during a selected-SKU copy.
-                    allColours: selectedEntryRaw?.colourLabels ?? selectedEntry.colourLabels,
+                    allColours: (selectedEntryRaw?.colourLabels ?? selectedEntry.colourLabels).map(normalizeStoredSpecColourKey),
                     rows,
-                  },
-                  {
-                    onSuccess: (data) => {
-                      if (data.rowIds && data.rowIds.length > 0) {
-                        // Preserve the target's layout. Appending only the returned
-                        // custom rows makes source-only fields visible without
-                        // importing source template keys that the target cannot render.
-                        const currentKeys = getRowKeysRef.current?.()
-                          ?? exportRowOrderData?.rowKeys
-                          ?? [];
-                        const newCustomKeys = data.rowIds.map((row) => `c:${row.newId}`);
-                        const newKeySet = new Set(newCustomKeys);
-                        const restoredOrExisting = currentKeys.map((key) => {
-                          const deletedKey = key.startsWith("deleted:") ? key.slice("deleted:".length) : key;
-                          return newKeySet.has(deletedKey) ? deletedKey : key;
-                        });
-                        const knownKeys = new Set(restoredOrExisting);
-                        const finalKeys = [
-                          ...restoredOrExisting,
-                          ...newCustomKeys.filter((key) => !knownKeys.has(key)),
-                        ];
-                        if (finalKeys.length > 0) {
-                          upsertRowOrderForColourExplosionMutation.mutate({ style: selectedStyle, rowKeys: finalKeys });
-                        }
-                      }
-                    },
+                });
+                const sameRow = (a: { section: string; title: string }, b: { section: string; title: string }) => a.section === b.section && a.title.trim().toUpperCase() === b.title.trim().toUpperCase();
+                const update = (current: string[]) => {
+                  let keys = current;
+                  for (const returned of data.rowIds) {
+                    const newKey = `c:${returned.newId}`;
+                    for (const group of before.filter(group => sameRow(group.rep, returned))) {
+                      for (const member of group.rows) keys = replaceSpecRowKey(keys, `c:${member.id}`, newKey);
+                    }
+                    if (rows.some(row => sameRow(row, returned) && row.value.trim())) keys = restoreSpecRow(keys, newKey);
+                    if (!keys.includes(newKey) && !keys.includes(`deleted:${newKey}`)) keys = [...keys, newKey];
                   }
-                );
+                  return normalizeSpecRowLayout(keys);
+                };
+                if (activeStyleRef.current === style && updateRowKeysRef.current) {
+                  await updateRowKeysRef.current(update);
+                } else {
+                  await enqueueSpecRowSave(style, async () => {
+                    const order = await utils.specRowOrder.get.fetch({ style }, { staleTime: 0 });
+                    await upsertRowOrderForColourExplosionMutation.mutateAsync({ style, rowKeys: update(order.rowKeys ?? []) });
+                  });
+                }
+                await utils.specCustomRow.getByStyle.invalidate({ style });
               }}
               onRegisterReplaceRowKey={(swapFn) => {
                 replaceRowKeySetterRef.current = swapFn;
               }}
               onRegisterGetRowKeys={(getFn) => {
                 getRowKeysRef.current = getFn;
+              }}
+              onRegisterUpdateRowKeys={(updateFn) => {
+                updateRowKeysRef.current = updateFn;
               }}
             />
             </div>{/* end scrollable body */}

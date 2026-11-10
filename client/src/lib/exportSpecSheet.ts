@@ -17,9 +17,9 @@
  * - Image in top-right area (rows 1-8)
  *
  * Row order and deleted rows:
- * - If rowKeys is provided, the export respects the saved on-screen order.
- * - Template rows whose key is absent from rowKeys were deleted by the user and are omitted.
- * - Custom rows are included in the order they appear in rowKeys (c:<id> entries).
+ * - Uses the same saved order, explicit deletion markers and custom aliases as the Specs grid.
+ * - Newly available rows absent from the saved order are appended unless explicitly deleted.
+ * - Upper 1 is pinned first and cannot be deleted.
  */
 
 import ExcelJS from "exceljs";
@@ -27,6 +27,7 @@ import { saveAs } from "file-saver";
 import { getTemplateForCategory } from "@shared/specTemplates";
 import { readSpecColourValue } from "@shared/specColourKey";
 import { getSpecExportFilename } from "@shared/specExportFilename";
+import { getCustomSpecRowAliases, getOrderedSpecRowKeys, groupSpecCustomRows } from "@shared/specRowLayout";
 
 export interface CustomSpecRow {
   id: number;
@@ -50,7 +51,7 @@ export interface ExportSpecSheetParams {
   dressShoeSubType?: "court" | "sling" | null;
   imageUrl?: string;
   customRows?: CustomSpecRow[];
-  /** Saved row order from spec_row_order.rowKeys — used to preserve on-screen order and omit deleted rows */
+  /** Saved row order from spec_row_order.rowKeys, including explicit deleted:<rowKey> markers. */
   rowKeys?: string[] | null;
   /** Factory-facing style comments, shown as a yellow COMMENTS row when present. */
   comments?: string | null;
@@ -152,132 +153,44 @@ export async function buildSpecSheetWorkbook(params: ExportSpecSheetParams): Pro
     comments,
   } = params;
 
-  // Build custom rows lookup: repId → {title, section, valuesByColour}
-  // Per-colour rows share the same title but have different ids. We group them by title,
-  // using the LOWEST id as the representative (canonical) id so rowKeys lookups work.
-  // Sort by id ascending first so the lowest id is always picked as representative.
-  const sortedCustomRows = [...customRows].sort((a, b) => a.id - b.id);
-  const customRowById = new Map<number, { title: string; section: string; valuesByColour: Record<string, string> }>();
-  // Also build a title → repId map for fallback lookups when rowKeys has stale ids
-  const titleToRepId = new Map<string, number>();
-  for (const cr of sortedCustomRows) {
-    const existingRepId = titleToRepId.get(cr.title);
-    if (existingRepId === undefined) {
-      // First row for this title (lowest id) — use its id as the representative
-      titleToRepId.set(cr.title, cr.id);
-      customRowById.set(cr.id, { title: cr.title, section: cr.section, valuesByColour: { [cr.colour]: cr.value ?? "" } });
-    } else {
-      // Subsequent per-colour row — merge into the representative's valuesByColour
-      customRowById.get(existingRepId)!.valuesByColour[cr.colour] = cr.value ?? "";
-    }
-  }
-
+  // Match the grid: group by section + normalized title, keep unnamed rows distinct,
+  // and use the lowest ID as representative while resolving every member ID alias.
+  const customGroups = groupSpecCustomRows(customRows);
+  const customRowAliases = getCustomSpecRowAliases(customGroups);
+  const customRowById = new Map(customGroups.map((group) => [group.rep.id, {
+    title: group.rep.title,
+    section: group.rep.section,
+    valuesByColour: Object.fromEntries(
+      Array.from(group.colourMap, ([colour, row]) => [colour, row.value ?? ""]),
+    ),
+  }]));
   const template = getTemplateForCategory(category, { hasBuckle, dressShoeSubType, style });
   const today = new Date().toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" });
 
   // ── Build ordered component rows ──────────────────────────────────────────
-  // type for a single renderable row
   type CompRow = { label: string; key: string | null; isSpacer: boolean };
-
-  let componentRows: CompRow[];
-
-  if (rowKeys && rowKeys.length > 0) {
-    // Respect the saved on-screen order.
-    // Template keys absent from rowKeys were deleted by the user — omit them.
-    // Custom rows are included in the order they appear in rowKeys.
-    const templateMap = new Map(template.map((c) => [`t:${c.key}`, c]));
-
-    // Build the ordered list from rowKeys, skipping deleted entries
-    const orderedRows: CompRow[] = [];
-    let prevSection: string | null = null;
-
-    // Build a set of deleted keys (both template and custom) to prevent re-appending them
-    const exportDeletedKeys = new Set<string>();
-    for (const key of rowKeys) {
-      if (key.startsWith("deleted:")) exportDeletedKeys.add(key.slice("deleted:".length));
+  const templateMap = new Map(template.map((component) => [`t:${component.key}`, component]));
+  const availableKeys = [
+    ...Array.from(templateMap.keys()),
+    ...customGroups.map((group) => `c:${group.rep.id}`),
+  ];
+  const orderedKeys = getOrderedSpecRowKeys(availableKeys, rowKeys, customRowAliases);
+  const componentRows: CompRow[] = [];
+  let prevSection: string | null = null;
+  for (const key of orderedKeys) {
+    const component = templateMap.get(key);
+    const customId = component ? null : Number(key.slice(2));
+    const customRow = customId === null ? undefined : customRowById.get(customId);
+    const section = component?.section ?? customRow!.section;
+    if (prevSection !== null && section !== prevSection) {
+      componentRows.push({ label: "", key: null, isSpacer: true });
     }
-
-    for (const key of rowKeys) {
-      if (key.startsWith("deleted:")) continue;
-
-      if (key.startsWith("t:")) {
-        const comp = templateMap.get(key);
-        if (!comp) continue; // unknown key, skip
-        // Insert a spacer when the section changes
-        if (prevSection !== null && comp.section !== prevSection) {
-          orderedRows.push({ label: "", key: null, isSpacer: true });
-        }
-        orderedRows.push({ label: comp.label.toUpperCase(), key: comp.key, isSpacer: false });
-        prevSection = comp.section;
-      } else if (key.startsWith("c:")) {
-        const id = parseInt(key.slice(2), 10);
-        let cr = customRowById.get(id);
-        let repId = id;
-        if (!cr) {
-          // Stale id: after __all__ explosion the old id was deleted and new per-colour ids
-          // were assigned. The rowKeys entry still has the old id. We can't match by id,
-          // so skip it — the fallback (no-rowKeys path) will include all custom rows.
-          // To avoid duplicates, we simply skip stale ids here and rely on the fact that
-          // the client-side upsertForColourMutation updates rowKeys after explosion.
-          continue;
-        }
-        // Insert a spacer when the section changes
-        if (prevSection !== null && cr.section !== prevSection) {
-          orderedRows.push({ label: "", key: null, isSpacer: true });
-        }
-        orderedRows.push({ label: cr.title.toUpperCase(), key: `__custom__${repId}`, isSpacer: false });
-        prevSection = cr.section;
-      }
-    }
-
-    // Append any custom row groups that weren't placed by rowKeys.
-    // This handles stale ids (after __all__ explosion) where the old c:{id} in rowKeys
-    // no longer exists in the DB. We track which repIds were placed and append the rest.
-    // IMPORTANT: skip rows that are marked as deleted (deleted:c:{id} in rowKeys).
-    const placedRepIds = new Set(
-      orderedRows
-        .filter((r) => r.key?.startsWith("__custom__"))
-        .map((r) => parseInt(r.key!.slice("__custom__".length), 10))
-    );
-    for (const [repId, cr] of Array.from(customRowById)) {
-      const rowKey = `c:${repId}`;
-      if (!placedRepIds.has(repId) && !exportDeletedKeys.has(rowKey)) {
-        orderedRows.push({ label: cr.title.toUpperCase(), key: `__custom__${repId}`, isSpacer: false });
-      }
-    }
-
-    // NOTE: Template rows absent from rowKeys were deleted by the user — do NOT re-add them.
-    // (Custom rows not in rowKeys are treated as newly added and appended above.)
-
-    componentRows = orderedRows;
-  } else {
-    // No saved order — fall back to default template order + custom rows grouped by section
-    const customRowsBySection: Record<string, Array<{ id: number; title: string; valuesByColour: Record<string, string> }>> = {};
-    for (const [id, cr] of Array.from(customRowById)) {
-      if (!customRowsBySection[cr.section]) customRowsBySection[cr.section] = [];
-      customRowsBySection[cr.section].push({ id, title: cr.title, valuesByColour: cr.valuesByColour });
-    }
-
-    const sectionMap: Record<string, typeof template> = {};
-    for (const comp of template) {
-      if (!sectionMap[comp.section]) sectionMap[comp.section] = [];
-      sectionMap[comp.section].push(comp);
-    }
-    const sectionEntries = Object.entries(sectionMap);
-
-    componentRows = [];
-    for (let si = 0; si < sectionEntries.length; si++) {
-      const [sectionName, components] = sectionEntries[si];
-      for (const comp of components) {
-        componentRows.push({ label: comp.label.toUpperCase(), key: comp.key, isSpacer: false });
-      }
-      for (const cr of (customRowsBySection[sectionName] ?? [])) {
-        componentRows.push({ label: cr.title.toUpperCase(), key: `__custom__${cr.id}`, isSpacer: false });
-      }
-      if (si < sectionEntries.length - 1) {
-        componentRows.push({ label: "", key: null, isSpacer: true });
-      }
-    }
+    componentRows.push({
+      label: (component?.label ?? customRow!.title).toUpperCase(),
+      key: component?.key ?? `__custom__${customId}`,
+      isSpacer: false,
+    });
+    prevSection = section;
   }
 
   // Helper to get value for a component row + colour.
@@ -473,9 +386,9 @@ export async function buildSpecSheetWorkbook(params: ExportSpecSheetParams): Pro
       });
 
     // Two-pass filter:
-    // Pass 1: keep only non-spacer rows that have at least one value.
+    // Pass 1: keep Upper 1 pinned, plus non-spacer rows that have at least one value.
     // Pass 2: keep spacers only when there is a non-empty row on BOTH sides in the pass-1 result.
-    const pass1: CompRow[] = componentRows.filter((r) => r.isSpacer || rowHasValue(r));
+    const pass1: CompRow[] = componentRows.filter((r) => r.isSpacer || r.key === "upper_1" || rowHasValue(r));
     const filteredRows: CompRow[] = [];
     for (let ri = 0; ri < pass1.length; ri++) {
       const row = pass1[ri];
