@@ -1,7 +1,990 @@
 
+## SS26 Export Corrections (May 2026)
+
+### Add new SKUs (green)
+- [x] DIXIE — add Black Capri (New)
+- [x] DIXON — add Black Nappa Patent/Fur (New)
+- [x] HARLEY — add Chocolate Venice (New)
+- [x] HILTON — add Chocolate Venice (New)
+- [x] KIMBA — add Black Pony (New)
+- [x] ROBYN — add Black Suede (New)
+- [x] RORY — add Vanilla Nappa (New)
+- [x] ROXIE — add Milk Capretto (New, toe cap: Black Patent)
+- [x] SALLY — add Black Speckle (New)
+- [x] SARAH — add Espresso Suede (New, toe cap: Choc Vintage)
+- [x] SIA — add Choc Satin (New)
+- [x] SPOILT — add Ivory Satin (New)
+- [x] SWAY — add Silver Nappa Metallic (New)
+- [x] TILDA — add Chocolate Venice (New)
+- [x] TINA — add Petal Nappa (New)
+- [x] TREVI — add Choc Vintage (New)
+- [x] TREVI — add Chocolate Venice (New)
+- [x] VILLA — add Sky Suede (New)
+- [x] VINE — add Willow Nubuck (New)
+- [x] VOLLI — add Tan Vintage (New)
+
+### Updates (yellow)
+- [x] ENVY Black — update leather to Capri
+- [x] PAXOS Black Brocade — update category and last (use values from export)
+- [x] PAXOS Ivory Brocade — update category and last (use values from export)
+- [x] SAMMY Black — update leather to Venice
+- [x] SIA Black — update leather to Capri
+
+### Cancel (keep in system, mark cancelled)
+- [x] FAVE Choc Vintage — cancel
+- [x] MAMZELLE Black Nappa — cancel
+- [x] MAMZELLE Peru Nappa — cancel
+- [x] MAMZELLE Dove Nappa — cancel
+- [x] ROBYN Black Speckle — cancel
+- [x] VIKA Choc Venice — cancel
+
+### Delete (remove entirely — duplicates)
+- [x] MARAMEO Choc Snake — delete (same as Espresso)
+- [x] MARAMEO Black Snake — delete (same as Onyx)
+
+### Toe cap data (42 SKUs across 12 styles)
+- [x] CAPPA Dove — toe cap: Black Nappa
+- [x] CAPPA Peru — toe cap: Black Nappa
+- [x] CAPPA Sky — toe cap: Vino Nappa
+- [x] CAPPA Petal — toe cap: Vino Nappa
+- [x] DONTE Vanilla — toe cap: Black Venice
+- [x] DONTE Peru — toe cap: Black Venice
+- [x] DONTE Black (Nappa) — toe cap: Black Patent
+- [x] DONTE Sky — toe cap: Vino Nappa
+- [x] DONTE Vino — toe cap: Petal Nappa
+- [x] DONTE Black Speckle — toe cap: Black Speckle
+- [x] EMILY Mint — toe cap: Black Patent
+- [x] EMILY Petal — toe cap: Black Patent
+- [x] EMILY Black — toe cap: Black Patent
+- [x] EMILY Tan — toe cap: Taupe Suede
+- [x] EMILY Sky — toe cap: Denim Suede
+- [x] LEGACY Black — toe cap: Black Patent
+- [x] LEGACY Peru — toe cap: Black Patent
+- [x] LEGACY Dove — toe cap: Black Patent
+- [x] LEGACY Petal — toe cap: Petal Nappa Patent
+- [x] LEGACY Turquoise — toe cap: Turquoise Nappa Patent
+- [x] PIXIE Black (Speckle) — toe cap: Black Speckle
+- [x] PIXIE Choc — toe cap: Black Nappa
+- [x] PIXIE Vanilla — toe cap: Black Nappa
+- [x] PIXIE Vino — toe cap: Black Nappa
+- [x] ROBYN Milk — toe cap: Black Patent
+- [x] ROBYN Silver — toe cap: Black Gros Grain
+- [x] ROBYN Gold — toe cap: Black Gros Grain
+- [x] ROBYN Vino — toe cap: Petal Nappa
+- [x] ROBYN Black (Nappa) — toe cap: Black Patent
+- [x] ROBYN Vanilla — toe cap: Black Nappa
+- [x] ROBYN Black Speckle — toe cap: Black Patent (new SKU)
+- [x] ROXIE Turquoise — toe cap: Black Nappa
+- [x] ROXIE Peru — toe cap: Black Nappa
+- [x] ROXIE Milk — toe cap: Black Patent (new SKU)
+- [x] SARAH Milk — toe cap: Black Venice
+- [x] SARAH Petal — toe cap: Petal Nappa
+- [x] SARAH Sky — toe cap: Denim Suede
+- [x] SARAH Espresso — toe cap: Choc Vintage (new SKU)
+- [x] SAVANT Taupe — toe cap: Tan Vintage
+- [x] SAVANT Wheat — toe cap: Vanilla Vintage
+- [x] SAVANT Espresso — toe cap: Choc Vintage
+- [x] SAVANT Denim — toe cap: Sky Vintage
+
+### Global rename
+- [x] Rename all "Choc Venice" → "Chocolate Venice" throughout skuData.ts and DB
+
+## Fit Report Export (May 2026)
+- [x] Add exportFitReport function to generate Excel with style, last, category, fit rating, fit approved, most recent fit date, fit models, notes
+- [x] Add "Fit Report" button to FittingTab toolbar
+- [x] Only include styles that have been fitted (have sessions or fit rating set)
+
+## Size Recommendation Field (May 2026)
+- [x] Add size_recommendation column to style_fit_meta DB table (nullable varchar: "half_size_up", "full_size_up", "half_size_down", "full_size_down")
+- [x] Add sizeRecommendation to getStyleFitMeta and upsertStyleFitMeta tRPC procedures
+- [x] Show size recommendation selector in FittingTab only when fit rating is Runs Small or Runs Large
+- [x] Include size recommendation in Fit Report Excel export column
+
+## Fit Report Colourway Fix (May 2026)
+- [x] Fix Fit Report export: propagate fit rating and size recommendation to all colourways of the same base style — confirmed data is already at base style level, one row per base style in export
+- [x] Fix FittingTab UI: ensure fit rating lookup uses base style name — confirmed styleList is already base-style-level
+
+## Fit Report Notes Bug (May 2026)
+- [x] Investigate why fitting notes/comments are missing from the Fit Report Excel export
+- [x] Fix export to include both style-level fittingNotes and per-session notes in the Notes column
+
+## Cancelled Styles in Fit Report Export (May 2026)
+- [x] Fix Fit Report export to exclude cancelled styles (MAMZELLE, CIRCA, etc.) — they currently appear despite being cancelled (FittingTab exports already use filtered styleList)
+
+## Permanent Cancelled Style Exclusion from All Exports (May 2026)
+- [x] Audit all export functions across all tabs to find every place styles/SKUs are included in exports
+- [x] Ensure every export (Fit Report, Buy Export, Overview Export, Specs Export, etc.) filters out cancelled styles at the point of export using the cancelledStyleSet from the DB
+- [x] Add a server-side helper that returns the cancelled style set so exports that run server-side are also protected
+
+## Fit Report Per-Colourway Rows (May 2026)
+- [x] Rewrite Fit Report export to output one row per colourway (all colours of each style), with the base style's fit rating and size recommendation applied to every colourway row
+- [x] Exclude cancelled styles and cancelled SKUs from the per-colourway rows (via filtered styleList)
+- [x] Notes and fit models on first colourway row only to keep it readable
+
+## Full Export Fit Rating Bug (May 2026)
+- [x] Fix Full Data Export: Fit Rating column now reads from style_meta.fitRating (style-level, set in Fittings tab) with fallback to per-SKU fitRating
+- [x] Fit rating now applied to every SKU row for the matching style
+- [x] ARLA now correctly shows Runs Large in the export
+
+## Fit Rating Bulk Import + Size Recommendation Fix (May 2026)
+- [x] Parse uploaded spreadsheet to identify style, fit rating, and size instruction columns
+- [x] Bulk import fit ratings and size instructions from spreadsheet into style_meta via a migration script (234 styles imported)
+- [x] Fix size recommendation dropdown: Runs Small → "Half size up / Full size up", Runs Large → "Half size down / Full size down" (already correct)
+- [x] Verify imported data appears correctly in Fittings tab and By Style detail panel
+
+## By Style Add SKU Bug (May 2026)
+- [x] Fix: Adding a new colour/leather (e.g. Black Venice to MILAN) in By Style tab — was saving but no visible feedback; server-side duplicate check added
+- [x] Fix: Adding a SKU caused duplicate entries — removed 6 duplicate MILAN BLACK VENICE rows; server now throws error on duplicate; toast moved to bottom-right with richColors for visibility
+
+## Buy Session Changes Report (May 2026)
+- [x] Add tRPC procedure to fetch all changes since a buy session started: cancelled styles, cancelled SKUs, new colours added (custom_skus)
+- [x] Build Changes Report panel in Buy Sessions area: show CANCELLED STYLES, CANCELLED COLOURS, and NEW COLOURS ADDED sections
+- [x] Add Export button to generate a clean Excel report (SS26_Changes_Report_SessionName_DD-MM-YYYY.xlsx)
+- [x] Include style, colour, leather, category, and date of change in the export
+
+## Changes Report Email (May 2026)
+- [x] Add sendChangesReport tRPC procedure that sends formatted HTML email to team (fatih, amanda, anthony, alison, sarah.newton @tonybianco.com)
+- [x] Add "Send to Team" button to Changes Report modal
+- [x] Email body: session name, date, three sections (Cancelled Styles, Cancelled Colours, New Colours Added) as HTML tables
+
+## Buy Quantity Rollup & Always-Visible (May 2026)
+- [x] Show buy quantities on every SKU row at all times (not gated by active buy session) — shows all-sessions AU/USA totals when no session selected
+- [x] Add a running total rollup of total units bought (AU + USA) that updates as quantities are entered
+- [x] Show total bought units per style (rollup across all colours/leathers of that style) — per-style Buy Qty column shows all-sessions total with AU/USA breakdown
+- [x] Show grand total units bought across all styles in a summary bar or header — amber summary bar below Buy Session Bar shows Total Bought: AU X · USA Y · Z units total
+
+## URL Routing for Shareable Tab Links (May 2026)
+- [x] Replace useState tab switching with URL-based routing so each section has its own path (e.g. /styles, /fitting, /buy-sessions)
+- [x] Sidebar nav items become links that update the URL; active tab is derived from the URL
+- [x] Navigating to / redirects to /overview; unknown paths fall back to /overview
+- [x] Browser back/forward buttons work correctly between tabs
+
+## AI Dashboard Assistant Chatbot (May 2026)
+- [x] Add skuIsNewOverride DB table + helper to override is_new flag per SKU
+- [x] Add chat.command tRPC procedure using LLM tool-calling to interpret natural language commands
+- [x] Add floating chat panel UI using AIChatBox component in the dashboard
+- [x] Wire chat panel to chat.command mutation with conversation history
+- [x] Support commands: mark SKU as new/existing, update sample status, cancel/restore SKU, cancel style
+
+## NESTA VANILLA VINTAGE Override Fix (May 2026)
+- [x] Debug why per-SKU override for NESTA VANILLA VINTAGE is not applying in StylesTab despite assistant saying Done
+- [x] Ensure the override key lookup matches exactly what is stored in DB — fixed __ALL__ vs __all__ case mismatch and colour+leather split
+
+## Specs Tab Improvements (May 2026)
+- [x] Rename all spec sections to a single "Components" section — no separate Construction/Upper sections
+- [x] Toe cap field moves into Components (not Construction)
+- [x] Free-type rows: each component row is a free-type text box, not a dropdown with fixed options
+- [x] Insert row like Excel: + button between rows to insert at any position
+- [x] Delete dropdown options with a small X when required
+- [x] When copying spec from one colour to another, do NOT copy Upper 1 field
+- [x] Add New Colour/SKU button inside each style in the Specs tab
+- [x] Remove buckle toggle — buckle should always appear in Components
+
+## Specs Export Improvements (May 2026)
+- [x] Export as A4 landscape
+- [x] Max 7 colour columns per block on same sheet (ROXIE format), second block below first
+- [x] Wrap text in cells, use space efficiently — single column per colour
+- [x] Matched ROXIE format: label col 30 + 7 × 12 colour cols = A4 landscape fit
+
+## Drag-and-Drop Row Reordering in Specs Tab (May 2026)
+- [x] Install @dnd-kit/core and @dnd-kit/sortable
+- [x] Wrap custom spec rows in a SortableContext per section
+- [x] Add drag handle icon to each custom row
+- [x] On drag end, persist new sortOrder values to DB via batch upsert
+
+## Add Style to Last feature (May 2026)
+- [x] Add custom_styles DB table (style, last, category, createdAt) and push migration
+- [x] Add server-side tRPC procedures: customStyle.getAll, customStyle.add, customStyle.delete
+- [x] Update useCustomSkus hook to include custom styles in mergedStyles (so they appear in all tabs)
+- [x] Add "Add Style" UI inside each last's expanded section in LastApprovalTab with drag-and-drop image upload
+- [x] Custom styles should support image upload (reuse styleImage.upload tRPC procedure)
+
+## Add Style to By Style Tab (May 2026)
+- [x] Add "Add Style" button in By Style tab toolbar
+- [x] Modal with style name, last selector (from all known lasts), category selector, drag-and-drop image upload
+- [x] Custom style appears in grouped-by-last table immediately after adding
+
+## Custom Style Flow-through Fix (May 2026)
+- [x] Fix FittingTab: custom styles (_isCustomStyle) now always appear in style list regardless of last name (were filtered out by NEW_LASTS check)
+- [x] Fix SpecsTab: custom styles now always appear in baseStyleList regardless of last name, even with 0 colours
+
+## Specs Tab Custom Row UX Fixes (May 2026)
+- [x] Remove insert-between-rows ghost rows from SortableCustomRow (keep only Add Row at bottom of each section)
+- [x] Fix drag-and-drop reorder: add optimistic update so rows move immediately without snapping back
+
+## Delete SKU Colour Column in Specs Tab (May 2026)
+- [x] Add spec_hidden_columns DB table (styleKey, colourKey) to store hidden columns per style
+- [x] Add server-side tRPC procedures: getHiddenColumns, hideColumn, showColumn
+- [x] Add × delete button on each colour column header in SpecsTab
+- [x] Filter out hidden columns from the rendered spec grid (export still includes all columns)
+- [x] Sync: cancelled SKUs from By Style tab are already hidden in Specs via cancelledSkuSet filter
+
+## Dynamic Horizontal Scrollbar in Specs Tab (May 2026)
+- [x] Replace bottom-of-page horizontal scrollbar with a phantom sticky scrollbar at the bottom of the right panel
+- [x] Phantom scrollbar mirrors the table scroll position (bidirectional sync via useLayoutEffect)
+- [x] Phantom scrollbar is a sibling outside the overflow-y-auto body, always visible at the bottom of the pane
+- [x] Fix Dashboard.tsx: change h-screen to 100dvh to properly constrain layout to visible viewport
+
+## By Style Filter Panel (Jun 2026)
+- [x] Add filter panel with Sample Status, Last, Leather, Size 11 filters
+- [x] Filters button with active count badge; Clear filters button when any filter active
+- [x] Action toolbar buttons (Import, Import Invoice, Export Excel, Add Style, Sync Size 11) made visible
+
+## Spec Bugs (Jun 2026)
+- [x] Fix spec values not saving when selecting dropdown option or typing free text
+- [x] Fix spec export order — export must follow the on-screen unified row order (drag-drop + saved rowKeys)
+- [x] Fix spec export — deleted rows must be excluded from export (currently still appear)
+
+## Per-Colour Custom Row Editing (Jun 2026)
+- [x] Add upsertCustomRowForColour DB helper: explode __all__ row into per-colour rows, then update specific colour
+- [x] Add specCustomRow.upsertForColour tRPC procedure
+- [x] Update UnifiedCustomRow to pass colour key to onUpdate per cell
+- [x] Update handleUpdateCustomRow to call upsertForColour with colour key
+- [x] Update exportSpecSheet to read per-colour custom row values (by colour key, not __all__)
+
+## Spec Issues Round 2 (Jun 2026)
+- [x] Custom row options not persisting — new typed values should be saved as dropdown options for reuse; add delete-option button
+- [x] Drag-reorder not saving for export — rowKeys not being saved after drag, export uses wrong order
+- [x] Export column widths too narrow — set explicit column widths in ExcelJS
+
+## Spec Critical Bugs (Jun 2026 - custom rows)
+- [x] Spec row labels on left always proper-cased (e.g. "Upper 1" not "UPPER 1")
+- [x] Custom row value not copying across all colours on first entry (__all__ explosion broken)
+- [x] Custom rows not appearing in export
+- [x] Delete custom row only clears cell values instead of removing the entire row
+
+## Reset Colour Column in Specs (Jun 2026)
+
+- [x] Add resetColourColumn DB helper: clears all spec_values for a style+colour, and clears all per-colour custom row values for that colour (set value to '')
+- [x] Add specValues.resetColour tRPC procedure
+- [x] Add Reset button (with confirm popover) to each colour column header in SpecsTab
+- [x] After reset, invalidate rawCustomRows and spec values queries
+
+## Spec Export Fix - All Colour Values (Jun 2026)
+- [x] Fix spec export only showing first two colour values for custom rows — was using filtered (hidden-columns-excluded) colour list for explosion; now uses full unfiltered list
+
+## Reset Colour Column in Specs Tab (Jun 2026)
+- [x] Add resetSpecColour DB helper: delete all style_specs rows + clear custom row values for a colour
+- [x] Add specs.resetColour tRPC procedure
+- [x] Add Reset (↺) button to colour column header with confirmation prompt
+- [x] Clicking reset clears all template spec values and custom row values for that colour column
+
+## Unlimited Text in Spec Cells (Jun 2026)
+- [x] Expand specDropdownOptions.value DB column from varchar(256) to text (no character limit)
+- [x] Replace single-line input in FreeTypeCell and CustomFreeTypeCell with auto-growing textarea
+- [x] Remove text truncation from dropdown option suggestions so long values display fully
+
+## Reset Colour Column in Specs (Jun 2026)
+
+- [x] Add resetColourColumn DB helper: clears all spec_values for a style+colour, and clears all per-colour custom row values for that colour (set value to '')
+- [x] Add specValues.resetColour tRPC procedure
+- [x] Add Reset button (with confirm popover) to each colour column header in SpecsTab
+- [x] After reset, invalidate rawCustomRows and spec values queries
+
+## Manage Saved Dropdown Options (Jun 2026)
+- [x] Add specDropdownOptions.update tRPC procedure (rename a saved option value)
+- [x] Add specDropdownOptions.delete tRPC procedure (remove a saved option by id)
+- [x] Add "Manage options" gear/settings icon in the dropdown suggestion list
+- [x] Build ManageOptionsPanel: list all saved options for a row with inline edit (pencil) and delete (trash) per item
+- [x] After edit/delete, invalidate specDropdownOptions query and refresh open dropdown list
+
+## Spec Status System (Not Started / In Progress / Complete) (Jun 2026)
+- [x] Add specStatus column to spec_meta table (enum: not_started, in_progress, complete), default not_started
+- [x] Run pnpm db:push to apply migration
+- [x] Add setSpecStatus tRPC procedure (manual override)
+- [x] Include status in specMeta query response
+- [x] Replace progress bar in style list with status badge (grey/amber/green)
+- [x] Add status badge + manual toggle dropdown to spec sheet header
+- [x] Auto-complete logic: after every upsert, check if all cells filled → promote to complete; if any cell cleared → demote to in_progress
+- [x] Manual override always available (can set back to not_started or in_progress)
+
+## Specs Tab Bug Fixes (Jun 2026)
+- [x] Fix: add "Restore cancelled colours" panel in Specs tab so deleted colours can be re-added without knowing the name
+- [x] Fix: duplicate colour key bug (e.g. XENA BLACK TUSCON appearing twice) — deduplicate colour iteration in NEW_COLOURS_PER_STYLE so each colour is only processed once even when it appears with multiple leathers in custom_skus
+
+## Bulk Spec Status Update (Jun 2026)
+- [x] Add bulkSetSpecStatus DB helper and tRPC procedure
+- [x] Add checkbox selection UI to style list + bulk action toolbar (Complete / In Progress / Not Started)
+
+## Custom Row Bugs (Jun 2026)
+
+- [x] Fix: custom row drops to bottom after being moved — temp id in localRowKeys not swapped for real id after server responds; addCustomRowMutation.onSuccess now calls swapLocalRowKey to update SpecForm's localRowKeys in-place
+- [x] Fix: custom row copy not working across colours — allColours explosion was using raw colour codes (e.g. "BLACK") instead of full colour labels (e.g. "BLACK CAPRI"); fixed to use colourLabels so explosion keys match spec storage keys
+- [x] Fix: upsertForColourMutation explosion now also calls swapLocalRowKey so localRowKeys stays correct after __all__ row is replaced by per-colour rows
+
+## Trend Filter (Jun 2026)
+- [x] Parse trend data from SS26 spreadsheet columns G & H (26 styles, 4 trends: BALLET, MESH, TOE CAP, ROSETTE)
+- [x] Add trends column to style_trend_flags DB table (nullable TEXT, JSON array)
+- [x] Import all 26 style-trend mappings into DB via migration script
+- [x] Update getAllStyleTrendFlags to parse JSON trends array
+- [x] Add upsertStyleTrends and deleteStyleTrends DB helpers
+- [x] Add trendFlag.upsert and trendFlag.delete tRPC procedures
+- [x] Update useStyleCategories hook to expose getTrends() and allTrends
+- [x] Add trendFilter state to StylesTab
+- [x] Wire trendFilter into filtered useMemo
+- [x] Add Trend filter chips to More Filters panel
+- [x] Update More Filters badge count and Clear filters to include trendFilter
+- [x] Show clickable trend badges on each style row (clicking filters by that trend)
+
+## Trend Filter Improvements (Jun 2026)
+- [x] Add LOAFER styles to migrate-trends.mjs import mapping so re-imports preserve LOAFER
+- [x] Change trendFilter state from single string to string[] array for multi-select
+- [x] Update filtered useMemo to match styles where trends intersect with selected trend array
+- [x] Show style count on each trend chip (e.g. "BALLET (14)")
+- [x] Update filter chips UI to support multi-select toggle (add/remove from array)
+- [x] Update More Filters badge count and Clear filters to work with array
+
+## Last Measurements Feature (Jun 2026)
+- [x] Add last_measurements DB table (last, type: LENGTH|GIRTH, size, value)
+- [x] Seed 7 lasts × 12 sizes × 2 types from image data
+- [x] Add tRPC getLastMeasurements procedure
+- [x] Build LastMeasurementsPanel component (full table, Size 7 highlighted)
+- [x] Add Measurements button to Fitting tab toolbar opening the panel
+- [x] Make last name clickable in By Style to show that last's measurements
+
+## Markdown Scanner Feature (Jun 2026)
+- [x] Add markdown_skus DB table (style, colour, source_url, flagged_at, status: pending|deleted|restored)
+- [x] Add scraper server function to fetch all sale products from tonybianco.com.au Shopify API
+- [x] Add tRPC procedures: scanMarkdowns, getMarkdownSkus, bulkDeleteMarkdowns, restoreMarkdown
+- [x] Add /api/scheduled/markdown-scan Express handler for Heartbeat
+- [x] Build Markdown review page with bulk select/delete/restore
+- [x] Add scan button with confirmation popup showing matched SKUs before flagging
+- [x] Filter markdown SKUs out of By Style and By Category tabs
+- [x] §5c patches not needed — §4a project-level Heartbeat does not require cron auth patches
+- [x] Register weekly Heartbeat schedule — task_uid: cW4pFgYKXTVRJHDHCi3KeY, runs Mondays 02:00 UTC
+- [x] Remove the user-provided markdown SKU list from both SS26 and W27 dashboard views, and verify every requested style/colour–leather combination is matched
+- [x] Restore the missing horizontal scrollbar in the Specs table
+- [x] Allow colour-name editing for every applicable SKU in the Specs table
+- [x] Run a fresh tonybianco.com.au markdown scan and make matched SKUs available for review and deletion
+- [x] Verify that pending and deleted markdown SKUs are excluded from the Full Data Export
+- [x] Investigate and correct the missing FLUKE markdown flag from the live sale scan
+- [x] Reconcile the supplied markdown document with dashboard SKU names and queue missing exact matches for review
+- [x] Make Overview SKU and style counts respect pending and deleted markdown exclusions
+- [x] Make Last the first Full Data Export column and sort exported SKU rows alphabetically by Style
+- [x] Locate DYNASTY across SS26 and W27 and identify any status preventing it from appearing
+- [x] Add missing DYNASTY parent-style records in SS26 and W27 with Last Diamond and Category Dress Sandal
+- [x] Add a Buy Analysis view that lists styles and quantities by selected store location, including LA
+- [x] Fix the Buy Analysis location view returning zero quantities for every location
+- [x] Reclassify existing SKU Dash buy quantities as LA and validate them against the supplied backup workbook
+- [x] Add direct colour-name editing to By Style so SKU colours can be corrected without deletion
+- [x] Extend By Style inline editing so colour and leather can be corrected together in one save
+
+## Handbags Section (Jun 2026)
+- [x] Create handbag_styles, handbag_buy_sessions, handbag_buy_items DB tables
+- [x] Seed 30 colourways across 12 styles from SS26 linesheet (names and colours only)
+- [x] Add handbag tRPC router with listStyles, upsertStyle, deleteStyle, listSessions, createSession, deleteSession, listBuyItems, upsertBuyItem, deleteBuyItem
+- [x] Build HandbagsTab component with By Style view (colour, material, RRP, cost, buy totals) and Buy view (session selector, inline qty entry per AU/USA/NYC)
+- [x] Add /handbags route and Handbags nav item to Dashboard
+
+## Sales Analysis Tab (Jun 2026)
+- [x] Add sales_snapshots DB table (id, name, createdAt) and sales_data rows (snapshotId, style, colour, units)
+- [x] Add sales tRPC router: listSnapshots, createSnapshot (with parsed rows), deleteSnapshot, getSnapshot
+- [x] Build parser for tab-indented paste format (style header rows vs colour/qty rows)
+- [x] Build SalesTab UI: paste input modal, snapshot selector, style breakdown table with colourway rows, buy qty comparison column
+- [x] Add /sales route and Sales nav item under Analysis group in Dashboard sidebar
+
+## Handbags Export (Jul 2026)
+- [x] Add Export button to Handbags tab header
+- [x] Export all colourways to Excel (STYLE, COLOUR, MATERIAL, SECTION, RRP, COST, AU BOUGHT, USA BOUGHT)
+- [x] Style name only shown on first colourway row (bold), subsequent rows blank for readability
+- [x] Styled with dark header row, dated filename (Handbags_SS26_DD-MM-YYYY.xlsx)
+
+## Handbags Layout Improvements (Jul 2026)
+- [x] Separate bought vs unbought colourways — styles with any buy qty appear in "Bought" section, others in "New Season" section
+- [x] Larger colourway images (112×112px / w-28 h-28) to match Flora-style display
+- [x] Style-level header image (smaller, 64×40px) on collapsed row
+- [x] Add colour button inside buy session — same inline flow as footwear
+- [x] Buy session bar inline in HandbagsTab (no lock/unlock, simpler than footwear)
+- [x] Session-level qty entry per colourway with AU/USA/NYC columns
+- [x] All-sessions total always visible per colourway
+- [x] Grand total summary bar below session bar
+
+## Spec Export Bug Fix - Legacy Colour Key Mismatch (Jul 2026)
+- [x] Fix custom row values not appearing in spec export for styles with multiple leathers per colour (e.g. EDGY)
+- [x] Root cause: values stored under short colour key ("BLUSH") but export looked up by compound key ("BLUSH NUBUCK")
+- [x] Fix: add short-colour fallback in exportSpecSheet getValue() function
+- [x] Fix: add short-colour fallback in on-screen UnifiedCustomRow display and onSave handler
+
+## Spec Row Delete Fix (Jul 2026)
+- [x] Fix deleted rows reappearing at the bottom of the spec table
+- [x] Template row delete: mark as deleted:t:key in rowKeys instead of removing (so it doesn't get re-appended)
+- [x] Custom row delete: soft delete via deleted:c:id in rowKeys instead of permanent DB delete
+- [x] unifiedRows: skip deleted:c:id and deleted:t:key entries, and don't re-append them at the bottom
+- [x] Export: skip deleted:c:id entries in the fallback append loop
+- [x] Add "X hidden rows" restore button below the table — popover lists all hidden rows with one-click restore
+
+## Spec Tab - Uniform Colour Key Fix (Jul 2026)
+- [x] Audit all spec data paths (save, display, copy, export) for colour key inconsistencies
+- [x] Create a single normalised colour key helper used everywhere
+- [x] Fix template row copy (onUpsert) to use normalised colour key
+- [x] Fix template row display (specs lookup) to use normalised colour key
+- [x] Fix custom row copy to use normalised colour key
+- [x] Fix custom row display to use normalised colour key
+- [x] Fix export to use normalised colour key
+- [x] Run end-to-end tests to verify all paths
+
+## Upper 1 Pin + Toe Piece Always Available (Jul 2026)
+- [x] Pin Upper 1 row to always appear first in the spec table — cannot be dragged below other rows or deleted
+- [x] Ensure Toe Piece is always available as a row in all relevant categories (Dress Shoe, Sandal, Dress Sandal, Boot, Ankle Boot, Calf Boot, Loafer, Ballet Flat, Casual Flat) by adding it to their templates
+## LA Buy Location (Jul 2026)
+- [x] DB schema: laQty column added to buy_session_items (migration applied via direct SQL)
+- [x] server/db.ts: laQty added to upsertBuySessionItem, getSessionTotals, getAllSessionQtys
+- [x] server/routers.ts: laQty added to buy.upsertItem z.object schema
+- [x] BuySessionsPanel.tsx: LA column added to export and session preview table
+- [x] StylesTab.tsx: laQty added to sessionItemMap, handleQtyChange/Blur, all-session totals, LA input field
+- [x] BuyAnalysisTab.tsx data layer: mergedItems, boughtItems filter, totalLA, byCategory/byStyle/byLeather/byColourLeather/byColourOverall/byStyleWithColours maps, skuTableRows all include laQty
+- [x] BuyAnalysisTab.tsx UI: LA Pairs summary card (green), BarRow la prop (4th green segment), section subtitles updated, pairs breakdown table header/rows, SKU table header/rows/footer
+
+## Winter Lasts Book Import Prep (Jul 2026)
+- [x] Extract all lasts, styles, colours, and leathers from WINTERLASTS.pptx into a structured spreadsheet — not required; user confirmed only the supplied 14 new W27 lasts are needed
+- [x] Separate colour and leather into distinct columns for every extracted row — not required; user confirmed only the supplied 14 new W27 lasts are needed
+- [x] Validate the extracted spreadsheet against the slide deck and flag any ambiguous entries for review — not required; user confirmed only the supplied 14 new W27 lasts are needed
+- [x] Deliver the editable spreadsheet for user corrections before any DB upload — not required; user confirmed only the supplied 14 new W27 lasts are needed
+
+
+## Winter 27 Season (Jul 2026)
+- [x] Add season switcher to sidebar (SS26 / Winter 27) — replace "SS26 Range Review" subtitle with "SKU DASH" title + toggle
+- [x] Add SeasonContext provider to wrap the app
+- [x] Seed Winter 27 DB tables — copy all SS26 styles/SKUs with is_new=false
+- [x] Wire season filter to all data queries (buy sessions, analysis, fitting, specs, last approval)
+- [x] Verify all tabs respect active season
+- [x] Add ISLA, LUCKY, BAILEE, PRIYA, HOLLIE, PRYCE, FERGIE, VIVID, RAVE, KISS, NIKOH, JORJI, ESSA, and LENI to W27 Last Approvals
+- [x] Make W27 the default season when opening SKU Dash
+- [x] Create matching W27 styles for ISLA, LUCKY, BAILEE, PRIYA, HOLLIE, PRYCE, FERGIE, VIVID, RAVE, KISS, NIKOH, JORJI, ESSA, and LENI
+- [x] Make zero-colour W27 custom styles visible and searchable in By Style
+- [x] Clear all W27 cancelled style and SKU records, then restore ESSA visibility in By Style
+- [x] Fix production ReferenceError: Cannot access initialization variable before startup
+- [x] Show existing styles in Specs when they receive new colours, but display only new seasonal colour columns
+- [x] Reconcile all SS26 style and last records as W27 run-ons, retaining the 14 new W27 lasts
+- [x] Let Specs search and open all active core and run-on W27 styles so specifications can be added to any style
+- [x] Replace Specs status groups with a searchable category-organized style library
+- [x] Remove the Bulk Import control from the Specs style library
+- [x] Carry confirmed SS26 style and SKU cancellations into W27, including CIRCA
+
+## AP21 Product Import CSV — Colour Code Management (Jul 2026)
+- [x] Add colour_codes DB table (colourDescription, colourCode) with 544 seeded codes
+- [x] Add DB helpers: getAllColourCodes, getColourCodeByDescription, upsertColourCode, getMissingColourCodes
+- [x] Add colourCode tRPC router: getAll, getByDescription, upsert, getMissing, suggestCode (AI)
+- [x] Rewrite AP21 export to 101836 BxB format: 50 columns, AU sizes 5–11 + PACK, Style Level 0/1/2
+- [x] Colour Code column now populated from colour_codes DB table (matched by UPPERCASE description)
+- [x] Missing colour code modal: shows before export when any colour has no code; AI-suggests codes; user can edit; Save & Export saves codes then downloads CSV
+- [x] AP21ColourCodeModal component with per-description AI suggestion (colourCode.suggestCode), editable inputs, reset-to-suggestion button, Save & Export flow
+
+## AP21 Size Range Per Style (Jul 2026)
+- [x] Add ap21SizeRange column to style_meta DB table (enum: AU6-9, AU5-11, AU5-10, EU35-42, EU35-41), default AU5-11
+- [x] Run pnpm db:push to apply migration
+- [x] Add getAp21SizeRange, setAp21SizeRange, getAllAp21SizeRanges DB helpers
+- [x] Add ap21SizeRange.set and ap21SizeRange.getAll tRPC procedures
+- [x] Add size range selector to Specs tab header (below spec status badge)
+- [x] Wire AP21 export to use per-style sizeRange from DB; AU ranges support PACK; EU ranges never get PACK; default AU5-11
+
+## AP21 Export — Full KKtest1 Format (Jul 2026)
+
+### Field mapping from reference image:
+- Ref1  = DEPT (Department) — mandatory — always "Footwear"
+- Ref2  = Category — mandatory — Division (e.g. "Dress", "Casual")
+- Ref3  = Sub Cat (Sub Category) — mandatory — e.g. "Dress Sandal"
+- Ref4  = RangeTyp (Range Type) — optional — e.g. "Core", "Fashion"
+- Ref5  = Brand — optional — always "Tony Bianco"
+- Ref6  = Last — optional — last name
+- Ref7  = Heel (Heel Height) — optional — e.g. "7.5 cm"
+- Ref8  = Toe (Toe Shape) — optional — e.g. "Open", "Closed", "Peep"
+- Ref9  = Upper H (Upper Height) — optional — e.g. "Ankle", "Calf"
+- Ref10 = StkType (Stock type for Purchasing) — optional — always "Product"
+- Ref11 = Comp Grp (Component Group) — MANDATORY (internal AP21) — always "FG"
+- Ref12 = Country (Country of origin) — optional — e.g. "China"
+- Ref13 = Supplier — optional — factory name
+- Ref14 = HS Code — optional — barcode prefix / HS code
+- Ref15-20 = blank
+- ColourRef1  = Upper M (Upper Material) — optional, per-colour — e.g. "Leather", "PVC"
+- ColourRef2  = Sole M (Sole Material) — optional, per-colour
+- ColourRef3  = Lining M (Lining Material) — optional, per-colour
+- ColourRef4  = Season — optional, per-colour — e.g. "Summer 2025"
+- ColourRef5  = PStatus (Product Status) — optional, per-colour
+- ColourRef6  = Fab (Fabrication) — optional, per-colour
+- ColourRef7  = Iconic — optional, per-colour
+- ColourRef8  = ColGrp (Web Colour Group) — optional, per-colour
+- ColourRef9  = Occasion — optional, per-colour
+- ColourRef10 = Web — optional, per-colour
+
+### Format changes vs current export:
+- Style Level: size rows ONLY (Style Level = 2), no style-level (0) or colour-level (1) rows
+- Product Code: STYLE + YEAR (e.g. KASSY2026)
+- Product Description: Title Case + " - " + YEAR (e.g. "Kassy - 2026")
+- Size Range: full label e.g. "Shoes - AU (5-11)" not "AU5-11"
+- UOM: "Pair" not "Each"
+- Include in MRP: "Y" not "N"
+- Colour Description: colour name only (not "Black Capretto", just "Black")
+- Sell Price: from DB (rrp field on style_meta)
+
+### DB changes:
+- [x] Add ap21_style_refs table: style, season, rangeType, toeShape, upperHeight, countryOfOrigin, supplier, hsCode, subCategory
+- [x] Add ap21_colour_refs table: style, colourKey, upperMaterial, soleMaterial, liningMaterial, season, productStatus, fabrication, iconic, webColourGroup, occasion, web
+- [x] Run pnpm db:push (migrations 0050, 0051 applied)
+- [x] Add DB helpers: getAp21StyleRefs, upsertAp21StyleRefs, getAp21ColourRefs, upsertAp21ColourRefs, getAllAp21StyleRefs, getAllAp21ColourRefs
+
+### tRPC + UI:
+- [x] Add ap21Refs tRPC router: getStyleRefs, upsertStyleRefs, getColourRefs, upsertColourRefs, getAllStyleRefs, getAllColourRefs
+- [x] Build AP21 Refs panel in Specs tab: sub-category dropdown (Ref3, auto-derives Ref2 Division) + style-level fields + per-colour material table
+- [x] Auto-populate Ref1 (Footwear), Ref5 (Tony Bianco), Ref10 (Product), Ref11 (FG) as constants
+
+### Export rewrite:
+- [x] Rewrite AP21 export: size rows ONLY (Style Level 2), no style/colour-level rows
+- [x] Size Range label: "Shoes - AU (5-11)" format (derived from ap21SizeRange key)
+- [x] UOM = "Pair", Include in MRP = "Y"
+- [x] Populate Ref1-Ref10 from style data + ap21_style_refs (Ref2=Division derived from Ref3 sub-category)
+- [x] Populate Ref11-Ref20 from ap21_style_refs (Ref11 always "FG")
+- [x] Populate ColourRef1-10 from ap21_colour_refs (per-colour, with style-level season fallback for CR4)
+- [x] Colour Description = colour name only (strip leather)
+- [x] Colour code lookup still uses full COLOUR+LEATHER description for accuracy
+
+## AP21 Export — Style Selector (Jul 2026)
+- [x] Add ap21ExportedAt column (datetime nullable) to style_meta table (migration 0052)
+- [x] Run pnpm db:push
+- [x] Add DB helpers: markStylesAsAp21Exported(styles[]), resetAp21ExportedAt(style), getAp21UnexportedStyles(), getAp21ExportedStyles()
+- [x] Add tRPC procedures: ap21Export.getUnexported, ap21Export.markExported, ap21Export.resetExported, ap21Export.getExported
+- [x] In Export tab AP21 section: multi-select checklist of unexported styles (all pre-ticked by default)
+- [x] On Generate CSV: mark selected styles as exported, then download CSV; styles disappear from list
+- [x] Show "Reset" link per exported style to bring it back to unexported list
+- [x] Fix: winter carry-over custom styles (ELLIDY, ESTELLE, EVA, etc.) incorrectly appearing in Specs tab — filter now only allows custom styles with totalSKUs === 0 (brand-new) through when they have 0 new colours
+
+## Dashboard Export Email Delivery (Sep 2026)
+- [x] Reuse the secure server-side Resend sender for all dashboard spreadsheet/CSV exports.
+- [x] Add a shared email composer with saved recipient groups, To/CC/reply-to fields, optional message, and report-scope history.
+- [x] Add email delivery for Full Data and AP21 product import exports.
+- [x] Add email delivery for By Style, Handbags, Buy Sheets, Buy Changes Reports, Fitting date reports, Fitting Group reports, and Fit Reports.
+- [x] Extend the email history schema with export type/scope fields and a report-history index.
+- [x] Add generic sender/router/template regression coverage; 88 tests and the production build pass.
+
+## Specs Row-Order Reliability (Oct 2026)
+- [x] Consolidate duplicate historical row-order records to the latest saved order per style.
+- [x] Enforce one authoritative row-order record per style and update it on every save so components cannot revert or move after dragging.
+
+## Specs Email Attachments (Oct 2026)
+- [x] Add drag-and-drop and file-picker support for optional files in the Specs email composer.
+- [x] Send selected files together with the generated Specs workbook through the existing protected Resend workflow without storing them in SKU Dash.
+- [x] Enforce client and server attachment limits, including 10 files, 10 MB per file, and 30 MB combined email content.
+
+## Range Pricing & RRP Planning (Oct 2026)
+- [x] Add a per-style pricing card in By Style with landed cost, target margin, RRP, suggested price and current-margin calculation.
+- [x] Seed 108 matching styles from the Summer 26 Buy Plan without overwriting existing SKU Dash RRPs.
+- [x] Add optional SKU-level RRP overrides for genuine colourway exceptions.
+- [x] Add a visual operating-model flow that positions SKU Dash as the pre-product range-definition source of truth.
+
+## Factory Cost Completion Workflow (Oct 2026)
+- [x] Add a By Style export of all active SKUs that are missing a factory cost, including Upper 1 and Upper 2 identity fields.
+- [x] Add a matching factory email flow using saved groups, CC/reply-to fields and export email history.
+- [x] Add a drag-and-drop completed-cost import with preview, exact SKU matching and safe skip reporting.
+- [x] Store returned factory costs seasonally with a composite SKU identity so Upper 2 variants remain independently costed.
+
+## USD Cost List & Last Approval Notes (Oct 2026)
+- [x] Load the supplied 30 Aug cost list as USD factory costs: 531 new costs added, 55 newer values updated, 344 matching values retained; 65 retired/non-range rows skipped.
+- [x] Label factory-cost exports, imports and SKU details as USD; exclude USD factory cost from AUD margin calculation.
+- [x] Fix Last Approval saves to retain the active season and enforce one approval record per last per season.
+- [x] Consolidate duplicate historic Last Approval records and recover the W27 FERGIE and HOLLIE notes.
+
+## USD Landed-Cost Clarification (Oct 2026)
+- [x] Change the style pricing input to Factory / Landed Cost (USD) and retain RRP as AUD including GST.
+- [x] Pause margin and suggested-RRP calculations until an approved USD-to-AUD landed-cost conversion policy (FX, freight, duty and other costs) is configured.
+
+## Approved AP21 SKU Colour Descriptions (2 Oct 2026)
+- Loaded the supplied AP21 wording for **267 exact physical SKUs** into `ap21_sku_colour_descriptions`. Each mapping is identity-safe across Style, Upper 1 colour/leather, and Upper 2 colour/leather.
+- Buy Sheet exports now include the approved wording in the **AP21 SKU COLOUR** column while retaining the dashboard’s full development label in **COLOUR**.
+- AP21 Product Import CSVs now use the same approved Colour Description wording. Existing AP21 colour-code lookup remains unchanged, as requested.
+- Extended Buy Session rows and quantity handling with `colour2`/`leather2` plus a unique composite identity, so different dual-upper colourways cannot merge into one buy quantity. Updated By Style, Buy Sessions, and Buy Analysis keys/displays accordingly.
+- Added migrations `0068_steady_northstar` and `0069_complex_maverick`; applied both schema changes directly and verified the columns, composite unique index, and mapping count.
+- Validation: **100 tests passed** and production build passed. Visual check passed on the W27 Buy Sessions page.
+
+## Margin & RRP Guide Refinement (Oct 2026)
+- [x] Replace the long paused-calculation notice with quiet current-margin and RRP guide tiles.
+- [x] Use the Summer 26 Buy Plan's AUD landed-cost basis and RRP excluding GST for margin calculations; retain factory costs as USD per SKU.
+- [x] Restore 75% as the target margin for the 108 seeded price records and future styles.
+
+## Below-Target Margin Indicator (Oct 2026)
+- [x] Treat 70%–74.9% as an acceptable, quiet tolerance range beneath the 75% target.
+- [x] Use the subtle amber warning only when the selected RRP produces a margin below the 70% tolerance floor.
+
+## By Style Toolbar & Export Simplification (Oct 2026)
+- [x] Reduced the By Style action bar from eight controls to four grouped actions: **Add Style**, **Import**, **Export**, and **Factory costs**.
+- [x] Moved supplier-invoice import and Size 11 sync into Import; moved download/email into Export; moved cost-request download/email and completed-cost import into Factory costs.
+- [x] Simplified the main Export dialog to a single **Full range export** card with **Download Excel** and **Email** actions. All standard columns are included automatically.
+- [x] Hidden the AP21 Product Import CSV workflow and its email option while it is not needed, retaining the underlying workflow for a future AP21 handover.
+- [x] Validation: 101 regression tests and production build passed; visual check confirmed the compact W27 By Style toolbar.
+
+## Legacy SKU Data Import Removal (Oct 2026)
+- [x] Removed the legacy **SKU data** bulk cost/RRP importer from By Style and deleted its unused dialog component.
+- [x] Retained the useful options: supplier invoice import, completed factory-cost request import, and Size 11 sync.
+- [x] Validation: 101 tests and production build passed; visual check confirmed the streamlined By Style controls.
+
+## Sample Invoice Label Update (Oct 2026)
+- [x] Renamed **Supplier invoice** to **Import sample invoice** in the By Style menu and dialog title. Verified with 101 tests and a production build.
+
+## Strict Size 11 Rule (Oct 2026)
+- [x] Removed the website-driven **Sync Size 11** workflow: online products contain historical colourways and should not determine the development range.
+- [x] Size 11 now displays and exports only when **every active colourway** of a style is explicitly marked Size 11; mixed styles are treated as not Size 11.
+- [x] Corrected ANJA to 0 of 14 Size 11 colourways and cleared the 17 existing styles with partial Size 11 flags.
+- [x] Applied the same strict rule to By Style and Buy Sheet exports; added regression coverage. Validation: 103 tests and production build passed.
+
+## FOB Cost Source Correction (Oct 2026)
+- [x] Replaced the old Buy Plan landed-cost/margin/RRP calculation with an SKU Dash **FOB (USD)** view. The style card now shows the imported per-colourway FOB range and coverage, plus a separate optional RRP field.
+- [x] Loaded the existing 1,120 factory-cost records into the seasonal `sku_cost_prices` store for both SS26 and W27 (267 styles); zero legacy Buy Plan landed-cost or source records remain.
+- [x] Updated By Style exports, completed-cost import, factory email request, SKU detail panel and action menu to say **FOB (USD)**. Removed the obsolete margin calculation code and Buy Plan pricing mutation.
+- [x] Validation: 99 tests and production build passed; FOB data coverage and zero legacy pricing records verified directly.
+
+## FOB Margin Guide Restoration (Oct 2026)
+- [x] Restored the style-level margin and RRP guide after confirming it should remain in SKU Dash.
+- [x] The guide now uses the **highest imported FOB (USD)** colourway for a conservative style result, converted using the Summer 26 planning basis: USD→AUD **0.70** plus **AU$1.25** freight.
+- [x] Restored the 75% target, 70–74% quiet tolerance, below-70% warning, and RRP recommendation. Margin calculation waits until every active colourway has a FOB cost.
+- [x] Validated against ARLA: US$31.50 FOB → AU$46.25 planning landed cost, 74.6% at AU$199.95, and AU$209.95 75%-target guide. 102 tests and production build passed.
+
+## Last Approval Seasonal Delete Repair (6 Oct 2026)
+- [x] Fixed the Last Approval delete action so it sends and stores the active season instead of silently defaulting to SS26.
+- [x] Updated deleted-last storage to use a Style/season-style composite unique rule (`lastName + season`), so deleting a W27 last cannot affect SS26 and vice versa; restore is scoped the same way.
+- [x] Marked cancelled W27 lasts **NIKOH** and **YASMIN** as removed from Last Approvals. Verified they have zero remaining visible W27 approval rows.
+- [x] Replaced the stale hard-coded Last Approval header count with a neutral, current description. Validation: 103 tests, production build, database verification, and W27 visual check passed.
+
+## Buy Unit & Percentage Analysis (6 Oct 2026)
+- [x] Show each market's share of the selected buy alongside pair units in Buy Analysis summary cards and ranking bars.
+- [x] Add a sortable **% of Buy** column to the selected-session SKU breakdown.
+- [x] Add location share and per-style/per-colour purchase shares in the By Location analysis.
+- [x] Add per-colour and per-session share of a searched style, plus `Total` and `% Bought` in the expanded Buy Session preview.
+- [x] Add safe zero-total percentage calculation coverage. Validation: 105 tests and production build passed.
+- [x] Add the active-new-SKU completion percentage to the **Not Yet Bought** tab label and its completion cards; it updates with the market filter and excludes cancelled SKUs.
+
+## Buy Completion Bar & Buy Sheet Percentages (6 Oct 2026)
+- [x] Added a green **New SKU buy completion** progress bar to the Not Yet Bought view, with bought count and percentage for the active market filter.
+- [x] Extended Buy Sheet download and email attachments with **TOTAL QTY** and native Excel **% BOUGHT** columns. Each SKU’s percentage is its share of that session’s total units; the total row is 100.0%.
+- [x] Validation: 105 tests, production build, diff checks, and updated Buy Analysis visual review passed.
+
+## Material-Based FOB Estimates & Rolled-Up Margins (7 Oct 2026)
+- [x] Margin calculations now continue from available FOBs rather than blocking until every colourway is costed.
+- [x] Missing colourways inherit an **estimated FOB only from an actual same-style, same-material SKU**; estimates are never stored as factory costs and are visibly marked with `*`.
+- [x] The pricing card now shows a **rolled-up style margin** based on actual plus valid material estimates, while retaining a highest-FOB 75% RRP guide and clearly reporting any costs still outstanding.
+- [x] CHERRY validation: 8 actual US$33.50 FOBs, 4 same-material estimates (one Crinkle and three Suede), 1 unmatched Snake colourway still outstanding; rolled-up FOB is US$33.50, producing a 73.0% margin at AU$199.95 and a AU$219.95 75% guide.
+- [x] Validation: 108 tests, production build, source audit, real CHERRY coverage check, and By Style visual review passed.
+
+## Rolling FOB Request Filter (7 Oct 2026)
+- [x] FOB request download and email now include only active **new W27 SKUs**, with the physical SKU’s sample status set to **received** or **fitting sample**, and no positive FOB (USD) stored.
+- [x] Carry-over SKUs, waiting samples, cancelled/markdown SKUs, and already-costed SKUs are excluded; new colourways on an existing style are correctly included.
+- [x] The returned-workbook import still saves exact SKU FOBs. On the next request, an imported SKU automatically disappears because it is no longer missing a cost.
+- [x] Updated the menu and factory email wording to explain the rolling rule. Corrected the initial over-strict style-level filter; the W27 request now contains 12 eligible received new-season SKUs. Validation: 111 tests, production build, and W27 visual check passed.
+
+## Factory FOB Workbook Template (7 Oct 2026)
+- [x] Changed the FOB request attachment to exactly four columns from the supplied workbook: **LAST**, **Style**, **Colour**, and **FOB**. The worksheet is named **Cost Needed**; no extra request metadata, instructions, filters, or formatting is exported.
+- [x] The attachment and default email subject now use the Sydney business-date naming pattern: **FOB COST NEEDED DD.MM.xlsx** (for 7 October: `FOB COST NEEDED 07.10.xlsx`).
+- [x] Retained a safe returned-file import despite the concise template: the displayed Colour field is resolved back to its full Upper 1/Upper 2 identity only when it uniquely matches an active requested SKU. Ambiguous rows remain safely excluded.
+- [x] Validation: 113 tests and production build passed; template helper tests verify the four-column colour wording, dual-upper resolution, and Sydney date filename.
+
+## Same-Day Fitting Session Mirroring (7 Oct 2026)
+- [x] A new fitting session for the **same style on the same Sydney business day** now copies the latest session’s session date, sample date, sample type, and fitting size (when applicable).
+- [x] The new session deliberately does **not** copy the previous fit model, notes, or images. For example, a Jordan session can be followed by a blank-model session for Kiara with the same sample information ready to save.
+- [x] First sessions retain the existing recent-model shortcut; copied sessions display a confirmation message so the user knows the shared sample details were carried across.
+- [x] Updated fitting-session return types to include fitting sample size. Validation: 116 tests, production build, same-day default unit tests, typecheck confirms no new Fitting session errors, and W27 Fitting visual check passed.
+
+## Flexible Factory FOB Import (7 Oct 2026)
+- [x] Rename the completed-cost action to **Import factory FOB file** and retain the drag-and-drop importer in the By Style → FOB costs menu.
+- [x] Accept both the compact SKU Dash request workbook and the factory full cost-list format (`LAST`, `STYLE`, `COLOUR`, `LEATHER`, `$USD`).
+- [x] Normalise common currency entries such as `US$34.50`, `$USD40`, `USD 40`, and comma-separated amounts before validation.
+- [x] Validate factory rows against every active SKU, not just the outstanding request list, while safely skipping blank, duplicate, cancelled, markdown, or unmatched rows.
+- [x] Verified the supplied factory workbook: 997 rows recognised as the factory list, 996 valid FOB values, and one blank FOB safely excluded. Validation: 127 tests and production build passed.
+
+## Uppercase FOB Request Template (7 Oct 2026)
+- [x] Matched the supplied request workbook: worksheet **Cost Needed** with columns **LAST**, **STYLE**, **COLOUR**, and **FOB COST**.
+- [x] Made all FOB request values uppercase, including combined Upper 1/Upper 2 colour descriptions.
+- [x] Matched the supplied column widths, centered Calibri layout, bold Style column, row borders, and FOB COST currency formatting.
+- [x] Updated the date-stamped attachment name to the intended convention: `FOB COST NEEDED 07.10.xlsx`.
+- [x] Validation: 127 tests and production build passed; the export/import resolver remains case-insensitive for returned factory files.
+
+## FOB Workbook Cell Fit (7 Oct 2026)
+- [x] Made FOB request columns size themselves from their current data, with sensible maximum widths.
+- [x] Enabled wrapping and calculated row heights across LAST, STYLE, and COLOUR so lengthy labels and dual-upper combinations stay visible inside their cells.
+- [x] Kept cost cells clear and formatted as currency. Validated with a long-label Excel artifact: all three text fields wrap, the row expands to 36 points, and no column exceeds its readable cap. 127 tests and production build passed.
+
+## USD FOB Cost Reconciliation (8 Oct 2026)
+- [x] Treated the **$USD** column in `FULLCOSTLISTON20260830.xlsx` as the authoritative FOB source.
+- [x] Corrected JAQ Black Vintage and Tan Vintage from US$66.80 to **US$31.80** in both SS26 and W27.
+- [x] Added 28 previously unmatched active physical-SKU costs to each season (56 verified records), including dual-upper DIMA, DONTE, KASSY, PIXIE, RIVA, ROBYN, ROXIE, SAVANT and TABBY SKUs. Cost coverage is now **1,148 SKUs across 269 styles** in each season.
+- [x] Improved the factory importer to split slash-formatted combined colour/material fields into the correct Upper 1 / Upper 2 identity. The current factory file now safely recognises 921 exact active W27 SKUs; 47 unmatched historical/non-range rows remain excluded rather than being guessed.
+- [x] Validation: 128 tests and production build passed. Database verification confirms every imported physical-SKU FOB value within USD precision.
+
+## Manual FOB Entry (8 Oct 2026)
+- [x] Added a **FOB (USD)** editable field and Save control to the SKU detail panel in By Style (open the sliders icon on any SKU).
+- [x] Manual entries accept ordinary currency text such as `40`, `$40`, or `USD40`, validate it is positive, and save it against the active season and exact Upper 1 / Upper 2 SKU identity.
+- [x] The saved figure refreshes the current-season FOB data, feeds the style margin card, and removes eligible new-season items from the next factory FOB request.
+- [x] Added server validation for a direct one-SKU cost save, including dual-upper identity protection and zero-cost rejection. Validation: 130 tests and production build passed.
+
+## Upper-Identity Duplicate Repair (8 Oct 2026)
+- [x] Fixed PIXIE **Snow Leopard / Black Speckle** and its three sibling legacy rows (Black, Peru and Sand Nappa / Black Grosgrain): W27 now has one physical row per colourway and all associated Buy Session quantities retain their correct Upper 2 identity.
+- [x] Audited all custom SKUs across both seasons for the same legacy pattern—an earlier blank Upper 2 row followed by one exact corrected dual-upper row. Repaired all **14 safe W27 pairs**: KASSY (1), PIXIE (4), ROBYN (7), ROXIE (1), and SAVANT (1). Preserved all **2,032 units** across 29 Buy Session rows, with no identity collisions.
+- [x] Removed two true static duplicate records: CITY Black Nappa and NESSA Ashen Suede.
+- [x] Added a central exact physical-SKU deduplication guard to the active range merge. It keeps distinct Upper 2 constructions separate while suppressing any future exact static or custom duplicates across dashboard views and exports.
+- [x] Final audit: **0** legacy blank/dual pairs, **0** exact custom duplicates, and **0** static exact duplicates. Validation: 132 tests and production build passed; W27 dashboard visual check passed.
+
+## By Style Detail Navigation & Carry-Over Fields (8 Oct 2026)
+- [x] Added previous/next controls and a position indicator (for example, `3/270`) to the By Style detail drawer. Navigation follows the currently visible filtered style order and stops at both ends.
+- [x] When moving to a style, the drawer opens a new-season SKU first where one exists; otherwise it opens the first active carry-over SKU.
+- [x] Removed **Sample Status** and **Order Qty** from carry-over/core SKU details. Those controls remain available only for W27 new-season SKUs, where they are relevant.
+- [x] Added navigation-boundary regression tests. Validation: 135 tests and production build passed; W27 By Style visual review passed. Existing unrelated StylesTab strict TypeScript diagnostics remain unchanged.
+
+## Approved Size 11 Master List (8 Oct 2026)
+- [x] Saved the supplied master list across all active W27 static and custom colourways: **476 individual SKU metadata records** covering **77 listed styles** are now Size 11.
+- [x] Cleared all old Size 11 flags outside the supplied list and aligned W27 custom-style overrides, preserving the all-colourway Size 11 rule used in By Style and Buy Sheet exports.
+- [x] Database verification: 476 expected/actual Size 11 SKU records; zero listed active SKUs missing; zero unapproved flagged SKUs; zero unapproved custom-style overrides.
+- [x] Confirmed **CAMMIE**, **GEMMA**, and **RADA** do not exist in static range data, SKU metadata, custom SKUs, or custom styles. No placeholder records were created because Size 11 must remain tied to real physical colourways; add or restore their SKUs first if they should appear in SKU Dash.
+
+## User-Confirmed Markdown Removals (8 Oct 2026)
+- [x] Reconciled the supplied 100 markdown rows against exact dashboard SKU identities and marked **94 physical SKUs** as deleted markdowns. They are hidden from the active range, By Style, analysis, Specs, and exports in both SS26 and W27 while preserving a reversible Markdown audit record.
+- [x] Safely mapped four secondary-material aliases to their active primary SKU: HALLIE Clear Vinylite/Silver → Clear Vinylite, and MILEY Black/Choc/Skin Nylon variants → their three Nylon SKU records.
+- [x] Left six supplied rows alone because they do not exist in current static or custom range data: JESSICA Black/Choc Vintage, JOEY Black Hi Shine, PALAIS Skin Capretto, and SAKAI Denim Suede/Silver Shimmer. They are already absent from the dashboard; no guessed alternative was removed.
+- [x] Verification: all 94 confirmed records have `deleted` status and are excluded by the central dashboard range filter.
+
+## Planning Analysis (8 Oct 2026)
+- [x] Added **Planning Analysis** under the Buying section. It combines every current-season Buy Session with active W27 SKU, category, FOB, RRP, markdown, and cancellation data.
+- [x] Added live merchandising measures: planned units; new-season unit mix; actual FOB spend (USD); planning landed spend (AUD); retail value; weighted gross margin; new-SKU purchase completion; FOB/RRP coverage; and an actionable count of units/SKUs still needing a buy, cost, or RRP.
+- [x] Added market allocation (AU, USA, NYC, LA), category-level new-SKU completion, style-level spend/range mix, and a visible list of new SKUs with no buy quantity.
+- [x] Spend uses only actual season-specific FOBs and margin uses a costed + priced matching unit set—no missing cost or RRP is guessed. The planning basis is explicitly shown: US$0.70 per AU$1 plus AU$1.25 freight per pair; retail RRP is treated as GST-inclusive.
+- [x] Added tested shared calculation logic. Validation: 137 tests and production build passed; no TypeScript diagnostics are attributable to the new Planning Analysis files (existing StylesTab diagnostics remain unchanged).
+- [x] Registered `/planning-analysis` in the application router, fixing the sidebar link that previously fell through to Overview. Verified visually with populated W27 Planning Analysis data: 28,498 active planned units, 68.4% new-SKU completion, 7.5% FOB coverage and 74.6% weighted margin.
+
+## Style Compare Workspace (8 Oct 2026)
+- [x] Added **Style Compare** under Analysis with two searchable, swappable style selectors and a default W27 comparison of **MACK** and **MADDI**.
+- [x] Shows the selected styles side by side with their real product, override, or fitting image; last/category; RRP; FOB range; fit/size guidance; fitting notes; bought units; and every active physical SKU, including dual-upper labels, per-SKU FOB, and buy totals.
+- [x] Adds comparison cues for common lasts, categories, colours, and materials without collapsing distinct SKUs. In the requested MACK/MADDI example, it identifies the shared MADDI last and BLACK/SILVER colours.
+- [x] Images can be replaced directly in the comparison card through click or drag-and-drop, using the existing style-image override workflow. Existing product/override imagery takes precedence, followed by stored fitting imagery.
+- [x] Added shared comparison logic regression tests. Validation: 139 tests, production build, route/typecheck review, and rendered W27 MACK/MADDI visual verification passed. Existing unrelated StylesTab TypeScript diagnostics remain unchanged.
+
+## FOB Factory Export Layout (8 Oct 2026)
+- [x] Sort the factory **FOB COST NEEDED** workbook alphabetically by STYLE, then LAST and COLOUR.
+- [x] Replace the ineffective raw worksheet `width` settings with Excel-recognised `wch` column widths.
+- [x] Auto-size LAST, STYLE, and COLOUR columns from the live export data, wrap long values, and expand row heights to show every line without manual stretching.
+- [x] Retain the four-column factory template, add a filter row, and keep the FOB COST column formatted as currency.
+- [x] Validation: 140 tests and production build passed. Generated-workbook inspection confirmed alphabetic styles, widths A=34.83/B=15.83/C=70.83/D=16.83, wrapped long labels, a 36-point expanded long row, and filter `A1:D4`.
+
+## Dress Shoe Category & Buy Sheet Correction (8 Oct 2026)
+- [x] Corrected **MADDI** and **MOMA** from Ballet Flat to **Dress Shoe** in the static range source and saved metadata. Removed their obsolete `CASUAL FLAT` sub-category records.
+- [x] Corrected Buy Sheet category resolution: a trend label such as Toe Cap, Mesh, Slingback, or even Ballet now remains descriptive unless the base category is genuinely Ballet Flat/Loafer. It can no longer reclassify a Dress Shoe as Casual Flat.
+- [x] **ENVY** and **DONTE** therefore export as **DRESS SHOE**; true Ballet Flat/Loafer entries with their relevant trend continue to export as **CASUAL FLAT**.
+- [x] Applied saved style categories during the shared range merge so the corrected categories flow to By Style, Buy Analysis, Planning Analysis, Style Compare, exports, and filtering. Validation: 143 tests and production build passed; rendered W27 By Style/Buy Sessions checks passed. Existing unrelated StylesTab strict TypeScript diagnostics remain unchanged.
+
+## Four-Market Buy Totals (8 Oct 2026)
+- [x] Fixed the By Style **Total Bought** roll-up so it includes all four markets: **AU, USA, NYC, and LA**.
+- [x] Added NYC and LA figures to the total banner, per-style Buy Qty summaries, and per-SKU session tooltips. The total now uses a single tested four-market helper so one market cannot be dropped in a future roll-up.
+- [x] Verified against W27 buy data: **AU 15,042 · USA 9,222 · NYC 1,554 · LA 1,134 = 26,952 units**.
+- [x] Validation: 145 tests and production build passed; W27 By Style visual check confirms all four figures and the full 26,952 total.
+
+## Maddi Last Dress Shoe Correction (8 Oct 2026)
+- [x] Corrected the entire **MADDI** last to **Dress Shoe**: MADDI, MAMZELLE, MAXY, and MOMA.
+- [x] Removed the stale `CASUAL FLAT` sub-categories and `BALLET` trend flags that were still overriding the correct saved category and making the styles appear as Ballet Flat.
+- [x] Corrected the static range source for MAMZELLE and MAXY, and added a MADDI-last protection rule through every category consumer (By Style, Buy Analysis, Planning Analysis, Style Compare, Last Approval, factory request and Buy Sheet).
+- [x] Database and static-source verification both return four MADDI-last styles, all Dress Shoe, with no remaining flat override/trend. Validation: 146 tests and production build passed; no new TypeScript diagnostics in modified category consumers.
+
+## By Style Table Alignment Repair (8 Oct 2026)
+- [x] Separated **Size 11** and **Sample** into their own aligned summary-table columns. The `Rcvd?` action is now a consistently visible button for new-season styles instead of transparent text that only appears on hover.
+- [x] Rebuilt expanded-SKU headers so they sit directly above the matching columns: Colour, Leather, Size 11, Sample (new SKUs), Total, then a clearly labelled **Buy Qty** grid for AU, USA, NYC and LA.
+- [x] Gave all four editable market quantities equal fixed grid space and widened the all-session Total panel, so market values no longer overlap or run into one another.
+- [x] Applied a desktop-fit fixed table layout, with deliberate horizontal scrolling only on narrower viewports rather than compressing labels and controls. Validation: 146 tests and production build passed; 1440px W27 By Style visual check confirms visible headings, inline Size 11 badges, dedicated Sample column, and an unobstructed Buy Qty heading.
+- [x] Removed the repeated AU/USA/NYC/LA labels from every SKU row. Market names now appear once in the Buy Qty heading, with each centred numeric field directly beneath its matching market name.
+
+## Range Readiness Workspace (8 Oct 2026)
+- [x] Added **Range Readiness** under Analysis: an active W27 development worklist that deliberately ignores irrelevant core/carry-over fields.
+- [x] Each style shows only applicable gates—Fit, Last approval, Specs, FOB, RRP and Buy—plus the exact blocker, progress percentage, product image, last, category, and new SKU count.
+- [x] Last approval now follows the live W27 Last Approval workload (custom non-run-on lasts minus removed lasts), rather than an obsolete static list. Fit follows the existing new-pattern-only W27 scope; Specs, FOB, RRP and Buy apply only to active new physical SKUs.
+- [x] Added summary cards and blocker roll-up: current W27 shows 1/68 range-ready styles, 193/294 new SKUs bought, 15/294 new SKUs costed, 1/44 required fits approved, 0/34 last approvals approved, and 68/68 new-SKU Specs complete.
+- [x] Added shared readiness-calculation regression tests. Validation: 149 tests, production build, diff checks, and a populated 1440px W27 visual verification passed. Existing unrelated `StylesTab` strict TypeScript diagnostics remain unchanged.
+- [x] Fixed the Range Readiness React key warning by removing `key` from the spread props and passing it directly to each gate component. Verified with 149 regression tests, a production build, and rendered W27 Range Readiness review.
+
+## Deleted SKU Buy Sheet Exclusion (9 Oct 2026)
+- [x] Buy Sheet download and email attachments now check each exact active physical SKU identity before exporting session quantities. A deleted/markdown SKU, a cancelled SKU, a cancelled style, or a SKU no longer in the active range cannot reappear merely because a historic Buy Session row still holds quantities.
+- [x] The selected Buy Session preview and its totals now apply the same exclusion rule, so it matches the exported/emailled sheet. A clear empty-state message explains when a session contains only removed SKUs.
+- [x] Preserved valid colour-name corrections through source-identity aliases and kept dual-upper identities distinct, so the guard excludes only the deleted SKU—not a different Upper 2 combination.
+- [x] Added four regression tests covering cancelled, deleted, dual-upper, and corrected-label cases. Validation: 153 tests and production build passed; Buy Sessions visual review passed. Existing unrelated StylesTab strict TypeScript diagnostics remain unchanged.
+
+## Buy Session Total Reconciliation (9 Oct 2026)
+- [x] Corrected legacy Buy Session accounting: a pre-market-split `qty` value is now counted as AU when the row has no saved AU quantity. This was a valid historic **60-pair** purchase that the session badge and Buy/Planning Analysis previously omitted.
+- [x] The current **BUY 05.10** recorded total is **19,693 pairs** (AU 11,502 · USA 6,262 · NYC 1,080 · LA 849), and is retained intact in session history.
+- [x] The current Buy Sheet intentionally contains **17,516 pairs**. The explicit difference is **2,177 pairs** on cancelled or markdown-deleted SKUs, which are now excluded from the live sheet as requested—not missing.
+- [x] The selected-session preview now displays both the current Buy Sheet total and the recorded historical total with the excluded-pair explanation, so the distinction is visible rather than alarming. Buy Analysis and all-session roll-ups use the same legacy-market fallback.
+- [x] Validation: 155 tests and production build passed; database-backed reconciliation confirmed `19,693 − 17,516 = 2,177`, and W27 Buy Sessions visual review shows the corrected recorded total.
+
+## Exact Dual-Upper Cancellation Repair (9 Oct 2026)
+- [x] Restored the requested W27 cancellations as **exact physical SKU** records: **ELECTRIC Black Nylon / Ecru Snake** and **EMILY Viper Snake / Stone Suede**. Their valid sibling Upper 2 constructions remain active.
+- [x] Extended cancelled-SKU storage, router procedures, active range merging, By Style cancellation/restore controls, Buy Sheet preview, download and email paths with Upper 2 identity. New cancellations of a dual-upper SKU are now precise; existing legacy Upper 1 cancellations retain their intentionally broader historic behaviour.
+- [x] Added the safe schema migration `0073_mighty_peter_parker` and applied it. The unique cancellation identity now comprises Style, Upper 1, Upper 2, and season.
+- [x] Validation: 159 tests and production build passed; the live `cancelledSku.listExact` API returns both W27 replacement cancellations, and a 1440px W27 By Style check shows the refreshed active range at 1,104 SKUs with the preserved 19,693-buy total.
+
+## Specs Upper 1 Colour/Leather Search (12 Oct 2026)
+- [x] Extended Specs search to find styles by an active physical SKU’s **Upper 1 colour/leather** as well as style, last, and category. Searching `petal nappa` now returns every style with Petal Nappa as Upper 1.
+- [x] Keeps Upper 2 separate: a search for `petal nappa` does not return a style where Petal Nappa appears only after the slash as the secondary upper.
+- [x] Added whitespace/case-insensitive regression coverage and updated the search prompt. Validation: 162 tests and production build passed; W27 Specs visual review confirms the updated search control. Existing unrelated StylesTab language-service diagnostics remain unchanged.
+
+## Buy Quantity Preservation on SKU Edits (12 Oct 2026)
+- [x] Re-key Buy Session rows automatically when Upper 1 or Upper 2 is edited, including locked sessions; market quantities are retained exactly.
+- [x] Merge market quantities safely if a colour correction meets an existing Buy Session line, rather than replacing either line.
+- [x] Apply the safeguard to both static/carry-over SKU overrides and custom SKUs, including the SS26 → W27 carry-over mirror.
+- [x] Refresh By Style and Buy Session totals immediately after a saved colour/leather edit. Validation: 168 tests and production build passed.
+
+## 05.10 W27 Buy Reconciliation (12 Oct 2026)
+- [x] Reconciled every one of the **152** rows in the supplied `05.10BUY.xlsx` against the locked W27 **BUY 05.10** session, exact Upper 1 + Upper 2 identity, active W27 range, saved AP21 wording, four market quantities, category, last and Size 11 metadata.
+- [x] Confirmed **152 / 152** workbook rows have exact AU/USA/NYC/LA quantities in the session and map to one active W27 physical SKU. Verified workbook totals: **AU 10,006 · USA 5,362 · NYC 984 · LA 774 = 17,126 pairs**. No workbook SKU, quantity or Upper 2 identity remains missing or ambiguous.
+- [x] Applied the user-confirmed Blossom → Petal corrections for **ESSA Petal Nappa** and **VIVID Petal Nappa**. Re-keyed their locked Buy Session rows, SKU metadata and AP21 descriptions while preserving all market quantities: ESSA 60 AU + 36 USA = **96 pairs**; VIVID 48 AU + 36 USA = **84 pairs**; **180 pairs** preserved in total.
+- [x] Explained the session/workbook total difference: `BUY 05.10` retains **19,693** historical pairs, but **2,567 pairs across 23 confirmed cancelled replacement colourways** are intentionally excluded from the supplied/current active range. They remain cancelled; none were revived.
+- [x] Category and last match the source on all 152 reconciled lines. The only source metadata inconsistency is MACK’s four rows, which are blank in workbook Size 11 but correctly remain Size 11 in the approved all-colourway master list; no MACK data was downgraded.
+
+## Specs Upper 1 + Upper 2 Search (13 Oct 2026)
+- [x] Added a dedicated **Upper 2** filter to the W27 Specs library alongside the existing style/last/category/Upper 1 search.
+- [x] Filters can be used independently or together; when both Upper 1 and Upper 2 are supplied, they must match the **same physical SKU**, preventing false matches from two separate colourways on one style.
+- [x] Kept a compact direct lookup option in the main field (for example `ECRU SNAKE/LIPSTICK SUEDE`). Verified against live ROBYN W27 dual-upper SKUs and added regression coverage for Upper 2-only, exact same-SKU, false split-SKU and compact lookup cases.
+
+## Colour/Leather Either-Upper Search (13 Oct 2026)
+- [x] Replaced the two-filter version with one practical material search on the W27 Colour/Leather page.
+- [x] The search returns a physical SKU when the term occurs in **either Upper 1 or Upper 2**, so users do not need to know where a material sits; expanded cards show the relevant Upper 2 label.
+- [x] Added regression coverage for Upper 1, Upper 2, either-upper, spacing/case and no-secondary-upper cases.
+
+## Colour/Leather Complete Upper 2 Material Groups (13 Oct 2026)
+- [x] Corrected the Colour/Leather data model so every active dual-upper SKU appears under **both** physical material groups, rather than only under Upper 1.
+- [x] Verified live W27 DIMA is saved as `CLOUD SUEDE/CLOUD SNAKE`, is not cancelled, and now appears in the `CLOUD SNAKE` group explicitly labelled **Upper 2 · CLOUD SNAKE**.
+- [x] A physical SKU using the same material in both uppers is counted once in that material group and labelled **Upper 1 + Upper 2**; different two-upper constructions remain separate physical SKUs.
+
+## Cross-Style Specs Copy Visibility Repair (14 Oct 2026)
+- [x] Fixed cross-style copying of style-specific spec components. Previously a source-only component ID (for example ROXIE's `roxie_leather_bow`) was written to the target but the target template could not render it, so the value looked missing.
+- [x] Copy now maps a same-named component to the target style's own key where available; otherwise it creates a visible target custom row with the original component label and copies only the selected SKU columns.
+- [x] Stopped copying a source style's row-order keys into the target, preserving the target layout and avoiding invisible source-only template keys.
+- [x] Repaired the existing ROXIE → RAZZLE TIGER PONY copy: **Grosgrain Topline = Matching**, **Leather Bow = Upper 1**, and **Toe Cap = Upper 1** are now saved against the correct RAZZLE SKU and visible in its sheet.
+
+## Specs Comments and Factory Export Template (14 Oct 2026)
+- [x] Removed the category selector and its Settings dropdown from Specs. Category remains controlled by the range data, while a simple always-visible **Comments** field replaces the old Notes setting.
+- [x] Comments save automatically to the existing seasonal spec metadata and are now read from factory spec imports as well as stored from the editor.
+- [x] Reformatted downloaded and emailed spec sheets to the approved factory order: Date, Last, Style Name, Brand, Season, optional **yellow COMMENTS** row, then the grey Components/Colour table. Blank comments omit the heading entirely.
+- [x] Preserved the supplied RAZZLE factory instruction as W27 Comments: **VAMP HEIGHT TO BE THE SAME AS COMMA**.
+- [x] Added import/export regression coverage and rendered an Excel/PDF visual check against the supplied RAZZLE example. Validation: production build passed; 175 isolated regression tests passed (the separate Resend account-validation test was unavailable because its external request stalled).
+
+- [x] Refined the on-screen Comments field to the standard neutral Specs style and removed the explanatory helper sentence; the yellow treatment is reserved for a populated exported factory COMMENTS row only.
+
+## Optional Buy Sheet FOB Cost Export (16 Oct 2026)
+- [x] Kept **Export Buy Sheet** as the clean operational export and added a separate **Export with Costs** action on every Buy Session.
+- [x] The cost version adds an optional `FOB (USD)` column using the saved W27 seasonal cost keyed to the full Upper 1 + Upper 2 identity, with legacy SKU FOB as a historical fallback. Blank cost data remains blank rather than being shown as zero.
+- [x] Removed `% BOUGHT` from every downloaded and emailed Buy Sheet; it remains an on-screen analysis measure only.
+- [x] Verified the live W27 `BUY 05.10` source has 220 purchased lines, including 179 lines with a saved FOB available to the new optional export. Added column-layout coverage; 177 isolated regression tests and the production build pass.
+
+- [x] Repaired the first cost-export workbook format: the unquoted `US$` number format could be interpreted as a date/time token by spreadsheet readers. FOB now uses the standards-safe literal format `"US$"#,##0.00`. Added a workbook round-trip regression test and verified the generated XLSX opens through OpenPyXL and LibreOffice. Validation: 178 isolated regression tests and production build pass.
+
+- [x] Replaced the fragile custom FOB currency format completely after Microsoft Excel still flagged the file. The `FOB (USD)` header now carries the currency context and each cost is written as a plain numeric cell with no custom number-format XML. Verified ZIP structure, OpenPyXL readback, LibreOffice conversion, 178 isolated tests and production build.
+
+## Larger Specs Product Image (20 Oct 2026)
+- [x] Moved the Specs product image from the small cropped style thumbnail into the centred header area beneath the toolbar.
+- [x] Enlarged the preview to 240 × 160 px and changed it to `object-contain`, so the whole shoe is visible without cropping.
+- [x] Kept the enlarged image fully clean: it contains no sample date, sample type or other commentary overlay. Verified with 178 isolated tests and a production build.
+
+## W27 Sample Receipts — 15–17 Oct (20 Oct 2026)
+- [x] Marked all **26** confirmed W27 physical SKUs as **Received**, with sample type **#7**, across INVSP2200, INVSP2203 and INVSP2205.
+- [x] Confirmed slash identities before updating: EMILY `SERPE SNAKE/ESPRESSO SUEDE`, ELECTRIC `GEM NYLON/GEM SNAKE`, ROBYN `VINO PONY/VINO PATENT`, and ROBYN `ECRU SNAKE/ROYAL SUEDE` each now have an exact received record. ROBYN `ECRU SNAKE/LIPSTICK SUEDE` remains waiting.
+- [x] Made sample-status save/read/summary paths Upper-2-aware, with a backward-compatible primary-only fallback for existing single-upper metadata.
+- [x] Added the user-confirmed W27 SKU **ESTELLE Espresso Vintage** and the user-confirmed **VIVID Black Supra**, then marked both Received / #7.
+- [x] Fixed Sample Invoice Import to match against the current active merged W27 range instead of only the old static SS26 SKU data. Newly added W27 SKUs such as ESSA Chocolate/Vino Nappa, JERZY Suedes and LUCKY Chocolate/Vanilla Nappa now resolve correctly; the importer also carries a complete Upper 2 match through review and saving.
+
+## Per-Style Fitting Update Email (21 Oct 2026)
+- [x] Added **Email fitting update** to each expanded style in Fitting, while preserving the existing date-based report for internal daily recaps.
+- [x] A per-style email contains the current fit status/rating/size recommendation, style-level notes, selected fitting-session notes, sample details and fitting photos together in the email body. Images are displayed inline rather than sent as an oversized attachment bundle.
+- [x] It includes the latest fitting day by default (all models fitted that day) and offers **Include full fitting history** for earlier notes. In every case, the image gallery uses only the newest fitting session that contains photos, so historical images are never re-sent.
+- [x] Uses the established recipient groups, To/CC/reply-to controls and email history. Added session-selection, router and HTML content coverage; 201 tests and production build passed, plus a rendered email preview using live fitting imagery.
+
+## AYLA Last — W27 Existing Carry-Over (23 Oct 2026)
+- [x] Verified the AYLA last and its W27 Flat Sandal style shells are existing carry-over: **AYLA** (9 SKUs), **ALEXI** (3), **ALLY** (10), plus **AVAR** (1). All 23 active SKUs are marked existing, so no W27 fitting workload has been created.
+- [x] Applied the requested season-specific **ALYSE** cancellation in W27 (4 carry-over SKUs), so it is excluded across the dashboard, Specs, exports and analyses.
+- [x] Preserved the pre-existing W27 cancellation of **AIMEE** (3 SKUs); it was not revived. **ALYSE** and **AIMEE** remain excluded by their cancellation records.
+- [x] Added a last-based AYLA exception to the W27 Flat/Casual Sandal hide rule, so every active AYLA-last carry-over—including a newly entered style—appears in W27 By Style as **Existing**. All other Flat/Casual Sandals retain the W27 development hide policy.
+- [x] Reconciled all six AYLA-last style shells / 30 stored carry-over SKUs and passed 204 regression tests plus the production build.
+
+- [x] Fixed the W27 Add Style **Last** dropdown so it derives options from live seasonal style records as well as the new-last registry. **AYLA** is now available as an existing last without being converted into a new W27 last.
+- [x] Converted Add Style into a proper form: pressing **Enter** in any eligible field confirms Add Style, while Escape and non-submit controls remain safe.
+- [x] Added live last-option regression coverage and verified the W27 option list contains AYLA from its active AYLA-last style records. Validation: 204 tests and production build pass.
+- [x] Repaired the newly added **AVAR — ECRU SNAKE**: it is now an active **Existing** W27 AYLA-last SKU. New AYLA-last SKUs now automatically inherit this status and flow through the same shared range source used by By Style and Specs.
+
+## TAMMY Last — W27 New Style Visibility (27 Oct 2026)
+- [x] Verified the newly added W27 style is **TROYE — ECRU SNAKE**, correctly saved on last **TAMMY** as a new Flat Sandal SKU.
+- [x] Added TAMMY as an actively worked W27 Flat Sandal last, so TROYE and future TAMMY-last additions pass through the shared active range used by both By Style and Specs.
+- [x] Kept status separate from visibility: TROYE remains **New**, while AYLA's separate carry-over rule continues to mark AYLA-last additions as **Existing**.
+- [x] Added coverage for the TAMMY-new/AYLA-existing distinction; verified live data and passed 205 regression tests plus the production build.
+
+## Responsive Specs Comments (27 Oct 2026)
+- [x] Replaced the server-controlled Comments textarea with a local draft editor, so keystrokes update only the small Comments control instead of forcing the complete Specs grid to re-render.
+- [x] Comments save once after a 500 ms typing pause, immediately on blur, and when moving to another style; imports and exports keep using the same saved Comments value.
+- [x] Removed the redundant second debounce at the parent level. Validation: 205 regression tests and production build pass.
+
+## Material Label Standardisation (27 Oct 2026)
+- [x] Renamed all active **BLUE NAPPA METALLIC** to **BLUE METALLIC**, **PINK NAPPA METALLIC** to **PINK METALLIC**, and every physical **CHOC NAPPA** identity to **CHOCOLATE NAPPA** across W27/SS26 range records.
+- [x] Kept Upper 2 identities intact, including DEVYN `CHOC NYLON/CHOCOLATE NAPPA`; updated AP21 identity links, cancelled records, Specs columns/custom rows, SKU metadata and seasonal FOB keys.
+- [x] Preserved Buy quantities. The three affected Buy Session lines remain: DEVYN 84 units (AU 48 / USA 36), LENI 80 AU units and ISLA 0 units. Matching duplicate PHOEBE cost records had the same USD cost and were consolidated safely.
+- [x] Verified there are no remaining active legacy identities or old Specs labels for the three corrected names. Full validation: 205 regression tests and production build pass.
+
+## Sample Receipt Worklist Reconciliation — 5 Nov 2026
+- [x] Audited retained receipt data and found contradictory NULL/blank duplicate metadata created during an earlier Size 11 bulk update. Overview counters previously read the first copy, while dropdowns and By Style read the last, so the same physical SKU could show different statuses.
+- [x] Added a shared, order-independent sample receipt resolver. Received evidence is retained for exact physical identities; legacy Upper-1-only receipts apply to a dual-upper SKU only when there is exactly one active construction. Ambiguous Upper 2 siblings remain unconfirmed rather than inheriting another colourway's receipt.
+- [x] Persisted seven unambiguous W27 legacy receipts as exact Received records: DEVYN Black Nylon/Black Nappa; DEVYN Choc Nylon/Chocolate Nappa; ELECTRIC Skin Nylon/Viper Snake; EMILY Black Vintage/Black Suede, Espresso Vintage/Espresso Suede, Vanilla Vintage/Stone Suede, and Viper Snake/Wheat Suede. Preserved their existing non-receipt metadata and verified every Buy Session market total is unchanged.
+- [x] Overview totals and lists now derive from one alphabetically sorted, deduplicated active-new-SKU worklist. Reconciled W27: 317 new physical SKUs; 253 Received / 64 Waiting. By Style receipt filtering, row controls, SKU details and FOB sample eligibility use the same resolution.
+- [x] Replaced hover-only lists with searchable click-open Received and Waiting dropdowns. Added a one-click Rcvd action, optional Mark waiting reset, immediate optimistic movement/count changes, row-level save feedback and rollback on failure.
+- [x] Receipt writes now update every duplicate of the full Upper 1 + Upper 2 identity, normalising NULL/blank Upper 2 without affecting sibling constructions. Receipt identity parameters no longer trigger Buy quantity re-keying. Creating an exact receipt record retains existing legacy Size 11, pricing and fitting details.
+- [x] Verified search, Upper 2 isolation, receipt movement, counters and resets in an isolated browser fixture without live test writes. All 218 tests in 57 files and the production build pass; existing unrelated TypeScript diagnostics remain unchanged. Removed all temporary verification files.
+
+## W27 Sample Dropdown Parity — 5 Nov 2026
+- [x] Confirmed SS26 and W27 both use the same Overview sample controls, including searchable Received/Waiting lists and the Rcvd action; no SS26-only render gate exists.
+- [x] Added the selected season to Sample Tracking and both popover headings. Keyed each dropdown by season so an old SS26 search/open popover cannot carry into W27 and hide its samples. No receipt records, range classifications or buy quantities changed.
+- [x] Added actual Overview rendering regression cases for SS26 and W27. Verified in an isolated browser fixture that an SS26 TAMMY search closes/clears on switching to W27, the W27 list shows its own active new colourways, and its Rcvd action immediately moves the sample/count.
+- [x] Validation: 219 tests pass and production build passes. The full 220-test run has one unrelated failure: the existing live Resend credential check currently reports an invalid API key. Re-ran with only that external credential assertion skipped (58 files, 219 passed / 1 skipped). Existing unrelated TypeScript diagnostics remain unchanged. Removed temporary browser fixtures.
+
+## Sample Receipt HTML Response Repair — 6 Nov 2026
+- [x] Traced the reported Unexpected token '<' toast to a non-JSON transport response, not a Buy re-key or metadata identity error. Preview GET/POST tRPC responses are valid JSON; the recorded published domain currently returns a Manus Space HTML 404 for both page and API paths. The domain needs publication/routing restoration; code changes alone cannot repair an upstream missing site.
+- [x] Added JSON-only tRPC response validation using the existing credentialed batch transport. Gateway/SPA/sign-in HTML now produces a readable connection message, not raw parser text. No automatic mutation retry because a lost response can occur after a successful write.
+- [x] Added API 404/parser-error JSON guards before frontend fallback, and restricted the SPA fallback to GET/HEAD. Receipt saves now clear pending state even if preparation/refetch fails, roll back only their own optimistic identity, and refetch actual receipt status without blocking the Rcvd control. No sample statuses, Buy quantities, costs or range records changed.
+- [x] Added 14 HTTP/lifecycle regression tests using the real tRPC router/client with mocked persistence: exact GATOR receipt payload, success, persistence failure, HTML gateway 404, unknown/malformed API requests, rollback, no retry and stalled/rejected refetch cleanup. 233 tests pass in 60 files with only the previously failing external Resend credential assertion skipped; production build passes and existing 13 unrelated typecheck diagnostics are unchanged. Compiled production-server smoke test confirms Overview loads and API errors remain JSON. Temporary server stopped. Publish the checkpoint and refresh to verify the hosted route; upstream 404 remains outside the local code fix.
+
+## ESSA Black Nappa — Specs Synchronization Repair — 9 Nov 2026
+- [x] Confirmed ESSA BLACK NAPPA exists in W27, is Received, and retains 21 saved template component records. ESSA BLACK SUPRA is intentionally cancelled. Black Nappa has no hidden-column record.
+- [x] Root cause: the live range already removed cancelled BLACK SUPRA, but Specs applied a second cancellation-to-column-key pass. The missing Supra identity fell back to bare BLACK, incorrectly removing the remaining BLACK NAPPA column. Removed that redundant pass; Specs now trusts the same physical-SKU cancellation/markdown filtering as By Style and applies only whole-style exclusions afterward.
+- [x] Preserved the existing saved-label namespace, specs/custom rows, row order, hidden-colour preferences, new-only seasonal scope and exact Upper 2 handling. No database writes, cancellations restored, buy quantities, sample statuses or costs changed. The repair applies generally to cancelled leather/Upper 2 siblings, not only ESSA.
+- [x] Added four cancellation/visibility regression cases. 237 tests pass in 61 files with only the existing external Resend credential assertion skipped; production build passes. Verified the actual SpecsTab in a read-only live-W27 browser fixture: BLACK NAPPA renders with saved Stitch/Lining/Sole/Heel and other values; BLACK SUPRA remains absent and existing hidden colours remain hidden. Blocked every fixture mutation, removed all temporary files and stopped the verification browser.
+
+## Approved Markdown Removal List — 9 Nov 2026
+- [x] Reconciled all 311 supplied rows across 131 listed styles, including 12 handbag rows. 256 footwear colourways match an existing physical identity, eight handbag colourways match exact style/colour/material records, and 47 rows have no exact current identity. Of the 311 rows, 177 already had pending/deleted markdown entries, 110 additional footwear identities are now excluded, eight active handbag colourways are now cancelled, and 16 labels have neither a current exact SKU nor a prior removal entry. All 311 requested labels are saved as approved/deleted markdown records; 14 additional exact canonical labels cover known CHOC/CHOCOLATE and single-upper legacy lining wording (325 checked registry keys total).
+- [x] Footwear exclusions are global across SS26 and W27. The eight handbag rows were cancelled by exact ID + style + colour: CAITLIN Red/Espresso Suede; FLORA Vino/Black Smooth; LESLEY Choc/Black Vintage; LIZZIE Vino/Choc Smooth. Handbag raw records, pricing, imagery and quantities remain retained. Four listed handbag colourways were not present: CAITLIN Black Suede, LESLEY Espresso Suede, LIZZIE Black Smooth, LULA Black Vintage.
+- [x] Verified no unlisted physical SKU would be newly hidden by the approved batch before applying it. No matched footwear row in this batch has a persisted Upper 2; legacy slash descriptions match only their existing single-upper source. No changes to global markdown matching semantics, cancellation scope or raw range identities were made.
+- [x] Did not infer material substitutions: BIKER Cognac vs existing COGNAC WAX, FIDDY Black/Choc Lycra vs existing BLACK/CHOC MICRO, and ROXANNE Tan Vintage vs existing TAN VALENCIA remain distinct. The listed spellings already had markdown records; the differently named current SKUs were left untouched pending user confirmation.
+- [x] Other exact labels not present: BRAZEN Black Luxe; EDGY Scarlet Vintage; HAVANA Black Venice; JASPER Black Scuba; JESSICA Black/Choc Vintage; JETT Bisque Scuba; JOEY Black Hi Shine; NANO White Jersey/Black Jersey/Black-White Jersey; RAYE Espresso Suede. Recorded approved exclusions without creating or deleting substitute range SKUs.
+- [x] Hash-verified custom_skus, sku_meta, cancelled_skus, cancelled_styles, buy_sessions, buy_session_items, style_specs, spec_custom_rows, spec_row_order, spec_hidden_columns, sku_cost_prices, handbag_buy_items and handbag_style_parents unchanged. Handbag status/updated timestamp changed only for the eight exact matched IDs; all other handbag fields and rows unchanged. W27 current Buy Sheet helper totals remain BUY 05.10 17,169 and BUY 29.10 5,895. Historical SS26 active-sheet totals fall only for the new markdown exclusions; all stored market quantities remain intact.
+- [x] Fixed BuySessionsPanel markdown.list.useQuery() to useQuery({}), matching the protected API's required object input. Previously that request failed validation and silently defaulted to an empty removal list; current previews and normal/cost-inclusive downloaded or emailed Buy Sheets now load the exclusions correctly. Added three router/exclusion regressions. 240 tests pass across 62 files (only the existing live Resend credential assertion skipped), production build passes, and unrelated typecheck diagnostics reduced from 13 to 12 by this input fix. All temporary project scripts removed.
+
+## Specs Row Deletion and Saved-Source Copy Repair — 10 Nov 2026
+- [x] Fixed deletion of populated template rows that were not yet present in the saved row-order list. Both template and custom rows now get explicit deletion markers immediately, without requiring their values to be cleared or Hide empty pressed. Drag, Save order, restore, temporary-ID replacement and shared-row ID changes preserve the markers. Upper 1 remains pinned and undeletable.
+- [x] Added a shared stable row layout resolver for the editor, saved-source snapshot and factory export. Custom groups use section + normalized title, stable lowest-ID representatives, and all-member aliases; deleting any member hides the physical component group. Same-title rows in different sections and unnamed editable placeholders remain independent. Serialized per-style layout saves prevent older order writes from overwriting a later delete; removed competing delayed custom-ID order writes.
+- [x] Copy-from-another-style now loads fresh saved source cells, row layout, custom rows and optional template settings. Copies only current source-template/visible custom rows, not hidden rows, orphan keys retained from an earlier source, another SKU's cells or dropdown suggestions. Latest saved duplicate cell wins; explicit blanks override older shared/raw values. Same-style colour copying uses the same saved-layout projection. Latest visible manual custom rows take precedence over generated component aliases.
+- [x] Copy replacement is limited to the selected target SKU columns: template fields absent/cleared on the source and obsolete target custom cells are cleared instead of retaining earlier-copy leftovers. Source-only visible components become editable target custom rows. Upper 1, unselected SKU columns and hidden-column data are retained. Target component ordering remains local to the target rather than importing foreign source template IDs. Copy waits for template/custom/layout saves, disables repeat submission, and reports success only when complete.
+- [x] Custom-row copying now accepts explicit blanks for existing cells, runs inside one transaction, preserves the original shared ID when converting to per-colour records, and preserves unselected specific/legacy cell values. UI/export custom cells respect exact blank/full-label values. No live spec data, range records, cancellations, Buy quantities, costs, sample receipt statuses or email settings were migrated or changed by this task.
+- [x] Added 52 regressions across row layout/save sequencing, saved-source projection, literal/blank replacement, custom database persistence, and factory workbook parity. Final validation: 292 tests pass in 66 files; only the existing unrelated live Resend credential assertion is skipped. Production build and whitespace checks pass; the 12 unrelated pre-existing typecheck diagnostics remain, with none in the modified Specs/copy/layout files.
+- [x] Browser-verified the actual SpecForm in an isolated mocked-API fixture: populated Bow disappears immediately, Save order and reload retain its deletion, cross-style copy uses latest visible Lining/Leather Bow, excludes hidden/orphan source rows, clears old selected target custom values and makes no Upper 1/unselected-column writes. No runtime errors. All temporary fixture files removed and browser stopped. Publish this checkpoint for the hosted site, then refresh Specs; already incorrectly copied specs can be recopied with the repaired action.
+
+## Remove Newly Added Plain Velvet SKUs — 10 Nov 2026
+- [x] Deleted the 19 W27 custom SKUs entered today with leather exactly VELVET: BILLIE Black/Vino/Charcoal; CASA Fudge/Navy; CHELSEA Vino/Fudge; EIFFEL Black/Fudge; LAUREN Fudge/Stone/Vino; IVIE Black/Stone/Fudge/Charcoal/Navy; DAZIE Charcoal/Stone. Removed only audited row IDs in one transaction; no plain-VELVET W27 custom rows remain.
+- [x] Kept existing CHELSEA LUMIA VELVET Black/Stone/Blush and historical purchases untouched. No plain-VELVET purchases existed. All parent styles and unlisted SKUs retained. Hash verification confirms specs, custom spec rows, row order, hidden columns, costs, sample metadata, cancellations and Buy Session records unchanged. Saved private recovery snapshot outside the project. No cancellations or markdown blocks added, so corrected leather names can be re-added normally. This is a shared database-only change; refresh the dashboard, no publication required.
+
+## Repeat Removal of New Velvet SKUs — 10 Nov 2026, 16:23 AEDT
+- [x] Removed all 19 current newly added W27 plain-VELVET custom colourways: BILLIE Black/Vino/Charcoal; CASA Vino/Olive/Fudge; CHELSEA Vino/Fudge; EIFFEL Black/Fudge/Olive; LAUREN Fudge/Stone/Vino; IVIE Black/Fudge/Olive; DAZIE Charcoal/Olive. Scope is exact audited IDs 4140006 and 4170001–4170018, all entered today. No plain-VELVET W27 custom rows remain.
+- [x] Transaction and hash checks verified all other SKUs, parent styles, specs, components/layout, costs, sample metadata, cancellation records and purchases unchanged. Existing CHELSEA LUMIA VELVET retained; no purchases existed for the deleted new Velvet identities. No cancellation/markdown blocks introduced. Private rollback snapshot stored outside the project. Shared database-only update; refresh without republishing.
+
+## Confirmed New W27 Lumia Velvet SKUs — 10 Nov 2026
+- [x] Added 17 exact single-upper new W27 SKUs with leather LUMIA VELVET: BILLIE Black/Vino/Charcoal (interpreted user typo 'illie' as the established BILLIE style); CASA Charcoal/Vino; CHELSEA Vino/Fudge/Olive; DAZIE Charcoal/Olive; EIFFEL Black/Fudge/Olive; LAUREN Fudge/Vino; IVIE Black/Fudge. User explicitly confirmed IVIE should also be LUMIA VELVET rather than plain VELVET.
+- [x] Used normal Add SKU persistence: normalized physical identities, is_new=true, W27 only, reset each affected W27 spec workload to not_started and unhide only each exact requested new column. No cancelled/markdown target identities existed. Existing CHELSEA Black/Stone/Blush LUMIA VELVET range and its seasonal Blush cancellation remain unchanged.
+- [x] Verified all 17 identities are present once with W27/new flags and no Upper 2. Hash checks confirm all pre-existing SKUs, parent style details, saved spec cells/custom rows/order, sample metadata, costs and Buy Session history unchanged. No costs, receipt statuses or purchase quantities inferred. No new styles created. 292 regression tests pass with only the unrelated existing live email-key assertion skipped; production build passes. Temporary script removed; shared database update requires refresh, not republication.
+
 ## Specs Hidden Rows in Excel and New-Colour Copies — 11 Nov 2026
 - [x] Audited CASA: copied template Bow values were still present and its saved layout had active t:bow without a deletion marker. Persisted only CASA's explicit deleted:t:bow requirement, retaining copied cell values, all other component order, custom rows, SKUs and buys; private previous-layout snapshot retained outside the repository. EIFFEL's latest saved layout already has deleted:t:topline and deleted:t:bow; retained these and all its cell values.
 - [x] Found the recurrence in copy: applySavedCopy explicitly restored every populated template component, and returned custom rows were automatically restored when source cells contained data. Removed both automatic restorations. Copying to existing/new SKU columns now updates selected values but preserves explicit target row deletion markers; only the manual Restore control reopens them. Previously unhidden newly available source components still appear normally.
 - [x] Downloaded and emailed factory workbooks now wait for pending layout saves, load the latest saved row layout and use only same-style local edited overrides. Unmounted/previous-style getters are cleared; untouched cached grids cannot override fresh saved hides. Historical template:/custom: hidden marker spellings normalize centrally in both editor and exporter, preserving custom-member aliases and pinned Upper 1. Excel download is awaited, disabled while building, and reports completion only after a successful workbook; failed layout loading prevents a misleading/default export. Effective category is shared with the grid.
 - [x] Verified actual live CASA and EIFFEL workbooks and decoded email attachments: CASA Bow absent, EIFFEL Topline/Bow absent across all current colours, copied values retained, and unrelated components unchanged. Independently opened generated files with openpyxl. Added 16 regressions for export snapshot timing/style ownership/failures, legacy markers, Blob/email XLSX decoding, copied populated hidden rows and multi-block/custom-group visibility. 308 tests pass across 67 files (only unrelated existing live email-key assertion skipped); production build and diff checks pass. Preview Specs module compiles successfully.
 - [x] Browser-verified the actual SpecForm using synthetic API persistence, with no live writes: CHELSEA-to-EIFFEL copy transfers saved cells only to the selected new Lumia Velvet colour, preserves Upper 1 and every unselected colour, and retains hidden Topline/Bow. Populated Lining deletion appears in the export getter immediately before its delayed save; adding another populated colour and Save order keep all three hidden rows. Zero runtime exceptions/API network requests; fixture files and owned browser/Vite services cleaned up. Final exact source revalidated with 308 passing tests and production build. Publish the checkpoint for the hosted app, refresh/reopen Specs, then generate new Excel files; previously downloaded sheets are not modified.
+
+## Custom Specs Cell Retention When Adding Colours/Rows — LAUREN — 11 Nov 2026
+
+- [x] Read-only LAUREN audit confirmed original PIPING is saved as LEOPARD PONY → RED NAPPA, TIGER PONY → PINK METALLIC, BLACK SPECKLE → MILK CAPRETTO. Existing exact and legacy rows currently agree; no speculative restoration or live data writes were made. Verified both current download and decoded email workbooks preserve these original cells with new Lumia Velvet columns; independently read the resulting XLSX with openpyxl. Fudge retains its existing UPPER 1 value; no value was invented for Vino.
+- [x] Reproduced the destructive paths in transactional tests: row-name editing used to send an empty value for an existing per-colour representative; shared-row expansion could delete the wrong representative and write blank exact keys over still-present legacy values using a stale client shared value. Concurrent expansion also created competing records. Replaced name edits with a title-only group endpoint and exact per-colour override transactions based on persisted anchors. Existing shared fallbacks, historical/hidden columns, IDs, order, specific values and distinct Upper 2 keys are retained. Copy custom rows also writes only selected exact cells even when all current visible columns are selected; it never converts/deletes a shared fallback or modifies unseen previous-season colours.
+- [x] Custom component editors now protect dirty drafts from refetches, flush current drafts on blur/unmount, suppress untouched blur saves and duplicate Enter/blur commits, and keep name/value saves independent. Newly added temporary row IDs are mapped to real IDs before queued edits persist; name/cell/layout writes share a serialized per-style queue. Every cell edit uses its full colour/leather label instead of updating a fallback row belonging to another SKU. Unnamed colour writes reject before creating unassociated rows. Grid/export duplicate-cell resolution uses the latest saved timestamp plus ID while representative IDs/hide markers stay stable.
+- [x] Restored the project task log history accidentally omitted in the prior checkpoint, retaining its latest hidden-row export notes. Added 62 regressions overall: 370 tests pass in 70 files, with only the unrelated existing live email credential assertion skipped; production build and diff checks pass. Pre-existing StylesTab type diagnostics remain unchanged; current edit files have no new TypeScript errors. Actual SpecsTab browser verification passed 28 synthetic persistence assertions with zero runtime exceptions or live requests. Verified group renames, exact new-colour overrides, dirty refetches, Enter/blur deduplication, delayed Add row ID assignment and dirty temporary-to-real row remount saves. Add row now switches off automatic empty filtering so new blank components remain editable; explicit deleted rows remain excluded. No live fitting/buy/range/spec values altered.

@@ -423,3 +423,23 @@ describe("factory exports use the shared Specs row layout", () => {
     expect(sheet.getImages()).toHaveLength(0);
   });
 });
+
+describe('custom component values after adding new colours', () => {
+  it('keeps LAUREN original Piping values in both download and email when new Velvet columns are present', async () => {
+    const labels = ['LEOPARD PONY', 'TIGER PONY', 'BLACK SPECKLE', 'FUDGE LUMIA VELVET', 'VINO LUMIA VELVET'];
+    const values = ['RED NAPPA', 'PINK METALLIC', 'MILK CAPRETTO'];
+    const customRows = values.map((value, index) => customRow(100 + index, {
+      style: 'LAUREN', title: 'PIPING', colour: labels[index], value,
+    }));
+    customRows.push(customRow(110, { style: 'LAUREN', title: 'PIPING', colour: labels[3], value: 'UPPER 1' }));
+    const params = { ...baseParams, style: 'LAUREN', colours: ['LEOPARD', 'TIGER', 'BLACK', 'FUDGE', 'VINO'],
+      colourLabels: labels, specs: {}, customRows, rowKeys: ['t:upper_1', 'c:100'] };
+    for (const workbook of await downloadedAndAttachedWorkbooks(params)) {
+      const rows: unknown[][] = [];
+      workbook.worksheets[0].eachRow(row => {
+        if (row.getCell(1).value === 'PIPING') rows.push([2, 3, 4, 5, 6].map(column => row.getCell(column).value ?? ''));
+      });
+      expect(rows).toEqual([['RED NAPPA', 'PINK METALLIC', 'MILK CAPRETTO', 'UPPER 1', '']]);
+    }
+  });
+});

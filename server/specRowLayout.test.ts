@@ -69,3 +69,25 @@ describe('Specs layout save queue', () => {
     expect(failed).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('Latest saved custom-cell resolution', () => {
+  it('prefers the latest saved duplicate, not a later inserted stale copy', () => {
+    const rows = [
+      { id: 10, colour: 'LEOPARD PONY', title: 'Piping', section: 'components', sortOrder: 1, value: 'RED NAPPA', updatedAt: new Date('2026-11-11T00:00:00Z') },
+      { id: 12, colour: ' leopard pony ', title: 'PIPING', section: 'components', sortOrder: 1, value: '', updatedAt: new Date('2026-10-10T00:00:00Z') },
+    ];
+    const [group] = groupSpecCustomRows(rows);
+    expect(group.rep.id).toBe(10);
+    expect(group.colourMap.get('LEOPARD PONY')?.value).toBe('RED NAPPA');
+    expect(getCustomSpecRowAliases([group]).get('c:12')).toBe('c:10');
+  });
+  it('honours a deliberately saved later blank and retains shared fallback separately', () => {
+    const [group] = groupSpecCustomRows([
+      { id: 10, colour: '__all__', title: 'Piping', section: 'components', sortOrder: 1, value: 'MATCHING', updatedAt: null },
+      { id: 12, colour: 'BLACK', title: 'Piping', section: 'components', sortOrder: 1, value: 'OLD', updatedAt: '2026-10-10T00:00:00Z' },
+      { id: 11, colour: 'BLACK', title: 'Piping', section: 'components', sortOrder: 1, value: '', updatedAt: '2026-11-11T00:00:00Z' },
+    ]);
+    expect(group.colourMap.get('BLACK')?.value).toBe('');
+    expect(group.colourMap.get('__all__')?.value).toBe('MATCHING');
+  });
+});

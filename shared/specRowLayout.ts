@@ -1,6 +1,25 @@
+import { normalizeStoredSpecColourKey } from './specColourKey';
+
 /** Shared by Specs rendering, row actions and factory exports. */
-export type SpecLayoutCustomRow = { id: number; section: string; title: string; colour: string; sortOrder: number };
+export type SpecLayoutCustomRow = { id: number; section: string; title: string; colour: string; sortOrder: number; updatedAt?: Date | string | number | null };
 export type SpecCustomRowGroup<T extends SpecLayoutCustomRow> = { rep: T; rows: T[]; colourMap: Map<string, T> };
+
+function buildLatestCustomColourMap<T extends SpecLayoutCustomRow>(rows: readonly T[]): Map<string, T> {
+  const result = new Map<string, T>();
+  const savedTime = (row: T) => {
+    const value = row.updatedAt;
+    const time = value instanceof Date ? value.getTime() : value == null ? 0 : new Date(value).getTime();
+    return Number.isFinite(time) ? time : 0;
+  };
+  for (const row of rows) {
+    const key = normalizeStoredSpecColourKey(row.colour);
+    const previous = result.get(key);
+    if (!previous || savedTime(row) > savedTime(previous) || (savedTime(row) === savedTime(previous) && row.id > previous.id)) {
+      result.set(key, row);
+    }
+  }
+  return result;
+}
 
 export function groupSpecCustomRows<T extends SpecLayoutCustomRow>(rows: readonly T[]): SpecCustomRowGroup<T>[] {
   const groups = new Map<string, T[]>();
@@ -14,7 +33,7 @@ export function groupSpecCustomRows<T extends SpecLayoutCustomRow>(rows: readonl
   }
   return Array.from(groups.values()).map((members) => ({
     rep: members[0], rows: members,
-    colourMap: new Map(members.map((row) => [row.colour, row])),
+    colourMap: buildLatestCustomColourMap(members),
   })).sort((a, b) => a.rep.sortOrder - b.rep.sortOrder || a.rep.id - b.rep.id);
 }
 

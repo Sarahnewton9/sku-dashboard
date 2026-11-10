@@ -32,6 +32,7 @@ import {
   getAllStyleWebsiteImages,
   createFittingGroup, getAllFittingGroups, updateFittingGroup, deleteFittingGroup, addStyleToFittingGroup, removeStyleFromFittingGroup,
   getSpecCustomRowsForStyle, upsertSpecCustomRow, deleteSpecCustomRow, deleteSpecCustomRowGroup, upsertCustomRowForColour,
+  renameSpecCustomRowGroup, updateSpecCustomRowValue,
   getLatestPptxImport, listPptxImports,
   getAllLastHeelHeights, upsertLastHeelHeight,
   getChangesReport,
@@ -2132,6 +2133,13 @@ If the request is unclear or is a question, use no_action.`;
         sortOrder: z.number().default(0),
       }))
       .mutation(async ({ input }) => upsertSpecCustomRow(input)),
+
+    rename: publicProcedure
+      .input(z.object({ id: z.number().positive(), style: z.string(), title: z.string() }))
+      .mutation(async ({ input }) => renameSpecCustomRowGroup(input)),
+    updateValue: publicProcedure
+      .input(z.object({ id: z.number().positive(), style: z.string(), value: z.string() }))
+      .mutation(async ({ input }) => updateSpecCustomRowValue(input)),
 
     delete: publicProcedure
       .input(z.object({ id: z.number() }))

@@ -9,7 +9,7 @@ import { getCustomSkuCarryOverSeason } from "../shared/customSkuSeasonCarryOver"
 import { getHandbagSkuEditOutcome } from "../shared/handbagSkuEdit";
 import { getSpecTemplateComponentKeys } from "../shared/specCompletionQueue";
 import { isW27ExistingCarryOverLast } from "../shared/w27SandalVisibility";
-import { findSpecColourMapValue } from "../shared/specColourKey";
+import { normalizeSpecColourPart, normalizeStoredSpecColourKey } from "../shared/specColourKey";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -1577,18 +1577,69 @@ export async function deleteSpecCustomRowGroup(style: string, section: string, t
   );
 }
 
-/**
- * Upsert a custom row value for a specific colour.
- *
- * If the row is currently stored as `__all__` (single shared value), this
- * function "explodes" it into individual per-colour rows (one per colour in
- * `allColours`), then updates the target colour's row with the new value.
- *
- * If per-colour rows already exist for this title, it simply upserts the
- * specific colour's row.
- */
+function sameSpecCustomRowGroup(a: Pick<SpecCustomRow, "section" | "title">, b: Pick<SpecCustomRow, "section" | "title">): boolean {
+  return normalizeSpecColourPart(a.section) === normalizeSpecColourPart(b.section)
+    && normalizeSpecColourPart(a.title) === normalizeSpecColourPart(b.title);
+}
+
+function getSpecCustomRowGroup(rows: SpecCustomRow[], anchor: SpecCustomRow): SpecCustomRow[] {
+  // Unnamed placeholders are independent rows, not one blank-title group.
+  return normalizeSpecColourPart(anchor.title)
+    ? rows.filter(row => sameSpecCustomRowGroup(row, anchor))
+    : rows.filter(row => row.id === anchor.id);
+}
+
+function newestSpecCustomRow(rows: SpecCustomRow[]): SpecCustomRow | undefined {
+  const timestamp = (value: SpecCustomRow["updatedAt"]) => {
+    const time = value instanceof Date ? value.getTime() : Date.parse(String(value ?? ""));
+    return Number.isFinite(time) ? time : 0;
+  };
+  return rows.reduce<SpecCustomRow | undefined>((latest, row) =>
+    !latest || timestamp(row.updatedAt) > timestamp(latest.updatedAt)
+      || (timestamp(row.updatedAt) === timestamp(latest.updatedAt) && row.id > latest.id)
+      ? row : latest, undefined);
+}
+
+/** Rename a logical custom group without sending any colour-cell values. */
+export async function renameSpecCustomRowGroup(data: { id: number; style: string; title: string }): Promise<SpecCustomRow[]> {
+  const connection = await getDb();
+  if (!connection) throw new Error("Database not available");
+  return connection.transaction(async db => {
+    const rows = await db.select().from(specCustomRows).where(eq(specCustomRows.style, data.style)).for("update");
+    const anchor = rows.find(row => row.id === data.id);
+    if (!anchor) throw new Error("Custom row not found for this style");
+    const group = getSpecCustomRowGroup(rows, anchor);
+    const ids = new Set(group.map(row => row.id));
+    const renamed = { section: anchor.section, title: data.title };
+    if (normalizeSpecColourPart(data.title) && rows.some(row => !ids.has(row.id) && sameSpecCustomRowGroup(row, renamed))) {
+      throw new Error("A custom row with this title already exists in this section");
+    }
+    await db.update(specCustomRows).set({ title: data.title }).where(and(
+      eq(specCustomRows.style, data.style), inArray(specCustomRows.id, Array.from(ids)),
+    ));
+    return db.select().from(specCustomRows).where(and(
+      eq(specCustomRows.style, data.style), inArray(specCustomRows.id, Array.from(ids)),
+    ));
+  });
+}
+
+/** A cell edit must never overwrite a newer group title. */
+export async function updateSpecCustomRowValue(data: { id: number; style: string; value: string }): Promise<SpecCustomRow> {
+  const connection = await getDb();
+  if (!connection) throw new Error("Database not available");
+  return connection.transaction(async db => {
+    const condition = and(eq(specCustomRows.id, data.id), eq(specCustomRows.style, data.style));
+    const [row] = await db.select().from(specCustomRows).where(condition).for("update");
+    if (!row) throw new Error("Custom row not found for this style");
+    await db.update(specCustomRows).set({ value: data.value }).where(condition);
+    const [updated] = await db.select().from(specCustomRows).where(condition);
+    return updated;
+  });
+}
+
+/** Write an exact colour override; retain shared fallback and historical cells. */
 export async function upsertCustomRowForColour(data: {
-  /** The __all__ row id (used to delete it when exploding) */
+  /** Stable group anchor; its persisted title is authoritative during renames. */
   allRowId: number;
   style: string;
   section: string;
@@ -1598,72 +1649,41 @@ export async function upsertCustomRowForColour(data: {
   targetColour: string;
   /** New value for targetColour */
   newValue: string;
-  /** Current shared value (used to seed all other colours when exploding) */
+  /** Legacy compatibility only: persisted shared values are authoritative. */
   currentSharedValue: string;
-  /** All colours for this style (used to create per-colour rows) */
+  /** Legacy compatibility only: current columns may omit historical SKUs. */
   allColours: string[];
 }): Promise<{ rows: SpecCustomRow[]; newRepId: number | null; wasExploded: boolean }> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  // Check if per-colour rows already exist for this style+section+title
-  const existing = await db.select().from(specCustomRows)
-    .where(
-      and(
-        eq(specCustomRows.style, data.style),
-        eq(specCustomRows.section, data.section),
-        eq(specCustomRows.title, data.title),
-      )
-    );
-
-  const hasAllRow = existing.some((r) => r.colour === "__all__");
-
-  if (hasAllRow) {
-    // Explode: delete the __all__ row and insert per-colour rows
-    await db.delete(specCustomRows).where(eq(specCustomRows.id, data.allRowId));
-    for (const colour of data.allColours) {
-      const value = colour === data.targetColour ? data.newValue : data.currentSharedValue;
-      await db.insert(specCustomRows).values({
-        style: data.style,
-        colour,
-        section: data.section,
-        title: data.title,
-        value,
-        sortOrder: data.sortOrder,
-      });
-    }
-  } else {
-    // Per-colour rows already exist — upsert the target colour's row
-    const targetRow = existing.find((r) => r.colour === data.targetColour);
+  const connection = await getDb();
+  if (!connection) throw new Error("Database not available");
+  return connection.transaction(async db => {
+    const rows = await db.select().from(specCustomRows).where(eq(specCustomRows.style, data.style)).for("update");
+    const anchor = rows.find(row => row.id === data.allRowId);
+    if (!anchor) throw new Error("Custom row not found for this style");
+    if (!normalizeSpecColourPart(anchor.title)) throw new Error("Name this component before entering its colour values");
+    const existing = getSpecCustomRowGroup(rows, anchor);
+    const targetColour = normalizeStoredSpecColourKey(data.targetColour);
+    if (!targetColour || targetColour === "__all__") throw new Error("An exact target colour is required");
+    const targetRow = newestSpecCustomRow(existing.filter(row => normalizeStoredSpecColourKey(row.colour) === targetColour));
     if (targetRow) {
-      await db.update(specCustomRows)
-        .set({ value: data.newValue })
-        .where(eq(specCustomRows.id, targetRow.id));
+      await db.update(specCustomRows).set({ value: data.newValue }).where(and(
+        eq(specCustomRows.style, data.style), eq(specCustomRows.id, targetRow.id),
+      ));
     } else {
-      // Colour row doesn't exist yet (e.g. new colour added after rows were created)
       await db.insert(specCustomRows).values({
         style: data.style,
-        colour: data.targetColour,
-        section: data.section,
-        title: data.title,
+        colour: targetColour,
+        section: anchor.section,
+        title: anchor.title,
         value: data.newValue,
-        sortOrder: data.sortOrder,
+        sortOrder: anchor.sortOrder,
       });
     }
-  }
-
-  // Return all rows for this style+section+title
-  const newRows = await db.select().from(specCustomRows)
-    .where(
-      and(
-        eq(specCustomRows.style, data.style),
-        eq(specCustomRows.section, data.section),
-        eq(specCustomRows.title, data.title),
-      )
-    );
-  // Also return the new representative id (lowest id) so the client can update rowKeys
-  const newRepId = newRows.length > 0 ? Math.min(...newRows.map((r) => r.id)) : null;
-  return { rows: newRows, newRepId, wasExploded: hasAllRow };
+    const saved = await db.select().from(specCustomRows).where(eq(specCustomRows.style, data.style));
+    const newRows = getSpecCustomRowGroup(saved, anchor);
+    const newRepId = newRows.length > 0 ? Math.min(...newRows.map(row => row.id)) : null;
+    return { rows: newRows, newRepId, wasExploded: false };
+  });
 }
 
 // ─── PPTX Import Log ────────────────────────────────────────────────────────────────────────────
@@ -1966,13 +1986,13 @@ export async function bulkSetSpecStatus(
 
 /**
  * Copy custom rows from a source style/colour to selected target columns in a
- * target style. The copy must never populate unselected SKU columns: a shared
- * __all__ row is exploded when needed so only the chosen targets change.
+ * target style. Shared fallback and historical colour rows remain untouched;
+ * even selecting every current column only creates exact selected overrides.
  */
 export async function bulkCopyCustomRows(data: {
   targetStyle: string;
   targetColours: string[];
-  /** Every active Specs column for the target style; used when exploding __all__. */
+  /** Legacy compatibility only: current columns may omit historical SKUs. */
   allColours: string[];
   /** Each item represents one custom row group from the source style */
   rows: Array<{
@@ -1987,125 +2007,41 @@ export async function bulkCopyCustomRows(data: {
   return connection.transaction(async (db) => {
     // Returns section+title → row ID mapping so the caller can remap row order keys
     const rowIds: Array<{ section: string; title: string; newId: number }> = [];
+    const selectedTargets = Array.from(new Set(data.targetColours.map(normalizeStoredSpecColourKey).filter(Boolean)));
+    if (selectedTargets.includes("__all__")) throw new Error("An exact target colour is required");
+    if (selectedTargets.length === 0) return rowIds;
+    // Lock the style once: copies, renames and colour edits share this lock scope.
+    const styleRows = await db.select().from(specCustomRows).where(eq(specCustomRows.style, data.targetStyle)).for("update");
 
     for (const row of data.rows) {
       if (!row.title.trim()) continue;
-      // Check if target style already has rows for this section+title
-      const existing = await db.select().from(specCustomRows).where(
-        and(
-          eq(specCustomRows.style, data.targetStyle),
-          eq(specCustomRows.section, row.section),
-          eq(specCustomRows.title, row.title),
-        )
-      );
-
-      const selectedTargets = Array.from(new Set(data.targetColours.filter(Boolean)));
-      const allTargets = Array.from(new Set(data.allColours.filter(Boolean)));
-      const selectedSet = new Set(selectedTargets);
-      const allAreSelected = allTargets.length > 0 && allTargets.every((colour) => selectedSet.has(colour));
-
-      if (existing.length === 0) {
-        if (!row.value.trim()) continue; // A blank clears existing cells, but creates no empty group.
-        if (allAreSelected) {
-          // All target columns are selected, so retain the compact shared form.
-          const [inserted] = await db.insert(specCustomRows).values({
-            style: data.targetStyle,
-            colour: "__all__",
-            section: row.section,
-            title: row.title,
-            value: row.value,
-            sortOrder: row.sortOrder,
-          });
-          if ((inserted as any)?.insertId) {
-            rowIds.push({ section: row.section, title: row.title, newId: Number((inserted as any).insertId) });
-          }
-        } else {
-          // Only some columns are selected — create values only for those columns.
-          const insertedIds: number[] = [];
-          for (const colour of selectedTargets) {
-            const [inserted] = await db.insert(specCustomRows).values({
-              style: data.targetStyle,
-              colour,
-              section: row.section,
-              title: row.title,
-              value: row.value,
-              sortOrder: row.sortOrder,
-            });
-            if ((inserted as any)?.insertId) insertedIds.push(Number((inserted as any).insertId));
-          }
-          if (insertedIds.length > 0) {
-            rowIds.push({ section: row.section, title: row.title, newId: Math.min(...insertedIds) });
-          }
-        }
-        continue;
-      }
-
-      const sharedRow = existing.find((existingRow) => existingRow.colour === "__all__");
-      if (sharedRow) {
-        if (allAreSelected) {
-          await db.update(specCustomRows).set({ value: row.value }).where(and(
-            eq(specCustomRows.style, data.targetStyle), eq(specCustomRows.section, row.section), eq(specCustomRows.title, row.title),
-          ));
-          rowIds.push({ section: row.section, title: row.title, newId: Math.min(...existing.map(item => item.id)) });
-          continue;
-        }
-        // Preserve unselected cells when a shared custom row needs a selected-SKU edit.
-        // Keep the original shared ID for the first cell so hide/order markers stay valid.
-        const expandedColours = allTargets.length > 0 ? allTargets : selectedTargets;
-        const insertedIds: number[] = existing.map(item => item.id);
-        let sharedConverted = false;
-        const existingCells = new Map(existing.map(item => [item.colour, item]));
-        for (const colour of expandedColours) {
-          const specific = existing.find(item => item.colour === colour);
-          const previous = findSpecColourMapValue(existingCells, colour);
-          const value = selectedSet.has(colour) ? row.value : (previous?.value ?? sharedRow.value ?? "");
-          if (specific) {
-            if (selectedSet.has(colour)) await db.update(specCustomRows).set({ value }).where(eq(specCustomRows.id, specific.id));
-            continue;
-          }
-          if (!sharedConverted) {
-            await db.update(specCustomRows).set({ colour, value }).where(eq(specCustomRows.id, sharedRow.id));
-            sharedConverted = true;
-            continue;
-          }
-          const [inserted] = await db.insert(specCustomRows).values({
-            style: data.targetStyle,
-            colour,
-            section: row.section,
-            title: row.title,
-            value,
-            sortOrder: row.sortOrder,
-          });
-          if ((inserted as any)?.insertId) insertedIds.push(Number((inserted as any).insertId));
-        }
-        if (insertedIds.length > 0) {
-          rowIds.push({ section: row.section, title: row.title, newId: Math.min(...insertedIds) });
-        }
-        if (!sharedConverted && expandedColours.length > 0) {
-          // Every selected column already has an explicit row; retire shared fallback
-          // without deleting its identity or overwriting those specific cells.
-          await db.update(specCustomRows).set({ colour: expandedColours[0], value: selectedSet.has(expandedColours[0]) ? row.value : (findSpecColourMapValue(existingCells, expandedColours[0])?.value ?? sharedRow.value ?? "") }).where(eq(specCustomRows.id, sharedRow.id));
-        }
-        continue;
-      }
-
-      // The group is already per-colour: update or create only selected targets.
-      const existingByColour = new Map(existing.map((existingRow) => [existingRow.colour, existingRow]));
+      const existing = styleRows.filter(existingRow => sameSpecCustomRowGroup(existingRow, row));
+      if (existing.length === 0 && !row.value.trim()) continue; // Blank clears, but never creates an empty group.
       const ids = existing.map((existingRow) => existingRow.id);
       for (const colour of selectedTargets) {
-        const targetRow = existingByColour.get(colour);
+        // No short-key fallback when writing: new exact blanks must override,
+        // not erase legacy values for unselected leather/secondary-upper siblings.
+        const targetRow = newestSpecCustomRow(existing.filter(existingRow => normalizeStoredSpecColourKey(existingRow.colour) === colour));
         if (targetRow) {
-          await db.update(specCustomRows).set({ value: row.value }).where(eq(specCustomRows.id, targetRow.id));
+          await db.update(specCustomRows).set({ value: row.value }).where(and(
+            eq(specCustomRows.style, data.targetStyle), eq(specCustomRows.id, targetRow.id),
+          ));
         } else {
-          const [inserted] = await db.insert(specCustomRows).values({
+          const values = {
             style: data.targetStyle,
             colour,
-            section: row.section,
-            title: row.title,
+            section: existing[0]?.section ?? row.section,
+            title: existing[0]?.title ?? row.title,
             value: row.value,
-            sortOrder: row.sortOrder,
-          });
-          if ((inserted as any)?.insertId) ids.push(Number((inserted as any).insertId));
+            sortOrder: existing[0]?.sortOrder ?? row.sortOrder,
+          };
+          const [inserted] = await db.insert(specCustomRows).values(values);
+          if ((inserted as any)?.insertId) {
+            const id = Number((inserted as any).insertId);
+            ids.push(id);
+            // Make a repeated incoming title use the newly created group as well.
+            styleRows.push({ ...values, id, createdAt: new Date(), updatedAt: new Date() });
+          }
         }
       }
       if (ids.length > 0) {

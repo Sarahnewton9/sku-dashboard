@@ -46,6 +46,8 @@ import { matchesSpecsStyleSearchFilters } from "@shared/specsStyleSearch";
 import { enqueueSpecRowSave, getCustomSpecRowAliases, getOrderedSpecRowKeys, groupSpecCustomRows, hideSpecRow, mergeSpecRowOrder, normalizeSpecRowLayout, replaceSpecRowKey, restoreSpecRow } from "@shared/specRowLayout";
 import { getLatestSpecExportLayout, type RegisteredSpecRowLayout } from "@shared/specExportLayout";
 import { buildSavedSpecCopySnapshot } from "@shared/specCopySnapshot";
+import { createSpecCustomRowIdentityTracker } from "@shared/specCustomRowDrafts";
+import { SpecCustomValueCell as CustomFreeTypeCell, SpecCustomTitleInput as CustomRowTitleInput } from "./SpecCustomEditors";
 import {
   planSavedSpecReplacement,
   type CrossStyleCustomRowCopy,
@@ -286,198 +288,6 @@ function FreeTypeCell({ component, value, savedOptions, savedOptionIds, onSave, 
   );
 }
 
-// ─── Custom Free Type Cell (for custom rows — no SpecComponent dependency) ──────
-interface CustomFreeTypeCellProps {
-  value: string;
-  options: string[];
-  optionIds?: Record<string, number>;
-  onSave: (val: string) => void;
-  onAddOption: (val: string) => void;
-  onDeleteOption: (val: string) => void;
-  onEditOption?: (id: number, newValue: string) => void;
-  /** Used for Tab navigation: "rowId:colIdx" */
-  cellId?: string;
-}
-function CustomFreeTypeCell({ value, options, optionIds, onSave, onAddOption, onDeleteOption, onEditOption, cellId }: CustomFreeTypeCellProps) {
-  const allOptions = Array.from(new Set(options)).filter(Boolean).sort((a, b) => a.localeCompare(b));
-
-  const [draft, setDraft] = useState(value);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  // Track whether the user is actively typing (vs just focused with existing value)
-  const [isTyping, setIsTyping] = useState(false);
-  const [editingOpt, setEditingOpt] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState("");
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const committedRef = useRef(false);
-
-  useEffect(() => { setDraft(value); }, [value]);
-
-  // Auto-resize textarea height to fit content
-  useEffect(() => {
-    const el = inputRef.current;
-    if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; }
-  }, [draft]);
-
-  // When typing, filter options by the draft. On initial focus (not typing), show all options.
-  const filtered = isTyping && draft.trim()
-    ? allOptions.filter((o) => o.toLowerCase().includes(draft.toLowerCase()))
-    : allOptions;
-
-  // The "Save as suggestion" row should show whenever the draft is a new value (not in options)
-  const isNewValue = draft.trim() !== "" && !allOptions.some((o) => o.toLowerCase() === draft.trim().toLowerCase());
-
-  function commit(val: string) {
-    const trimmed = val.trim();
-    onSave(trimmed);
-    setDraft(trimmed);
-    setShowSuggestions(false);
-    setIsTyping(false);
-  }
-
-  function handleSelect(opt: string) {
-    committedRef.current = true;
-    commit(opt);
-    inputRef.current?.blur();
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Tab" && !e.shiftKey && cellId) {
-      const [, colPart] = cellId.split(":");
-      const colIdx = parseInt(colPart ?? "0", 10);
-      const allCells = Array.from(
-        document.querySelectorAll<HTMLTextAreaElement>(`[data-spec-cell]`)
-      ).filter((el) => {
-        const parts = el.getAttribute("data-spec-cell")?.split(":") ?? [];
-        return parseInt(parts[1] ?? "0", 10) === colIdx;
-      });
-      const currentIdx = allCells.indexOf(inputRef.current!);
-      const nextCell = allCells[currentIdx + 1];
-      if (nextCell) {
-        e.preventDefault();
-        committedRef.current = true;
-        commit(draft);
-        nextCell.focus();
-        return;
-      }
-    }
-    if (e.key === "Enter" && e.ctrlKey && isNewValue) {
-      e.preventDefault();
-      onAddOption(draft.trim());
-      committedRef.current = true;
-      commit(draft.trim());
-      inputRef.current?.blur();
-      return;
-    }
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); committedRef.current = true; commit(draft); inputRef.current?.blur(); }
-    if (e.key === "Escape") { setDraft(value); setShowSuggestions(false); setIsTyping(false); inputRef.current?.blur(); }
-  }
-
-  function handleBlur() {
-    setTimeout(() => {
-      if (!containerRef.current?.contains(document.activeElement)) {
-        if (!committedRef.current) commit(draft);
-        committedRef.current = false;
-        setShowSuggestions(false);
-        setIsTyping(false);
-      }
-    }, 150);
-  }
-
-  // The dropdown shows if there are options to display OR if the draft is a new value to save
-  const shouldShowDropdown = showSuggestions && (filtered.length > 0 || isNewValue);
-
-  return (
-    <div ref={containerRef} className="relative min-w-[140px] w-full">
-      <textarea
-        ref={inputRef}
-        value={draft}
-        rows={1}
-        data-spec-cell={cellId}
-        onChange={(e) => { setDraft(e.target.value); setIsTyping(true); setShowSuggestions(true); }}
-        onFocus={() => { setIsTyping(false); setShowSuggestions(true); }}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        placeholder="— type —"
-        className="w-full px-2 py-1.5 text-xs rounded border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground resize-none overflow-hidden min-h-[32px]"
-        style={{ lineHeight: "1.4" }}
-      />
-      {shouldShowDropdown && (
-        <div className="absolute z-50 top-full left-0 mt-0.5 w-64 max-h-52 overflow-y-auto bg-popover border border-border rounded shadow-md">
-          {filtered.map((opt) => {
-            const optId = optionIds?.[opt];
-            if (editingOpt === opt) {
-              return (
-                <div key={opt} className="flex items-center gap-1 px-2 py-1" onMouseDown={(e) => e.preventDefault()}>
-                  <input
-                    autoFocus
-                    className="flex-1 text-xs border border-input rounded px-1.5 py-0.5 bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={editDraft}
-                    onChange={(e) => setEditDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && editDraft.trim() && optId !== undefined) {
-                        onEditOption?.(optId, editDraft.trim());
-                        setEditingOpt(null);
-                      }
-                      if (e.key === "Escape") setEditingOpt(null);
-                    }}
-                  />
-                  <button
-                    className="p-0.5 rounded text-xs text-green-600 hover:bg-green-50 flex-shrink-0"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      if (editDraft.trim() && optId !== undefined) onEditOption?.(optId, editDraft.trim());
-                      setEditingOpt(null);
-                    }}
-                    title="Save"
-                  ><Check className="w-3 h-3" /></button>
-                  <button
-                    className="p-0.5 rounded text-xs text-muted-foreground hover:bg-accent flex-shrink-0"
-                    onMouseDown={(e) => { e.preventDefault(); setEditingOpt(null); }}
-                    title="Cancel"
-                  ><X className="w-3 h-3" /></button>
-                </div>
-              );
-            }
-            return (
-              <div
-                key={opt}
-                className="flex items-center justify-between px-2 py-1.5 text-xs hover:bg-accent hover:text-accent-foreground cursor-pointer group/opt"
-                onMouseDown={(e) => { e.preventDefault(); handleSelect(opt); }}
-              >
-                <span className="flex-1 break-words whitespace-pre-wrap">{opt}</span>
-                <span className="flex items-center gap-0.5 opacity-0 group-hover/opt:opacity-100 flex-shrink-0">
-                  {onEditOption && optId !== undefined && (
-                    <button
-                      className="p-0.5 rounded hover:bg-accent text-muted-foreground"
-                      onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setEditingOpt(opt); setEditDraft(opt); }}
-                      title="Edit suggestion"
-                    ><Pencil className="w-2.5 h-2.5" /></button>
-                  )}
-                  <button
-                    className="p-0.5 rounded hover:bg-destructive/20 hover:text-destructive text-muted-foreground"
-                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); onDeleteOption(opt); }}
-                    title="Remove suggestion"
-                  ><X className="w-2.5 h-2.5" /></button>
-                </span>
-              </div>
-            );
-          })}
-          {/* Always show Save-as-option when the draft is a new value, regardless of filtered length */}
-          {isNewValue && (
-            <div
-              className="px-2 py-1.5 text-xs text-blue-600 font-medium hover:bg-accent cursor-pointer border-t border-border"
-              onMouseDown={(e) => { e.preventDefault(); onAddOption(draft.trim()); commit(draft.trim()); }}
-            >
-              + Save "{draft.trim()}" as suggestion
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── Text Cell ────────────────────────────────────────────────────────────────
 
 interface TextCellProps {
@@ -693,9 +503,9 @@ interface UnifiedCustomRowProps {
   rowGroup: Map<string, CustomRowData>;
   colours: string[];
   colourLabels: string[];
-  /** Called when the title or value of the __all__ row changes (still-shared row). */
-  onUpdate: (id: number, title: string, value: string) => void;
-  /** Called when a specific colour cell is edited. Triggers explosion of __all__ into per-colour rows. */
+  /** A component rename never carries a cell value. */
+  onRename: (id: number, title: string) => void;
+  /** Save one exact full-label colour override without deleting shared or other cells. */
   onUpdateForColour: (representativeId: number, title: string, colour: string, newValue: string, currentSharedValue: string, section: string, sortOrder: number) => void;
   onDelete: (id: number) => void;
   allTitles: string[];
@@ -707,7 +517,7 @@ interface UnifiedCustomRowProps {
   onDeleteDropdownOption: (key: string, value: string) => void;
   onEditDropdownOption?: (id: number, newValue: string) => void;
 }
-function UnifiedCustomRow({ id, row, rowGroup, colours, colourLabels, onUpdate, onUpdateForColour, onDelete, allTitles, isActive, allDropdownOptions, allDropdownOptionIds, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption }: UnifiedCustomRowProps) {
+function UnifiedCustomRow({ id, row, rowGroup, colours, colourLabels, onRename, onUpdateForColour, onDelete, allTitles, isActive, allDropdownOptions, allDropdownOptionIds, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption }: UnifiedCustomRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } = useSortable({ id });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -715,7 +525,7 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, colourLabels, onUpdate, 
     opacity: isDragging ? 0.15 : 1,
   };
   const isAllRow = row.colour === "__all__";
-  // Shared value (used for seeding other colours when exploding __all__)
+  // Shared value is display fallback only; colour saves do not consume it.
   const sharedValue = isAllRow ? (row.value ?? "") : "";
   return (
     <tr
@@ -741,8 +551,7 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, colourLabels, onUpdate, 
           <CustomRowTitleInput
             id={row.id}
             initialTitle={row.title}
-            value={isAllRow ? (row.value ?? "") : ""}
-            onUpdate={onUpdate}
+            onRename={onRename}
             onDelete={onDelete}
             allTitles={allTitles}
           />
@@ -767,11 +576,9 @@ function UnifiedCustomRow({ id, row, rowGroup, colours, colourLabels, onUpdate, 
               options={opts}
               optionIds={optIds}
               onSave={(v) => {
-                if (!colourRow || colourRow.colour === "__all__") {
-                  onUpdateForColour(row.id, row.title, label, v, sharedValue, row.section, row.sortOrder);
-                } else {
-                  onUpdate(colourRow.id, colourRow.title, v);
-                }
+                // Even a legacy fallback row belongs to a different physical colour.
+                // Write an exact full-label override; never modify that fallback's ID.
+                onUpdateForColour(row.id, row.title, label, v, sharedValue, row.section, row.sortOrder);
               }}
               onAddOption={(val) => onAddDropdownOption(optKey, val)}
               onDeleteOption={(val) => onDeleteDropdownOption(optKey, val)}
@@ -870,78 +677,6 @@ function ColourCopyPanel({ colours, colourLabels, onCopy }: ColourCopyPanelProps
   );
 }
 
-// ─── Custom Row Title Input (local state to avoid lag) ──────────────────────────
-
-interface CustomRowTitleInputProps {
-  id: number;
-  initialTitle: string;
-  value: string;
-  onUpdate: (id: number, title: string, value: string) => void;
-  onDelete: (id: number) => void;
-  allTitles: string[]; // known titles for autocomplete
-}
-
-function CustomRowTitleInput({ id, initialTitle, value, onUpdate, onDelete, allTitles }: CustomRowTitleInputProps) {
-  // Helper: convert stored title to proper case for display (e.g. "BUCKLE" → "Buckle")
-  function toProperCase(s: string) {
-    return s.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
-  }
-  const [localTitle, setLocalTitle] = useState(toProperCase(initialTitle));
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-
-  // Sync if the DB title changes from outside (e.g. on first load)
-  useEffect(() => { setLocalTitle(toProperCase(initialTitle)); }, [initialTitle]);
-
-  const suggestions = allTitles
-    .filter((t) => t && t.toLowerCase().includes(localTitle.toLowerCase()) && t !== localTitle)
-    .slice(0, 6);
-
-  function handleChange(val: string) {
-    setLocalTitle(val);
-    onUpdate(id, val, value);
-  }
-
-  function handleSelect(val: string) {
-    setLocalTitle(val);
-    onUpdate(id, val, value);
-    setOpen(false);
-  }
-
-  return (
-    <div className="flex items-center gap-1.5 relative">
-      <input
-        className="text-xs font-medium text-amber-700 dark:text-amber-400 bg-transparent border-0 border-b border-dashed border-amber-300 dark:border-amber-700 focus:outline-none focus:border-amber-500 w-full min-w-0 placeholder:text-amber-400/60"
-        value={localTitle}
-        placeholder="Field name…"
-        onChange={(e) => handleChange(e.target.value)}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-      />
-      {open && suggestions.length > 0 && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-popover border border-border rounded-md shadow-md min-w-[180px] py-1">
-          {suggestions.map((s) => (
-            <button
-              key={s}
-              className="w-full text-left text-xs px-3 py-1.5 hover:bg-accent hover:text-accent-foreground"
-              onMouseDown={(e) => { e.preventDefault(); handleSelect(s); }}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
-      <button
-        onClick={() => onDelete(id)}
-        className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 flex-shrink-0"
-        title="Delete this row"
-      >
-        <Trash2 className="w-3 h-3" />
-      </button>
-    </div>
-  );
-}
-
 // ─── Spec Form for a single style ─────────────────────────────────────────────
 
 interface CustomRowData {
@@ -975,7 +710,7 @@ interface SpecFormProps {
   editableCustomSkus: Record<string, { id: number; colour: string; leather: string | null | undefined }>;
   onEditSku: (id: number, colour: string, leather: string) => void;
   onAddCustomRow: (section: string, afterSortOrder?: number) => void;
-  onUpdateCustomRow: (id: number, title: string, value: string) => void;
+  onRenameCustomRow: (id: number, title: string) => void;
   onUpdateCustomRowForColour: (representativeId: number, title: string, colour: string, newValue: string, currentSharedValue: string, section: string, sortOrder: number) => void;
   onDeleteCustomRow: (id: number) => void;
   onReorderCustomRows: (section: string, orderedIds: number[]) => void;
@@ -1321,7 +1056,7 @@ type UnifiedRow =
 
 export function SpecForm({
   entry, toeCapsPerColour, specMeta, specs, allDropdownOptions, allDropdownOptionIds, allColourLeatherOptions, customRows,
-  onUpsert, onBulkAutoFill, onBulkCopy, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption, onMetaChange, onAddSku, editableCustomSkus, onEditSku, onAddCustomRow, onUpdateCustomRow, onUpdateCustomRowForColour, onDeleteCustomRow, onReorderCustomRows,
+  onUpsert, onBulkAutoFill, onBulkCopy, onAddDropdownOption, onDeleteDropdownOption, onEditDropdownOption, onMetaChange, onAddSku, editableCustomSkus, onEditSku, onAddCustomRow, onRenameCustomRow, onUpdateCustomRowForColour, onDeleteCustomRow, onReorderCustomRows,
   dbCategory, allCustomRowTitles, allStyleEntries,
   onHideColumn, hiddenColumns, showHiddenColumns, onShowColumn, onResetColour,
   tableScrollRef: externalTableScrollRef,
@@ -1896,7 +1631,7 @@ export function SpecForm({
                       rowGroup={uRow.rowGroup}
                       colours={entry.colours}
                       colourLabels={entry.colourLabels}
-                      onUpdate={onUpdateCustomRow}
+                      onRename={onRenameCustomRow}
                       onUpdateForColour={onUpdateCustomRowForColour}
                       onDelete={(id) => {
                         void saveRowKeys(hideSpecRow(getCurrentRowKeys(), `c:${id}`)).catch(() => undefined);
@@ -1918,7 +1653,13 @@ export function SpecForm({
               <td colSpan={entry.colours.length + 1} className="px-3 py-2">
                 <div className="flex items-center gap-4">
                   <button
-                    onClick={() => onAddCustomRow("components")}
+                    onClick={() => {
+                      // A new empty component must stay visible while its name and
+                      // first colour value are being entered. Explicit row deletes
+                      // remain excluded by the layout, even with empty rows shown.
+                      setHideEmptyRows(false);
+                      onAddCustomRow("components");
+                    }}
                     className="flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-amber-600 transition-colors"
                   >
                     <Plus className="w-3 h-3" />
@@ -2579,39 +2320,32 @@ export default function SpecsTab({}: SpecsTabProps) {
       .filter((r) => r.style === selectedStyle);
   }, [cancelledSkusRaw, selectedStyle]);
 
-   const upsertCustomRowMutation = trpc.specCustomRow.upsert.useMutation({
-    onMutate: async (updated) => {
-      if (!selectedStyle) return;
-      await utils.specCustomRow.getByStyle.cancel({ style: updated.style });
-      const prev = utils.specCustomRow.getByStyle.getData({ style: updated.style });
-      utils.specCustomRow.getByStyle.setData({ style: updated.style }, (old) =>
-        old
-          ? old.map((r) =>
-              r.id === updated.id
-                ? { ...r, title: updated.title, value: updated.value ?? r.value, colour: updated.colour ?? r.colour }
-                : r
-            )
-          : old
+  const [customRowIdentityTracker] = useState(createSpecCustomRowIdentityTracker);
+  const renameCustomRowMutation = trpc.specCustomRow.rename.useMutation({
+    onSuccess: (rows, vars) => {
+      const renamedIds = new Set(rows.map(row => row.id));
+      utils.specCustomRow.getByStyle.setData({ style: vars.style }, old =>
+        old?.map(row => renamedIds.has(row.id) ? { ...row, title: vars.title } : row)
       );
-      return { prev };
     },
-    onError: (_err, updated, ctx) => {
-      if (ctx?.prev !== undefined) utils.specCustomRow.getByStyle.setData({ style: updated.style }, ctx.prev);
-      toast.error("Failed to save custom row");
-    },
-    onSettled: (_data, _err, updated) => {
-      utils.specCustomRow.getByStyle.invalidate({ style: updated.style });
+    onSettled: (_data, _error, vars) => {
+      utils.specCustomRow.getByStyle.invalidate({ style: vars.style });
     },
   });
-  // Track the temp id used in the optimistic update so we can swap it after server responds
-  const pendingAddTempIdRef = useRef<number | null>(null);
+  function handleRenameCustomRow(id: number, title: string) {
+    if (!selectedStyle) return;
+    const style = selectedStyle;
+    void enqueueSpecRowSave(style, async () => {
+      const savedId = await customRowIdentityTracker.resolveId(id);
+      await renameCustomRowMutation.mutateAsync({ id: savedId, style, title });
+    }).catch(error => toast.error(`Could not save component name: ${error.message}`));
+  }
   const addCustomRowMutation = trpc.specCustomRow.upsert.useMutation({
     onMutate: async (newRow) => {
       // Optimistic update: immediately add a placeholder row to the cache
       await utils.specCustomRow.getByStyle.cancel({ style: newRow.style });
       const prev = utils.specCustomRow.getByStyle.getData({ style: newRow.style });
-      const tempId = -Date.now();
-      pendingAddTempIdRef.current = tempId;
+      const tempId = customRowIdentityTracker.create();
       utils.specCustomRow.getByStyle.setData({ style: newRow.style }, (old) => [
         ...(old ?? []),
         { id: tempId, style: newRow.style, colour: newRow.colour ?? "__all__", section: newRow.section, title: newRow.title, value: newRow.value ?? "", sortOrder: newRow.sortOrder ?? 0, createdAt: new Date(), updatedAt: new Date() },
@@ -2622,11 +2356,18 @@ export default function SpecsTab({}: SpecsTabProps) {
       // Swap the temp key for the real key in SpecForm's localRowKeys so dragged
       // position is preserved after the server responds with the actual row id.
       const tempId = ctx?.tempId;
+      if (tempId !== undefined && realRow?.id) {
+        customRowIdentityTracker.saved(tempId, realRow.id);
+        utils.specCustomRow.getByStyle.setData({ style: vars.style }, old =>
+          old?.map(row => row.id === tempId ? realRow : row)
+        );
+      }
       if (vars.style === selectedStyle && tempId !== undefined && realRow?.id && realRow.id !== tempId) {
         swapLocalRowKey(`c:${tempId}`, `c:${realRow.id}`);
       }
     },
     onError: (_err, newRow, ctx) => {
+      if (ctx?.tempId !== undefined) customRowIdentityTracker.failed(ctx.tempId, new Error("New component could not be added"));
       if (ctx?.prev !== undefined) utils.specCustomRow.getByStyle.setData({ style: newRow.style }, ctx.prev);
       toast.error("Failed to add custom row");
     },
@@ -2656,9 +2397,6 @@ export default function SpecsTab({}: SpecsTabProps) {
     },
   });
 
-  // Debounced custom row title/value save
-  const customRowTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
-
   function handleAddCustomRow(section: string, afterSortOrder?: number) {
     if (!selectedStyle) return;
     const sectionRows = rawCustomRows.filter((r: any) => r.section === section);
@@ -2680,25 +2418,6 @@ export default function SpecsTab({}: SpecsTabProps) {
     });
   }
 
-  function handleUpdateCustomRow(id: number, title: string, value: string) {
-    if (!selectedStyle) return;
-    // Optimistic update in the cache via refetch after debounce
-    if (customRowTimers.current[id]) clearTimeout(customRowTimers.current[id]);
-    customRowTimers.current[id] = setTimeout(() => {
-      const row = rawCustomRows.find((r: any) => r.id === id);
-      if (!row) return;
-      upsertCustomRowMutation.mutate({
-        id,
-        style: (row as any).style,
-        colour: normalizeStoredSpecColourKey((row as any).colour),
-        section: (row as any).section,
-        title,
-        value,
-        sortOrder: (row as any).sortOrder,
-      });
-    }, 600);
-  }
-
   function handleDeleteCustomRow(id: number) {
     if (!selectedStyle) return;
     // Find the representative row to get its section and title
@@ -2710,18 +2429,11 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   const upsertForColourMutation = trpc.specCustomRow.upsertForColour.useMutation({
     onSuccess: (result, vars) => {
-      // If the __all__ row was exploded into per-colour rows, the old row id is gone.
-      // Update the saved rowKeys to replace the old c:{allRowId} with c:{newRepId} so the
-      // export can still find the custom row.
-      if (result.wasExploded && result.newRepId !== null && result.newRepId !== vars.allRowId && vars.style === selectedStyle) {
-        const oldKey = `c:${vars.allRowId}`;
-        const newKey = `c:${result.newRepId}`;
-        // The form's one layout writer also preserves hidden markers and saves the new key.
-        swapLocalRowKey(oldKey, newKey);
-      }
-    },
-    onSettled: () => {
-      if (selectedStyle) utils.specCustomRow.getByStyle.invalidate({ style: selectedStyle });
+      utils.specCustomRow.getByStyle.setData({ style: vars.style }, old => {
+        const changedIds = new Set(result.rows.map(row => row.id));
+        return [...(old ?? []).filter(row => !changedIds.has(row.id)), ...result.rows];
+      });
+      utils.specCustomRow.getByStyle.invalidate({ style: vars.style });
     },
     onError: () => toast.error("Failed to save spec value"),
   });
@@ -2751,22 +2463,21 @@ export default function SpecsTab({}: SpecsTabProps) {
   ) {
     if (!selectedStyle) return;
     // Use section and sortOrder passed directly from the component (avoids rawCustomRows timing issues)
-    upsertForColourMutation.mutate({
-      allRowId: representativeId,
-      style: selectedStyle,
+    const style = selectedStyle;
+    const allColours = (selectedEntryRaw?.colourLabels ?? selectedEntry?.colourLabels ?? []).map(normalizeStoredSpecColourKey);
+    void enqueueSpecRowSave(style, async () => upsertForColourMutation.mutateAsync({
+      allRowId: await customRowIdentityTracker.resolveId(representativeId),
+      style,
       section,
       title,
       sortOrder,
       targetColour: normalizeStoredSpecColourKey(colour),
       newValue,
       currentSharedValue,
-      // IMPORTANT: use the UNFILTERED colourLabels list so that hidden columns are still included
-      // in the per-colour row explosion. Using selectedEntry.colourLabels (filtered) would omit
-      // hidden colours and cause their values to never be saved.
-      // We use colourLabels (e.g. "BLACK CAPRI") not raw colours (e.g. "BLACK") because
-      // spec values are stored keyed by the full colour label.
-      allColours: (selectedEntryRaw?.colourLabels ?? selectedEntry?.colourLabels ?? []).map(normalizeStoredSpecColourKey),
-    });
+      // Retained for API compatibility. Persist one exact override, not a conversion
+      // of shared rows into only the colours that happen to be visible this season.
+      allColours,
+    })).catch(error => toast.error(`Could not save component value: ${error.message}`));
   }
 
   const batchReorderMutation = trpc.specCustomRow.batchReorderCustomRows.useMutation({
@@ -3693,7 +3404,7 @@ export default function SpecsTab({}: SpecsTabProps) {
               onEditSku={handleEditSku}
               onMetaChange={handleMetaChange}
               onAddCustomRow={handleAddCustomRow}
-              onUpdateCustomRow={handleUpdateCustomRow}
+              onRenameCustomRow={handleRenameCustomRow}
               onUpdateCustomRowForColour={handleUpdateCustomRowForColour}
               onDeleteCustomRow={handleDeleteCustomRow}
               onReorderCustomRows={handleReorderCustomRows}
