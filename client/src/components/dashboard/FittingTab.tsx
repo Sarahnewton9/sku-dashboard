@@ -19,6 +19,7 @@ import { useSeason } from "@/contexts/SeasonContext";
 import { getNewLastsForSeason } from "@shared/const";
 import { getSeasonDisplayLabel, getSeasonFileLabel } from "@shared/seasonLabel";
 import { getW27NewPatternStyleNames, isEligibleFittingStyle } from "@shared/fittingStyleScope";
+import { getRequestedFittingSkuLabels } from "@shared/fittingSkuRequests";
 import { getSameDayFittingDefaults, getSydneyBusinessDate } from "@shared/fittingSessionDefaults";
 import { countFittingEmailImages, selectFittingEmailSessions, selectLatestFittingEmailImageSession } from "@shared/fittingEmailReport";
 import { EmailExportDialog } from "./EmailExportDialog";
@@ -58,6 +59,7 @@ interface StyleEntry {
   isAllNew: boolean;
   newSKUs: number;
   totalSKUs: number;
+  requestedSkuLabels?: string[];
 }
 
 interface FittingSession {
@@ -540,6 +542,11 @@ function StyleFitRow({
             <span className="text-xs text-muted-foreground">{entry.last}</span>
             <span className="text-xs text-muted-foreground">·</span>
             <span className="text-xs text-muted-foreground">{entry.category}</span>
+            {entry.requestedSkuLabels?.map((label) => (
+              <Badge key={label} variant="outline" className="text-[10px] px-1.5 py-0">
+                {label}
+              </Badge>
+            ))}
             {entry.isAllNew && (
               <Badge className="text-[10px] px-1.5 py-0 bg-emerald-100 text-emerald-700 border-emerald-200">All New</Badge>
             )}
@@ -1774,8 +1781,14 @@ export function FittingTab() {
   );
 
     // Live merged styles (includes custom SKUs from DB)
-  const { mergedStyles, customStyleRows } = useCustomSkus();
+  const { mergedStyles, mergedRawSkus, customStyleRows } = useCustomSkus();
   const { season } = useSeason();
+  // Explicitly requested material checks are exceptions, not new patterns.
+  // Resolve against the active physical range so deleted siblings cannot enter.
+  const requestedFittingSkus = useMemo(
+    () => getRequestedFittingSkuLabels(season, mergedRawSkus),
+    [season, mergedRawSkus],
+  );
   const { data: ss26CustomStyleRows = [] } = trpc.customStyle.getAll.useQuery(
     { season: "SS26" },
     { enabled: season === "W27", staleTime: 300_000 },
@@ -1831,11 +1844,23 @@ export function FittingTab() {
         .filter((s) => !cancelledStyleSet.has(s.style));
     // Merge, deduplicate (custom style wins if same name)
     const seen = new Set(customEntries.map((s) => s.style));
-    return [
+    const normalEntries = [
       ...customEntries,
       ...staticEntries.filter((s) => !seen.has(s.style)),
-    ].sort((a, b) => a.last.localeCompare(b.last) || a.style.localeCompare(b.style));
-  }, [mergedStyles, cancelledStyleSet, runOnLastsSet, season, seasonNewLasts, w27NewPatternStyleNames]);
+    ];
+    const normalStyleNames = new Set(normalEntries.map((entry) => entry.style));
+    const requestedEntries: StyleEntry[] = allStyles
+      .filter((entry) => requestedFittingSkus.has(entry.style) && !normalStyleNames.has(entry.style)
+        && !cancelledStyleSet.has(entry.style))
+      .map((entry) => ({
+        style: entry.style, last: entry.last ?? "", category: entry.category ?? "",
+        imageUrl: entry.imageUrl, hasNew: entry.hasNew, isAllNew: entry.isAllNew,
+        newSKUs: entry.newSKUs, totalSKUs: entry.totalSKUs,
+        requestedSkuLabels: requestedFittingSkus.get(entry.style),
+      }));
+    return [...normalEntries, ...requestedEntries]
+      .sort((a, b) => a.last.localeCompare(b.last) || a.style.localeCompare(b.style));
+  }, [mergedStyles, cancelledStyleSet, runOnLastsSet, season, seasonNewLasts, w27NewPatternStyleNames, requestedFittingSkus]);
 
   // Data queries
   const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery(undefined, { staleTime: 30_000 });
@@ -1899,7 +1924,8 @@ export function FittingTab() {
   // Apply search filter
   const q = search.trim().toLowerCase();
   const filteredActive = q
-    ? filteredByApproval.filter((s) => s.style.toLowerCase().includes(q) || s.last.toLowerCase().includes(q) || s.category.toLowerCase().includes(q))
+    ? filteredByApproval.filter((s) => s.style.toLowerCase().includes(q) || s.last.toLowerCase().includes(q) || s.category.toLowerCase().includes(q)
+      || s.requestedSkuLabels?.some((label) => label.toLowerCase().includes(q)))
     : filteredByApproval;
 
   // Group by last
@@ -2054,7 +2080,7 @@ export function FittingTab() {
 
       // Expand to one row per colour — shared fit data on every row, notes/models on first row only
       // Exclude cancelled individual SKUs (cancelled by colour)
-      const colours = (styleColoursMap[s.style] ?? [""]).filter(
+      const colours = s.requestedSkuLabels ?? (styleColoursMap[s.style] ?? [""]).filter(
         (colour) => !cancelledSkuSet.has(`${s.style}|${colour}`)
       );
       colours.forEach((colour, colIdx) => {
