@@ -10,6 +10,15 @@ const state = vi.hoisted(() => ({
   inserted: undefined as any,
 }));
 vi.mock("drizzle-orm/mysql2", () => ({ drizzle: () => ({
+  transaction: async (callback: any) => callback({
+    select: () => ({ from: (table: any) => ({ where: () => ({ for: async () =>
+      table[Symbol.for("drizzle:Name")] === "sku_meta" && state.existing ? [state.existing] : [],
+    }) }) }),
+    update: () => ({ set: (values: any) => ({ where: async (condition: any) => {
+      state.updateSet = values; state.updateWhere = condition;
+    } }) }),
+    insert: () => ({ values: async (values: any) => { state.inserted = values; } }),
+  }),
   select: () => ({ from: () => ({ where: (condition: any) => {
     state.selectWhere = condition;
     return { limit: async () => state.selectQueue.length ? state.selectQueue.shift() : state.existing ? [state.existing] : [] };

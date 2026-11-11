@@ -10,6 +10,7 @@ import { getHandbagSkuEditOutcome } from "../shared/handbagSkuEdit";
 import { getSpecTemplateComponentKeys } from "../shared/specCompletionQueue";
 import { isW27ExistingCarryOverLast } from "../shared/w27SandalVisibility";
 import { normalizeSpecColourPart, normalizeStoredSpecColourKey } from "../shared/specColourKey";
+import { identityKey, loadStyleIdentities, selectStaticIdentity, rejectActiveIdentityCollision, materializeRenamedSkuSpecs, type IdentityDbScope } from "./skuIdentityPreservation";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -173,9 +174,41 @@ export async function upsertSkuMeta(data: {
   leatherOverride?: string | null;
   colour2?: string | null;
   leather2?: string | null;
+  sourceColour2?: string | null;
+  sourceLeather2?: string | null;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  // Leave the existing exact receipt update path below untouched. Upper 2 in
+  // that path selects a receipt; in an identity edit it is the NEXT upper.
+  const receiptOnly = data.sampleStatus !== undefined && data.colourOverride === undefined && data.leatherOverride === undefined;
+  if (!receiptOnly && (data.colourOverride !== undefined || data.leatherOverride !== undefined || data.colour2 !== undefined || data.leather2 !== undefined)) {
+    await db.transaction(async tx => {
+      const library = await loadStyleIdentities(tx, data.style);
+      const source = selectStaticIdentity(library, data);
+      const rename = getStaticSkuBuyRename(data, {
+        ...source.metadata,
+        colourOverride: source.previous.colour,
+        leatherOverride: source.previous.leather,
+        colour2: source.previous.colour2,
+        leather2: source.previous.leather2,
+      });
+      if (rename) {
+        await rejectActiveIdentityCollision(tx, library, rename.next, { sourceMetaId: source.metadata?.id,
+          originalStatic: { style: data.style, colour: data.colour, leather: data.leather,
+            colour2: source.previous.colour2, leather2: source.previous.leather2 } });
+        await materializeRenamedSkuSpecs(tx, rename.previous, rename.next);
+      }
+      const { sourceColour2: _sourceColour2, sourceLeather2: _sourceLeather2, style, colour, leather, ...updates } = data;
+      const updateSet = Object.fromEntries(Object.entries(updates).filter(([, value]) => value !== undefined));
+      if (source.metadata) await tx.update(skuMeta).set(updateSet).where(eq(skuMeta.id, source.metadata.id));
+      else await tx.insert(skuMeta).values({ style, colour, leather, ...updateSet,
+        colour2: data.colour2 === undefined ? source.previous.colour2 : data.colour2,
+        leather2: data.leather2 === undefined ? source.previous.leather2 : data.leather2 });
+      if (rename) await rekeyBuySessionSkuIdentity(rename.previous, rename.next, undefined, tx);
+    });
+    return;
+  }
   // A sample status is a physical-SKU attribute. When Upper 2 is supplied,
   // resolve only that exact construction instead of updating a sibling that
   // shares Upper 1. Colour corrections still use the legacy primary lookup so
@@ -460,8 +493,8 @@ export async function getAllSessionQtys(season = "SS26"): Promise<Record<string,
  * identity already exists in a session, quantities are merged market by market
  * rather than overwritten.
  */
-export async function rekeyBuySessionSkuIdentity(previous: BuySkuIdentity, next: BuySkuIdentity, season?: string): Promise<{ moved: number; merged: number }> {
-  const db = await getDb();
+export async function rekeyBuySessionSkuIdentity(previous: BuySkuIdentity, next: BuySkuIdentity, season?: string, scope?: IdentityDbScope): Promise<{ moved: number; merged: number }> {
+  const db = scope ?? await getDb();
   if (!db) throw new Error("Database not available");
 
   const before = {
@@ -500,7 +533,7 @@ export async function rekeyBuySessionSkuIdentity(previous: BuySkuIdentity, next:
 
   let moved = 0;
   let merged = 0;
-  await db.transaction(async (tx) => {
+  const apply = async (tx: IdentityDbScope) => {
     for (const source of sourceRows) {
       const target = await tx.select().from(buySessionItems).where(and(
         eq(buySessionItems.sessionId, source.sessionId),
@@ -522,7 +555,9 @@ export async function rekeyBuySessionSkuIdentity(previous: BuySkuIdentity, next:
         moved++;
       }
     }
-  });
+  };
+  if (scope) await apply(scope);
+  else await (db as NonNullable<Awaited<ReturnType<typeof getDb>>>).transaction(apply);
   return { moved, merged };
 }
 
@@ -1302,48 +1337,36 @@ export async function deleteCustomSku(id: number): Promise<void> {
 export async function updateCustomSku(id: number, colour: string, leather: string, colour2?: string, leather2?: string): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const existing = await db.select().from(customSkus).where(eq(customSkus.id, id)).limit(1);
-  const current = existing[0];
-  if (!current) throw new Error("SKU not found");
-  const next = {
-    style: current.style,
-    colour: normalizeSkuIdentityPart(colour),
-    leather: normalizeSkuIdentityPart(leather),
-    colour2: normalizeSkuIdentityPart(colour2),
-    leather2: normalizeSkuIdentityPart(leather2),
-  };
-  const buyRename = getCustomSkuBuyRename(current, next);
-  await db.update(customSkus).set({
-    colour: next.colour,
-    leather: next.leather,
-    colour2: next.colour2 || null,
-    leather2: next.leather2 || null,
-  }).where(eq(customSkus.id, id));
-  if (buyRename) await rekeyBuySessionSkuIdentity(buyRename.previous, buyRename.next, current.season);
-
-  // SS26 custom colourways are mirrored as W27 carry-over rows. Keep that
-  // mirror and its recorded W27 buy quantities aligned when the source label
-  // is corrected later.
-  const carryOverSeason = getCustomSkuCarryOverSeason(current.season);
-  if (!carryOverSeason) return;
-  const carryRows = await db.select().from(customSkus).where(and(
-    eq(customSkus.style, current.style),
-    eq(customSkus.colour, current.colour),
-    eq(customSkus.leather, current.leather),
-    or(eq(customSkus.colour2, current.colour2 ?? ""), isNull(customSkus.colour2)),
-    or(eq(customSkus.leather2, current.leather2 ?? ""), isNull(customSkus.leather2)),
-    eq(customSkus.season, carryOverSeason),
-  ));
-  for (const carryRow of carryRows) {
-    await db.update(customSkus).set({
-      colour: next.colour,
-      leather: next.leather,
-      colour2: next.colour2 || null,
-      leather2: next.leather2 || null,
-    }).where(eq(customSkus.id, carryRow.id));
-    const carryRename = getCustomSkuBuyRename(carryRow, next);
-    if (carryRename) await rekeyBuySessionSkuIdentity(carryRename.previous, carryRename.next, carryOverSeason);
-  }
+  await db.transaction(async tx => {
+    const [current] = await tx.select().from(customSkus).where(eq(customSkus.id, id)).for("update");
+    if (!current) throw new Error("SKU not found");
+    const next = {
+      style: current.style,
+      colour: normalizeSkuIdentityPart(colour),
+      leather: normalizeSkuIdentityPart(leather),
+      colour2: normalizeSkuIdentityPart(colour2 === undefined ? current.colour2 : colour2),
+      leather2: normalizeSkuIdentityPart(leather2 === undefined ? current.leather2 : leather2),
+    };
+    const rename = getCustomSkuBuyRename(current, next);
+    if (!rename) return;
+    const library = await loadStyleIdentities(tx, current.style);
+    const carryOverSeason = getCustomSkuCarryOverSeason(current.season);
+    // Composite normalization treats NULL/blank as equivalent only when the
+    // source itself has no secondary upper. A populated upper never matches NULL.
+    const carryRows = carryOverSeason ? library.custom.filter(row => row.season === carryOverSeason && identityKey(row) === identityKey(current)) : [];
+    const excludedCustomIds = [id, ...carryRows.map(row => row.id)];
+    await rejectActiveIdentityCollision(tx, library, next, { season: current.season, excludedCustomIds });
+    if (carryRows.length) await rejectActiveIdentityCollision(tx, library, next, { season: carryOverSeason!, excludedCustomIds });
+    await materializeRenamedSkuSpecs(tx, rename.previous, rename.next);
+    for (const row of [current, ...carryRows]) {
+      await tx.update(customSkus).set({ colour: next.colour, leather: next.leather,
+        ...(colour2 === undefined ? {} : { colour2: next.colour2 || null }),
+        ...(leather2 === undefined ? {} : { leather2: next.leather2 || null }),
+      }).where(eq(customSkus.id, row.id));
+    }
+    await rekeyBuySessionSkuIdentity(rename.previous, rename.next, current.season, tx);
+    if (carryRows.length) await rekeyBuySessionSkuIdentity(rename.previous, rename.next, carryOverSeason!, tx);
+  });
 }
 
 // ─── Custom Styles ────────────────────────────────────────────────────────────

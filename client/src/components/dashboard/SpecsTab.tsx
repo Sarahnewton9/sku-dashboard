@@ -112,11 +112,26 @@ function FreeTypeCell({ component, value, savedOptions, savedOptionIds, onSave, 
   const [editDraft, setEditDraft] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const draftRef = useRef(value);
+  const baselineRef = useRef(value);
+  const dirtyRef = useRef(false);
+  const saveRef = useRef(onSave);
+  saveRef.current = onSave;
+  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Prevent double-commit: when a suggestion is clicked, handleSelect commits immediately;
   // the subsequent blur must not commit again with the stale draft.
   const committedRef = useRef(false);
 
-  useEffect(() => { setDraft(value); }, [value]);
+  useEffect(() => {
+    if (!dirtyRef.current) {
+      draftRef.current = value;
+      baselineRef.current = value;
+      setDraft(value);
+    }
+  }, [value]);
+  useEffect(() => () => {
+    if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+  }, []);
 
   // Auto-resize textarea height to fit content
   useEffect(() => {
@@ -133,7 +148,10 @@ function FreeTypeCell({ component, value, savedOptions, savedOptionIds, onSave, 
 
   function commit(val: string) {
     const trimmed = val.trim();
-    onSave(trimmed);
+    if (trimmed !== baselineRef.current) saveRef.current(trimmed);
+    baselineRef.current = trimmed;
+    draftRef.current = trimmed;
+    dirtyRef.current = false;
     setDraft(trimmed);
     setShowSuggestions(false);
   }
@@ -147,13 +165,13 @@ function FreeTypeCell({ component, value, savedOptions, savedOptionIds, onSave, 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Tab" && !e.shiftKey && cellId) {
       // Move focus to the next row's cell in the same column
-      const [, colPart] = cellId.split(":");
+      const colPart = cellId.split(":").pop();
       const colIdx = parseInt(colPart ?? "0", 10);
       const allCells = Array.from(
         document.querySelectorAll<HTMLTextAreaElement>(`[data-spec-cell]`)
       ).filter((el) => {
         const parts = el.getAttribute("data-spec-cell")?.split(":") ?? [];
-        return parseInt(parts[1] ?? "0", 10) === colIdx;
+        return parseInt(parts[parts.length - 1] ?? "0", 10) === colIdx;
       });
       const currentIdx = allCells.indexOf(inputRef.current!);
       const nextCell = allCells[currentIdx + 1];
@@ -174,15 +192,25 @@ function FreeTypeCell({ component, value, savedOptions, savedOptionIds, onSave, 
       return;
     }
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); committedRef.current = true; commit(draft); inputRef.current?.blur(); }
-    if (e.key === "Escape") { setDraft(value); setShowSuggestions(false); inputRef.current?.blur(); }
+    if (e.key === "Escape") {
+      committedRef.current = true;
+      dirtyRef.current = false;
+      baselineRef.current = value;
+      draftRef.current = value;
+      setDraft(value);
+      setShowSuggestions(false);
+      inputRef.current?.blur();
+    }
   }
 
   function handleBlur(e: React.FocusEvent<HTMLTextAreaElement>) {
     // Delay so clicks on suggestions register first
-    setTimeout(() => {
+    if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+    blurTimerRef.current = setTimeout(() => {
+      blurTimerRef.current = null;
       if (!containerRef.current?.contains(document.activeElement)) {
-        if (!committedRef.current) {
-          commit(draft);
+        if (!committedRef.current && dirtyRef.current) {
+          commit(draftRef.current);
         }
         committedRef.current = false;
         setShowSuggestions(false);
@@ -197,8 +225,18 @@ function FreeTypeCell({ component, value, savedOptions, savedOptionIds, onSave, 
         value={draft}
         rows={1}
         data-spec-cell={cellId}
-        onChange={(e) => { setDraft(e.target.value); setShowSuggestions(true); }}
-        onFocus={() => setShowSuggestions(true)}
+        onChange={(e) => {
+          draftRef.current = e.target.value;
+          dirtyRef.current = e.target.value !== baselineRef.current;
+          setDraft(e.target.value);
+          setShowSuggestions(true);
+        }}
+        onFocus={() => {
+          if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+          blurTimerRef.current = null;
+          committedRef.current = false;
+          setShowSuggestions(true);
+        }}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder="— type —"
@@ -2580,15 +2618,33 @@ export default function SpecsTab({}: SpecsTabProps) {
     if (!selectedStyle) return;
     addCustomSkuMutation.mutate({ style: selectedStyle, colour, leather, season });
   }
+  const pendingSkuCorrections = useRef(new Set<number>());
   const updateCustomSkuMutation = trpc.customSku.update.useMutation({
-    onSuccess: () => {
-      utils.customSku.getAll.invalidate();
-      toast.success('Colour updated');
-    },
-    onError: () => toast.error('Failed to update colour'),
+    onError: (error) => toast.error(`Could not correct Upper 1: ${error.message}`),
   });
   function handleEditSku(id: number, colour: string, leather: string) {
-    updateCustomSkuMutation.mutate({ id, colour, leather });
+    if (!selectedStyle || pendingSkuCorrections.current.has(id)) return;
+    if (!colour.trim() || !leather.trim()) {
+      toast.error('Enter both Upper 1 colour and leather');
+      return;
+    }
+    const style = selectedStyle;
+    pendingSkuCorrections.current.add(id);
+    // A correction is not Copy specs: save the old column's queued edits first,
+    // then load its preserved cells before switching the range to the new label.
+    void enqueueSpecRowSave(style, async () => {
+      await updateCustomSkuMutation.mutateAsync({ id, colour, leather });
+      await Promise.all([
+        utils.specs.getForStyle.invalidate({ style }),
+        utils.specCustomRow.getByStyle.invalidate({ style }),
+        utils.specHiddenColumns.getHidden.invalidate({ style, season }),
+        utils.buy.getAllSessionQtys.invalidate(),
+        utils.buy.getSessionTotals.invalidate(),
+        utils.buy.getItems.invalidate(),
+      ]);
+      await utils.customSku.getAll.invalidate();
+      toast.success('Upper 1 corrected — saved spec retained');
+    }).catch(() => undefined).finally(() => pendingSkuCorrections.current.delete(id));
   }
 
   const addDropdownMutation = trpc.specs.addDropdownOption.useMutation({
@@ -2621,18 +2677,16 @@ export default function SpecsTab({}: SpecsTabProps) {
 
   function handleUpsert(colour: string, component: string, value: string) {
     if (!selectedStyle) return;
+    const style = selectedStyle;
     // Pass colours + rowKeys so server can auto-check completion status
     const colours = (selectedEntry?.colours ?? []).map(normalizeStoredSpecColourKey);
     const rowKeys = getCurrentStyleRowKeys() ?? exportRowOrderData?.rowKeys ?? [];
-    upsertMutation.mutate(
-      { style: selectedStyle, colour: normalizeStoredSpecColourKey(colour), component, value, colours, rowKeys, season },
-      {
-        onSettled: () => {
-          // Refresh status after save (server may have auto-promoted to complete)
-          refetchMeta();
-        },
-      }
-    );
+    void enqueueSpecRowSave(style, async () => {
+      await upsertMutation.mutateAsync(
+        { style, colour: normalizeStoredSpecColourKey(colour), component, value, colours, rowKeys, season },
+      );
+      await utils.specs.getMeta.invalidate({ style, season });
+    }).catch(() => undefined);
   }
   // Batch auto-fill: sends all auto-fill rows in a single bulk upsert to avoid 502s from simultaneous mutations
   function handleBulkAutoFill(rows: Array<{ style: string; colour: string; component: string; value: string }>) {

@@ -308,6 +308,8 @@ export const appRouter = router({
         leatherOverride: z.string().nullable().optional(),
         colour2: z.string().nullable().optional(),
         leather2: z.string().nullable().optional(),
+        sourceColour2: z.string().nullable().optional(),
+        sourceLeather2: z.string().nullable().optional(),
       }))
       .mutation(async ({ input }) => {
         await upsertSkuMeta(input);

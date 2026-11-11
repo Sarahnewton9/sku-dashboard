@@ -104,6 +104,8 @@ export default function StylesTab() {
     style: string;
     sourceColour: string;
     sourceLeather: string;
+    sourceColour2: string;
+    sourceLeather2: string;
     colourDraft: string;
     leatherDraft: string;
     hasUpper2: boolean;
@@ -360,6 +362,11 @@ export default function StylesTab() {
   const updateCustomSkuMutation = trpc.customSku.update.useMutation({
     onSuccess: async () => {
       await Promise.all([
+        utils.specs.getForStyle.invalidate(),
+        utils.specCustomRow.getByStyle.invalidate(),
+        utils.specHiddenColumns.getHidden.invalidate(),
+      ]);
+      await Promise.all([
         utils.customSku.getAll.invalidate({ season }),
         utils.buy.getAllSessionQtys.invalidate({ season }),
         utils.buy.getSessionTotals.invalidate({ season }),
@@ -374,6 +381,11 @@ export default function StylesTab() {
 
   const updateStaticColourMutation = trpc.sku.update.useMutation({
     onSuccess: async () => {
+      await Promise.all([
+        utils.specs.getForStyle.invalidate(),
+        utils.specCustomRow.getByStyle.invalidate(),
+        utils.specHiddenColumns.getHidden.invalidate(),
+      ]);
       await Promise.all([
         utils.buy.getAllSessionQtys.invalidate({ season }),
         utils.buy.getSessionTotals.invalidate({ season }),
@@ -405,8 +417,8 @@ export default function StylesTab() {
         id: colourEdit.customId,
         colour: nextColour,
         leather: nextLeather,
-        colour2: colourEdit.hasUpper2 ? nextColour2 : undefined,
-        leather2: colourEdit.hasUpper2 ? nextLeather2 : undefined,
+        colour2: colourEdit.hasUpper2 ? nextColour2 : "",
+        leather2: colourEdit.hasUpper2 ? nextLeather2 : "",
       });
       return;
     }
@@ -416,6 +428,8 @@ export default function StylesTab() {
       leather: colourEdit.sourceLeather,
       colourOverride: nextColour,
       leatherOverride: nextLeather,
+      sourceColour2: colourEdit.sourceColour2,
+      sourceLeather2: colourEdit.sourceLeather2,
       colour2: colourEdit.hasUpper2 ? nextColour2 : null,
       leather2: colourEdit.hasUpper2 ? nextLeather2 : null,
     });
@@ -2174,7 +2188,7 @@ export default function StylesTab() {
                                               <button
                                                 onClick={(event) => {
                                                   event.stopPropagation();
-                                                  setColourEdit({ rowKey: colourEditKey, customId: (sku as any)._customId, style: sku.style, sourceColour, sourceLeather, colourDraft: sku.colour, leatherDraft: sku.leather, hasUpper2: Boolean(currentColour2 || currentLeather2), colour2Draft: currentColour2, leather2Draft: currentLeather2 });
+                                                  setColourEdit({ rowKey: colourEditKey, customId: (sku as any)._customId, style: sku.style, sourceColour, sourceLeather, sourceColour2: currentColour2, sourceLeather2: currentLeather2, colourDraft: sku.colour, leatherDraft: sku.leather, hasUpper2: Boolean(currentColour2 || currentLeather2), colour2Draft: currentColour2, leather2Draft: currentLeather2 });
                                                 }}
                                                 className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted flex-shrink-0"
                                                 title="Edit Upper 1 and Upper 2"
