@@ -691,29 +691,34 @@ export async function getAllLastApprovals(season = "SS26") {
 
 export async function upsertLastApproval(
   lastName: string,
-  status: "approved" | "waiting_revised",
+  status?: "approved" | "waiting_revised",
   notes?: string | null,
   size65Approved?: boolean,
   size7Approved?: boolean,
   size95Approved?: boolean,
   proceedWithSamples?: boolean,
   season = "SS26",
+  size55Approved?: boolean,
+  size6Approved?: boolean,
+  size9Approved?: boolean,
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const values: Record<string, unknown> = { lastName, season, status, notes: notes ?? null };
+  // Only supplied fields belong in the update; schema defaults apply to new rows.
+  // Keep legacy positional arguments unchanged, including the existing size 7.
+  const values: typeof lastApprovals.$inferInsert = { lastName, season };
+  if (status !== undefined) values.status = status;
+  if (notes !== undefined) values.notes = notes;
   if (size65Approved !== undefined) values.size65Approved = size65Approved;
   if (size7Approved !== undefined) values.size7Approved = size7Approved;
   if (size95Approved !== undefined) values.size95Approved = size95Approved;
   if (proceedWithSamples !== undefined) values.proceedWithSamples = proceedWithSamples;
+  if (size55Approved !== undefined) values.size55Approved = size55Approved;
+  if (size6Approved !== undefined) values.size6Approved = size6Approved;
+  if (size9Approved !== undefined) values.size9Approved = size9Approved;
   await db.insert(lastApprovals)
-    .values({ lastName, season, status, notes: notes ?? null,
-      size65Approved: size65Approved ?? false,
-      size7Approved: size7Approved ?? false,
-      size95Approved: size95Approved ?? false,
-      proceedWithSamples: proceedWithSamples ?? false,
-    })
-    .onDuplicateKeyUpdate({ set: values as any });
+    .values(values)
+    .onDuplicateKeyUpdate({ set: values });
 }
 
 // ─── Deleted Lasts ───────────────────────────────────────────────────────────

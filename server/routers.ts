@@ -689,23 +689,29 @@ export const appRouter = router({
       .input(z.object({
         lastName: z.string(),
         season: z.string().optional().default("SS26"),
-        status: z.enum(["approved", "waiting_revised"]),
+        status: z.enum(["approved", "waiting_revised"]).optional(),
         notes: z.string().nullable().optional(),
         size65Approved: z.boolean().optional(),
         size7Approved: z.boolean().optional(),
         size95Approved: z.boolean().optional(),
         proceedWithSamples: z.boolean().optional(),
+        size55Approved: z.boolean().optional(),
+        size6Approved: z.boolean().optional(),
+        size9Approved: z.boolean().optional(),
       }))
       .mutation(async ({ input }) => {
         await upsertLastApproval(
           input.lastName,
           input.status,
-          input.notes ?? null,
+          input.notes,
           input.size65Approved,
           input.size7Approved,
           input.size95Approved,
           input.proceedWithSamples,
           input.season,
+          input.size55Approved,
+          input.size6Approved,
+          input.size9Approved,
         );
         return { success: true };
       }),

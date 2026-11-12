@@ -42,6 +42,9 @@ describe("lastApproval.upsert", () => {
       undefined,
       undefined,
       "W27",
+      undefined,
+      undefined,
+      undefined,
     );
   });
 

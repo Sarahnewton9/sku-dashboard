@@ -519,6 +519,13 @@
       "when": 1791513111081,
       "tag": "0073_mighty_peter_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "5",
+      "when": 1794461714033,
+      "tag": "0074_demonic_titanium_man",
+      "breakpoints": true
     }
   ]
 }
