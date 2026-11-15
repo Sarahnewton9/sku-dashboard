@@ -364,6 +364,7 @@ export default function LastApprovalTab() {
     const map: Record<string, {
       status: "approved" | "waiting_revised";
       notes: string | null;
+      size5Approved: boolean;
       size55Approved: boolean;
       size6Approved: boolean;
       size65Approved: boolean;
@@ -376,6 +377,7 @@ export default function LastApprovalTab() {
       map[a.lastName] = {
         status: a.status,
         notes: a.notes ?? null,
+        size5Approved: (a as any).size5Approved ?? false,
         size55Approved: (a as any).size55Approved ?? false,
         size6Approved: (a as any).size6Approved ?? false,
         size65Approved: (a as any).size65Approved ?? false,
@@ -390,13 +392,13 @@ export default function LastApprovalTab() {
       if (map[lastName]) {
         map[lastName] = { ...map[lastName], status };
       } else {
-        map[lastName] = { status, notes: null, size55Approved: false, size6Approved: false, size65Approved: false, size7Approved: false, size9Approved: false, size95Approved: false, proceedWithSamples: false };
+        map[lastName] = { status, notes: null, size5Approved: false, size55Approved: false, size6Approved: false, size65Approved: false, size7Approved: false, size9Approved: false, size95Approved: false, proceedWithSamples: false };
       }
     }
     // Apply local size/proceed overrides on top
     for (const [lastName, overrides] of Object.entries(localSizeOverrides)) {
       if (!map[lastName]) {
-        map[lastName] = { status: "waiting_revised", notes: null, size55Approved: false, size6Approved: false, size65Approved: false, size7Approved: false, size9Approved: false, size95Approved: false, proceedWithSamples: false };
+        map[lastName] = { status: "waiting_revised", notes: null, size5Approved: false, size55Approved: false, size6Approved: false, size65Approved: false, size7Approved: false, size9Approved: false, size95Approved: false, proceedWithSamples: false };
       }
       for (const field of LAST_APPROVAL_SIZE_FIELDS) {
         if (overrides[field] !== undefined) map[lastName][field] = overrides[field]!;

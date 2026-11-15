@@ -526,6 +526,13 @@
       "when": 1794461714033,
       "tag": "0074_demonic_titanium_man",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "5",
+      "when": 1794783899826,
+      "tag": "0075_modern_white_queen",
+      "breakpoints": true
     }
   ]
 }

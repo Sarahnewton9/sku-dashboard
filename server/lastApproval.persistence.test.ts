@@ -27,6 +27,7 @@ vi.mock("drizzle-orm/mysql2", () => ({
             size55Approved: false,
             size6Approved: false,
             size9Approved: false,
+            size5Approved: false,
             proceedWithSamples: false,
             ...values,
           });
@@ -44,7 +45,8 @@ const lastName = "FERGIE";
 const season = "W27";
 const key = `${lastName}|${season}`;
 const newSizeFields = ["size55Approved", "size6Approved", "size9Approved"] as const;
-const allSizeFields = ["size65Approved", "size7Approved", "size95Approved", ...newSizeFields] as const;
+const independentlyWritableSizeFields = [...newSizeFields, "size5Approved"] as const;
+const allSizeFields = ["size65Approved", "size7Approved", "size95Approved", ...independentlyWritableSizeFields] as const;
 
 function caller() {
   const ctx: TrpcContext = {
@@ -67,6 +69,7 @@ function existingRow() {
     size55Approved: true,
     size6Approved: true,
     size9Approved: true,
+    size5Approved: true,
     proceedWithSamples: true,
   };
 }
@@ -89,15 +92,19 @@ describe("last approval schema", () => {
     }
     expect(columns.size55Approved).not.toBe(columns.size65Approved);
     expect(columns.size9Approved).not.toBe(columns.size95Approved);
+    for (const field of allSizeFields.filter(field => field !== "size5Approved")) {
+      expect(columns.size5Approved).not.toBe(columns[field]);
+    }
   });
 });
 
 describe("upsertLastApproval mock persistence", () => {
-  it.each(newSizeFields)("stores %s independently without reusing a legacy size", async field => {
+  it.each(independentlyWritableSizeFields)("stores %s independently without reusing a legacy size", async field => {
     await upsertLastApproval(lastName, undefined, undefined, undefined, undefined, undefined, undefined,
       season, field === "size55Approved" ? true : undefined,
       field === "size6Approved" ? true : undefined,
-      field === "size9Approved" ? true : undefined);
+      field === "size9Approved" ? true : undefined,
+      field === "size5Approved" ? true : undefined);
 
     const row = state.rows.get(key)!;
     for (const size of allSizeFields) expect(row[size]).toBe(size === field);
@@ -112,7 +119,7 @@ describe("upsertLastApproval mock persistence", () => {
       true, false, true);
     expect(state.rows.get(key)).toMatchObject({
       size7Approved: true, size55Approved: true, size6Approved: false, size9Approved: true,
-      size65Approved: false, size95Approved: false,
+      size65Approved: false, size95Approved: false, size5Approved: false,
     });
   });
 
@@ -136,6 +143,7 @@ describe("upsertLastApproval mock persistence", () => {
     expect(state.updated).not.toHaveProperty("size6Approved");
     expect(state.updated).not.toHaveProperty("size65Approved");
     expect(state.updated).not.toHaveProperty("size95Approved");
+    expect(state.updated).not.toHaveProperty("size5Approved");
   });
 
   it("accepts the legacy signature and preserves season isolation", async () => {
@@ -144,14 +152,14 @@ describe("upsertLastApproval mock persistence", () => {
     expect(state.rows.get(`${lastName}|SS26`)).toMatchObject({
       status: "approved", notes: "Legacy call", size65Approved: true, size7Approved: true,
       size95Approved: true, proceedWithSamples: true,
-      size55Approved: false, size6Approved: false, size9Approved: false,
+      size55Approved: false, size6Approved: false, size9Approved: false, size5Approved: false,
     });
     expect(state.rows.get(key)).toEqual(existingRow());
   });
 });
 
 describe("lastApproval.upsert router through mock persistence", () => {
-  it.each(newSizeFields)("validates and persists an independent %s checkbox-only update", async field => {
+  it.each(independentlyWritableSizeFields)("validates and persists an independent %s checkbox-only update", async field => {
     state.rows.set(key, existingRow());
     await expect(caller().lastApproval.upsert({ lastName, season, [field]: false }))
       .resolves.toEqual({ success: true });
@@ -166,6 +174,13 @@ describe("lastApproval.upsert router through mock persistence", () => {
     expect(state.updated).not.toHaveProperty("status");
     expect(state.updated).not.toHaveProperty("notes");
     expect(state.updated).not.toHaveProperty("size7Approved");
+  });
+
+  it("updates only W27 sizes 5 and 6.5 while preserving the first fitting, legacy flags and notes", async () => {
+    state.rows.set(key, { ...existingRow(), size5Approved: false, size65Approved: false });
+    await caller().lastApproval.upsert({ lastName, season, size5Approved: true, size65Approved: true });
+    expect(state.rows.get(key)).toEqual(existingRow());
+    expect(state.updated).toEqual({ lastName, season, size65Approved: true, size5Approved: true });
   });
 
   it("persists a size 7-only first-fitting update using the original column", async () => {
@@ -193,11 +208,11 @@ describe("lastApproval.upsert router through mock persistence", () => {
     })).resolves.toEqual({ success: true });
     expect(state.rows.get(`${lastName}|SS26`)).toEqual({
       ...existingRow(), season: "SS26", notes: "Legacy",
-      size55Approved: false, size6Approved: false, size9Approved: false,
+      size55Approved: false, size6Approved: false, size9Approved: false, size5Approved: false,
     });
   });
 
-  it.each(newSizeFields)("rejects a non-boolean %s without writing", async field => {
+  it.each(independentlyWritableSizeFields)("rejects a non-boolean %s without writing", async field => {
     await expect(caller().lastApproval.upsert({ lastName, season, [field]: "true" } as never))
       .rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(state.rows.size).toBe(0);

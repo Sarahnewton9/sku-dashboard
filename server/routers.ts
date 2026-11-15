@@ -698,6 +698,7 @@ export const appRouter = router({
         size55Approved: z.boolean().optional(),
         size6Approved: z.boolean().optional(),
         size9Approved: z.boolean().optional(),
+        size5Approved: z.boolean().optional(),
       }))
       .mutation(async ({ input }) => {
         await upsertLastApproval(
@@ -712,6 +713,7 @@ export const appRouter = router({
           input.size55Approved,
           input.size6Approved,
           input.size9Approved,
+          input.size5Approved,
         );
         return { success: true };
       }),

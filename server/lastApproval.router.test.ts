@@ -45,6 +45,19 @@ describe("lastApproval.upsert", () => {
       undefined,
       undefined,
       undefined,
+      undefined,
+    );
+  });
+
+  it("appends size 5 after size 9 without moving any existing positional field", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    await caller.lastApproval.upsert({
+      lastName: "FERGIE", season: "W27", size7Approved: true,
+      size65Approved: false, size9Approved: true, size5Approved: false,
+    });
+    expect(db.upsertLastApproval).toHaveBeenCalledWith(
+      "FERGIE", undefined, undefined, false, true, undefined, undefined,
+      "W27", undefined, undefined, true, false,
     );
   });
 

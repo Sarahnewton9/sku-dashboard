@@ -23,6 +23,8 @@ import { getRequestedFittingSkuLabels } from "@shared/fittingSkuRequests";
 import { getSameDayFittingDefaults, getSydneyBusinessDate } from "@shared/fittingSessionDefaults";
 import { countFittingEmailImages, selectFittingEmailSessions, selectLatestFittingEmailImageSession } from "@shared/fittingEmailReport";
 import { EmailExportDialog } from "./EmailExportDialog";
+import { DEFAULT_FITTING_SIZE, getNewFittingSize } from "@shared/lastApprovalSizes";
+import { FittingSizeSelect } from "./FittingSizeSelect";
 import { EmailSpecDialog } from "./EmailSpecDialog";
 import { workbookToEmailAttachment } from "@/lib/exportEmailAttachment";
 
@@ -145,7 +147,7 @@ function Lightbox({ src, onClose, sampleDate, sampleType }: { src: string; onClo
 
 // ─── Session Card ─────────────────────────────────────────────────────────────
 
-function SessionCard({
+export function SessionCard({
   session,
   knownModels,
   onUploadImage,
@@ -162,13 +164,14 @@ function SessionCard({
   onDeleteSession: (id: number) => void;
   startInEditMode?: boolean;
 }) {
+  const { season } = useSeason();
   const [editing, setEditing] = useState(startInEditMode);
   const [localModel, setLocalModel] = useState(session.fitModel);
   const [localDate, setLocalDate] = useState(session.sessionDate);
   const [localNotes, setLocalNotes] = useState(session.notes ?? "");
   const [localSampleDate, setLocalSampleDate] = useState(session.sampleDate ?? "");
   const [localSampleType, setLocalSampleType] = useState(session.sampleType ?? "");
-  const [localSampleSize, setLocalSampleSize] = useState(session.sampleSize ?? "");
+  const [localSampleSize, setLocalSampleSize] = useState(getNewFittingSize(session.sampleSize));
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -193,12 +196,12 @@ function SessionCard({
       setLocalNotes(session.notes ?? "");
       setLocalSampleDate(session.sampleDate ?? "");
       setLocalSampleType(session.sampleType ?? "");
-      setLocalSampleSize(session.sampleSize ?? "");
+      setLocalSampleSize(getNewFittingSize(session.sampleSize));
     }
   }, [session.fitModel, session.sessionDate, session.notes, session.sampleDate, session.sampleType, session.sampleSize, editing]);
 
   const handleSave = () => {
-    onUpdateSession(session.id, localModel, localDate, localNotes || null, localSampleDate || null, localSampleType || null, (localSampleType === "Fitting Sample" && localSampleSize) ? localSampleSize : null);
+    onUpdateSession(session.id, localModel, localDate, localNotes || null, localSampleDate || null, localSampleType || null, localSampleSize);
     setEditing(false);
   };
 
@@ -324,26 +327,17 @@ function SessionCard({
             </span>
           )}
         </div>
-        {/* Fitting size — only visible when Fitting Sample is selected */}
-        {(editing ? localSampleType === "Fitting Sample" : session.sampleType === "Fitting Sample") && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground font-medium">Fitting size:</span>
-            {editing ? (
-              <input
-                type="text"
-                value={localSampleSize}
-                onChange={(e) => setLocalSampleSize(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
-                placeholder="e.g. 37"
-                className="border border-border rounded px-2 py-0.5 text-xs bg-background w-20"
-              />
-            ) : (
-              <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">
-                {session.sampleSize || <span className="text-muted-foreground/50">—</span>}
-              </span>
-            )}
-          </div>
-        )}
+        {/* The fitted shoe size is independent of sample type. */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-muted-foreground font-medium">Fitting size:</span>
+          {editing ? (
+            <FittingSizeSelect season={season} value={localSampleSize} onChange={setLocalSampleSize} />
+          ) : (
+            <span className="text-xs font-semibold text-foreground">
+              {session.sampleSize || <span className="text-muted-foreground/50">—</span>}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Session notes */}
@@ -2010,7 +2004,7 @@ export function FittingTab() {
         sessionDate: defaults.sessionDate,
         sampleDate: defaults.sampleDate,
         sampleType: defaults.sampleType,
-        sampleSize: defaults.sampleSize,
+        sampleSize: DEFAULT_FITTING_SIZE,
         season,
       },
       {

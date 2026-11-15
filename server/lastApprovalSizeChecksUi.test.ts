@@ -10,13 +10,13 @@ function render(season: string, approvals = { size7Approved: true }) {
 }
 
 describe("Last Approval size controls", () => {
-  it("renders 7 first fitting then 5.5, 6 and 9 in order", () => {
+  it("renders 7 first fitting then 5, 6.5 and 9 in order", () => {
     const html = render("W27");
     expect(html.match(/aria-label="[^"]+"/g)).toEqual([
-      'aria-label="Size 7 — first fitting"', 'aria-label="Size 5.5"', 'aria-label="Size 6"', 'aria-label="Size 9"',
+      'aria-label="Size 7 — first fitting"', 'aria-label="Size 5"', 'aria-label="Size 6.5"', 'aria-label="Size 9"',
     ]);
     expect(html).toContain("First fitting");
-    expect(html).not.toContain("Sz 6.5");
+    expect(html).not.toContain("Sz 5.5");
     expect(html).not.toContain("Sz 9.5");
   });
 

@@ -8,6 +8,7 @@ import { getCustomSkuBuyRename, getStaticSkuBuyRename, mergeRenamedBuySessionQua
 import { getCustomSkuCarryOverSeason } from "../shared/customSkuSeasonCarryOver";
 import { getHandbagSkuEditOutcome } from "../shared/handbagSkuEdit";
 import { getSpecTemplateComponentKeys } from "../shared/specCompletionQueue";
+import { getNewFittingSize } from "../shared/lastApprovalSizes";
 import { isW27ExistingCarryOverLast } from "../shared/w27SandalVisibility";
 import { normalizeSpecColourPart, normalizeStoredSpecColourKey } from "../shared/specColourKey";
 import { identityKey, loadStyleIdentities, selectStaticIdentity, rejectActiveIdentityCollision, materializeRenamedSkuSpecs, type IdentityDbScope } from "./skuIdentityPreservation";
@@ -701,6 +702,7 @@ export async function upsertLastApproval(
   size55Approved?: boolean,
   size6Approved?: boolean,
   size9Approved?: boolean,
+  size5Approved?: boolean,
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -716,6 +718,7 @@ export async function upsertLastApproval(
   if (size55Approved !== undefined) values.size55Approved = size55Approved;
   if (size6Approved !== undefined) values.size6Approved = size6Approved;
   if (size9Approved !== undefined) values.size9Approved = size9Approved;
+  if (size5Approved !== undefined) values.size5Approved = size5Approved;
   await db.insert(lastApprovals)
     .values(values)
     .onDuplicateKeyUpdate({ set: values });
@@ -1110,7 +1113,8 @@ export async function createFittingSession(data: { style: string; fitModel: stri
     notes: data.notes ?? null,
     sampleDate: data.sampleDate ?? null,
     sampleType: data.sampleType ?? null,
-    sampleSize: data.sampleSize ?? null,
+    // Default only new sessions; preserve explicit legacy sizes and leave updates independent.
+    sampleSize: getNewFittingSize(data.sampleSize),
     season: data.season ?? "SS26",
   });
   return (result[0] as { insertId: number }).insertId;

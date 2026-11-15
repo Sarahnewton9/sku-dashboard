@@ -205,6 +205,7 @@ export const lastApprovals = mysqlTable("last_approvals", {
   size55Approved: boolean("size55Approved").default(false).notNull(),
   size6Approved: boolean("size6Approved").default(false).notNull(),
   size9Approved: boolean("size9Approved").default(false).notNull(),
+  size5Approved: boolean("size5Approved").default(false).notNull(),
   // Proceed with samples sign-off
   proceedWithSamples: boolean("proceedWithSamples").default(false).notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

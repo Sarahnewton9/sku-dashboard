@@ -1,0 +1,1 @@
+ALTER TABLE `last_approvals` ADD `size5Approved` boolean DEFAULT false NOT NULL;
