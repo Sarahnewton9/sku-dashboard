@@ -10,6 +10,7 @@ import { useStyleCategories } from "@/hooks/useStyleCategories";
 import { useCancelledStyles } from "@/hooks/useCancelledStyles";
 import { useSeason } from "@/contexts/SeasonContext";
 import { BarChart3, ChevronDown, Package, Check, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { BuySessionPickerOptions } from "./BuySessionPickerOptions";
 import { displayColour, displayLeather } from "@/lib/utils";
 import { formatSkuExportLabel } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
@@ -381,12 +382,6 @@ export default function BuyAnalysisTab() {
     .filter((s) => selectedSessionIds.includes(s.id))
     .map((s) => s.name);
 
-  function toggleSession(id: number) {
-    setSelectedSessionIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  }
-
   function handleSort(field: SortField) {
     if (sortField === field) {
       setSortDir((d) => d === "asc" ? "desc" : "asc");
@@ -467,41 +462,13 @@ export default function BuyAnalysisTab() {
               className="absolute top-full right-0 mt-1 w-72 rounded-xl border shadow-lg z-20 overflow-hidden"
               style={{ background: "var(--card)", borderColor: "var(--border)" }}
             >
-              {(allSessions as Array<{ id: number; name: string; createdAt: Date; isLocked: boolean }>).length === 0 ? (
-                <div className="px-4 py-6 text-sm text-muted-foreground text-center">No sessions yet</div>
-              ) : (
-                <div className="max-h-64 overflow-y-auto">
-                  {[...(allSessions as Array<{ id: number; name: string; createdAt: Date; isLocked: boolean }>)].reverse().map((s) => {
-                    const isSelected = selectedSessionIds.includes(s.id);
-                    return (
-                      <button
-                        key={s.id}
-                        onClick={() => toggleSession(s.id)}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm hover:bg-muted/50 transition-colors"
-                        style={{ background: isSelected ? "oklch(0.97 0.04 65 / 0.6)" : undefined }}
-                      >
-                        <div className="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0"
-                          style={{
-                            borderColor: isSelected ? "oklch(0.55 0.14 55)" : "var(--border)",
-                            background: isSelected ? "oklch(0.55 0.14 55)" : "transparent",
-                          }}>
-                          {isSelected && <Check className="w-3 h-3 text-white" />}
-                        </div>
-                        <span className="flex-1 truncate font-medium text-foreground">{s.name}</span>
-                        <span className="text-xs text-muted-foreground flex-shrink-0">
-                          {new Date(s.createdAt).toLocaleDateString("en-AU", { day: "2-digit", month: "short" })}
-                        </span>
-                        {s.isLocked && (
-                          <span className="text-xs px-1.5 py-0.5 rounded font-medium flex-shrink-0"
-                            style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>Locked</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+              <BuySessionPickerOptions
+                sessions={allSessions}
+                selectedIds={selectedSessionIds}
+                onSelectionChange={setSelectedSessionIds}
+              />
               <div className="px-4 py-2 border-t text-xs text-muted-foreground" style={{ borderColor: "var(--border)" }}>
-                Click sessions to toggle. Multiple sessions are combined.
+                Select all, then deselect any sessions you don't need. Selected sessions are combined.
               </div>
             </div>
           )}
