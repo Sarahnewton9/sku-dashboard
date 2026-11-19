@@ -22,4 +22,16 @@ describe("W27 fitting scope", () => {
   it("keeps the SS26 fitting workflow unchanged", () => {
     expect(isEligibleFittingStyle("SS26", "APACHE", true, newW27Patterns)).toBe(true);
   });
+  it("does not treat the BRITT custom parent as a W27 fitting pattern", () => {
+    expect([...getW27NewPatternStyleNames([
+      { style: " BRITT " }, { style: "BILLIE" }, { style: "BRITTA" },
+    ], [])]).toEqual(["BILLIE", "BRITTA"]);
+  });
+  it("excludes BRITT even if a cached or manually supplied pattern set contains it", () => {
+    expect(isEligibleFittingStyle("W27", " britt ", true, new Set(["BRITT"]))).toBe(false);
+    expect(isEligibleFittingStyle("W27", "BILLIE", true, new Set(["BILLIE"]))).toBe(true);
+  });
+  it("keeps historical SS26 BRITT eligibility unchanged", () => {
+    expect(isEligibleFittingStyle("SS26", "BRITT", true, new Set())).toBe(true);
+  });
 });
