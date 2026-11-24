@@ -32,9 +32,30 @@ export function summariseActiveStyleBuys(
   return { ...markets, total: getBuyMarketTotal(markets), boughtSkus, unboughtSkus: seen.size - boughtSkus };
 }
 
-/** A partly bought style belongs in 'bought', not 'unbought'. */
-export function matchesStyleBuyFilter(filter: StyleBuyFilter, summary: { boughtSkus: number }): boolean {
+/** A partly bought style has both bought and unbought colourways. */
+export function matchesStyleBuyFilter(filter: StyleBuyFilter, summary: { boughtSkus: number; unboughtSkus: number }): boolean {
   if (filter === "bought") return summary.boughtSkus > 0;
-  if (filter === "unbought") return summary.boughtSkus === 0;
+  if (filter === "unbought") return summary.unboughtSkus > 0;
   return true;
+}
+
+/** Intersect buy status and newness on the SAME colourway. A new bought SKU
+ * and an existing unbought sibling must not match 'new + unbought'. */
+export function getMatchingStyleBuySkus<T extends ActiveColourway & { is_new?: boolean }>(
+  skus: readonly T[],
+  quantities: Readonly<Record<string, BuyMarketQuantities | undefined>>,
+  filter: StyleBuyFilter,
+  newness = "All",
+): T[] {
+  if (filter === "all") return [...skus];
+  const seen = new Set<string>();
+  return skus.filter((sku) => {
+    const key = getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, sku.colour2, sku.leather2);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    if ((newness === "Has New SKUs" || newness === "All New") && sku.is_new !== true) return false;
+    if (newness === "No New SKUs" && sku.is_new === true) return false;
+    const total = getBuyMarketTotal(toBuyMarketTotals(quantities[key]));
+    return filter === "bought" ? total > 0 : total <= 0;
+  });
 }

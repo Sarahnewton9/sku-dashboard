@@ -3,10 +3,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 
-const fixture = vi.hoisted(() => ({ filter: "all", category: "All", season: "W27", loading: false, error: false, queryInputs: [] as any[] }));
+const fixture = vi.hoisted(() => ({ filter: "all", category: "All", newness: "All", stateCall: 0, season: "W27", loading: false, error: false, queryInputs: [] as any[] }));
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
-  return { ...actual, useState: (initial: any) => actual.useState(initial === "all" ? fixture.filter : initial === "All" && fixture.category !== "All" ? fixture.category : initial) };
+  return { ...actual, useState: (initial: any) => {
+    const index = fixture.stateCall++;
+    return actual.useState(index === 1 ? fixture.category : index === 2 ? fixture.newness : initial === "all" ? fixture.filter : initial);
+  } };
 });
 vi.stubGlobal("React", React);
 vi.mock("@/contexts/SeasonContext", () => ({ useSeason: () => ({ season: fixture.season }) }));
@@ -16,8 +19,9 @@ vi.mock("@/hooks/useCustomSkus", () => ({ useCustomSkus: () => {
   const specs = [
     ["AU-ONLY", "BLACK"], ["USA-ONLY", "BLACK"], ["NYC-ONLY", "BLACK"], ["LA-ONLY", "BLACK"],
     ["MIXED", "BLACK"], ["MIXED", "DOVE"], ["UNBOUGHT", "BLACK"], ["CANCELLED", "BLACK"],
+    ["CHELSEA", "BLACK"], ["CHELSEA", "MINT"],
   ];
-  return { customStyleRows: [], customSkus: [], mergedRawSkus: specs.map(([style, colour]) => ({ style, colour, leather: "NAPPA", is_new: true })),
+  return { customStyleRows: [], customSkus: [], mergedRawSkus: specs.map(([style, colour]) => ({ style, colour, leather: style === "CHELSEA" && colour === "BLACK" ? "SUPRA" : "NAPPA", is_new: true })),
     mergedStyles: Array.from(new Set(specs.map(([style]) => style))).map((style) => ({ style, last: "TEST LAST", category: "DRESS SHOE", leathers: ["NAPPA"], colours: ["BLACK"], totalSKUs: 1, newSKUs: 1, existingSKUs: 0, hasNew: true, isAllNew: true })) };
 } }));
 vi.mock("@/lib/trpc", () => {
@@ -30,6 +34,7 @@ vi.mock("@/lib/trpc", () => {
         ["AU-ONLY", { totalAu: 1 }], ["USA-ONLY", { totalUsa: 2 }], ["NYC-ONLY", { totalNyc: 3 }], ["LA-ONLY", { totalLa: 4 }],
         ["MIXED", { totalAu: 5 }], ["CANCELLED", { totalAu: 100 }], ["OLD-COLOUR", { totalAu: 300 }],
       ].map(([style, quantity]) => [getSkuCompositeIdentity(style as string, "BLACK", "NAPPA"), quantity]));
+      quantities[getSkuCompositeIdentity("CHELSEA", "MINT", "NAPPA")] = { totalAu: 36 };
       if (name === "buy.getAllSessionQtys") fixture.queryInputs.push(input);
       return { data: name === "buy.getAllSessionQtys" ? quantities : name === "buy.getActive" ? null : [],
         isLoading: name === "buy.getAllSessionQtys" && fixture.loading,
@@ -47,8 +52,8 @@ vi.mock("@/components/dashboard/CostRequestImportDialog", () => ({ CostRequestIm
 vi.mock("@/components/dashboard/BuySessionBar", () => ({ default: () => null }));
 vi.mock("@/components/dashboard/EmailExportDialog", () => ({ EmailExportDialog: () => null }));
 import StylesTab from "@/components/dashboard/StylesTab";
-const render = () => renderToStaticMarkup(React.createElement(StylesTab));
-beforeEach(() => Object.assign(fixture, { filter: "all", category: "All", season: "W27", loading: false, error: false, queryInputs: [] }));
+const render = () => { fixture.stateCall = 0; return renderToStaticMarkup(React.createElement(StylesTab)); };
+beforeEach(() => Object.assign(fixture, { filter: "all", category: "All", newness: "All", stateCall: 0, season: "W27", loading: false, error: false, queryInputs: [] }));
 
 describe("By Style buy status filter UI", () => {
   it("renders all three accessible buy status options beside the existing filters", () => {
@@ -65,16 +70,24 @@ describe("By Style buy status filter UI", () => {
     const html = render();
     for (const style of ["AU-ONLY", "USA-ONLY", "NYC-ONLY", "LA-ONLY", "MIXED"]) expect(html).toContain(`>${style}<`);
     expect(html).not.toContain('>UNBOUGHT<');
-    expect(html).toContain('5 of 6 styles');
+    expect(html).toContain('6 of 7 styles');
     expect(html).toContain('Clear filters');
   });
-  it("shows only wholly unbought styles and not partly bought styles", () => {
+  it("includes partly bought styles when they have an unbought colourway", () => {
     fixture.filter = "unbought";
     const html = render();
     expect(html).toContain('>UNBOUGHT<');
-    expect(html).not.toContain('>MIXED<');
+    expect(html).toContain('>MIXED<');
+    expect(html).toContain('>CHELSEA<');
     expect(html).not.toContain('>LA-ONLY<');
-    expect(html).toContain('1 of 6 styles');
+    expect(html).toContain('3 of 7 styles');
+  });
+  it("keeps Chelsea visible under No buy quantities plus Has New SKUs", () => {
+    fixture.filter = "unbought"; fixture.newness = "Has New SKUs";
+    const html = render();
+    expect(html).toContain('>CHELSEA<');
+    expect(html).toContain('Showing new unbought colourways');
+    expect(html).toContain('Expand a style to see matching colours');
   });
   it("queries combined quantities for the active season rather than a selected session", () => {
     fixture.filter = "bought"; fixture.season = "SS26";

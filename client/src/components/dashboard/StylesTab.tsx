@@ -15,7 +15,7 @@ import { getSkuExportFields } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { buildSkuMetaLookup, resolveSkuMeta } from "@shared/skuMetaIdentity";
 import { buildSampleReceiptLookup, resolveSampleReceiptStatus, sampleReceiptIdentity } from "@shared/sampleReceiptTracking";
-import { summariseActiveStyleBuys, matchesStyleBuyFilter, type StyleBuyFilter } from "@shared/styleBuyStatus";
+import { summariseActiveStyleBuys, getMatchingStyleBuySkus, type StyleBuyFilter } from "@shared/styleBuyStatus";
 import { getBuyMarketTotal, sumBuyMarketTotals, type BuyMarketQuantities } from "@shared/buyMarketTotals";
 import { hasSize11ForAllColourways } from "@shared/size11";
 import { summariseStyleFobCosts } from "@shared/fobEstimates";
@@ -1046,7 +1046,7 @@ export default function StylesTab() {
     if (buyStatusFilter !== "all") {
       // Never label an unloaded or failed quantity query as 'not bought'.
       if (buyQtysLoading || buyQtysError) return [];
-      data = data.filter((s) => matchesStyleBuyFilter(buyStatusFilter, s.buySummary));
+      data = data.filter((s) => getVisibleSkusForStyle(s.style).length > 0);
     }
 
     if (lastFilter !== "All") {
@@ -1085,7 +1085,7 @@ export default function StylesTab() {
     }
 
     return data;
-  }, [search, categoryFilter, statusFilter, buyStatusFilter, buyQtysLoading, buyQtysError, sampleFilter, fittingFilter, lastFilter, leatherFilter, size11Filter, trendFilters, stylesWithCategories, skuMetaMap, styleMetaMap, fittedStylesSet]);
+  }, [search, categoryFilter, statusFilter, buyStatusFilter, buyQtysLoading, buyQtysError, allSessionQtys, sampleFilter, fittingFilter, lastFilter, leatherFilter, size11Filter, trendFilters, stylesWithCategories, skuMetaMap, styleMetaMap, fittedStylesSet]);
 
   // Group by last, sorted alphabetically by last, then by category order within each last, then alphabetically within category
   const groupedByLast = useMemo(() => {
@@ -1135,6 +1135,12 @@ export default function StylesTab() {
         && !markdownSkuSet.has(markdownKey(s.style, s.colour, (s as any).leather ?? "")));
   }
 
+  // Filter only the view. Full-range sizing, sample controls and style totals
+  // continue using getSkusForStyle and are never changed by a buy filter.
+  function getVisibleSkusForStyle(styleName: string) {
+    return getMatchingStyleBuySkus(getSkusForStyle(styleName), allSessionQtys, buyStatusFilter, statusFilter);
+  }
+
   // Supplier invoices must match against the current merged season range, not
   // the static SS26 source. This includes newly added W27 SKUs and preserves
   // Upper 2 for the importer’s exact physical-SKU match.
@@ -1157,7 +1163,7 @@ export default function StylesTab() {
 
   function openStyleDetail(styleName: string) {
     const styleInfo = stylesWithCategories.find((style) => style.style === styleName);
-    const styleSkus = getSkusForStyle(styleName);
+    const styleSkus = getVisibleSkusForStyle(styleName);
     // A mixed style opens its new colourway first, as that is the development work.
     const sku = styleSkus.find((row) => row.is_new) ?? styleSkus[0];
     if (!styleInfo || !sku) return;
@@ -1395,13 +1401,13 @@ export default function StylesTab() {
             value={buyStatusFilter}
             onChange={(e) => setBuyStatusFilter(e.target.value as StyleBuyFilter)}
             disabled={buyQtysLoading || buyQtysError}
-            title={`Active colourways across all ${season} buy sessions, including AU, USA, NYC and LA. Partly bought styles count as having buy quantities.`}
+            title={`Filter individual active colourways across all ${season} buy sessions, including AU, USA, NYC and LA. Partly bought styles remain visible when they have matching SKUs.`}
             className={`px-3 py-2 text-sm rounded-lg border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-400/40 disabled:opacity-50 ${buyStatusFilter !== "all" ? "border-amber-400" : ""}`}
             style={{ borderColor: buyStatusFilter === "all" ? "var(--border)" : undefined }}
           >
             <option value="all">All buy statuses</option>
             <option value="bought">Has buy qty's</option>
-            <option value="unbought">No buy qty's — not bought</option>
+            <option value="unbought">No buy qty's — unbought SKUs</option>
           </select>
 
           <button
@@ -1437,7 +1443,7 @@ export default function StylesTab() {
         {buyQtysLoading && <p className="text-xs text-muted-foreground" role="status">Loading buy quantities…</p>}
         {buyQtysError && <p className="text-xs text-red-600" role="alert">Buy quantities could not be loaded. Refresh to use the buy-status filter.</p>}
         {buyStatusFilter !== "all" && !buyQtysLoading && !buyQtysError && (
-          <p className="text-xs text-muted-foreground">All {season} buy sessions · AU, USA, NYC and LA · {buyStatusFilter === "bought" ? "At least one active colourway has been bought." : "No active colourways have been bought."}</p>
+          <p className="text-xs text-muted-foreground">All {season} buy sessions · AU, USA, NYC and LA · Showing {statusFilter === "Has New SKUs" || statusFilter === "All New" ? "new " : ""}{buyStatusFilter === "bought" ? "bought" : "unbought"} colourways, including matching SKUs on partly bought styles. Expand a style to see matching colours; style totals remain for the full active range.</p>
         )}
 
         {/* Expanded filter panel */}
@@ -2108,7 +2114,7 @@ export default function StylesTab() {
 
                                 {/* Split into Existing and New SKU sections */}
                                 {(() => {
-                                  const allSkus = getSkusForStyle(style.style);
+                                  const allSkus = getVisibleSkusForStyle(style.style);
                                   const existingSkus = allSkus.filter((s) => !s.is_new);
                                   const newSkus = allSkus.filter((s) => s.is_new);
 
