@@ -15,6 +15,7 @@ import { getSkuExportFields } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { buildSkuMetaLookup, resolveSkuMeta } from "@shared/skuMetaIdentity";
 import { buildSampleReceiptLookup, resolveSampleReceiptStatus, sampleReceiptIdentity } from "@shared/sampleReceiptTracking";
+import { summariseActiveStyleBuys, matchesStyleBuyFilter, type StyleBuyFilter } from "@shared/styleBuyStatus";
 import { getBuyMarketTotal, sumBuyMarketTotals, type BuyMarketQuantities } from "@shared/buyMarketTotals";
 import { hasSize11ForAllColourways } from "@shared/size11";
 import { summariseStyleFobCosts } from "@shared/fobEstimates";
@@ -79,6 +80,7 @@ export default function StylesTab() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [buyStatusFilter, setBuyStatusFilter] = useState<StyleBuyFilter>("all");
   const [sampleFilter, setSampleFilter] = useState("All");
   const [fittingFilter, setFittingFilter] = useState("All");
   const [lastFilter, setLastFilter] = useState("All");
@@ -544,7 +546,7 @@ export default function StylesTab() {
   });
 
   // All-session combined buy quantities (persistent, always visible)
-  const { data: allSessionQtys = {} } = trpc.buy.getAllSessionQtys.useQuery({ season }, { staleTime: 10_000 });
+  const { data: allSessionQtys = {}, isLoading: buyQtysLoading, isError: buyQtysError } = trpc.buy.getAllSessionQtys.useQuery({ season }, { staleTime: 10_000 });
 
   // Buy sessions
   const { data: allSessions = [], refetch: refetchSessions } = trpc.buy.getSessions.useQuery({ season }, { staleTime: 30_000 });
@@ -962,8 +964,10 @@ export default function StylesTab() {
         const activeColours = Array.from(new Set(activeSkus.map((r) => r.colour).filter(Boolean))) as string[];
         const activeTotal = activeSkus.length;
         const activeNew = activeSkus.filter((r) => r.is_new).length;
+        const buySummary = summariseActiveStyleBuys(activeSkus, allSessionQtys);
         return {
           ...s,
+          buySummary,
           _allSkusCancelled,
           leathers: activeLeathers.length > 0 ? activeLeathers : (s.leathers as string[]),
           colours: activeColours.length > 0 ? activeColours : (s.colours as string[]),
@@ -977,7 +981,7 @@ export default function StylesTab() {
           trends: getTrends(s.style),
         };
       });
-  }, [mergedStyles, mergedRawSkus, cancelledSet, cancelledSkuSet, markdownSkuSet, getCategory, getTrendFlag, getTrends]);
+  }, [mergedStyles, mergedRawSkus, cancelledSet, cancelledSkuSet, markdownSkuSet, getCategory, getTrendFlag, getTrends, allSessionQtys]);
 
   // Build category list dynamically from resolved categories (case-insensitive, sorted)
   const availableCategories = useMemo(() => {
@@ -1039,6 +1043,12 @@ export default function StylesTab() {
       data = data.filter((s) => !s.hasNew);
     }
 
+    if (buyStatusFilter !== "all") {
+      // Never label an unloaded or failed quantity query as 'not bought'.
+      if (buyQtysLoading || buyQtysError) return [];
+      data = data.filter((s) => matchesStyleBuyFilter(buyStatusFilter, s.buySummary));
+    }
+
     if (lastFilter !== "All") {
       data = data.filter((s) => s.last === lastFilter);
     }
@@ -1075,7 +1085,7 @@ export default function StylesTab() {
     }
 
     return data;
-  }, [search, categoryFilter, statusFilter, sampleFilter, fittingFilter, lastFilter, leatherFilter, size11Filter, trendFilters, stylesWithCategories, skuMetaMap, styleMetaMap, fittedStylesSet]);
+  }, [search, categoryFilter, statusFilter, buyStatusFilter, buyQtysLoading, buyQtysError, sampleFilter, fittingFilter, lastFilter, leatherFilter, size11Filter, trendFilters, stylesWithCategories, skuMetaMap, styleMetaMap, fittedStylesSet]);
 
   // Group by last, sorted alphabetically by last, then by category order within each last, then alphabetically within category
   const groupedByLast = useMemo(() => {
@@ -1187,11 +1197,8 @@ export default function StylesTab() {
   // USA, NYC and LA.
   const allQtysTyped = allSessionQtys as Record<string, BuyMarketQuantities>;
   function getStyleAllSessionsTotal(styleName: string): { au: number; usa: number; nyc: number; la: number; total: number } {
-    const markets = sumBuyMarketTotals(getSkusForStyle(styleName).map((sku) => {
-      const key = getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, (sku as any).colour2, (sku as any).leather2);
-      return allQtysTyped[key];
-    }));
-    return { ...markets, total: getBuyMarketTotal(markets) };
+    return stylesWithCategories.find((style) => style.style === styleName)?.buySummary
+      ?? { au: 0, usa: 0, nyc: 0, la: 0, total: 0 };
   }
   // Legacy: session buy total for a style (current selected session only)
   function getStyleSessionTotal(styleName: string) {
@@ -1383,6 +1390,20 @@ export default function StylesTab() {
             {STATUS_FILTERS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
 
+          <select
+            aria-label="Buy status"
+            value={buyStatusFilter}
+            onChange={(e) => setBuyStatusFilter(e.target.value as StyleBuyFilter)}
+            disabled={buyQtysLoading || buyQtysError}
+            title={`Active colourways across all ${season} buy sessions, including AU, USA, NYC and LA. Partly bought styles count as having buy quantities.`}
+            className={`px-3 py-2 text-sm rounded-lg border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-400/40 disabled:opacity-50 ${buyStatusFilter !== "all" ? "border-amber-400" : ""}`}
+            style={{ borderColor: buyStatusFilter === "all" ? "var(--border)" : undefined }}
+          >
+            <option value="all">All buy statuses</option>
+            <option value="bought">Has buy qty's</option>
+            <option value="unbought">No buy qty's — not bought</option>
+          </select>
+
           <button
             onClick={() => setShowMoreFilters((v) => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors ${
@@ -1401,9 +1422,9 @@ export default function StylesTab() {
             )}
           </button>
 
-          {(sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilters.length > 0) && (
+          {(buyStatusFilter !== "all" || sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilters.length > 0) && (
             <button
-              onClick={() => { setSampleFilter("All"); setFittingFilter("All"); setLastFilter("All"); setLeatherFilter("All"); setSize11Filter(false); setTrendFilters([]); }}
+              onClick={() => { setBuyStatusFilter("all"); setSampleFilter("All"); setFittingFilter("All"); setLastFilter("All"); setLeatherFilter("All"); setSize11Filter(false); setTrendFilters([]); }}
               className="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
             >
               <X className="w-3 h-3" /> Clear filters
@@ -1412,6 +1433,12 @@ export default function StylesTab() {
 
           <span className="text-sm text-muted-foreground">{totalFilteredStyles} of {totalAvailableStyles} styles</span>
         </div>
+
+        {buyQtysLoading && <p className="text-xs text-muted-foreground" role="status">Loading buy quantities…</p>}
+        {buyQtysError && <p className="text-xs text-red-600" role="alert">Buy quantities could not be loaded. Refresh to use the buy-status filter.</p>}
+        {buyStatusFilter !== "all" && !buyQtysLoading && !buyQtysError && (
+          <p className="text-xs text-muted-foreground">All {season} buy sessions · AU, USA, NYC and LA · {buyStatusFilter === "bought" ? "At least one active colourway has been bought." : "No active colourways have been bought."}</p>
+        )}
 
         {/* Expanded filter panel */}
         {showMoreFilters && (
