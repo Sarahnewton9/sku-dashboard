@@ -214,8 +214,12 @@ export default function StylesTab() {
     onError: (err) => toast.error(`Failed to restore SKU: ${err.message}`),
   });
 
-  // Fetch all SKU meta from DB
-  const { data: skuMetaList = [], refetch: refetchSkuMeta } = trpc.sku.getAll.useQuery(undefined, { staleTime: 30_000 });
+  // Re-read saved sizing and sample flags when By Style opens or regains focus.
+  const { data: skuMetaList = [], refetch: refetchSkuMeta } = trpc.sku.getAll.useQuery(undefined, {
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: "always",
+  });
   const { data: styleMetaList = [], refetch: refetchStyleMeta } = trpc.style.getAll.useQuery(undefined, { staleTime: 30_000 });
   const { data: seasonCostList = [], refetch: refetchSeasonCosts } = trpc.sku.getSeasonCosts.useQuery({ season }, { staleTime: 30_000 });
 
@@ -1085,7 +1089,7 @@ export default function StylesTab() {
     }
 
     return data;
-  }, [search, categoryFilter, statusFilter, buyStatusFilter, buyQtysLoading, buyQtysError, allSessionQtys, sampleFilter, fittingFilter, lastFilter, leatherFilter, size11Filter, trendFilters, stylesWithCategories, skuMetaMap, styleMetaMap, fittedStylesSet]);
+  }, [search, categoryFilter, statusFilter, buyStatusFilter, buyQtysLoading, buyQtysError, allSessionQtys, sampleFilter, fittingFilter, lastFilter, leatherFilter, size11Filter, trendFilters, stylesWithCategories, skuMetaMap, customStyleRows, styleMetaMap, fittedStylesSet]);
 
   // Group by last, sorted alphabetically by last, then by category order within each last, then alphabetically within category
   const groupedByLast = useMemo(() => {
@@ -1797,9 +1801,19 @@ export default function StylesTab() {
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                                   {style.hasNew && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#f59e0b" }} />}
                                   <span className="font-semibold text-foreground">{style.style}</span>
+                                  {styleSize11 && (
+                                    <span
+                                      data-size11-style={style.style}
+                                      title="Available in Size 11"
+                                      className="inline-flex shrink-0 items-center whitespace-nowrap rounded border px-1.5 py-0.5 text-[10px] font-semibold"
+                                      style={{ background: "oklch(0.94 0.06 240)", color: "oklch(0.45 0.14 240)", borderColor: "oklch(0.80 0.10 240)" }}
+                                    >
+                                      SIZE 11
+                                    </span>
+                                  )}
                                   {style.isAllNew && (
                                     <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}>NEW</span>
                                   )}
