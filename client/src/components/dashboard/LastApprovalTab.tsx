@@ -1,6 +1,5 @@
 import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { skuData } from "@/lib/skuData";
 import { useCustomSkus } from "@/hooks/useCustomSkus";
 import { useStyleCategories } from "@/hooks/useStyleCategories";
 import { CheckCircle2, Clock, ChevronDown, ChevronRight, Upload, X, AlertTriangle, Trash2, Plus, Image as ImageIcon } from "lucide-react";
@@ -10,6 +9,7 @@ import confetti from "canvas-confetti";
 import { getNewLastsForSeason } from "@shared/const";
 import { useSeason } from "@/contexts/SeasonContext";
 import { LastApprovalSizeChecks } from "./LastApprovalSizeChecks";
+import { LastApprovalStyleThumbnail } from "./LastApprovalStyleThumbnail";
 import { LAST_APPROVAL_SIZE_FIELDS, getLastApprovalSizeProgress, type LastApprovalSizeField, type LastApprovalSizeFlags } from "@shared/lastApprovalSizes";
 
 // Short descriptor shown under each last name
@@ -45,12 +45,6 @@ function categoryOrder(cat: string): number {
   return CATEGORY_ORDER[cat?.toUpperCase()?.trim()] ?? 99;
 }
 
-// Static STYLE_IMAGE_MAP fallback (used when no DB override)
-const STYLE_IMAGE_MAP: Record<string, string> = {};
-for (const s of skuData.styles) {
-  if ((s as any).imageUrl) STYLE_IMAGE_MAP[s.style] = (s as any).imageUrl;
-}
-
 interface ImportRow {
   lastName: string;
   notes: string;
@@ -77,6 +71,8 @@ function StyleCard({
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
+  const hasImage = !!imageUrl && failedImageUrl !== imageUrl;
 
   const uploadImageMutation = trpc.styleImage.upload.useMutation({
     onSuccess: (data) => {
@@ -132,7 +128,7 @@ function StyleCard({
   };
 
   return (
-    <div className="flex flex-col items-center gap-1 group relative">
+    <div data-last-style-card={styleName} className="flex flex-col items-center gap-1 group relative">
       <input
         ref={fileInputRef}
         type="file"
@@ -145,7 +141,7 @@ function StyleCard({
         className="relative w-24 h-24 rounded-lg border overflow-hidden cursor-pointer transition-all"
         style={{
           borderColor: isDragging ? "oklch(0.55 0.14 260)" : "var(--border)",
-          background: isDragging ? "oklch(0.94 0.04 260)" : imageUrl ? "white" : "var(--muted)",
+          background: isDragging ? "oklch(0.94 0.04 260)" : hasImage ? "white" : "var(--muted)",
           boxShadow: isDragging ? "0 0 0 2px oklch(0.55 0.14 260)" : undefined,
         }}
         onDrop={handleDrop}
@@ -158,9 +154,9 @@ function StyleCard({
           <div className="w-full h-full flex items-center justify-center">
             <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "oklch(0.55 0.14 260)" }} />
           </div>
-        ) : imageUrl ? (
+        ) : hasImage ? (
           <>
-            <img src={imageUrl} alt={styleName} className="w-full h-full object-contain" />
+            <img src={imageUrl} alt={styleName} loading="lazy" decoding="async" className="w-full h-full object-contain" onError={() => setFailedImageUrl(imageUrl!)} />
             {/* Upload overlay on hover */}
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <Upload className="w-5 h-5 text-white" />
@@ -277,14 +273,14 @@ export default function LastApprovalTab() {
   const { getCategory } = useStyleCategories();
 
   // Build style lookup per last (live, includes custom SKUs and custom styles)
-  // Each entry stores { style, category } so we can group/sort by category in the render
+  // Merged image URLs already resolve saved website/static fallbacks, like By Style.
   const { lastToStyles, lastNewSkuCount } = useMemo(() => {
-    const lastToStyles: Record<string, Array<{ style: string; category: string }>> = {};
+    const lastToStyles: Record<string, Array<{ style: string; category: string; imageUrl?: string }>> = {};
     const lastNewSkuCount: Record<string, number> = {};
-    for (const s of mergedStyles as unknown as Array<{ style: string; last: string; category: string; newSKUs: number }>) {
+    for (const s of mergedStyles as unknown as Array<{ style: string; last: string; category: string; newSKUs: number; imageUrl?: string }>) {
       if (!lastToStyles[s.last]) lastToStyles[s.last] = [];
       const resolvedCat = getCategory(s.style, (s as any).category ?? "", s.last);
-      lastToStyles[s.last].push({ style: s.style, category: resolvedCat });
+      lastToStyles[s.last].push({ style: s.style, category: resolvedCat, imageUrl: s.imageUrl });
       lastNewSkuCount[s.last] = (lastNewSkuCount[s.last] ?? 0) + (s.newSKUs ?? 0);
     }
     // Sort each last's styles by category order, then alphabetically within category
@@ -300,9 +296,13 @@ export default function LastApprovalTab() {
   const { season } = useSeason();
   const { data: approvals, refetch } = trpc.lastApproval.getAll.useQuery({ season });
   const { data: deletedLastsFromDb = [], refetch: refetchDeleted } = trpc.lastApproval.getDeleted.useQuery({ season });
-  const { data: imageOverrideList = [], refetch: refetchImages } = trpc.styleImage.getAll.useQuery();
+  const { data: imageOverrideList = [], refetch: refetchImages } = trpc.styleImage.getAll.useQuery(undefined, {
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: "always",
+  });
   const imageOverrides = useMemo(
-    () => imageOverrideList.reduce<Record<string, string>>((acc, o) => { acc[o.style] = o.imageUrl; return acc; }, {}),
+    () => imageOverrideList.reduce<Record<string, string>>((acc, o) => { if (o.imageUrl?.trim()) acc[o.style.trim().toUpperCase()] = o.imageUrl; return acc; }, {}),
     [imageOverrideList]
   );
 
@@ -628,10 +628,10 @@ export default function LastApprovalTab() {
   return (
     <div className="space-y-6">
       {/* Header stats + import button */}
-      <div className="flex items-start gap-4">
-        <div className="grid grid-cols-3 gap-4 flex-1">
+      <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-start">
+        <div className="grid grid-cols-3 gap-2 flex-1 sm:gap-4">
           <div
-            className="rounded-xl p-4 cursor-pointer border transition-all"
+            className="rounded-xl p-3 sm:p-4 cursor-pointer border transition-all"
             style={{
               background: filter === "all" ? "oklch(0.97 0.02 240)" : "var(--card)",
               borderColor: filter === "all" ? "oklch(0.72 0.10 240)" : "var(--border)",
@@ -666,7 +666,7 @@ export default function LastApprovalTab() {
         </div>
 
         {/* Import button */}
-        <div className="flex-shrink-0 pt-1 flex flex-col gap-2">
+        <div className="flex-shrink-0 pt-1 flex flex-wrap items-start gap-2 sm:flex-col">
           {/* Add Last button */}
           <button
             onClick={() => { setNewLastName(""); setAddLastDialogOpen(true); }}
@@ -842,6 +842,7 @@ export default function LastApprovalTab() {
           return (
             <div
               key={lastName}
+              data-last-approval={lastName}
               className="rounded-xl border overflow-hidden"
               style={{
                 borderColor: status === "approved" ? "oklch(0.80 0.10 155)" : "var(--border)",
@@ -850,7 +851,7 @@ export default function LastApprovalTab() {
             >
               {/* Main row — entire row is clickable to expand */}
               <div
-                className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none hover:bg-muted/30 transition-colors"
+                className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 cursor-pointer select-none hover:bg-muted/30 transition-colors"
                 onClick={() => setExpandedLast(isExpanded ? null : lastName)}
               >
                 {/* Toggle button */}
@@ -871,8 +872,8 @@ export default function LastApprovalTab() {
                 </button>
 
                 {/* Last name */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-[120px]">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="font-semibold text-foreground">{lastName}</span>
                     {LAST_DESCRIPTIONS[lastName] && (
                       <span className="text-xs px-1.5 py-0.5 rounded-md font-medium" style={{ background: "oklch(0.94 0.04 260)", color: "oklch(0.40 0.14 260)" }}>
@@ -889,7 +890,7 @@ export default function LastApprovalTab() {
                 </div>
 
                 {/* Size approval checkboxes */}
-                <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
                   <LastApprovalSizeChecks
                     season={season}
                     approvals={approval}
@@ -949,6 +950,24 @@ export default function LastApprovalTab() {
                   )}
                 </div>
               </div>
+
+              {/* Recognition images are visible without expanding; every style is labelled. */}
+              {!isExpanded && styles.length > 0 && (
+                <div data-last-style-thumbnails={lastName} className="px-4 pb-3">
+                  <ul className="flex flex-wrap gap-3" aria-label={`Styles on ${lastName}`}>
+                    {styles.map(({ style: s, imageUrl }) => (
+                      <li key={s}>
+                        <LastApprovalStyleThumbnail
+                          styleName={s}
+                          lastName={lastName}
+                          imageUrl={imageOverrides[s.trim().toUpperCase()] ?? imageUrl}
+                          onExpand={() => setExpandedLast(lastName)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* Size approval progress bar */}
               {(() => {
@@ -1050,8 +1069,8 @@ export default function LastApprovalTab() {
                             </p>
                           )}
                           <div className="flex flex-wrap gap-3">
-                            {group.items.map(({ style: s }) => {
-                              const imgUrl = imageOverrides[s] ?? STYLE_IMAGE_MAP[s];
+                            {group.items.map(({ style: s, imageUrl }) => {
+                              const imgUrl = imageOverrides[s.trim().toUpperCase()] ?? imageUrl;
                               const isCustom = customStyleNames.has(s.toUpperCase());
                               const customStyleRow = customStyleRows.find((cs) => cs.style.toUpperCase() === s.toUpperCase());
                               return (
