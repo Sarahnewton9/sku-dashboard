@@ -1332,7 +1332,7 @@ export async function addCustomSku(style: string, colour: string, leather: strin
   return id;
 }
 
-export async function getAllCustomSkus(season = "SS26"): Promise<{ id: number; style: string; colour: string; leather: string; colour2: string | null; leather2: string | null; isNew: boolean; createdAt: Date }[]> {
+export async function getAllCustomSkus(season = "SS26"): Promise<{ id: number; style: string; colour: string; leather: string; colour2: string | null; leather2: string | null; isNew: boolean; isCore: boolean; createdAt: Date }[]> {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(customSkus).where(eq(customSkus.season, season));

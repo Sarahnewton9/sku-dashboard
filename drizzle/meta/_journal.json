@@ -533,6 +533,20 @@
       "when": 1794783899826,
       "tag": "0075_modern_white_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "5",
+      "when": 1795581756773,
+      "tag": "0076_safe_shadowcat",
+      "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "5",
+      "when": 1795582014557,
+      "tag": "0077_confused_tattoo",
+      "breakpoints": true
     }
   ]
 }

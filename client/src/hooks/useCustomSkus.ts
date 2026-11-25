@@ -9,6 +9,7 @@ import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { dedupeSkusByCompositeIdentity } from "@shared/dedupeSkus";
 import { resolveStyleCategory } from "@shared/styleCategory";
 import { buildCancelledSkuKeySet, isCancelledSku } from "@shared/cancelledSkuIdentity";
+import { buildSkuCoreLookup, isCoreSku } from "@shared/skuCore";
 
 export type CustomSkuRow = {
   id: number;
@@ -18,6 +19,7 @@ export type CustomSkuRow = {
   colour2?: string | null;
   leather2?: string | null;
   isNew: boolean;
+  isCore?: boolean;
   createdAt: Date;
 };
 
@@ -31,9 +33,12 @@ export type CustomSkuRow = {
  * Also fetches skuNewOverrides which can override the is_new flag for static SKUs
  * (e.g. marking PAXOS as existing so it disappears from Fitting/Specs/New counts).
  *
+ * Exact, confirmed CORE metadata adds is_core=true and takes precedence over
+ * effective newness. It never changes the stored isNew or new override flags.
+ *
  * Returns:
  *  - customSkus: raw list of custom SKU rows from DB
- *  - mergedRawSkus: skuData.rawSkus + custom SKUs (as RawSku-shaped objects), with overrides applied
+ *  - mergedRawSkus: skuData.rawSkus + custom SKUs, with overrides and is_core applied
  *  - mergedStyles: skuData.styles with custom SKUs folded in (colours/leathers updated), with overrides applied
  *  - isLoading: whether the query is still loading
  */
@@ -93,11 +98,28 @@ export function useCustomSkus() {
   // override preserves that stable source key while showing a corrected colour
   // name across every dashboard view.
   const { data: skuMetaList = [] } = trpc.sku.getAll.useQuery(undefined, {
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: "always",
   });
+
+  const skuCoreLookup = useMemo(() => buildSkuCoreLookup(skuMetaList), [skuMetaList]);
 
   const skuDescriptionOverrideMap = useMemo(() => {
     const map: Record<string, { colour?: string; leather?: string; colour2?: string; leather2?: string }> = {};
+    const primaryKey = (sku: { style: string; colour: string; leather?: string | null }) => getSkuCompositeIdentity(sku.style, sku.colour, sku.leather);
+    const rawVariants = new Map<string, Set<string>>();
+    const metaVariants = new Map<string, Set<string>>();
+    for (const sku of skuData.rawSkus) {
+      const key = primaryKey(sku);
+      if (!rawVariants.has(key)) rawVariants.set(key, new Set());
+      rawVariants.get(key)!.add(getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, (sku as any).colour2, (sku as any).leather2));
+    }
+    for (const meta of skuMetaList) {
+      const key = primaryKey(meta);
+      if (!metaVariants.has(key)) metaVariants.set(key, new Set());
+      metaVariants.get(key)!.add(getSkuCompositeIdentity(meta.style, meta.colour, meta.leather, meta.colour2, meta.leather2));
+    }
     for (const meta of skuMetaList as Array<{
       style: string;
       colour: string;
@@ -112,7 +134,14 @@ export function useCustomSkus() {
       const colour2 = meta.colour2?.trim().toUpperCase();
       const leather2 = meta.leather2?.trim().toUpperCase();
       if (colour || leather || colour2 || leather2) {
-        map[`${meta.style}|${meta.colour}|${meta.leather}`] = { colour, leather, colour2, leather2 };
+        const description = { colour, leather, colour2, leather2 };
+        map[getSkuCompositeIdentity(meta.style, meta.colour, meta.leather, meta.colour2, meta.leather2)] = description;
+        // Preserve legacy single-source identity corrections, but never apply
+        // one Upper 2 row's description to a sibling and collapse the range.
+        const primary = primaryKey(meta);
+        if ((rawVariants.get(primary)?.size ?? 0) <= 1 && metaVariants.get(primary)?.size === 1) {
+          map[`legacy:${primary}`] = description;
+        }
       }
     }
     return map;
@@ -218,7 +247,7 @@ export function useCustomSkus() {
   }
 
   // Merge custom SKUs into rawSkus — same shape as skuData.rawSkus entries
-  const mergedRawSkus = useMemo<Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean; _customId?: number; _sourceColour?: string; _sourceLeather?: string }>>(() => {
+  const mergedRawSkus = useMemo<Array<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean; is_core: boolean; _customId?: number; _sourceColour?: string; _sourceLeather?: string }>>(() => {
     // Apply overrides to static SKUs
     // For W27 (and any non-SS26 season), all static SKUs are carry-overs — force is_new=false
     const baseSkus = dedupeSkusByCompositeIdentity((skuData.rawSkus as unknown as ReadonlyArray<{ style: string; colour: string; leather: string; colour2?: string | null; leather2?: string | null; is_new: boolean }>)
@@ -228,9 +257,9 @@ export function useCustomSkus() {
       .map((sku) => {
       const staticIsNew = season === "SS26" ? sku.is_new : false;
       const effectiveIsNew = resolveIsNew(sku.style, sku.colour, sku.leather ?? "", staticIsNew);
-      const descriptionOverride = skuDescriptionOverrideMap[`${sku.style}|${sku.colour}|${sku.leather ?? ""}`];
-      if (effectiveIsNew === sku.is_new && !descriptionOverride) return sku;
-      return {
+      const descriptionOverride = skuDescriptionOverrideMap[getSkuCompositeIdentity(sku.style, sku.colour, sku.leather, sku.colour2, sku.leather2)]
+        ?? skuDescriptionOverrideMap[`legacy:${getSkuCompositeIdentity(sku.style, sku.colour, sku.leather)}`];
+      const displayedSku = {
         ...sku,
         ...(descriptionOverride ? {
           colour: descriptionOverride.colour ?? sku.colour,
@@ -240,8 +269,9 @@ export function useCustomSkus() {
           _sourceColour: sku.colour,
           _sourceLeather: sku.leather,
         } : {}),
-        is_new: effectiveIsNew,
       };
+      const isCore = isCoreSku(skuCoreLookup, displayedSku);
+      return { ...displayedSku, is_core: isCore, is_new: isCore ? false : effectiveIsNew };
     }));
 
     if (customSkus.length === 0) return baseSkus;
@@ -250,15 +280,21 @@ export function useCustomSkus() {
       .filter((c) => isWorkingRangeStyle(c.style))
       .filter((c) => !isMarkdownSku(markdownSkuSet, c.style, c.colour, c.leather ?? ""))
       .filter((c) => !isCancelledSku(cancelledSkuKeys, c))
-      .map((c) => ({
-      style: c.style as string,
-      colour: c.colour as string,
-      leather: c.leather as string,
-      colour2: (c as any).colour2 as string | null | undefined,
-      leather2: (c as any).leather2 as string | null | undefined,
-      is_new: resolveIsNew(c.style, c.colour, c.leather ?? "", (c.isNew ?? true) as boolean),
-      _customId: c.id,
-    }));
+      .map((c) => {
+        // Custom identity corrections preserve the row ID, so its approved
+        // CORE flag survives even when old metadata still uses the prior key.
+        const isCore = (c as { isCore?: boolean }).isCore === true || isCoreSku(skuCoreLookup, c);
+        return {
+          style: c.style as string,
+          colour: c.colour as string,
+          leather: c.leather as string,
+          colour2: (c as any).colour2 as string | null | undefined,
+          leather2: (c as any).leather2 as string | null | undefined,
+          is_core: isCore,
+          is_new: isCore ? false : resolveIsNew(c.style, c.colour, c.leather ?? "", (c.isNew ?? true) as boolean),
+          _customId: c.id,
+        };
+      });
 
     // Deduplicate only an exact Upper 1 + Upper 2 combination. Two physical
     // SKUs may share Upper 1 while using different Upper 2 constructions.
@@ -283,7 +319,7 @@ export function useCustomSkus() {
     });
 
     return [...baseSkus, ...filtered];
-  }, [cancelledSkuKeys, customSkus, markdownSkuSet, season, skuNewOverrideMap, skuDescriptionOverrideMap, styleCategoryMap]);
+  }, [cancelledSkuKeys, customSkus, markdownSkuSet, season, skuNewOverrideMap, skuDescriptionOverrideMap, skuCoreLookup, styleCategoryMap, styleLastMap]);
 
   const activeSkusByStyle = useMemo(() => {
     const groups: Record<string, Array<{ style: string; colour: string; leather: string; is_new: boolean }>> = {};

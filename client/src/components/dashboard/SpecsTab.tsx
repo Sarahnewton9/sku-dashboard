@@ -77,6 +77,8 @@ interface StyleEntry {
   totalSKUs: number;
   newSKUs: number;
   _isCustomStyle?: boolean;
+  coreColourKeys?: string[];
+  coreSKUs?: number;
 }
 
 
@@ -1366,6 +1368,7 @@ export function SpecForm({
             )}
             <Badge variant="outline" className="text-xs">{entry.last}</Badge>
             {entry.isAllNew && <Badge className="text-xs bg-blue-100 text-blue-800 border-blue-200">New Pattern</Badge>}
+            {!!entry.coreSKUs && <Badge title={`Has ${entry.coreSKUs} core colourway${entry.coreSKUs === 1 ? "" : "s"}; not every colourway is necessarily core.`} className="text-xs bg-emerald-100 text-emerald-800 border-emerald-200">CORE</Badge>}
           </div>
           <div className="flex items-center gap-3 mt-1 flex-wrap">
             <span className="text-sm text-muted-foreground">{entry.colours.length} colours · {entry.totalSKUs} SKUs</span>
@@ -1527,7 +1530,10 @@ export function SpecForm({
               {entry.colours.map((colour, i) => (
                 <th key={`${colour}-${i}`} className="text-left px-3 py-2 font-medium border-b min-w-[160px] group/col relative">
                   <div className="flex items-center gap-1 justify-between">
-                    <span>{entry.colourLabels[i] ?? colour}</span>
+                    <span className="flex flex-wrap items-center gap-1">
+                      {entry.colourLabels[i] ?? colour}
+                      {entry.coreColourKeys?.includes(colour) && <Badge data-core-spec-colour={colour} title="Core colourway" className="h-4 px-1 text-[9px] bg-emerald-100 text-emerald-800 hover:bg-emerald-100">CORE</Badge>}
+                    </span>
                     {showHiddenColumns && hiddenColumns.has(colour) ? (
                       // Restore button for hidden columns (visible when showHiddenColumns is on)
                       <button
@@ -1849,6 +1855,22 @@ export default function SpecsTab({}: SpecsTabProps) {
     [mergedRawSkus],
   );
 
+  // Use the exact same physical identity and column keys as the Specs grid.
+  // A core sibling never classifies another leather or Upper 2 construction.
+  const CORE_COLOURS_PER_STYLE = useMemo(() => {
+    const result: Record<string, string[]> = {};
+    for (const sku of mergedRawSkus) {
+      if (!sku.is_core) continue;
+      const style = normalizeSpecColourPart(sku.style);
+      const key = SPEC_COLOUR_KEY_BY_SKU.get(getSpecSkuIdentity(sku.style, sku.colour, sku.leather, sku.colour2, sku.leather2));
+      if (!key) continue;
+      const colours = result[style] ?? [];
+      if (!colours.includes(key)) colours.push(key);
+      result[style] = colours;
+    }
+    return result;
+  }, [mergedRawSkus, SPEC_COLOUR_KEY_BY_SKU]);
+
   const COLOUR_LEATHER_MAP = useMemo(() => {
     const map: Record<string, Record<string, string>> = {};
     for (const sku of mergedRawSkus as any[]) {
@@ -1953,12 +1975,14 @@ export default function SpecsTab({}: SpecsTabProps) {
           totalSKUs: s.totalSKUs,
           newSKUs: s.newSKUs,
           _isCustomStyle: !!(s as any)._isCustomStyle,
+          coreColourKeys: CORE_COLOURS_PER_STYLE[s.style] ?? [],
+          coreSKUs: CORE_COLOURS_PER_STYLE[s.style]?.length ?? 0,
         };
       })
       // Zero-colour custom styles stay available so specs can be prepared before colours are added.
       .filter((s) => s.colours.length > 0 || s._isCustomStyle)
       .sort((a, b) => a.style.localeCompare(b.style));
-  }, [mergedStyles, NEW_COLOURS_PER_STYLE, ACTIVE_COLOURS_PER_STYLE, COLOUR_LEATHER_MAP, TOE_CAP_MAP]);
+  }, [mergedStyles, NEW_COLOURS_PER_STYLE, ACTIVE_COLOURS_PER_STYLE, CORE_COLOURS_PER_STYLE, COLOUR_LEATHER_MAP, TOE_CAP_MAP]);
 
   const utils = trpc.useUtils();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
@@ -2944,6 +2968,7 @@ export default function SpecsTab({}: SpecsTabProps) {
                       <div className="text-xs text-muted-foreground">{entry.colours.length} colours</div>
                     </div>
                     <div className="flex flex-col items-end gap-1">
+                      {!!entry.coreSKUs && <Badge data-core-spec-style={entry.style} title={`Has ${entry.coreSKUs} core colourway${entry.coreSKUs === 1 ? "" : "s"}; other colourways may be carry-over or new.`} className="h-4 px-1 text-[9px] font-medium bg-emerald-100 text-emerald-800 hover:bg-emerald-100">CORE</Badge>}
                       {entry.newSKUs > 0 && (
                         <Badge className="h-4 px-1 text-[9px] font-medium bg-amber-100 text-amber-800 hover:bg-amber-100">
                           {entry.newSKUs} new

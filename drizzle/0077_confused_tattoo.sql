@@ -1,0 +1,1 @@
+ALTER TABLE `custom_skus` ADD `isCore` boolean DEFAULT false NOT NULL;

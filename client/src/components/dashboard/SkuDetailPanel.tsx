@@ -4,12 +4,13 @@
  * Fit rating/notes/images are now at style level — see FittingTab
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { X, CheckCircle, Clock, Save, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { displayColour, displayLeather } from "@/lib/utils";
 import { getSkuMetaCompositeKey } from "@shared/skuMetaIdentity";
+import { buildSkuCoreLookup, isCoreSku } from "@shared/skuCore";
 
 export interface SkuPanelData {
   style: string;
@@ -18,6 +19,13 @@ export interface SkuPanelData {
   colour2?: string | null;
   leather2?: string | null;
   isNew: boolean;
+  isCore?: boolean;
+  _customId?: number;
+  /** Original physical identity survives display colour/leather corrections. */
+  _sourceColour?: string;
+  _sourceLeather?: string;
+  _sourceColour2?: string | null;
+  _sourceLeather2?: string | null;
   category: string;
   last: string;
   imageUrl?: string;
@@ -41,6 +49,7 @@ interface Props {
     isSize11?: boolean;
     costPrice?: number | null;
     rrpOverride?: number | null;
+    isCore?: boolean | null;
   }>;
   styleMeta: Record<string, { rrp?: number | null }>;
   onMetaChange: () => void;
@@ -65,8 +74,30 @@ export default function SkuDetailPanel({
   const [fobDraft, setFobDraft] = useState("");
 
   const utils = trpc.useUtils();
+  const { data: freshSkuMeta } = trpc.sku.getAll.useQuery(undefined, {
+    enabled: sku !== null,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: "always",
+  });
+  const { data: freshCustomSkus } = trpc.customSku.getAll.useQuery({ season }, {
+    enabled: !!sku?._customId,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: "always",
+  });
 
   const meta = sku ? skuMeta[getSkuMetaCompositeKey(sku)] : undefined;
+  // Core is strictly physical-SKU metadata: never fall back to an Upper 1
+  // sibling. Use original source keys when colours have been corrected.
+  const coreLookup = useMemo(() => buildSkuCoreLookup(freshSkuMeta ?? []), [freshSkuMeta]);
+  const customCore = sku?._customId
+    ? (freshCustomSkus?.find((row) => row.id === sku._customId) as { isCore?: boolean } | undefined)?.isCore
+      ?? sku.isCore === true
+    : false;
+  const isCore = sku && freshSkuMeta !== undefined
+    ? customCore || isCoreSku(coreLookup, sku)
+    : sku?.isCore === true;
   const effectiveCost = sku?.seasonalCost ?? meta?.costPrice;
   const styleRrp = sku ? styleMeta[sku.style]?.rrp : undefined;
   const effectiveRrp = meta?.rrpOverride ?? styleRrp;
@@ -169,7 +200,7 @@ export default function SkuDetailPanel({
   const sampleStatus = meta?.sampleStatus ?? "waiting";
   const orderQty = meta?.orderQty ?? 0;
   const isSize11 = meta?.isSize11 ?? false;
-  const showsDevelopmentFields = sku.isNew;
+  const showsDevelopmentFields = sku.isNew && !isCore;
 
   return (
     <div className="fixed inset-0 z-50 flex" style={{ pointerEvents: "auto" }}>
@@ -186,7 +217,9 @@ export default function SkuDetailPanel({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="font-display font-bold text-lg text-foreground">{sku.style}</h2>
-              {sku.isNew && (
+              {isCore ? (
+                <span title="Core colourway" className="text-xs px-2 py-0.5 rounded font-semibold" style={{ background: "oklch(0.94 0.06 155)", color: "oklch(0.40 0.14 155)" }}>CORE</span>
+              ) : sku.isNew && (
                 <span className="text-xs px-2 py-0.5 rounded font-semibold" style={{ background: "oklch(0.96 0.08 65)", color: "oklch(0.50 0.14 55)" }}>NEW</span>
               )}
             </div>

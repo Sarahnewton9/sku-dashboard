@@ -36,6 +36,8 @@ export const skuMeta = mysqlTable("sku_meta", {
   sampleStatus: mysqlEnum("sampleStatus", ["waiting", "fitting_sample", "received"]).default("waiting").notNull(),
   orderQty: int("orderQty").default(0),
   isSize11: boolean("isSize11").default(false).notNull(),
+  /** Confirmed core physical colourway, independent of seasonal carry-over/newness. */
+  isCore: boolean("isCore").default(false).notNull(),
   costPrice: float("costPrice"),
   /** Optional selling-price exception for this colourway; otherwise the style RRP applies. */
   rrpOverride: float("rrpOverride"),
@@ -441,6 +443,8 @@ export const customSkus = mysqlTable("custom_skus", {
   colour2: varchar("colour2", { length: 64 }),
   leather2: varchar("leather2", { length: 64 }),
   isNew: boolean("is_new").notNull().default(true),
+  /** Stable core classification retained when this custom colourway is edited. */
+  isCore: boolean("isCore").notNull().default(false),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   imageUrl: text("image_url"),
   productUrl: text("product_url"),

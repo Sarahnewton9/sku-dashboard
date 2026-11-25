@@ -15,6 +15,7 @@ import { getSkuExportFields } from "@shared/skuExportLabel";
 import { getSkuCompositeIdentity } from "@shared/skuCompositeIdentity";
 import { buildSkuMetaLookup, resolveSkuMeta } from "@shared/skuMetaIdentity";
 import { buildSampleReceiptLookup, resolveSampleReceiptStatus, sampleReceiptIdentity } from "@shared/sampleReceiptTracking";
+import { buildCancelledSkuKeySet, isCancelledSku } from "@shared/cancelledSkuIdentity";
 import { summariseActiveStyleBuys, getMatchingStyleBuySkus, type StyleBuyFilter } from "@shared/styleBuyStatus";
 import { getBuyMarketTotal, sumBuyMarketTotals, type BuyMarketQuantities } from "@shared/buyMarketTotals";
 import { hasSize11ForAllColourways } from "@shared/size11";
@@ -335,6 +336,22 @@ export default function StylesTab() {
 
   // Add colour inline form state: key = style name, value = { colour, leather, colour2, leather2, hasUpper2 } draft
   const [addColourDraft, setAddColourDraft] = useState<Record<string, { colour: string; leather: string; colour2: string; leather2: string; hasUpper2: boolean }>>({});
+
+  // Append new state after every existing StylesTab state declaration: SSR
+  // regression scaffolds depend on the established filter/expansion slots.
+  const [rangeStatusFilter, setRangeStatusFilter] = useState<"all-range" | "core" | "carryover" | "new">("all-range");
+  const cancelledSkuKeys = useMemo(() => buildCancelledSkuKeySet([
+    ...cancelledSkuList, ...exactCancelledSkuList,
+  ]), [cancelledSkuList, exactCancelledSkuList]);
+  function isActiveSkuCancelled(sku: any) {
+    return isCancelledSku(cancelledSkuKeys, {
+      style: sku.style,
+      colour: sku._sourceColour ?? sku.colour,
+      leather: sku._sourceLeather ?? sku.leather,
+      colour2: sku._sourceColour2 ?? sku.colour2,
+      leather2: sku._sourceLeather2 ?? sku.leather2,
+    });
+  }
 
   const addCustomSkuMutation = trpc.customSku.add.useMutation({
     onSuccess: async (_data, vars) => {
@@ -957,13 +974,13 @@ export default function StylesTab() {
       .filter((s) => !cancelledSet.has(s.style))
       .map((s) => {
         // Recompute leathers and colours excluding cancelled SKUs and markdown SKUs
-        const allStyleSkus = (mergedRawSkus as Array<{ style: string; colour: string; leather: string; is_new: boolean }>)
+        const allStyleSkus = (mergedRawSkus as Array<{ style: string; colour: string; leather: string; is_new: boolean; is_core?: boolean }>)
           .filter((r) => r.style === s.style);
         const activeSkus = allStyleSkus
-          .filter((r) => !cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`)
+          .filter((r) => !isActiveSkuCancelled(r)
             && !markdownSkuSet.has(markdownKey(r.style, r.colour, r.leather)));
         // Track if all SKUs for this style are individually cancelled (so we still show the style row)
-        const _allSkusCancelled = allStyleSkus.length > 0 && allStyleSkus.every((r) => cancelledSkuSet.has(`${r.style}|${r.colour}|${r.leather}`));
+        const _allSkusCancelled = allStyleSkus.length > 0 && allStyleSkus.every(isActiveSkuCancelled);
         const activeLeathers = Array.from(new Set(activeSkus.map((r) => r.leather).filter(Boolean))) as string[];
         const activeColours = Array.from(new Set(activeSkus.map((r) => r.colour).filter(Boolean))) as string[];
         const activeTotal = activeSkus.length;
@@ -980,12 +997,13 @@ export default function StylesTab() {
           existingSKUs: activeTotal - activeNew,
           hasNew: activeNew > 0,
           isAllNew: activeNew === activeTotal && activeTotal > 0,
+          coreSKUs: activeSkus.filter((r) => r.is_core === true).length,
           category: getCategory(s.style, s.category, s.last),
           trendFlag: getTrendFlag(s.style),
           trends: getTrends(s.style),
         };
       });
-  }, [mergedStyles, mergedRawSkus, cancelledSet, cancelledSkuSet, markdownSkuSet, getCategory, getTrendFlag, getTrends, allSessionQtys]);
+  }, [mergedStyles, mergedRawSkus, cancelledSet, cancelledSkuSet, cancelledSkuKeys, markdownSkuSet, getCategory, getTrendFlag, getTrends, allSessionQtys]);
 
   // Build category list dynamically from resolved categories (case-insensitive, sorted)
   const availableCategories = useMemo(() => {
@@ -1050,6 +1068,8 @@ export default function StylesTab() {
     if (buyStatusFilter !== "all") {
       // Never label an unloaded or failed quantity query as 'not bought'.
       if (buyQtysLoading || buyQtysError) return [];
+    }
+    if (buyStatusFilter !== "all" || rangeStatusFilter !== "all-range") {
       data = data.filter((s) => getVisibleSkusForStyle(s.style).length > 0);
     }
 
@@ -1089,7 +1109,7 @@ export default function StylesTab() {
     }
 
     return data;
-  }, [search, categoryFilter, statusFilter, buyStatusFilter, buyQtysLoading, buyQtysError, allSessionQtys, sampleFilter, fittingFilter, lastFilter, leatherFilter, size11Filter, trendFilters, stylesWithCategories, skuMetaMap, customStyleRows, styleMetaMap, fittedStylesSet]);
+  }, [search, categoryFilter, statusFilter, buyStatusFilter, rangeStatusFilter, buyQtysLoading, buyQtysError, allSessionQtys, sampleFilter, fittingFilter, lastFilter, leatherFilter, size11Filter, trendFilters, stylesWithCategories, skuMetaMap, customStyleRows, styleMetaMap, fittedStylesSet]);
 
   // Group by last, sorted alphabetically by last, then by category order within each last, then alphabetically within category
   const groupedByLast = useMemo(() => {
@@ -1135,14 +1155,23 @@ export default function StylesTab() {
     // mergedRawSkus already has overrides applied via useCustomSkus
     return mergedRawSkus
       .filter((s) => s.style === styleName
-        && !cancelledSkuSet.has(`${s.style}|${s.colour}|${s.leather}`)
+        && !isActiveSkuCancelled(s)
         && !markdownSkuSet.has(markdownKey(s.style, s.colour, (s as any).leather ?? "")));
   }
 
   // Filter only the view. Full-range sizing, sample controls and style totals
   // continue using getSkusForStyle and are never changed by a buy filter.
   function getVisibleSkusForStyle(styleName: string) {
-    return getMatchingStyleBuySkus(getSkusForStyle(styleName), allSessionQtys, buyStatusFilter, statusFilter);
+    return getMatchingStyleBuySkus(getSkusForStyle(styleName), allSessionQtys, buyStatusFilter, statusFilter)
+      .filter((sku) => {
+        if (rangeStatusFilter === "all-range") return true;
+        // Intersect range and newness on this exact physical colourway, not a sibling.
+        if ((statusFilter === "Has New SKUs" || statusFilter === "All New") && !sku.is_new) return false;
+        if (statusFilter === "No New SKUs" && sku.is_new) return false;
+        if (rangeStatusFilter === "core") return sku.is_core === true;
+        if (rangeStatusFilter === "carryover") return !sku.is_core && !sku.is_new;
+        return !sku.is_core && sku.is_new === true;
+      });
   }
 
   // Supplier invoices must match against the current merged season range, not
@@ -1190,6 +1219,12 @@ export default function StylesTab() {
       colour2,
       leather2,
       isNew: sku.is_new === true,
+      isCore: sku.is_core === true,
+      _customId: (sku as any)._customId,
+      _sourceColour: (sku as any)._sourceColour,
+      _sourceLeather: (sku as any)._sourceLeather,
+      _sourceColour2: (sku as any)._sourceColour2,
+      _sourceLeather2: (sku as any)._sourceLeather2,
       category: styleInfo.category,
       last: styleInfo.last,
       imageUrl: styleInfo.imageUrl,
@@ -1414,6 +1449,20 @@ export default function StylesTab() {
             <option value="unbought">No buy qty's — unbought SKUs</option>
           </select>
 
+          <select
+            aria-label="Range status"
+            value={rangeStatusFilter}
+            onChange={(event) => setRangeStatusFilter(event.target.value as typeof rangeStatusFilter)}
+            title="Filter exact active colourways. Core does not classify every colourway of a style."
+            className={`px-3 py-2 text-sm rounded-lg border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-400/40 ${rangeStatusFilter !== "all-range" ? "border-amber-400" : ""}`}
+            style={{ borderColor: rangeStatusFilter === "all-range" ? "var(--border)" : undefined }}
+          >
+            <option value="all-range">All range statuses</option>
+            <option value="core">Core</option>
+            <option value="carryover">Carry-over</option>
+            <option value="new">New SKUs</option>
+          </select>
+
           <button
             onClick={() => setShowMoreFilters((v) => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border transition-colors ${
@@ -1432,9 +1481,9 @@ export default function StylesTab() {
             )}
           </button>
 
-          {(buyStatusFilter !== "all" || sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilters.length > 0) && (
+          {(buyStatusFilter !== "all" || rangeStatusFilter !== "all-range" || sampleFilter !== "All" || fittingFilter !== "All" || lastFilter !== "All" || leatherFilter !== "All" || size11Filter || trendFilters.length > 0) && (
             <button
-              onClick={() => { setBuyStatusFilter("all"); setSampleFilter("All"); setFittingFilter("All"); setLastFilter("All"); setLeatherFilter("All"); setSize11Filter(false); setTrendFilters([]); }}
+              onClick={() => { setBuyStatusFilter("all"); setRangeStatusFilter("all-range"); setSampleFilter("All"); setFittingFilter("All"); setLastFilter("All"); setLeatherFilter("All"); setSize11Filter(false); setTrendFilters([]); }}
               className="flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
             >
               <X className="w-3 h-3" /> Clear filters
@@ -1448,6 +1497,9 @@ export default function StylesTab() {
         {buyQtysError && <p className="text-xs text-red-600" role="alert">Buy quantities could not be loaded. Refresh to use the buy-status filter.</p>}
         {buyStatusFilter !== "all" && !buyQtysLoading && !buyQtysError && (
           <p className="text-xs text-muted-foreground">All {season} buy sessions · AU, USA, NYC and LA · Showing {statusFilter === "Has New SKUs" || statusFilter === "All New" ? "new " : ""}{buyStatusFilter === "bought" ? "bought" : "unbought"} colourways, including matching SKUs on partly bought styles. Expand a style to see matching colours; style totals remain for the full active range.</p>
+        )}
+        {rangeStatusFilter !== "all-range" && (
+          <p className="text-xs text-muted-foreground">Showing {rangeStatusFilter === "core" ? "core" : rangeStatusFilter === "carryover" ? "carry-over" : "new"} colourways only. Expand a style to see matching colours; sizing and style totals remain for the full active range.</p>
         )}
 
         {/* Expanded filter panel */}
@@ -1804,6 +1856,9 @@ export default function StylesTab() {
                                 <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                                   {style.hasNew && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#f59e0b" }} />}
                                   <span className="font-semibold text-foreground">{style.style}</span>
+                                  {style.coreSKUs > 0 && (
+                                    <span data-core-style={style.style} title={`Has ${style.coreSKUs} core colourway${style.coreSKUs === 1 ? "" : "s"}; other colourways may be carry-over or new.`} className="text-xs px-1.5 py-0.5 rounded font-semibold" style={{ background: "oklch(0.94 0.06 155)", color: "oklch(0.40 0.14 155)" }}>CORE</span>
+                                  )}
                                   {styleSize11 && (
                                     <span
                                       data-size11-style={style.style}
@@ -2130,6 +2185,8 @@ export default function StylesTab() {
                                 {(() => {
                                   const allSkus = getVisibleSkusForStyle(style.style);
                                   const existingSkus = allSkus.filter((s) => !s.is_new);
+                                  const coreSkus = existingSkus.filter((s) => s.is_core === true);
+                                  const carryoverSkus = existingSkus.filter((s) => s.is_core !== true);
                                   const newSkus = allSkus.filter((s) => s.is_new);
 
                                   const renderRow = (sku: typeof allSkus[0], isNew: boolean) => {
@@ -2164,6 +2221,8 @@ export default function StylesTab() {
                                     const allTotal = allQtyData?.total ?? 0;
                                     return (
                                       <div
+                                        data-range-sku={buySkuKey}
+                                        data-range-status={sku.is_core ? "core" : isNew ? "new" : "carryover"}
                                         key={getSkuCompositeIdentity(
                                           sku.style,
                                           sku.colour,
@@ -2232,6 +2291,7 @@ export default function StylesTab() {
                                                 {displayColour(sku.colour, sku.leather)}
                                                 {currentColour2 && <span className="text-muted-foreground"> / {displayColour(currentColour2, currentLeather2)}</span>}
                                               </span>
+                                              {sku.is_core && <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold" title="Core colourway" style={{ background: "oklch(0.94 0.06 155)", color: "oklch(0.40 0.14 155)" }}>CORE</span>}
                                               <button
                                                 onClick={(event) => {
                                                   event.stopPropagation();
@@ -2422,6 +2482,12 @@ export default function StylesTab() {
                                               colour2: currentColour2,
                                               leather2: currentLeather2,
                                               isNew: sku.is_new,
+                                              isCore: sku.is_core === true,
+                                              _customId: (sku as any)._customId,
+                                              _sourceColour: (sku as any)._sourceColour,
+                                              _sourceLeather: (sku as any)._sourceLeather,
+                                              _sourceColour2: (sku as any)._sourceColour2,
+                                              _sourceLeather2: (sku as any)._sourceLeather2,
                                               category: style.category,
                                               last: style.last,
                                               imageUrl: style.imageUrl,
@@ -2464,11 +2530,11 @@ export default function StylesTab() {
                                   return (
                                     <div className="space-y-3">
                                       {/* Existing SKUs section */}
-                                      {existingSkus.length > 0 && (
-                                        <div>
+                                      {[{ label: "Core", skus: coreSkus }, { label: "Existing", skus: carryoverSkus }].map(({ label, skus }) => skus.length > 0 && (
+                                        <div key={label}>
                                           {/* Section label */}
                                           <div className="flex items-center gap-2 mb-1 px-1">
-                                            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Existing</span>
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</span>
                                             <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
                                           </div>
                                           {/* Column headers — same grid as data rows */}
@@ -2487,10 +2553,10 @@ export default function StylesTab() {
                                             <span />{/* cancel btn col */}
                                           </div>
                                           <div className="space-y-1">
-                                            {existingSkus.map((sku) => renderRow(sku, false))}
+                                            {skus.map((sku) => renderRow(sku, false))}
                                           </div>
                                         </div>
-                                      )}
+                                      ))}
                                       {/* New SKUs section */}
                                       {newSkus.length > 0 && (
                                         <div>

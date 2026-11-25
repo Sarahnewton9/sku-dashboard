@@ -1,0 +1,1 @@
+ALTER TABLE `sku_meta` ADD `isCore` boolean DEFAULT false NOT NULL;
